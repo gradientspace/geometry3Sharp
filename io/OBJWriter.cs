@@ -32,7 +32,7 @@ namespace g3
                     Vector3d v = mesh.GetVertex(vi);
                     if ( bVtxColors ) {
                         Vector3d c = mesh.GetVertexColor(vi);
-                        writer.WriteLine("v {0} {1} {2} {3:F8} {4:F8} {5:F8}", v[0], v[1], v[2], v[3], v[4], v[5]);
+                        writer.WriteLine("v {0} {1} {2} {3:F8} {4:F8} {5:F8}", v[0], v[1], v[2], c[0], c[1], c[2]);
                     } else {
                         writer.WriteLine("v {0} {1} {2}", v[0], v[1], v[2]);
                     }
