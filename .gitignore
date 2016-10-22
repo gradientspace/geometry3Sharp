@@ -30,3 +30,5 @@
 geometry3Sharp/bin
 geometry3Sharp/obj
 geometry3Sharp.csproj.user
+bin
+obj
