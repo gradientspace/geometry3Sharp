@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace g3
@@ -26,11 +25,19 @@ namespace g3
         }
     }
 
+    public struct IOReadResult
+    {
+        public ReadResult result { get; set; }
+        public string info { get; set; }
+        public IOReadResult(ReadResult r, string s) { result = r; info = s; }
+    }
+
+
 
     public interface IMeshReader
     {
-        Tuple<ReadResult, string> Read(TextReader reader, ReadOptions options, IMeshBuilder builder);
-        Tuple<ReadResult, string> Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder);
+        IOReadResult Read(TextReader reader, ReadOptions options, IMeshBuilder builder);
+        IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder);
     }
 
 
@@ -44,19 +51,25 @@ namespace g3
         WriterError = 3
     }
 
+    public struct IOWriteResult
+    {
+        public WriteResult result { get; set; }
+        public string info { get; set; }
+        public IOWriteResult( WriteResult r, string s ) { result = r;  info = s;  }
+    }
 
     public class WriteOptions
     {
-        bool bWriteBinary;
+        //bool bWriteBinary;        // currently unused
 
         public bool bPerVertexNormals;
         public bool bPerVertexColors;
 
         public WriteOptions()
         {
-            bWriteBinary = false;
+            //bWriteBinary = false;
 
-            bPerVertexNormals = true;
+            bPerVertexNormals = false;
             bPerVertexColors = false;
         }
     }
@@ -64,8 +77,8 @@ namespace g3
     
     public interface IMeshWriter
     {
-        Tuple<WriteResult, string> Write(TextWriter writer, List<IMesh> vMeshes, WriteOptions options);
-        Tuple<WriteResult, string> Write(BinaryWriter writer, List<IMesh> vMeshes, WriteOptions options);
+        IOWriteResult Write(TextWriter writer, List<IMesh> vMeshes, WriteOptions options);
+        IOWriteResult Write(BinaryWriter writer, List<IMesh> vMeshes, WriteOptions options);
     }
 
 

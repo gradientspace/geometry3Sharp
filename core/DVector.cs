@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace g3
 {
@@ -50,6 +49,10 @@ namespace g3
         }
 
 
+        // TODO: 
+        //   - iterate through blocks in above to avoid div/mod for each element
+        //   - provide function that takes lambda?
+
 
         // [RMS] slowest option, but only one that is completely generic
         public void GetBuffer(T[] data)
@@ -57,6 +60,22 @@ namespace g3
             int nLen = this.Length;
             for (int k = 0; k < nLen; ++k)
                 data[k] = this[k];
+        }
+        public T[] GetBuffer()
+        {
+            T[] data = new T[this.Length];
+            for (int k = 0; k < this.Length; ++k)
+                data[k] = this[k];
+            return data;
+        }
+
+        // warning: this may be quite slow!
+        public T2[] GetBufferCast<T2>()
+        {
+            T2[] data = new T2[this.Length];
+            for (int k = 0; k < this.Length; ++k)
+                data[k] = (T2)Convert.ChangeType(this[k], typeof(T2));
+            return data;
         }
 
 
@@ -72,7 +91,8 @@ namespace g3
             int N = v.Blocks.Count;
             for (int k = 0; k < N - 1; k++) {
                 System.Runtime.InteropServices.Marshal.Copy(v.Blocks[k], 0, pCur, v.nBlockSize);
-                pCur = IntPtr.Add(pCur, v.nBlockSize * sizeof(double));
+                pCur = new IntPtr(
+                    pCur.ToInt64() + v.nBlockSize * sizeof(double));
             }
             System.Runtime.InteropServices.Marshal.Copy(v.Blocks[N - 1], 0, pCur, v.iCurBlockUsed);
         }
@@ -82,7 +102,8 @@ namespace g3
             int N = v.Blocks.Count;
             for (int k = 0; k < N - 1; k++) {
                 System.Runtime.InteropServices.Marshal.Copy(v.Blocks[k], 0, pCur, v.nBlockSize);
-                pCur = IntPtr.Add(pCur, v.nBlockSize * sizeof(float));
+                pCur = new IntPtr(
+                    pCur.ToInt64() + v.nBlockSize * sizeof(float));
             }
             System.Runtime.InteropServices.Marshal.Copy(v.Blocks[N - 1], 0, pCur, v.iCurBlockUsed);
         }
@@ -92,7 +113,8 @@ namespace g3
             int N = v.Blocks.Count;
             for (int k = 0; k < N - 1; k++) {
                 System.Runtime.InteropServices.Marshal.Copy(v.Blocks[k], 0, pCur, v.nBlockSize);
-                pCur = IntPtr.Add(pCur, v.nBlockSize * sizeof(int));
+                pCur = new IntPtr(
+                    pCur.ToInt64() + v.nBlockSize * sizeof(int));
             }
             System.Runtime.InteropServices.Marshal.Copy(v.Blocks[N - 1], 0, pCur, v.iCurBlockUsed);
         }

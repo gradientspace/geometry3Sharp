@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace g3
@@ -44,31 +43,34 @@ namespace g3
         }
 
 
+        public bool HasPerVertexColors { get { return m_bOBJHasPerVertexColors; } }
+        public int UVDimension{ get { return m_nUVComponents; } }
 
-        public Tuple<ReadResult, string> Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
+
+        public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
         {
             throw new NotImplementedException();
         }
 
-        public Tuple<ReadResult, string> Read(TextReader reader, ReadOptions options, IMeshBuilder builder)
+        public IOReadResult Read(TextReader reader, ReadOptions options, IMeshBuilder builder)
         {
             var parseResult = ParseInput(reader, options);
-            if (parseResult.Item1 != ReadResult.Ok)
+            if (parseResult.result != ReadResult.Ok)
                 return parseResult;
 
             var buildResult = BuildMeshes(options, builder);
-            if (buildResult.Item1 != ReadResult.Ok)
+            if (buildResult.result != ReadResult.Ok)
                 return buildResult;
 
-            return Tuple.Create(ReadResult.Ok, "");
+            return new IOReadResult(ReadResult.Ok, "");
         }
 
-        unsafe Tuple<ReadResult, string> BuildMeshes(ReadOptions options, IMeshBuilder builder)
+        unsafe IOReadResult BuildMeshes(ReadOptions options, IMeshBuilder builder)
         {
             if (vPositions.Length == 0)
-                return Tuple.Create(ReadResult.GarbageDataError, "No vertices in file");
+                return new IOReadResult(ReadResult.GarbageDataError, "No vertices in file");
             if (vTriangles.Length == 0)
-                return Tuple.Create(ReadResult.GarbageDataError, "No triangles in file");
+                return new IOReadResult(ReadResult.GarbageDataError, "No triangles in file");
 
             // [TODO] support non-per-vertex normals/colors
             bool bHaveNormals = (vNormals.Length == vPositions.Length);
@@ -107,7 +109,7 @@ namespace g3
                 builder.AppendTriangle(v0, v1, v2);
             }
 
-            return Tuple.Create(ReadResult.Ok, "");
+            return new IOReadResult(ReadResult.Ok, "");
         }
 
 
@@ -115,7 +117,7 @@ namespace g3
 
 
 
-        public Tuple<ReadResult, string> ParseInput(TextReader reader, ReadOptions options)
+        public IOReadResult ParseInput(TextReader reader, ReadOptions options)
         {
             vPositions = new DVector<double>();
             vNormals = new DVector<float>();
@@ -183,7 +185,7 @@ namespace g3
             m_bOBJHasPerVertexColors = bVerticesHaveColors;
             m_nUVComponents = nMaxUVLength;
 
-            return Tuple.Create(ReadResult.Ok, "");
+            return new IOReadResult(ReadResult.Ok, "");
         }
 
 

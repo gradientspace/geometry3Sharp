@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace g3
 {
@@ -47,24 +46,6 @@ namespace g3
         }
 
 
-        public int VertexCount
-        {
-            get { return Vertices.Length / 3; }
-        }
-        public int TriangleCount
-        {
-            get { return Triangles.Length / 3; }
-        }
-
-
-        public bool HasNormals
-        {
-            get { return Normals != null && Normals.Length == Vertices.Length; }
-        }
-        public bool HasColors
-        {
-            get { return Colors != null && Colors.Length == Vertices.Length; }
-        }
 
         public double[] GetVertex(int i)
         {
@@ -79,11 +60,6 @@ namespace g3
             return new[] { Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2] };
         }
 
-
-        public bool HasFaceGroups
-        {
-            get { return FaceGroups != null && FaceGroups.Length == Triangles.Length / 3; }
-        }
         public int[] GetTriangle(int i)
         {
             return new[] { Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2] };
@@ -101,10 +77,10 @@ namespace g3
         public int AppendVertex(double x, double y, double z)
         {
             int i = Vertices.Length / 3;
-            if (HasNormals) {
+            if (HasVertexNormals) {
                 Normals.Add(0); Normals.Add(0); Normals.Add(0);
             }
-            if (HasColors) {
+            if (HasVertexColors) {
                 Colors.Add(1); Colors.Add(1); Colors.Add(1);
             }
             Vertices.Add(x); Vertices.Add(y); Vertices.Add(z);
@@ -121,12 +97,23 @@ namespace g3
         public int AppendTriangle(int i, int j, int k, int g = -1)
         {
             int ti = Triangles.Length / 3;
-            if (HasFaceGroups)
+            if (HasTriangleGroups)
                 FaceGroups.Add((g == -1) ? 0 : g);
             Triangles.Add(i); Triangles.Add(j); Triangles.Add(k);
             return ti;
         }
 
+
+        public void AppendTriangles(int[] vTriangles, int[] vertexMap, int g = -1)
+        {
+            for (int ti = 0; ti < vTriangles.Length; ++ti) {
+                Triangles.Add(vertexMap[vTriangles[ti]]);
+            }
+            if (HasTriangleGroups) {
+                for (int ti = 0; ti < vTriangles.Length / 3; ++ti)
+                    FaceGroups.Add((g == -1) ? 0 : g);
+            }
+        }
 
 
         /*
@@ -162,24 +149,25 @@ namespace g3
          * IMesh interface
          */
 
-        public int GetVertexCount()
+
+        public int VertexCount
         {
-            return Vertices.Length / 3;
+            get { return Vertices.Length / 3; }
+        }
+        public int TriangleCount
+        {
+            get { return Triangles.Length / 3; }
         }
 
-        public int GetTriangleCount()
+
+        public bool HasVertexColors
         {
-            return Triangles.Length / 3;
+            get { return Colors != null && Colors.Length == Vertices.Length; }
         }
 
-        public bool HasVertexColors()
+        public bool HasVertexNormals
         {
-            return Colors != null && Colors.Length == Vertices.Length;
-        }
-
-        public bool HasVertexNormals()
-        {
-            return Normals != null && Normals.Length == Vertices.Length;
+            get { return Normals != null && Normals.Length == Vertices.Length; }
         }
 
         Vector3d IMesh.GetVertex(int i)
@@ -197,9 +185,9 @@ namespace g3
             return new Vector3d(Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2]);
         }
 
-        public bool HasTriangleGroups()
+        public bool HasTriangleGroups
         {
-            return FaceGroups.Length == Triangles.Length / 3;
+            get { return FaceGroups.Length == Triangles.Length / 3; }
         }
 
         Vector3i IMesh.GetTriangle(int i)
@@ -215,6 +203,44 @@ namespace g3
 
 
         /*
+         * Array-based access (allocates arrays automatically)
+         */
+        public double[] GetVertexArray()
+        {
+            return this.Vertices.GetBuffer();
+        }
+        public float[] GetVertexArrayFloat()
+        {
+            float[] buf = new float[this.Vertices.Length];
+            for (int i = 0; i < this.Vertices.Length; ++i)
+                buf[i] = (float)this.Vertices[i];
+            return buf;
+        }
+
+        public float[] GetVertexNormalArray()
+        {
+            return (this.HasVertexNormals) ? this.Normals.GetBuffer() : null;
+        }
+
+        public float[] GetVertexColorArray()
+        {
+            return (this.HasVertexColors) ? this.Colors.GetBuffer() : null;
+        }
+
+        public int[] GetTriangleArray()
+        {
+            return this.Triangles.GetBuffer();
+        }
+
+        public int[] GetFaceGroupsArray()
+        {
+            return (this.HasTriangleGroups) ? this.FaceGroups.GetBuffer() : null;
+        }
+
+
+
+
+        /*
          * copy internal data into buffers. Assumes that buffers are big enough!!
          */
 
@@ -225,13 +251,13 @@ namespace g3
 
         public unsafe void GetVertexNormalBuffer(float * pBuffer)
         {
-            if ( this.HasNormals )
+            if ( this.HasVertexNormals )
                 DVector<float>.FastGetBuffer(this.Normals, pBuffer);
         }
 
         public unsafe void GetVertexColorBuffer(float* pBuffer)
         {
-            if (this.HasColors)
+            if (this.HasVertexColors)
                 DVector<float>.FastGetBuffer(this.Colors, pBuffer);
         }
 
@@ -242,7 +268,7 @@ namespace g3
 
         public unsafe void GetFaceGroupsBuffer(int* pBuffer)
         {
-            if ( this.HasFaceGroups)
+            if ( this.HasTriangleGroups)
                 DVector<int>.FastGetBuffer(this.FaceGroups, pBuffer);
         }
 

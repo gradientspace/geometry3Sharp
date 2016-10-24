@@ -2,24 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace g3
 {
     public interface IMesh
     {
-        int GetVertexCount();
-        int GetTriangleCount();
+        int VertexCount { get; }
+        int TriangleCount { get; }
 
-        bool HasVertexColors();
-        bool HasVertexNormals();
+        bool HasVertexColors { get; }
+        bool HasVertexNormals { get; }
 
         Vector3d GetVertex(int i);
         Vector3d GetVertexNormal(int i);
         Vector3d GetVertexColor(int i);
 
 
-        bool HasTriangleGroups();
+        bool HasTriangleGroups { get; }
 
         Vector3i GetTriangle(int i);
         int GetTriangleGroup(int i);
