@@ -16,6 +16,14 @@ namespace g3
 
 
 
+        // fMinMaxValue may be signed
+        public static float RangeClamp(float fValue, float fMinMaxValue)
+        {
+            return Clamp(fValue, -Math.Abs(fMinMaxValue), Math.Abs(fMinMaxValue));
+        }
+
+
+
         //! if yshift is 0, function approaches y=1 at xZero from y=0. 
         //! speed (> 0) controls how fast it gets there
         //! yshift pushes the whole graph upwards (so that it actually crosses y=1 at some point)
@@ -56,5 +64,26 @@ namespace g3
             } else
                 return 1.0f;
         }
+
+
+
+
+        // lerps from [0,1] for x in range [deadzone,R]
+        public static float LinearRampT(float R, float deadzoneR, float x)
+        {
+            float sign = Math.Sign(x);
+            x = Math.Abs(x);
+            if (x < deadzoneR)
+                return 0.0f;
+            else if (x > R)
+                return sign * 1.0f;
+            else {
+                x = Math.Min(x, R);
+                float d = (x - deadzoneR) / (R - deadzoneR);
+                return sign * d;
+            }
+        }
+
+
     }
 }
