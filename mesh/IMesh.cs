@@ -31,7 +31,9 @@ namespace g3
      */
     public interface IMeshBuilder
     {
-        void AppendNewMesh();
+        // return ID of new mesh
+        int AppendNewMesh();
+        void SetActiveMesh(int id);
 
         int AppendVertex(double x, double y, double z);
         int AppendVertexN(double x, double y, double z, float nx, float ny, float nz);
@@ -40,47 +42,17 @@ namespace g3
 
         int AppendTriangle(int i, int j, int k);
         int AppendTriangle(int i, int j, int k, int g);
+
+
+        // material handling
+
+        // return client-side unique ID of material
+        int BuildMaterial(GenericMaterial m);
+
+        // do material assignment to mesh, where meshID comes from IMeshBuilder
+        void AssignMaterial(int materialID, int meshID);
     }
 
-
-
-    /*
-     * default implementations of all the extra functions in IMeshBuilder
-     *    (which just discard the extra data)
-     */
-    public class MinimalMeshBuilder : IMeshBuilder
-    {
-        public void AppendNewMesh()
-        {
-            throw new NotImplementedException();
-        }
-        public int AppendVertex(double x, double y, double z)
-        {
-            throw new NotImplementedException();
-        }
-        public int AppendTriangle(int i, int j, int k)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        public int AppendVertexN(double x, double y, double z, float nx, float ny, float nz)
-        {
-            return AppendVertex(x, y, z);
-        }
-        public int AppendVertexC(double x, double y, double z, float r, float g, float b)
-        {
-            return AppendVertex(x, y, z);
-        }
-        public int AppendVertexNC(double x, double y, double z, float nx, float ny, float nz, float r, float g, float b)
-        {
-            return AppendVertex(x, y, z);
-        }
-        public int AppendTriangle(int i, int j, int k, int g)
-        {
-            return AppendTriangle(i, j, k);
-        }
-    }
 
 
 

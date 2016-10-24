@@ -282,49 +282,85 @@ namespace g3
     public class SimpleMeshBuilder : IMeshBuilder
     {
         public List<SimpleMesh> Meshes;
+        public List<GenericMaterial> Materials;
+        public List<int> MaterialAssignment;
 
+        int nActiveMesh;
 
         public SimpleMeshBuilder()
         {
             Meshes = new List<SimpleMesh>();
+            Materials = new List<GenericMaterial>();
+            MaterialAssignment = new List<int>();
+            nActiveMesh = -1;
         }
 
-        public void AppendNewMesh()
+        public int AppendNewMesh()
         {
+            int index = Meshes.Count;
             SimpleMesh m = new SimpleMesh();
             m.Initialize();
             Meshes.Add(m);
+            MaterialAssignment.Add(-1);     // no material is known
+            nActiveMesh = index;
+            return index;
+        }
+
+        public void SetActiveMesh(int id)
+        {
+            if (id >= 0 && id < Meshes.Count)
+                nActiveMesh = id;
+            else
+                throw new ArgumentOutOfRangeException("active mesh id is out of range");
         }
 
         public int AppendTriangle(int i, int j, int k)
         {
-            return Meshes.Last().AppendTriangle(i, j, k);
+            return Meshes[nActiveMesh].AppendTriangle(i, j, k);
         }
 
         public int AppendTriangle(int i, int j, int k, int g)
         {
-            return Meshes.Last().AppendTriangle(i, j, k, g);
+            return Meshes[nActiveMesh].AppendTriangle(i, j, k, g);
         }
 
         public int AppendVertex(double x, double y, double z)
         {
-            return Meshes.Last().AppendVertex(x, y, z);
+            return Meshes[nActiveMesh].AppendVertex(x, y, z);
         }
 
         public int AppendVertexC(double x, double y, double z, float r, float g, float b)
         {
-            return Meshes.Last().AppendVertex(x, y, z, 0,0,0, r, g, b);
+            return Meshes[nActiveMesh].AppendVertex(x, y, z, 0,0,0, r, g, b);
         }
 
         public int AppendVertexN(double x, double y, double z, float nx, float ny, float nz)
         {
-            return Meshes.Last().AppendVertex(x, y, z, nx, ny, nz, 1.0f, 1.0f, 1.0f);
+            return Meshes[nActiveMesh].AppendVertex(x, y, z, nx, ny, nz, 1.0f, 1.0f, 1.0f);
         }
 
         public int AppendVertexNC(double x, double y, double z, float nx, float ny, float nz, float r, float g, float b)
         {
-            return Meshes.Last().AppendVertex(x, y, z, nx, ny, nz, r, g, b);
+            return Meshes[nActiveMesh].AppendVertex(x, y, z, nx, ny, nz, r, g, b);
         }
+
+
+        // just store GenericMaterial object, we can't use it here
+        public int BuildMaterial(GenericMaterial m)
+        {
+            int id = Materials.Count;
+            Materials.Add(m);
+            return id;
+        }
+
+        // do material assignment to mesh
+        public void AssignMaterial(int materialID, int meshID)
+        {
+            if (meshID >= MaterialAssignment.Count || materialID >= Materials.Count)
+                throw new ArgumentOutOfRangeException("[SimpleMeshBuilder::AssignMaterial] meshID or materialID are out-of-range");
+            MaterialAssignment[meshID] = materialID;
+        }
+
     }
 
 }

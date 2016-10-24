@@ -32,7 +32,7 @@ namespace g3
     {
         public ReadResult result { get; set; }
         public string info { get; set; }
-        public IOReadResult(ReadResult r, string s) { result = r; info = s; }
+        public IOReadResult(ReadResult r, string s) { result = r; info = s; if (info == "") info = "(no message)"; }
     }
 
 
@@ -58,7 +58,7 @@ namespace g3
     {
         public WriteResult result { get; set; }
         public string info { get; set; }
-        public IOWriteResult( WriteResult r, string s ) { result = r;  info = s;  }
+        public IOWriteResult( WriteResult r, string s ) { result = r;  info = s; if (info == "") info = "(no message)"; }
     }
 
     public class WriteOptions
