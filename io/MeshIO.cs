@@ -20,8 +20,11 @@ namespace g3
 
     public class ReadOptions
     {
+		public bool ReadMaterials;
+
         public ReadOptions()
         {
+			ReadMaterials = false;
         }
     }
 

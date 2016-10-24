@@ -21,6 +21,24 @@ namespace g3
     }
 
 
+	// details: http://www.fileformat.info/format/material/
+	public class OBJMaterial
+	{
+		string name;
+
+		Vector3f Ka;		// rgb ambient reflectivity
+		Vector3f Kd;		// rgb diffuse reflectivity 
+		Vector3f Ks;		// rgb specular reflectivity
+		Vector3f Tf;        // rgb transmission filter
+		int illum;          // illumination model 0-10
+		float d;            // dissolve
+		float Ns;           // specular exponent
+		float sharpness;    // reflection sharpness
+		float Ni;			// index of refraction / optical density
+
+		// [TODO] texture materials
+	}
+
 
     public class OBJReader : IMeshReader
     {
@@ -29,6 +47,8 @@ namespace g3
         DVector<double> vUVs;
         DVector<float> vColors;
         DVector<Triangle> vTriangles;
+
+		Dictionary<string, OBJMaterial> Materials;
 
         bool m_bOBJHasPerVertexColors;
         int m_nUVComponents;
@@ -40,8 +60,14 @@ namespace g3
         {
             this.splitDoubleSlash = new string[] { "//" };
             this.splitSlash = new char[] { '/' };
+			Materials = new Dictionary<string, OBJMaterial>();
+			MTLFileSearchPaths = new List<string>();
         }
 
+		// you need to initialize this with paths if you want .MTL files to load
+		List<string> MTLFileSearchPaths { get; set; } 
+
+		public event ErrorEventHandler warningEvent;
 
         public bool HasPerVertexColors { get { return m_bOBJHasPerVertexColors; } }
         public int UVDimension{ get { return m_nUVComponents; } }
@@ -178,7 +204,18 @@ namespace g3
 
                 } else if ( tokens[0][0] == 'o' ) {
 
-                }
+				} else if ( tokens[0] == "mtllib" && options.ReadMaterials ) {
+					if ( MTLFileSearchPaths.Count == 0 )
+						throw new Exception("Materials requested but Material Search Paths not initialized!");
+					string sFile = FindMTLFile(tokens[1]);
+					if ( sFile != null ) {
+						// read material file
+					} else if ( warningEvent != null )
+						warningEvent(this, new ErrorEventArgs(
+							new Exception("material file " + sFile + " could not be found in material search paths")));
+						
+				}
+
 
             }
 
@@ -232,6 +269,29 @@ namespace g3
 
             }
         }
+
+
+		string FindMTLFile(string sMTLFilePath) {
+			foreach ( string sPath in MTLFileSearchPaths ) {
+				string sFullPath = Path.Combine(sPath, sMTLFilePath);
+				if ( File.Exists(sFullPath) )
+					return sFullPath;
+			}
+			return null;
+		}
+
+
+		public IOReadResult ReadMaterials(string sPath)
+		{
+			return new IOReadResult(ReadResult.FileParsingError, "");
+		}
+
+
+		private OBJMaterial parse_material()
+		{
+			return null;
+		}
+
 
 
     }
