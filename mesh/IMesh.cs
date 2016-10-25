@@ -12,10 +12,12 @@ namespace g3
 
         bool HasVertexColors { get; }
         bool HasVertexNormals { get; }
+        bool HasVertexUVs { get; }
 
         Vector3d GetVertex(int i);
         Vector3d GetVertexNormal(int i);
         Vector3d GetVertexColor(int i);
+        Vector2f GetVertexUV(int i);
 
 
         bool HasTriangleGroups { get; }
@@ -29,6 +31,13 @@ namespace g3
     /*
      * Abstracts construction of meshes, so that we can construct different types, etc
      */
+    public struct NewVertexInfo
+    {
+        public Vector3d v;
+        public Vector3f n, c;
+        public Vector2f uv;
+        public bool bHaveN, bHaveUV, bHaveC;
+    }
     public interface IMeshBuilder
     {
         // return ID of new mesh
@@ -36,9 +45,7 @@ namespace g3
         void SetActiveMesh(int id);
 
         int AppendVertex(double x, double y, double z);
-        int AppendVertexN(double x, double y, double z, float nx, float ny, float nz);
-        int AppendVertexC(double x, double y, double z, float r, float g, float b);
-        int AppendVertexNC(double x, double y, double z, float nx, float ny, float nz, float r, float g, float b);
+        int AppendVertex(NewVertexInfo info);
 
         int AppendTriangle(int i, int j, int k);
         int AppendTriangle(int i, int j, int k, int g);

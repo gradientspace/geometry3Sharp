@@ -31,10 +31,20 @@ namespace g3
         public Vector3f Ks;     // rgb specular reflectivity
         public Vector3f Tf;        // rgb transmission filter
         public int illum;          // illumination model 0-10
-        public float d;            // dissolve
+        public float d;            // dissolve (alpha)
         public float Ns;           // specular exponent
         public float sharpness;    // reflection sharpness
         public float Ni;            // index of refraction / optical density
+
+        public string map_Ka;
+        public string map_Kd;
+        public string map_Ks;
+        public string map_d;
+        public string map_Ns;
+
+        public string bump;
+        public string disp;
+        public string decal;
 
         // [TODO] texture materials
 

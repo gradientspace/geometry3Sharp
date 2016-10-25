@@ -10,6 +10,7 @@ namespace g3
         public DVector<double> Vertices;
         public DVector<float> Normals;
         public DVector<float> Colors;
+        public DVector<float> UVs;
 
         public DVector<int> Triangles;
         public DVector<int> FaceGroups;
@@ -36,11 +37,12 @@ namespace g3
         //}
 
 
-        public void Initialize(bool bWantNormals = true, bool bWantColors = true, bool bWantFaceGroups = true)
+        public void Initialize(bool bWantNormals = true, bool bWantColors = true, bool bWantUVs = true, bool bWantFaceGroups = true)
         {
             Vertices = new DVector<double>();
             Normals = (bWantNormals) ? new DVector<float>() : null;
             Colors = (bWantColors) ? new DVector<float>() : null;
+            UVs = (bWantUVs) ? new DVector<float>() : null;
             Triangles = new DVector<int>();
             FaceGroups = (bWantFaceGroups) ? new DVector<int>() : null;
         }
@@ -58,6 +60,10 @@ namespace g3
         public float[] GetColor(int i)
         {
             return new[] { Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2] };
+        }
+        public float[] GetUV(int i)
+        {
+            return new[] { UVs[2 * i], UVs[2 * i + 1] };
         }
 
         public int[] GetTriangle(int i)
@@ -83,17 +89,31 @@ namespace g3
             if (HasVertexColors) {
                 Colors.Add(1); Colors.Add(1); Colors.Add(1);
             }
+            if (HasVertexUVs) {
+                UVs.Add(0); UVs.Add(0);
+            }
             Vertices.Add(x); Vertices.Add(y); Vertices.Add(z);
             return i;
         }
-        public int AppendVertex(double x, double y, double z, float nx, float ny, float nz, float r, float g, float b)
+        public int AppendVertex(NewVertexInfo info)
         {
-            int vi = Vertices.Length / 3;
-            Normals.Add(nx); Normals.Add(ny); Normals.Add(nz);
-            Colors.Add(r); Colors.Add(g); Colors.Add(b);
-            Vertices.Add(x); Vertices.Add(y); Vertices.Add(z);
-            return vi;
+            int i = Vertices.Length / 3;
+            Vertices.Add(info.v[0]); Vertices.Add(info.v[1]); Vertices.Add(info.v[2]);
+
+            if (info.bHaveN) {
+                Normals.Add(info.n[0]); Normals.Add(info.n[1]); Normals.Add(info.n[2]);
+            }
+            if (info.bHaveC) {
+                Colors.Add(info.c[0]); Colors.Add(info.c[1]); Colors.Add(info.c[2]);
+            }
+            if (info.bHaveUV) {
+                UVs.Add(info.uv[0]); UVs.Add(info.uv[1]);
+            }
+            return i;
         }
+
+
+
         public int AppendTriangle(int i, int j, int k, int g = -1)
         {
             int ti = Triangles.Length / 3;
@@ -170,6 +190,11 @@ namespace g3
             get { return Normals != null && Normals.Length == Vertices.Length; }
         }
 
+        public bool HasVertexUVs
+        {
+            get { return UVs != null && UVs.Length/2 == Vertices.Length/3; }
+        }
+
         Vector3d IMesh.GetVertex(int i)
         {
             return new Vector3d(Vertices[3 * i], Vertices[3 * i + 1], Vertices[3 * i + 2]);
@@ -183,6 +208,11 @@ namespace g3
         public Vector3d GetVertexColor(int i)
         {
             return new Vector3d(Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2]);
+        }
+
+        public Vector2f GetVertexUV(int i)
+        {
+            return new Vector2f(UVs[2 * i], UVs[2 * i + 1]);
         }
 
         public bool HasTriangleGroups
@@ -227,6 +257,11 @@ namespace g3
             return (this.HasVertexColors) ? this.Colors.GetBuffer() : null;
         }
 
+        public float[] GetVertexUVArray()
+        {
+            return (this.HasVertexUVs) ? this.UVs.GetBuffer() : null;
+        }
+
         public int[] GetTriangleArray()
         {
             return this.Triangles.GetBuffer();
@@ -259,6 +294,12 @@ namespace g3
         {
             if (this.HasVertexColors)
                 DVector<float>.FastGetBuffer(this.Colors, pBuffer);
+        }
+
+        public unsafe void GetVertexUVBuffer(float* pBuffer)
+        {
+            if (this.HasVertexUVs)
+                DVector<float>.FastGetBuffer(this.UVs, pBuffer);
         }
 
         public unsafe void GetTriangleBuffer(int* pBuffer)
@@ -328,21 +369,11 @@ namespace g3
         {
             return Meshes[nActiveMesh].AppendVertex(x, y, z);
         }
-
-        public int AppendVertexC(double x, double y, double z, float r, float g, float b)
+        public int AppendVertex(NewVertexInfo info)
         {
-            return Meshes[nActiveMesh].AppendVertex(x, y, z, 0,0,0, r, g, b);
+            return Meshes[nActiveMesh].AppendVertex(info);
         }
 
-        public int AppendVertexN(double x, double y, double z, float nx, float ny, float nz)
-        {
-            return Meshes[nActiveMesh].AppendVertex(x, y, z, nx, ny, nz, 1.0f, 1.0f, 1.0f);
-        }
-
-        public int AppendVertexNC(double x, double y, double z, float nx, float ny, float nz, float r, float g, float b)
-        {
-            return Meshes[nActiveMesh].AppendVertex(x, y, z, nx, ny, nz, r, g, b);
-        }
 
 
         // just store GenericMaterial object, we can't use it here

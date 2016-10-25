@@ -17,8 +17,21 @@ namespace g3
         {
             nMaterialID = -1;
             fixed (int* v = this.vIndices) { v[0] = -1; v[1] = -1; v[2] = -1; }
-            fixed (int* n = this.vIndices) { n[0] = -1; n[1] = -1; n[2] = -1; }
-            fixed (int* u = this.vIndices) { u[0] = -1; u[1] = -1; u[2] = -1; }
+            fixed (int* n = this.vNormals) { n[0] = -1; n[1] = -1; n[2] = -1; }
+            fixed (int* u = this.vUVs) { u[0] = -1; u[1] = -1; u[2] = -1; }
+        }
+
+        public bool is_complex()
+        {
+            fixed (int * v = this.vIndices, n = this.vNormals, u = this.vUVs) {
+                for ( int j = 0; j < 3; ++j ) {
+                    if (n[j] != -1 && n[j] != v[j])
+                        return true;
+                    if (u[j] != -1 && u[j] != v[j])
+                        return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -30,7 +43,7 @@ namespace g3
     {
         DVector<double> vPositions;
         DVector<float> vNormals;
-        DVector<double> vUVs;
+        DVector<float> vUVs;
         DVector<float> vColors;
         DVector<Triangle> vTriangles;
 
@@ -61,6 +74,10 @@ namespace g3
         public bool HasPerVertexColors { get { return m_bOBJHasPerVertexColors; } }
         public int UVDimension{ get { return m_nUVComponents; } }
 
+        // if this is true, means during parsing we found vertices of faces that
+        //  had different indices for vtx/normal/uv
+        public bool HasComplexVertices { get; set; }
+
 
         public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
         {
@@ -71,13 +88,14 @@ namespace g3
         {
             Materials = new Dictionary<string, OBJMaterial>();
             UsedMaterials = new Dictionary<int, string>();
+            HasComplexVertices = false;
 
             var parseResult = ParseInput(reader, options);
             if (parseResult.result != ReadResult.Ok)
                 return parseResult;
 
             var buildResult = 
-                (UsedMaterials.Count > 1) ?
+                (UsedMaterials.Count > 1 || HasComplexVertices) ?
                     BuildMeshes_ByMaterial(options, builder) : BuildMeshes_Simple(options, builder);
             if (buildResult.result != ReadResult.Ok)
                 return buildResult;
@@ -87,25 +105,44 @@ namespace g3
 
 
 
-        int append_vertex(IMeshBuilder builder, int nVtx, bool bHaveNormals, bool bHaveColors )
+
+
+
+
+        struct vtx_key
         {
-            // [TODO] support non-per-vertex normals/colors
-
-            int i = 3 * nVtx;
-            if (bHaveColors && bHaveNormals) {
-                return builder.AppendVertexNC(vPositions[i], vPositions[i + 1], vPositions[i + 2],
-                    vNormals[i], vNormals[i + 1], vNormals[i + 2], vColors[i], vColors[i + 1], vColors[i + 2]);
-            } else if (bHaveColors) {
-                return builder.AppendVertexC(vPositions[i], vPositions[i + 1], vPositions[i + 2],
-                   vColors[i], vColors[i + 1], vColors[i + 2]);
-            } else if (bHaveNormals) {
-                return builder.AppendVertexN(vPositions[i], vPositions[i + 1], vPositions[i + 2],
-                   vNormals[i], vNormals[i + 1], vNormals[i + 2]);
-
-            } else {
-                return builder.AppendVertex(vPositions[i], vPositions[i + 1], vPositions[i + 2]);
-            }
+            public int vi, ni, ci, ui;
         }
+
+        int append_vertex(IMeshBuilder builder, vtx_key vk, bool bHaveNormals, bool bHaveColors, bool bHaveUVs )
+        {
+            int vi = 3 * vk.vi;
+            if ( bHaveNormals == false && bHaveColors == false && bHaveUVs == false )
+                return builder.AppendVertex(vPositions[vi], vPositions[vi + 1], vPositions[vi + 2]);
+
+            NewVertexInfo vinfo = new NewVertexInfo();
+            vinfo.bHaveC = vinfo.bHaveN = vinfo.bHaveUV = false;
+            vinfo.v = new Vector3d(vPositions[vi], vPositions[vi + 1], vPositions[vi + 2]);
+            if ( bHaveNormals ) {
+                vinfo.bHaveN = true;
+                int ni = 3 * vk.ni;
+                vinfo.n = new Vector3f(vNormals[ni], vNormals[ni + 1], vNormals[ni + 2]);
+            }
+            if ( bHaveColors ) {
+                vinfo.bHaveC = true;
+                int ci = 3 * vk.ci;
+                vinfo.c = new Vector3f(vColors[ci], vColors[ci + 1], vColors[ci + 2]);
+            }
+            if ( bHaveUVs ) {
+                vinfo.bHaveUV = true;
+                int ui = 2 * vk.ui;
+                vinfo.uv = new Vector2f(vUVs[ui], vUVs[ui + 1]);
+            }
+
+            return builder.AppendVertex(vinfo);
+        }
+
+
 
         unsafe int append_triangle(IMeshBuilder builder, int nTri, int[] mapV)
         {
@@ -115,7 +152,10 @@ namespace g3
             int v2 = mapV[t.vIndices[2] - 1];
             return builder.AppendTriangle(v0, v1, v2);
         }
-
+        unsafe int append_triangle(IMeshBuilder builder, Triangle t)
+        {
+            return builder.AppendTriangle(t.vIndices[0], t.vIndices[1], t.vIndices[2]);
+        }
 
 
         unsafe IOReadResult BuildMeshes_Simple(ReadOptions options, IMeshBuilder builder)
@@ -128,17 +168,28 @@ namespace g3
             // [TODO] support non-per-vertex normals/colors
             bool bHaveNormals = (vNormals.Length == vPositions.Length);
             bool bHaveColors = (vColors.Length == vPositions.Length);
+            bool bHaveUVs = (vUVs.Length/2 == vPositions.Length/3);
 
             int nVertices = vPositions.Length / 3;
             int[] mapV = new int[nVertices];
 
-            builder.AppendNewMesh();
-            for ( int k = 0; k < nVertices; ++k ) 
-                mapV[k] = append_vertex(builder, k, bHaveNormals, bHaveColors);
+            int meshID = builder.AppendNewMesh();
+            for (int k = 0; k < nVertices; ++k) {
+                vtx_key vk = new vtx_key() { vi = k, ci = k, ni = k, ui = k } ;
+                mapV[k] = append_vertex(builder, vk, bHaveNormals, bHaveColors, bHaveUVs);
+            }
 
             // [TODO] this doesn't handle missing vertices...
             for (int k = 0; k < vTriangles.Length; ++k)
                 append_triangle(builder, k, mapV);
+
+            if ( UsedMaterials.Count == 1 ) {       // [RMS] should not be in here otherwise
+                int material_id = UsedMaterials.Keys.First();
+                string sMatName = UsedMaterials[material_id];
+                OBJMaterial useMat = Materials[sMatName];
+                int matID = builder.BuildMaterial(useMat);
+                builder.AssignMaterial(matID, meshID);
+            }
 
             return new IOReadResult(ReadResult.Ok, "");
         }
@@ -155,12 +206,9 @@ namespace g3
             if (vTriangles.Length == 0)
                 return new IOReadResult(ReadResult.GarbageDataError, "No triangles in file");
 
-            // [TODO] support non-per-vertex normals/colors
-            bool bHaveNormals = (vNormals.Length == vPositions.Length);
-            bool bHaveColors = (vColors.Length == vPositions.Length);
-            int nVertices = vPositions.Length / 3;
-            int[] mapV = new int[nVertices];
-
+            bool bHaveNormals = (vNormals.Length > 0);
+            bool bHaveColors = (vColors.Length > 0);
+            bool bHaveUVs = (vUVs.Length > 0);
 
             foreach ( int material_id in UsedMaterials.Keys ) {
                 string sMatName = UsedMaterials[material_id];
@@ -168,21 +216,29 @@ namespace g3
                 int matID = builder.BuildMaterial( useMat );
                 int meshID = builder.AppendNewMesh();
 
-                // reset vtx map
-                for (int k = 0; k < nVertices; ++k)
-                    mapV[k] = -1;
+                Dictionary<vtx_key, int> mapV = new Dictionary<vtx_key, int>();
 
                 for ( int k = 0; k < vTriangles.Length; ++k ) {
                     Triangle t = vTriangles[k];
                     if (t.nMaterialID == material_id) {
-                        Triangle t2;
+                        Triangle t2 = new Triangle();
                         for (int j = 0; j < 3; ++j) {
-                            int i = t.vIndices[j] - 1;
-                            if (mapV[i] == -1)
-                                mapV[i] = append_vertex(builder, i, bHaveNormals, bHaveColors);
-                            t2.vIndices[j] = mapV[i];
+                            vtx_key vk = new vtx_key();
+                            vk.vi = t.vIndices[j] - 1;
+                            vk.ni = t.vNormals[j] - 1;
+                            vk.ui = t.vUVs[j] - 1;
+                            vk.ci = vk.vi;
+
+                            int use_vtx = -1;
+                            if (mapV.ContainsKey(vk) == false) {
+                                use_vtx = append_vertex(builder, vk, bHaveNormals, bHaveColors, bHaveUVs);
+                                mapV[vk] = use_vtx;
+                            } else
+                                use_vtx = mapV[vk];
+
+                            t2.vIndices[j] = use_vtx;
                         }
-                        append_triangle(builder, k, mapV);
+                        append_triangle(builder, t2);
                     }
                 }
 
@@ -200,7 +256,7 @@ namespace g3
         {
             vPositions = new DVector<double>();
             vNormals = new DVector<float>();
-            vUVs = new DVector<double>();
+            vUVs = new DVector<float>();
             vColors = new DVector<float>();
             vTriangles = new DVector<Triangle>();
 
@@ -235,12 +291,14 @@ namespace g3
                         vNormals.Add(float.Parse(tokens[1]));
                         vNormals.Add(float.Parse(tokens[2]));
                         vNormals.Add(float.Parse(tokens[3]));
+
                     } else if ( tokens[0][1] == 't' ) {
-                        nMaxUVLength = Math.Max(nMaxUVLength, tokens.Length);
-                        vUVs.Add(Double.Parse(tokens[1]));
-                        vUVs.Add(Double.Parse(tokens[2]));
-                        if ( tokens.Length == 4 )
-                            vUVs.Add(Double.Parse(tokens[3]));
+                        if (tokens.Length == 3) {
+                            vUVs.Add(float.Parse(tokens[1]));
+                            vUVs.Add(float.Parse(tokens[2]));
+                            nMaxUVLength = Math.Max(nMaxUVLength, tokens.Length);
+                        } else
+                            emit_warning("[OBJReader] UV has more than 2 coordinates!");
                     }
 
 
@@ -249,11 +307,14 @@ namespace g3
                     if (tokens.Length == 4) {
                         Triangle tri = new Triangle();
                         parse_triangle(tokens, ref tri);
+
                         if (activeMaterial != null) {
                             tri.nMaterialID = activeMaterial.id;
                             UsedMaterials[activeMaterial.id] = activeMaterial.name;
                         }
                         vTriangles.Add(tri);
+                        if (tri.is_complex())
+                            HasComplexVertices = true;
                     } else {
                         // punt for now...
                     }
@@ -395,6 +456,8 @@ namespace g3
 
                 } else if (tokens[0] == "d") {
                     if (curMaterial != null) curMaterial.d = Single.Parse(tokens[1]);
+                } else if (tokens[0] == "Tr") {     // alternate to d/alpha, [Tr]ansparency is 1-d
+                    if (curMaterial != null) curMaterial.d = 1.0f - Single.Parse(tokens[1]);
                 } else if (tokens[0] == "Ns") {
                     if (curMaterial != null) curMaterial.Ns = Single.Parse(tokens[1]);
                 } else if (tokens[0] == "sharpness") {
@@ -402,6 +465,23 @@ namespace g3
                 } else if (tokens[0] == "Ni") {
                     if (curMaterial != null) curMaterial.Ni = Single.Parse(tokens[1]);
 
+                } else if (tokens[0] == "map_Ka") {
+                    if (curMaterial != null) curMaterial.map_Ka = tokens[1];
+                } else if (tokens[0] == "map_Kd") {
+                    if (curMaterial != null) curMaterial.map_Kd = tokens[1];
+                } else if (tokens[0] == "map_Ks") {
+                    if (curMaterial != null) curMaterial.map_Ks = tokens[1];
+                } else if (tokens[0] == "map_d") {
+                    if (curMaterial != null) curMaterial.map_d = tokens[1];
+                } else if (tokens[0] == "map_Ns") {
+                    if (curMaterial != null) curMaterial.map_Ns = tokens[1];
+
+                } else if (tokens[0] == "bump" || tokens[0] == "map_bump") {
+                    if (curMaterial != null) curMaterial.bump = tokens[1];
+                } else if (tokens[0] == "disp") {
+                    if (curMaterial != null) curMaterial.disp = tokens[1];
+                } else if (tokens[0] == "decal") {
+                    if (curMaterial != null) curMaterial.decal = tokens[1];
                 } else {
                     emit_warning("unknown material command " + tokens[0]);
                 }
