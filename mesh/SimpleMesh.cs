@@ -84,7 +84,7 @@ namespace g3
         {
             int i = Vertices.Length / 3;
             if (HasVertexNormals) {
-                Normals.Add(0); Normals.Add(0); Normals.Add(0);
+                Normals.Add(0); Normals.Add(1); Normals.Add(0);
             }
             if (HasVertexColors) {
                 Colors.Add(1); Colors.Add(1); Colors.Add(1);
@@ -98,17 +98,24 @@ namespace g3
         public int AppendVertex(NewVertexInfo info)
         {
             int i = Vertices.Length / 3;
-            Vertices.Add(info.v[0]); Vertices.Add(info.v[1]); Vertices.Add(info.v[2]);
 
-            if (info.bHaveN) {
+            if (info.bHaveN && HasVertexNormals) {
                 Normals.Add(info.n[0]); Normals.Add(info.n[1]); Normals.Add(info.n[2]);
+            } else if ( HasVertexNormals ) {
+                Normals.Add(0); Normals.Add(1); Normals.Add(0);
             }
-            if (info.bHaveC) {
+            if (info.bHaveC && HasVertexColors) {
                 Colors.Add(info.c[0]); Colors.Add(info.c[1]); Colors.Add(info.c[2]);
+            } else if (HasVertexColors) {
+                Colors.Add(1); Colors.Add(1); Colors.Add(1);
             }
-            if (info.bHaveUV) {
+            if (info.bHaveUV && HasVertexUVs) {
                 UVs.Add(info.uv[0]); UVs.Add(info.uv[1]);
+            } else if (HasVertexUVs) {
+                UVs.Add(0); UVs.Add(0);
             }
+
+            Vertices.Add(info.v[0]); Vertices.Add(info.v[1]); Vertices.Add(info.v[2]);
             return i;
         }
 
@@ -217,7 +224,7 @@ namespace g3
 
         public bool HasTriangleGroups
         {
-            get { return FaceGroups.Length == Triangles.Length / 3; }
+            get { return FaceGroups != null && FaceGroups.Length == Triangles.Length / 3; }
         }
 
         Vector3i IMesh.GetTriangle(int i)
@@ -336,11 +343,11 @@ namespace g3
             nActiveMesh = -1;
         }
 
-        public int AppendNewMesh()
+        public int AppendNewMesh(bool bHaveVtxNormals, bool bHaveVtxColors, bool bHaveVtxUVs, bool bHaveFaceGroups)
         {
             int index = Meshes.Count;
             SimpleMesh m = new SimpleMesh();
-            m.Initialize();
+            m.Initialize(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
             Meshes.Add(m);
             MaterialAssignment.Add(-1);     // no material is known
             nActiveMesh = index;

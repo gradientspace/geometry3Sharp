@@ -29,8 +29,8 @@ namespace g3
             if (sExtension == ".OBJ") {
                 try {
                     return Read_OBJ(sFilename, options);
-                } catch (Exception) {
-                    return new IOReadResult(ReadResult.GenericReaderError, "Unknown error");
+                } catch (Exception e) {
+                    return new IOReadResult(ReadResult.GenericReaderError, "caught exception : " + e.Message);
                 }
 
             } else

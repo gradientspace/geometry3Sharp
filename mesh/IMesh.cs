@@ -41,7 +41,7 @@ namespace g3
     public interface IMeshBuilder
     {
         // return ID of new mesh
-        int AppendNewMesh();
+        int AppendNewMesh(bool bHaveVtxNormals, bool bHaveVtxColors, bool bHaveVtxUVs, bool bHaveFaceGroups);
         void SetActiveMesh(int id);
 
         int AppendVertex(double x, double y, double z);
