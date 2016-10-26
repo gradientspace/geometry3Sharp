@@ -15,6 +15,13 @@ namespace g3
         // basic ray-sphere intersection
         public static bool Sphere(Vector3f vOrigin, Vector3f vDirection, Vector3f vCenter, float fRadius, out float fRayT)
         {
+            bool bHit = SphereSigned(vOrigin, vDirection, vCenter, fRadius, out fRayT);
+            fRayT = Math.Abs(fRayT);
+            return bHit;
+        }
+
+        public static bool SphereSigned(Vector3f vOrigin, Vector3f vDirection, Vector3f vCenter, float fRadius, out float fRayT)
+        {
             fRayT = 0.0f;
             Vector3f m = vOrigin - vCenter;
             float b = m.Dot(vDirection);
@@ -31,11 +38,6 @@ namespace g3
 
             // Ray now found to intersect sphere, compute smallest t value of intersection
             fRayT = -b - (float)Math.Sqrt(discr);
-
-            // If t is negative, ray started inside sphere so clamp t to zero 
-            // [RMS] disabling this...want to know this info
-            //if (fRayT < 0.0f) 
-            //	fRayT = 0.0f; 
 
             return true;
         }
