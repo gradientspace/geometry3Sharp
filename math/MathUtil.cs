@@ -4,8 +4,16 @@
 namespace g3
 {
 
-    class MathUtil
+    public class MathUtil
     {
+
+        public const double Deg2Rad = (180.0 / Math.PI);
+        public const double Rad2Deg = (Math.PI / 180.0);
+        public const float Rad2Degf = (float)(180.0 / Math.PI);
+        public const float Deg2Radf = (float)(Math.PI / 180.0);
+        public const float PIf = (float)(Math.PI);
+
+
         // ugh C# generics so limiting...
         public static T Clamp<T>(T f, T low, T high) where T : IComparable
         {

@@ -13,7 +13,10 @@ namespace g3
         public Vector3i(int x, int y, int z) { v[0] = x; v[1] = y; v[2] = z; }
         public Vector3i(int[] v2) { v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; }
 
-        static public Vector3i Zero() { return new Vector3i(0, 0, 0);  }
+        static public readonly Vector3i Zero = new Vector3i(0, 0, 0);
+        static public readonly Vector3i AxisX = new Vector3i(1, 0, 0);
+        static public readonly Vector3i AxisY = new Vector3i(0, 1, 0);
+        static public readonly Vector3i AxisZ = new Vector3i(0, 0, 1);
 
         public int this[int key]
         {

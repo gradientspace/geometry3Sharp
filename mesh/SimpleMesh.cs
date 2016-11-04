@@ -119,6 +119,22 @@ namespace g3
             return i;
         }
 
+        public void AppendVertices(VectorArray3d v, VectorArray3f n = null, VectorArray3f c = null, VectorArray2f uv = null) {
+            Vertices.Add(v.array);
+            if (n != null && HasVertexNormals)
+                Normals.Add(n.array);
+            else if (HasVertexNormals)
+                Normals.Add(new float[] { 0, 1, 0 }, v.Count);
+            if (c != null && HasVertexColors)
+                Colors.Add(c.array);
+            else if (HasVertexColors)
+                Normals.Add(new float[] { 1, 1, 1 }, v.Count);
+            if (uv != null && HasVertexUVs)
+                UVs.Add(uv.array);
+            else if (HasVertexUVs)
+                UVs.Add(new float[] { 0, 0 }, v.Count);
+        }
+
 
 
         public int AppendTriangle(int i, int j, int k, int g = -1)
@@ -142,12 +158,19 @@ namespace g3
             }
         }
 
+        public void AppendTriangles(VectorArray3i t)
+        {
+            Triangles.Add(t.array);
+            if (HasTriangleGroups)
+                FaceGroups.Add(0, t.Count);
+        }
+
 
         /*
          * Utility / Convenience
          */
 
-        // [RMS] this is convenience stuff...
+            // [RMS] this is convenience stuff...
         public void Translate(double tx, double ty, double tz)
         {
             int c = VertexCount;

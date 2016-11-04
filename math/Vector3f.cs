@@ -14,22 +14,10 @@ namespace g3
         public Vector3f(float[] v2) { v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; }
         public Vector3f(Vector3f copy) { v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; }
 
-        static public Vector3f Zero
-        {
-            get { return new Vector3f(0.0f, 0.0f, 0.0f); }
-        }
-        static public Vector3f AxisX
-        {
-            get { return new Vector3f(1.0f, 0.0f, 0.0f); }
-        }
-        static public Vector3f AxisY
-        {
-            get { return new Vector3f(0.0f, 1.0f, 0.0f); }
-        }
-        static public Vector3f AxisZ
-        {
-            get { return new Vector3f(0.0f, 0.0f, 1.0f); }
-        }
+        static public readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
+        static public readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
+        static public readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);
+        static public readonly Vector3f AxisZ = new Vector3f(0.0f, 0.0f, 1.0f);
 
         public float x
         {

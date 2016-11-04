@@ -37,6 +37,25 @@ namespace g3
             iCurBlockUsed++;
         }
 
+        public void Add(T value, int nRepeat) {
+            for (int i = 0; i < nRepeat; i++)
+                Add(value);
+        }
+
+        public void Add(T[] values)
+        {
+            // TODO make this more efficient?
+            for (int i = 0; i < values.Length; ++i)
+                Add(values[i]);
+        }
+
+        public void Add(T[] values, int nRepeat)
+        {
+            for (int i = 0; i < nRepeat; i++)
+                for (int j = 0; j < values.Length; ++j)
+                    Add(values[j]);
+        }
+
 
         public T this[int i]
         {
