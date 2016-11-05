@@ -64,6 +64,17 @@ namespace g3
             get { return new Vector3i(array[3 * i], array[3 * i + 1], array[3 * i + 2]); }
             set { Set(i, value[0], value[1], value[2]); }
         }
+        // [RMS] for CW/CCW codes
+        public void Set(int i, int a, int b, int c, bool bCycle = false) {
+            array[3 * i] = a;
+            if (bCycle) {
+                array[3 * i + 1] = c;
+                array[3 * i + 2] = b;
+            } else {
+                array[3 * i + 1] = b;
+                array[3 * i + 2] = c;
+            }
+        }
     };
 
 

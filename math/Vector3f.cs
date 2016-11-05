@@ -14,6 +14,11 @@ namespace g3
         public Vector3f(float[] v2) { v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; }
         public Vector3f(Vector3f copy) { v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; }
 
+        public Vector3f(double f) { v[0] = v[1] = v[2] = (float)f; }
+        public Vector3f(double x, double y, double z) { v[0] = (float)x; v[1] = (float)y; v[2] = (float)z; }
+        public Vector3f(double[] v2) { v[0] = (float)v2[0]; v[1] = (float)v2[1]; v[2] = (float)v2[2]; }
+        public Vector3f(Vector3d copy) { v[0] = (float)copy.v[0]; v[1] = (float)copy.v[1]; v[2] = (float)copy.v[2]; }
+
         static public readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
         static public readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
         static public readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);
@@ -87,7 +92,10 @@ namespace g3
 
 
 
-
+        public static Vector3f operator -(Vector3f v)
+        {
+            return new Vector3f(-v[0], -v[1], -v[2]);
+        }
 
         public static Vector3f operator *(float f, Vector3f v)
         {
