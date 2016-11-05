@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class MeshGenerator
+    abstract public class MeshGenerator
     {
         public VectorArray3d vertices;
         public VectorArray2f uv;
@@ -16,12 +16,41 @@ namespace g3
         public bool WantNormals = true;
         public bool Clockwise = false;
 
+
+
+        abstract public void Generate();
+
+
         public void MakeMesh(SimpleMesh m)
         {
             m.AppendVertices(vertices, (WantNormals) ? normals : null, null, (WantUVs) ? uv : null);
             m.AppendTriangles(triangles);
         }
 
+
+
+
+
+        public struct CircularSection
+        {
+            public float Radius;
+            public float SectionY;
+            public CircularSection(float r, float y)
+            {
+                Radius = r;
+                SectionY = y;
+            }
+        }
+
+
+        protected void duplicate_vertex_span(int nStart, int nCount)
+        {
+            for (int i = 0; i < nCount; ++i) {
+                vertices[(nStart + nCount) + i] = vertices[nStart + i];
+                normals[(nStart + nCount) + i] = normals[nStart + i];
+                uv[(nStart + nCount) + i] = uv[nStart + i];
+            }
+        }
 
 
         protected void append_disc(int Slices, int nCenterV, int nRingStart, bool bClosed, bool bCycle, ref int tri_counter)

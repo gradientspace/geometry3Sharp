@@ -19,7 +19,7 @@ namespace g3
         }
         public UVModes UVMode = UVModes.FullUVSquare;
 
-        public void Generate()
+        override public void Generate()
         {
             vertices = new VectorArray3d(4);
             uv = new VectorArray2f(4);
