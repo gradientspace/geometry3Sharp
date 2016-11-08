@@ -41,5 +41,44 @@ namespace g3
 
             return true;
         }
+
+
+
+
+        public static bool InfiniteCylinder(Vector3f vOrigin, Vector3f vDirection, Vector3f vCylOrigin, Vector3f vCylAxis, float fRadius, out float fRayT)
+        {
+            bool bHit = InfiniteCylinderSigned(vOrigin, vDirection, vCylOrigin, vCylAxis, fRadius, out fRayT);
+            fRayT = Math.Abs(fRayT);
+            return bHit;
+        }
+        public static bool InfiniteCylinderSigned(Vector3f vOrigin, Vector3f vDirection, Vector3f vCylOrigin, Vector3f vCylAxis, float fRadius, out float fRayT)
+        {
+            // [RMS] ugh this is shit...not even sure it works in general, but works for a ray inside cylinder
+
+            fRayT = 0.0f;
+
+
+            Vector3f AB = vCylAxis;
+            Vector3f AO = (vOrigin - vCylOrigin);
+            if (AO.SqrDistance(AO.Dot(AB) * AB) > fRadius * fRadius)
+                return false;
+
+            Vector3f AOxAB = AO.Cross(AB);
+            Vector3f VxAB = vDirection.Cross(AB);
+            float ab2 = AB.Dot(AB);
+            float a = VxAB.Dot(VxAB);
+            float b = 2 * VxAB.Dot(AOxAB);
+            float c = AOxAB.Dot(AOxAB) - (fRadius * fRadius * ab2);
+
+            double discrim = b * b - 4 * a * c;
+            if (discrim <= 0)
+                return false;
+            discrim = Math.Sqrt(discrim);
+            fRayT = (-b - (float)discrim) / (2 * a);
+            //float t1 = (-b + (float)discrim) / (2 * a);
+
+            return true;
+        }
+
     }
 }

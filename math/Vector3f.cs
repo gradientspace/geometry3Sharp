@@ -71,6 +71,19 @@ namespace g3
             return v[0] * v2[0] + v[1] * v2[1] + v[2] * v2[2];
         }
 
+        public Vector3f Cross(Vector3f v2)
+        {
+            return new Vector3f(
+                v[1] * v2.v[2] - v[2] * v2.v[1],
+                v[2] * v2.v[0] - v[0] * v2.v[2],
+                v[0] * v2.v[1] - v[1] * v2.v[0]);
+        }
+
+        public float SqrDistance(Vector3f v2)
+        {
+            float a = (v[0] - v2[0]), b = (v[1] - v2[1]), c = (v[2] - v2[2]);
+            return a * a + b * b + c * c;
+        }
 
 
         public void Set(Vector3f o)
