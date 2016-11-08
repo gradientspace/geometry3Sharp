@@ -1,6 +1,6 @@
 # geometry3Sharp
 
-Open-Source (MPL) C# library for geometry things:
+Open-Source (Apache 2.0) C# library for geometry things:
 - various vector-math things
 - basic mesh class
 - OBJ reader
