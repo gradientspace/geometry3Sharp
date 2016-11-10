@@ -25,6 +25,15 @@ namespace g3
             get { return (Blocks.Count - 1) * nBlockSize + iCurBlockUsed;  }
         }
 
+        public int size {
+            get { return Length; }
+        }
+                
+        public bool empty 
+        {
+            get { return iCurBlock == 0 && iCurBlockUsed == 0; }
+        }
+            
 
         public void Add(T value)
         {
@@ -57,6 +66,62 @@ namespace g3
         }
 
 
+        public void push_back(T value) {
+            this.Add(value);
+        }
+        public void pop_back() {
+            if (iCurBlockUsed > 0)
+                iCurBlockUsed--;
+            if (iCurBlockUsed == 0 && iCurBlock > 0)
+            {
+                iCurBlock--;
+                iCurBlockUsed = nBlockSize;
+            }
+        }
+
+
+        public void insert(T value, int index) {
+            if (index == size) {
+                push_back( value );
+            } else {
+                resize( index );
+                push_back(value);
+            }            
+        }
+
+
+        public void resize(int count) {
+            // figure out how many segments we need
+            int nNumSegs = 1 + (int)count / nBlockSize;
+
+            // figure out how many are currently allocated...
+            size_t nCurCount = Blocks.Count;
+
+            // erase extra segments memory
+            for (int i = nNumSegs; i < nCurCount; ++i)
+                Blocks[i] = null;
+
+            // resize to right number of segments
+            m_vSegments.Capacity = nNumSegs;
+
+            // allocate new segments
+            for (int i = (int)nCurCount; i < nNumSegs; ++i) {
+                Blocks[i] = new T[nBlockSize];
+            }
+
+            // mark full segments as used
+            //for (int i = 0; i < nNumSegs-1; ++i)
+            //    m_vSegments[i].nCur = nBlockSize;
+
+            // mark last segment
+            iCurBlockUsed = count - (nNumSegs-1)*nBlockSize;
+
+            iCurBlock = nNumSegs-1;            
+        }
+
+
+
+
         public T this[int i]
         {
             get {
@@ -66,6 +131,17 @@ namespace g3
                 Blocks[i / nBlockSize][i % nBlockSize] = value;
             }
         }
+
+
+        public T back {
+            get { return Blocks[iCurBlock][iCurBlockUsed-1]; }
+            set { Blocks[iCurBlock][iCurBlockUsed-1] = value; }
+        }
+        public T front {
+            get { return Blocks[0][0]; }
+            set { Blocks[0][0] = value; }
+        }
+
 
 
         // TODO: 

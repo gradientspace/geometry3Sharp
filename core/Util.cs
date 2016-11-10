@@ -8,6 +8,10 @@ namespace g3
     public class Util
     {
 
+        static public bool gDevAssert(bool bValue) {
+            throw new Exception("gDevAssert");
+        }
+
         static public bool IsBitSet(byte b, int pos)
         {
             return (b & (1 << pos)) != 0;
