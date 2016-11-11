@@ -137,5 +137,11 @@ namespace g3
             return new Vector3f(v0[0] - f, v0[1] - f, v0[2] - f);
         }
 
+
+        public override string ToString() {
+            return string.Format("{0:F8} {1:F8} {2:F8}", v[0], v[1], v[2]);
+        }
+
+
     }
 }

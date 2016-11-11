@@ -206,5 +206,12 @@ namespace g3
             Min.Set(fNewX, fNewY);
         }
 
+
+
+        public override string ToString() {
+            return string.Format("[{0:F8},{1:F8}] [{2:F8},{3:F8}]", Min.x, Max.x, Min.y, Max.y);
+        }
+
+
     }
 }

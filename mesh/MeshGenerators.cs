@@ -26,7 +26,17 @@ namespace g3
             m.AppendVertices(vertices, (WantNormals) ? normals : null, null, (WantUVs) ? uv : null);
             m.AppendTriangles(triangles);
         }
-
+        public void MakeMesh(DMesh3 m)
+        {
+            int nV = vertices.Count;
+            for (int i = 0; i < nV; ++i) {
+                int vID = m.AppendVertex(vertices[i]);
+                Util.gDevAssert(vID == i);
+            }
+            int nT = triangles.Count;
+            for (int i = 0; i < nT; ++i)
+                m.AppendTriangle(triangles[i]);
+        }
 
 
 

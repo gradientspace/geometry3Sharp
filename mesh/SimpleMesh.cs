@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -261,11 +262,22 @@ namespace g3
         }
 
 
+        public System.Collections.IEnumerable VertexIndices() {
+            int N = VertexCount;
+            for (int i = 0; i < N; ++i)
+                yield return i;
+        }
+        public System.Collections.IEnumerable TriangleIndices() { 
+            int N = TriangleCount;
+            for (int i = 0; i < N; ++i)
+                yield return i;
+        }
 
-        /*
-         * Array-based access (allocates arrays automatically)
-         */
-        public double[] GetVertexArray()
+
+    /*
+     * Array-based access (allocates arrays automatically)
+     */
+    public double[] GetVertexArray()
         {
             return this.Vertices.GetBuffer();
         }

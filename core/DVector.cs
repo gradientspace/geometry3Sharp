@@ -81,12 +81,15 @@ namespace g3
 
 
         public void insert(T value, int index) {
-            if (index == size) {
+            int s = size;
+            if (index == s) {
                 push_back( value );
-            } else {
+            } else if ( index > s ) { 
                 resize( index );
                 push_back(value);
-            }            
+            } else {
+                this[index] = value;
+            }
         }
 
 
@@ -106,12 +109,8 @@ namespace g3
 
             // allocate new segments
             for (int i = (int)nCurCount; i < nNumSegs; ++i) {
-                Blocks[i] = new T[nBlockSize];
+                Blocks.Add(new T[nBlockSize]);
             }
-
-            // mark full segments as used
-            //for (int i = 0; i < nNumSegs-1; ++i)
-            //    m_vSegments[i].nCur = nBlockSize;
 
             // mark last segment
             iCurBlockUsed = count - (nNumSegs-1)*nBlockSize;

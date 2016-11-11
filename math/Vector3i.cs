@@ -27,5 +27,11 @@ namespace g3
 
         public void Add(int s) { v[0] += s;  v[1] += s;  v[2] += s; }
 
+
+        public override string ToString() {
+            return string.Format("{0} {1} {2}", v[0], v[1], v[2]);
+        }
+
+
     }
 }

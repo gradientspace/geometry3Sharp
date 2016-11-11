@@ -119,7 +119,10 @@ namespace g3
             return new Vector2d(a[0] * f, a[1] * f);
         }
 
-        
+
+        public override string ToString() {
+            return string.Format("{0:F8} {1:F8}", v[0], v[1]);
+        }
 
     }
 }

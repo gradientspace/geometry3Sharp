@@ -15,9 +15,10 @@ namespace g3
         public IMeshBuilder MeshBuilder { get; set; }
 
 
-        static public IOReadResult ReadFile(string sFilename, ReadOptions options)
+        static public IOReadResult ReadFile(string sFilename, ReadOptions options, IMeshBuilder builder)
         {
             StandardMeshReader reader = new StandardMeshReader();
+            reader.MeshBuilder = builder;
             return reader.Read(sFilename, options);
         }
 

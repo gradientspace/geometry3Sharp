@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,6 +25,11 @@ namespace g3
 
         Vector3i GetTriangle(int i);
         int GetTriangleGroup(int i);
+
+
+        // iterators allow us to work with gaps in index space
+        System.Collections.IEnumerable VertexIndices();
+        System.Collections.IEnumerable TriangleIndices();
 
     }
 

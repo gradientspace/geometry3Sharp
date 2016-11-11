@@ -16,5 +16,11 @@ namespace g3
             get { return v[key]; }
             set { v[key] = value; }
         }
+
+
+        public override string ToString() {
+            return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", v[0], v[1], v[2], v[3]);
+        }
+
     }
 }
