@@ -53,6 +53,7 @@
     <Compile Include="math\Box2f.cs" />
     <Compile Include="math\BufferUtil.cs" />
     <Compile Include="math\Frame3f.cs" />
+    <Compile Include="math\IndexUtil.cs" />
     <Compile Include="math\MathUtil.cs" />
     <Compile Include="math\Matrix3f.cs" />
     <Compile Include="math\PolyLine2f.cs" />

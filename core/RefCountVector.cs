@@ -48,9 +48,9 @@ namespace g3
         }
 
 
-        public int refCount(int index)
-        {
-            return (index > 0) ? (ref_counts[index] != invalid ? ref_counts[index] : 0) : 0;
+        public int refCount(int index) {
+            int n = ref_counts[index];
+            return (n == invalid) ? 0 : n;
         }
 
 
