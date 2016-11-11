@@ -95,14 +95,14 @@ namespace g3
             int nNumSegs = 1 + (int)count / nBlockSize;
 
             // figure out how many are currently allocated...
-            size_t nCurCount = Blocks.Count;
+            int nCurCount = Blocks.Count;
 
             // erase extra segments memory
             for (int i = nNumSegs; i < nCurCount; ++i)
                 Blocks[i] = null;
 
             // resize to right number of segments
-            m_vSegments.Capacity = nNumSegs;
+            Blocks.Capacity = nNumSegs;
 
             // allocate new segments
             for (int i = (int)nCurCount; i < nNumSegs; ++i) {

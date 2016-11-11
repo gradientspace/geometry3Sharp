@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections;
 
 namespace g3
 {
     public class RefCountVector
 	{
-        public static readonly int invalid = -1;
+        public static readonly short invalid = -1;
 
 
         DVector<short> ref_counts;
@@ -28,7 +29,7 @@ namespace g3
         public int max_index {
             get { return ref_counts.size; }
         }
-        public int is_dense {
+        public bool is_dense {
             get { return free_indices.Length == 0; }
         }
 
@@ -36,7 +37,9 @@ namespace g3
         public bool isValid(int index) {
             return ( index < ref_counts.size && ref_counts[index] > 0 );
         }
-
+        public bool isValidUnsafe(int index) {
+            return ref_counts[index] > 0;
+        }
 
         public int allocate() {
             used_count++;
@@ -53,13 +56,13 @@ namespace g3
 
 
 
-        public int increment(int index, int increment = 1) {
+        public int increment(int index, short increment = 1) {
             Util.gDevAssert( isValid(index)  );
             ref_counts[index] += increment;
             return ref_counts[index];       
         }
 
-        public void decrement(int index, int decrement) {
+        public void decrement(int index, short decrement = 1) {
             Util.gDevAssert( isValid(index) );
             ref_counts[index] -= decrement;
             Util.gDevAssert(ref_counts[index] >= 0);
@@ -69,6 +72,25 @@ namespace g3
                 used_count--;
             }
         }
+
+
+
+        public System.Collections.IEnumerable index_enumerator()
+        {
+            int nIndex = 0;
+            int nLast = max_index;
+
+            while (nIndex != nLast) {
+                yield return nIndex;
+
+                if (nIndex != nLast)
+                    nIndex++;
+                while (nIndex != nLast && ref_counts[nIndex] <= 0)
+                    nIndex++;
+            }
+        }
+
+
 
 	}
 }
