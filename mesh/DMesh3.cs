@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Collections.Generic;
 
 namespace g3
@@ -120,7 +121,7 @@ namespace g3
             return vertices_refcount.isValid(vID) ?
                 new Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]) : InvalidVertex;
         }
-        public IReadOnlyCollection<int> GetVtxEdges(int vID) {
+        public ReadOnlyCollection<int> GetVtxEdges(int vID) {
             return vertices_refcount.isValid(vID) ?
                 vertex_edges[vID].AsReadOnly() : null;
         }
