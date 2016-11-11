@@ -3,8 +3,14 @@ using System.Collections;
 
 namespace g3
 {
-    public class RefCountVector
-	{
+
+    // this class allows you to keep track of refences to indices,
+    // with a free list so unreferenced indices can be re-used.
+    //
+    // the enumerator iterates over valid indices
+    //
+    public class RefCountVector : System.Collections.IEnumerable
+    {
         public static readonly short invalid = -1;
 
 
@@ -41,6 +47,13 @@ namespace g3
             return ref_counts[index] > 0;
         }
 
+
+        public int refCount(int index)
+        {
+            return (index > 0) ? (ref_counts[index] != invalid ? ref_counts[index] : 0) : 0;
+        }
+
+
         public int allocate() {
             used_count++;
             if (free_indices.empty) {
@@ -74,11 +87,23 @@ namespace g3
         }
 
 
+        // todo:
+        //   insert
+        //   remove
+        //   clear
 
-        public System.Collections.IEnumerable index_enumerator()
+
+
+
+
+        public System.Collections.IEnumerator GetEnumerator()
         {
             int nIndex = 0;
             int nLast = max_index;
+
+            // skip leading empties
+            while (nIndex != nLast && ref_counts[nIndex] <= 0)
+                nIndex++;
 
             while (nIndex != nLast) {
                 yield return nIndex;
@@ -90,6 +115,18 @@ namespace g3
             }
         }
 
+
+
+        public string debug_print()
+        {
+            string s = string.Format("size {0} used {1} free_size {2}\n", ref_counts.size, used_count, free_indices.size);
+            for (int i = 0; i < ref_counts.size; ++i)
+                s += string.Format("{0}:{1} ", i, ref_counts[i]);
+            s += "\nfree:\n";
+            for (int i = 0; i < free_indices.size; ++i)
+                s += free_indices[i].ToString() + " ";
+            return s;
+        }
 
 
 	}

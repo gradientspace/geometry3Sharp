@@ -8,8 +8,9 @@ namespace g3
     public class Util
     {
 
-        static public bool gDevAssert(bool bValue) {
-            throw new Exception("gDevAssert");
+        static public void gDevAssert(bool bValue) {
+            if (bValue == false)
+                throw new Exception("gDevAssert");
         }
 
         static public bool IsBitSet(byte b, int pos)

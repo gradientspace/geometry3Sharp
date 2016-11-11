@@ -43,21 +43,49 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="core\DVector.cs" />
+    <Compile Include="core\FileSystemUtils.cs" />
+    <Compile Include="core\RefCountVector.cs" />
+    <Compile Include="core\VectorArray.cs" />
+    <Compile Include="implicit\ImplicitField.cs" />
+    <Compile Include="implicit\ImplicitOperators.cs" />
+    <Compile Include="implicit\MarchingQuads.cs" />
+    <Compile Include="io\MaterialTypes.cs" />
+    <Compile Include="math\Box2f.cs" />
+    <Compile Include="math\BufferUtil.cs" />
+    <Compile Include="math\Frame3f.cs" />
+    <Compile Include="math\MathUtil.cs" />
+    <Compile Include="math\Matrix3f.cs" />
+    <Compile Include="math\PolyLine2f.cs" />
+    <Compile Include="math\Quaternionf.cs" />
+    <Compile Include="math\Vector2d.cs" />
+    <Compile Include="math\Vector2f.cs" />
+    <Compile Include="mesh\ArrowGenerators.cs" />
+    <Compile Include="mesh\CylinderGenerators.cs" />
+    <Compile Include="mesh\DiscGenerators.cs" />
+    <Compile Include="mesh\DMesh3.cs" />
     <Compile Include="mesh\IMesh.cs" />
     <Compile Include="io\MeshIO.cs" />
     <Compile Include="io\OBJReader.cs" />
     <Compile Include="io\OBJWriter.cs" />
     <Compile Include="io\StandardMeshReader.cs" />
     <Compile Include="io\StandardMeshWriter.cs" />
+    <Compile Include="mesh\MeshGenerators.cs" />
+    <Compile Include="mesh\PlaneGenerators.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="mesh\SimpleMesh.cs" />
     <Compile Include="core\Util.cs" />
     <Compile Include="math\Vector3d.cs" />
     <Compile Include="math\Vector3i.cs" />
     <Compile Include="math\Vector3f.cs" />
+    <Compile Include="queries\Distance.cs" />
+    <Compile Include="queries\RayIntersection.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LICENSE" />
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
