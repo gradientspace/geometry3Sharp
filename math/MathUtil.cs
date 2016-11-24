@@ -9,9 +9,17 @@ namespace g3
 
         public const double Deg2Rad = (180.0 / Math.PI);
         public const double Rad2Deg = (Math.PI / 180.0);
+        public const double TwoPI = 2.0 * Math.PI;
+        public const double HalfPI = 0.5 * Math.PI;
+        public const double ZeroTolerance = 1e-08;
+
         public const float Rad2Degf = (float)(180.0 / Math.PI);
         public const float Deg2Radf = (float)(Math.PI / 180.0);
         public const float PIf = (float)(Math.PI);
+        public const float TwoPIf = 2.0f * PIf;
+        public const float HalfPIf = 0.5f * PIf;
+
+        public const float ZeroTolerancef = 1e-06f;
 
 
         // ugh C# generics so limiting...
@@ -34,6 +42,47 @@ namespace g3
         {
             return Clamp(fValue, -Math.Abs(fMinMaxValue), Math.Abs(fMinMaxValue));
         }
+        public static double RangeClamp(double fValue, double fMinMaxValue)
+        {
+            return Clamp(fValue, -Math.Abs(fMinMaxValue), Math.Abs(fMinMaxValue));
+        }
+
+
+
+
+
+
+
+        public static float PlaneAngleD(Vector3f a, Vector3f b, int nPlaneNormalIdx = 1)
+        {
+            a[nPlaneNormalIdx] = b[nPlaneNormalIdx] = 0.0f;
+            a.Normalize();
+            b.Normalize();
+            return Vector3f.AngleD(a, b);
+        }
+        public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, int nPlaneNormalIdx = 1)
+        {
+            vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0f;
+            vFrom.Normalize();
+            vTo.Normalize();
+            float fSign = Math.Sign(vFrom.Cross(vTo)[nPlaneNormalIdx]);
+            float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+        public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, Vector3f planeN)
+        {
+            vFrom = vFrom - Vector3f.Dot(vFrom, planeN) * planeN;
+            vTo = vTo - Vector3f.Dot(vTo, planeN) * planeN;
+            vFrom.Normalize();
+            vTo.Normalize();
+            Vector3f c = Vector3f.Cross(vFrom, vTo);
+            float fSign = Math.Sign(Vector3f.Dot(c, planeN));
+            float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+
+
+
 
 
 

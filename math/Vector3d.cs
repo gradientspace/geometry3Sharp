@@ -71,6 +71,10 @@ namespace g3
         {
             return v[0] * v2[0] + v[1] * v2[1] + v[2] * v2[2];
         }
+        public static double Dot(Vector3d v1, Vector3d v2)
+        {
+            return v1.Dot(v2);
+        }
 
         public Vector3d Cross(Vector3d v2)
         {
@@ -78,6 +82,30 @@ namespace g3
                 v[1] * v2.v[2] - v[2] * v2.v[1],
                 v[2] * v2.v[0] - v[0] * v2.v[2],
                 v[0] * v2.v[1] - v[1] * v2.v[0]);
+        }
+        public static Vector3d Cross(Vector3d v1, Vector3d v2)
+        {
+            return v1.Cross(v2);
+        }
+
+
+        public double AngleD(Vector3d v2)
+        {
+            double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
+            return Math.Acos(fDot) * MathUtil.Rad2Deg;
+        }
+        public static double AngleD(Vector3d v1, Vector3d v2)
+        {
+            return v1.AngleD(v2);
+        }
+        public double AngleR(Vector3d v2)
+        {
+            double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
+            return Math.Acos(fDot);
+        }
+        public static double AngleR(Vector3d v1, Vector3d v2)
+        {
+            return v1.AngleR(v2);
         }
 
 
@@ -136,6 +164,10 @@ namespace g3
         public override string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8}", v[0], v[1], v[2]);
         }
+        public virtual string ToString(string fmt) {
+            return string.Format("{0} {1} {2}", v[0].ToString(fmt), v[1].ToString(fmt), v[2].ToString(fmt));
+        }
+
 
 
 #if G3_USING_UNITY
