@@ -12,7 +12,7 @@ namespace g3
 
 		void Gradient( float fX, float fY, ref float fGX, ref float fGY );
 
-		Box2f Bounds { get; }
+		AxisAlignedBox2f Bounds { get; }
 	}
 
 	public interface IImplicitOperator2D : IImplicitField2D 
@@ -52,9 +52,9 @@ namespace g3
 				return fDist2 * fDist2 * fDist2;
 		}
 
-		public Box2f Bounds {
+		public AxisAlignedBox2f Bounds {
             get { 
-                return new Box2f(LowX, LowY, HighX, HighY);
+                return new AxisAlignedBox2f(LowX, LowY, HighX, HighY);
             }
 		}
 

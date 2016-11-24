@@ -8,6 +8,7 @@ namespace g3
     public interface ICurve
     {
         int VertexCount { get; }
+        bool Closed { get; }
 
         Vector3d GetVertex(int i);
 

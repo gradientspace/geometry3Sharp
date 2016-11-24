@@ -44,6 +44,25 @@ namespace g3
 
 
 
+        public static bool SphereSigned(Vector3d vOrigin, Vector3d vDirection, Vector3d vCenter, double fRadius, out double fRayT)
+        {
+            fRayT = 0.0;
+            Vector3d m = vOrigin - vCenter;
+            double b = m.Dot(vDirection);
+            double c = m.Dot(m) - fRadius * fRadius;
+
+            // Exit if r’s origin outside s (c > 0) and r pointing away from s (b > 0) 
+            if (c > 0.0f && b > 0.0f)
+                return false;
+            double discr = b * b - c;
+            // A negative discriminant corresponds to ray missing sphere 
+            if (discr < 0.0)
+                return false;
+            // Ray now found to intersect sphere, compute smallest t value of intersection
+            fRayT = -b - Math.Sqrt(discr);
+            return true;
+        }
+
 
         public static bool InfiniteCylinder(Vector3f vOrigin, Vector3f vDirection, Vector3f vCylOrigin, Vector3f vCylAxis, float fRadius, out float fRayT)
         {

@@ -10,7 +10,7 @@ namespace g3
         // [TODO] use dvector? or double-indirection indexing?
         //   question is how to insert efficiently...
         public List<Vector3d> vertices;
-        public bool Closed;
+        public bool Closed { get; set; }
         public int Timestamp;
 
         public DCurve3()
@@ -46,6 +46,15 @@ namespace g3
 
         public IEnumerable<Vector3d> Vertices() {
             return vertices;
+        }
+
+
+        public AxisAlignedBox3d GetBoundingBox()
+        {
+            AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+            foreach (Vector3d v in vertices)
+                box.Contain(v);
+            return box;
         }
     }
 }

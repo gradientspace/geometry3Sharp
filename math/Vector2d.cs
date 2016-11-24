@@ -124,5 +124,15 @@ namespace g3
             return string.Format("{0:F8} {1:F8}", v[0], v[1]);
         }
 
+
+        public static implicit operator Vector2d(Vector2f v)
+        {
+            return new Vector2d(v[0], v[1]);
+        }
+        public static explicit operator Vector2f(Vector2d v)
+        {
+            return new Vector2f((float)v[0], (float)v[1]);
+        }
+
     }
 }

@@ -2,50 +2,50 @@ using System;
 
 namespace g3
 {
-    public struct Box2f
+    public struct AxisAlignedBox2f
     {
         public Vector2f Min;
         public Vector2f Max;
 
-        public static Box2f Empty = new Box2f(false);
-        public static Box2f Infinite = new Box2f(Single.MinValue, Single.MinValue, Single.MaxValue, Single.MaxValue);
+        public static AxisAlignedBox2f Empty = new AxisAlignedBox2f(false);
+        public static AxisAlignedBox2f Infinite = new AxisAlignedBox2f(Single.MinValue, Single.MinValue, Single.MaxValue, Single.MaxValue);
 
 
-        public Box2f(bool bIgnore) {
+        public AxisAlignedBox2f(bool bIgnore) {
             Min = new Vector2f(Single.MaxValue, Single.MaxValue);
             Max = new Vector2f(Single.MinValue, Single.MinValue);
         }
 
-        public Box2f(float xmin, float ymin, float xmax, float ymax) {
+        public AxisAlignedBox2f(float xmin, float ymin, float xmax, float ymax) {
             Min = new Vector2f(xmin, ymin);
             Max = new Vector2f(xmax, ymax);
         }
 
-        public Box2f(float fSquareSize) {
+        public AxisAlignedBox2f(float fSquareSize) {
             Min = new Vector2f(0, 0);
             Max = new Vector2f(fSquareSize, fSquareSize);
         }
 
-        public Box2f(float fWidth, float fHeight) {
+        public AxisAlignedBox2f(float fWidth, float fHeight) {
             Min = new Vector2f(0, 0);
             Max = new Vector2f(fWidth, fHeight);
         }
 
-        public Box2f(Vector2f vMin, Vector2f vMax) {
+        public AxisAlignedBox2f(Vector2f vMin, Vector2f vMax) {
             Min = new Vector2f(Math.Min(vMin.x, vMax.x), Math.Min(vMin.y, vMax.y));
             Max = new Vector2f(Math.Max(vMin.x, vMax.x), Math.Max(vMin.y, vMax.y));
         }
 
-        public Box2f(Vector2f vCenter, float fHalfWidth, float fHalfHeight) {
+        public AxisAlignedBox2f(Vector2f vCenter, float fHalfWidth, float fHalfHeight) {
             Min = new Vector2f(vCenter.x - fHalfWidth, vCenter.y - fHalfHeight);
             Max = new Vector2f(vCenter.x + fHalfWidth, vCenter.y + fHalfHeight);
         }
-        public Box2f(Vector2f vCenter, float fHalfWidth) {
+        public AxisAlignedBox2f(Vector2f vCenter, float fHalfWidth) {
             Min = new Vector2f(vCenter.x - fHalfWidth, vCenter.y - fHalfWidth);
             Max = new Vector2f(vCenter.x + fHalfWidth, vCenter.y + fHalfWidth);
         }
 
-        public Box2f(Box2f o) {
+        public AxisAlignedBox2f(AxisAlignedBox2f o) {
             Min = new Vector2f(o.Min);
             Max = new Vector2f(o.Max);
         }
@@ -145,17 +145,17 @@ namespace g3
             Max.y = Math.Max(Max.y, v.y);
         }
 
-        public void Contain(Box2f box) {
+        public void Contain(AxisAlignedBox2f box) {
             Contain(box.Min);
             Contain(box.Max);
         }
 
-        public Box2f Intersect(Box2f box) {
-            Box2f intersect = new Box2f(
+        public AxisAlignedBox2f Intersect(AxisAlignedBox2f box) {
+            AxisAlignedBox2f intersect = new AxisAlignedBox2f(
                 Math.Max(Min.x, box.Min.x), Math.Max(Min.y, box.Min.y),
                 Math.Min(Max.x, box.Max.x), Math.Min(Max.y, box.Max.y));
             if (intersect.Height <= 0 || intersect.Width <= 0)
-                return Box2f.Empty;
+                return AxisAlignedBox2f.Empty;
             else
                 return intersect;
         }
@@ -165,7 +165,7 @@ namespace g3
         public bool Contains(Vector2f v) {
             return (Min.x < v.x) && (Min.y < v.y) && (Max.x > v.x) && (Max.y > v.y);
         }
-        public bool Intersects(Box2f box) {
+        public bool Intersects(AxisAlignedBox2f box) {
             return !((box.Max.x < Min.x) || (box.Min.x > Max.x) || (box.Max.y < Min.y) || (box.Min.y > Max.y));
         }
 

@@ -32,10 +32,10 @@ namespace g3
             fGY = (Value(fX, fY + fDelta) - fValue) / fDelta;
         }
 
-        virtual public Box2f Bounds
+        virtual public AxisAlignedBox2f Bounds
         {
             get {
-                Box2f box = new Box2f();
+                AxisAlignedBox2f box = new AxisAlignedBox2f();
                 for (int i = 0; i < m_vChildren.Count; ++i)
                     box.Contain(m_vChildren[i].Bounds);
                 return box;

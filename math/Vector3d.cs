@@ -170,6 +170,16 @@ namespace g3
 
 
 
+        public static implicit operator Vector3d(Vector3f v)
+        {
+            return new Vector3d(v[0], v[1], v[2]);
+        }
+        public static explicit operator Vector3f(Vector3d v)
+        {
+            return new Vector3f((float)v[0], (float)v[1], (float)v[2]);
+        }
+
+
 #if G3_USING_UNITY
         public static implicit operator Vector3d(UnityEngine.Vector3 v)
         {
