@@ -7,10 +7,11 @@ namespace g3
 {
     public class Frame3f
     {
+        public Vector3f origin;
         public Vector3f x, y, z;
 
         public Frame3f() { x = Vector3f.AxisX; y = Vector3f.AxisY; z = Vector3f.AxisZ; }
-        public Frame3f(Vector3f xa, Vector3f ya, Vector3f za) { x = xa; y = ya; z = za; }
+        public Frame3f(Vector3f o, Vector3f xa, Vector3f ya, Vector3f za) { origin = o;  x = xa; y = ya; z = za; }
 
         public Matrix3f toMatrix3f()
         {

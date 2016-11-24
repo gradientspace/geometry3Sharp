@@ -21,7 +21,12 @@ namespace g3
             else if (f.CompareTo(high) > 0) return high;
             else return f;
         }
-
+        public static float Clamp(float f, float low, float high) {
+            return (f < low) ? low : (f > high) ? high : f;
+        }
+        public static double Clamp(double f, double low, double high) {
+            return (f < low) ? low : (f > high) ? high : f;
+        }
 
 
         // fMinMaxValue may be signed
@@ -42,20 +47,22 @@ namespace g3
             return Clamp(fY, 0, 1);
         }
 
-        public static float WyvillRise01(float fX)
-        {
+        public static float WyvillRise01(float fX) {
             float d = 1 - fX * fX;
-            if (d > 0)
-                return 1 - (d * d * d);
-            return 0;
+            return (d > 0) ? 1 - (d * d * d) : 0;
+        }
+        public static double WyvillRise01(double fX) {
+            double d = 1 - fX * fX;
+            return (d > 0) ? 1 - (d * d * d) : 0;
         }
 
-        public static float WyvillFalloff01(float fX)
-        {
+        public static float WyvillFalloff01(float fX) {
             float d = 1 - fX * fX;
-            if (d > 0)
-                return (d * d * d);
-            return 0;
+            return (d > 0) ? (d * d * d) : 0;
+        }
+        public static double WyvillFalloff01(double fX) {
+            double d = 1 - fX * fX;
+            return (d > 0) ? (d * d * d) : 0;
         }
 
 

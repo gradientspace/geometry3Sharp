@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
+#if G3_USING_UNITY
+using UnityEngine;
+#endif
+
 namespace g3
 {
     public class Vector3d
@@ -132,6 +136,19 @@ namespace g3
         public override string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8}", v[0], v[1], v[2]);
         }
+
+
+#if G3_USING_UNITY
+        public static implicit operator Vector3d(UnityEngine.Vector3 v)
+        {
+            return new Vector3d(v[0], v[1], v[2]);
+        }
+        public static explicit operator Vector3(Vector3d v)
+        {
+            return new Vector3((float)v[0], (float)v[1], (float)v[2]);
+        }
+#endif
+
 
     }
 }
