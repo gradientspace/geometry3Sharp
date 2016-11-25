@@ -119,6 +119,11 @@ namespace g3
             get { return new Vector2d(array[2 * i], array[2 * i + 1]); }
             set { Set(i, value[0], value[1]); }
         }
+
+        public IEnumerable<Vector2d> AsVector2d() {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
+        }
     };
     public class VectorArray2f : VectorArray2<float>
     {
@@ -127,6 +132,11 @@ namespace g3
         public Vector2f this[int i] {
             get { return new Vector2f(array[2 * i], array[2 * i + 1]); }
             set { Set(i, value[0], value[1]); }
+        }
+
+        public IEnumerable<Vector2d> AsVector2f() {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
         }
     };
 

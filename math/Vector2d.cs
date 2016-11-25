@@ -52,15 +52,22 @@ namespace g3
             get { return (double)Math.Sqrt(LengthSquared); }
         }
 
-        public double Normalize()
+        public double Normalize(double epsilon = MathUtil.Epsilon)
         {
-            double f = Length;
-            v[0] /= f; v[1] /= f; v[2] /= f;
-            return f;
+            double length = Length;
+            if (length > epsilon) {
+                double invLength = 1.0 / length;
+                v[0] *= invLength;
+                v[1] *= invLength;
+            } else {
+                length = 0;
+                v[0] = v[1] = 0;
+            }
+            return length;
         }
         public Vector2d Normalized
         {
-            get { double f = Length; return new Vector2d(v[0] / f, v[1] / f); }
+            get { Vector2d n = new Vector2d(v[0], v[1]); n.Normalize(); return n; }
         }
 
 

@@ -58,15 +58,22 @@ namespace g3
             get { return (float)Math.Sqrt(LengthSquared); }
         }
 
-        public float Normalize()
+        public float Normalize(float epsilon = MathUtil.Epsilonf)
         {
-            float f = Length;
-            v[0] /= f; v[1] /= f; v[2] /= f;
-            return f;
+            float length = Length;
+            if (length > epsilon) {
+                float invLength = 1.0f / length;
+                v[0] *= invLength;
+                v[1] *= invLength;
+                v[2] *= invLength;
+            } else {
+                length = 0;
+                v[0] = v[1] = v[2] = 0;
+            }
+            return length;
         }
-        public Vector3f Normalized
-        {
-            get { float f = Length; return new Vector3f(v[0] / f, v[1] / f, v[2] / f); }
+        public Vector3f Normalized {
+            get { Vector3f n = new Vector3f(v[0], v[1], v[2]); n.Normalize(); return n; }
         }
 
 
@@ -90,6 +97,14 @@ namespace g3
             return v1.Cross(v2);
         }
 
+        public Vector3f UnitCross(Vector3f v2) {
+            Vector3f n = new Vector3f(
+                v[1] * v2.v[2] - v[2] * v2.v[1],
+                v[2] * v2.v[0] - v[0] * v2.v[2],
+                v[0] * v2.v[1] - v[1] * v2.v[0]);
+            n.Normalize();
+            return n;
+        }
 
         public float AngleD(Vector3f v2) {
             float fDot = MathUtil.Clamp(Dot(v2), -1, 1);

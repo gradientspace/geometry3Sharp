@@ -8,6 +8,18 @@ namespace g3
     public class CurveUtils
     {
 
+        public static Vector3d GetTangent(List<Vector3d> vertices, int i)
+        {
+            if (i == 0)
+                return (vertices[1] - vertices[0]).Normalized;
+            else if (i == vertices.Count - 1)
+                return (vertices[vertices.Count - 1] - vertices[vertices.Count - 2]).Normalized;
+            else
+                return (vertices[i + 1] - vertices[i - 1]).Normalized;
+        }
+
+
+
 
         public static int FindNearestIndex(ICurve c, Vector3d v)
         {
@@ -35,7 +47,7 @@ namespace g3
 
             rayT = double.MaxValue;
             int nNearSegment = -1;
-            double fNearSegT = 0.0;
+            //double fNearSegT = 0.0;
 
             int N = c.VertexCount;
             for (int i = 0; i < N-1; ++i) {
@@ -54,7 +66,7 @@ namespace g3
                 if ( dSqr < segRadius*segRadius) {
                     if (dist.RayParameter < rayT) {
                         rayT = dist.RayParameter;
-                        fNearSegT = dist.SegmentParameter;
+                        //fNearSegT = dist.SegmentParameter;
                         nNearSegment = i;
                     }
                 }

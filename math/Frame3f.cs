@@ -132,6 +132,17 @@ namespace g3
         }
 
 
+        public Vector3f FromFrameP(Vector2f v, int nPlaneNormalAxis)
+        {
+            Vector3f dv = new Vector3f(v[0], v[1], 0);
+            if (nPlaneNormalAxis == 0) {
+                dv[0] = 0; dv[2] = v[0];
+            } else if ( nPlaneNormalAxis == 1 ) {
+                dv[1] = 0; dv[2] = v[1];
+            }
+            return this.rotation * dv + this.origin;
+        }
+
 
 
         public Vector3f ToFrameP(Vector3f v)

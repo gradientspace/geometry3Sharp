@@ -59,10 +59,28 @@ namespace g3
             get { return (float)Math.Sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]); }
         }
 
+        public float Normalize(float epsilon = 0) {
+            float length = Length;
+            if (length > epsilon) {
+                float invLength = 1.0f / length;
+                v[0] *= invLength;
+                v[1] *= invLength;
+                v[2] *= invLength;
+                v[3] *= invLength;
+            } else {
+                length = 0;
+                v[0] = v[1] = v[2] = v[3] = 0;
+            }
+            return length;
+        }
+        public Quaternionf Normalized {
+            get { Quaternionf q = new Quaternionf(v); q.Normalize(); return q; }
+        }
 
         public float Dot(Quaternionf q2) {
             return v[0] * q2.v[0] + v[1] * q2.v[1] + v[2] * q2.v[2] + v[3] * q2.v[3];
         }
+
 
 
 
@@ -129,28 +147,36 @@ namespace g3
         }
 
 
-
+        // this function can take non-normalized vectors vFrom and vTo (normalizes internally)
         public void SetFromTo(Vector3f vFrom, Vector3f vTo) {
-            Vector3f bisector = (vFrom + vTo).Normalized;
-            v[3] = vFrom.Dot(bisector);
+            // [RMS] not ideal to explicitly normalize here, but if we don't,
+            //   output quaternion is not normalized and this causes problems,
+            //   eg like drift if we do repeated SetFromTo()
+            Vector3f from = vFrom.Normalized, to = vTo.Normalized;
+            Vector3f bisector = (from + to).Normalized;
+            v[3] = from.Dot(bisector);
             if (v[3] != 0) {
-                Vector3f cross = vFrom.Cross(bisector);
+                Vector3f cross = from.Cross(bisector);
                 v[0] = cross[0];
                 v[1] = cross[1];
                 v[2] = cross[2];
             } else {
-                if ( Math.Abs(vFrom[0]) >= Math.Abs(vFrom[1]) ) {
-                    float invLength = 1.0f / (float)Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[2] * vFrom[2]);
-                    v[0] = -vFrom[2] * invLength;
+                float invLength;
+                if (Math.Abs(from[3]) >= Math.Abs(from[0])) {
+                    // V1.x or V1.z is the largest magnitude component.
+                    invLength = (float)(1.0 / Math.Sqrt(from[3] * from[3] + from[1] * from[1]));
+                    v[0] = -from[1] * invLength;
                     v[1] = 0;
-                    v[2] = +vFrom[0] * invLength;
+                    v[2] = +from[3] * invLength;
                 } else {
-                    float invLength = 1.0f / (float)Math.Sqrt(vFrom[1] * vFrom[1] + vFrom[2] * vFrom[2]);
+                    // V1.y or V1.z is the largest magnitude component.
+                    invLength = (float)(1.0 / Math.Sqrt(from[0] * from[0] + from[1] * from[1]));
                     v[0] = 0;
-                    v[1] = +vFrom[2] * invLength;
-                    v[2] = -vFrom[1] * invLength;
+                    v[1] = +from[1] * invLength;
+                    v[2] = -from[0] * invLength;
                 }
             }
+            Normalize();   // aaahhh just to be safe...
         }
         public static Quaternionf FromTo(Vector3f vFrom, Vector3f vTo) {
             return new Quaternionf(vFrom, vTo);
