@@ -37,7 +37,9 @@ namespace g3
         public static double Clamp(double f, double low, double high) {
             return (f < low) ? low : (f > high) ? high : f;
         }
-
+        public static int Clamp(int f, int low, int high) {
+            return (f < low) ? low : (f > high) ? high : f;
+        }
 
         // fMinMaxValue may be signed
         public static float RangeClamp(float fValue, float fMinMaxValue)

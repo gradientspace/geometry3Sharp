@@ -198,6 +198,10 @@ namespace g3
         {
             return new Vector3(v[0], v[1], v[2]);
         }
+        public static implicit operator Color(Vector3f v)
+        {
+            return new Color(v[0], v[1], v[2], 1.0f);
+        }
 #endif
 
     }
