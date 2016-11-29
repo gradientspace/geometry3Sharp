@@ -40,6 +40,11 @@ namespace g3
             get { return v[2]; }
             set { v[2] = value; }
         }
+        public float a
+        {
+            get { return v[3]; }
+            set { v[3] = value; }
+        }
         public float this[int key]
         {
             get { return v[key]; }
