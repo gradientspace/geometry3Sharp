@@ -52,9 +52,19 @@ namespace g3
         }
 
 
+        public static float SignedClamp(float f, float fMax) {
+            return Clamp(Math.Abs(f), 0, fMax) * Math.Sign(f);
+        }
+        public static double SignedClamp(double f, double fMax) {
+            return Clamp(Math.Abs(f), 0, fMax) * Math.Sign(f);
+        }
 
-
-
+        public static float SignedClamp(float f, float fMin, float fMax) {
+            return Clamp(Math.Abs(f), fMin, fMax) * Math.Sign(f);
+        }
+        public static double SignedClamp(double f, double fMin, double fMax) {
+            return Clamp(Math.Abs(f), fMin, fMax) * Math.Sign(f);
+        }
 
 
         public static float PlaneAngleD(Vector3f a, Vector3f b, int nPlaneNormalIdx = 1)
