@@ -25,6 +25,18 @@ namespace g3
             return Origin + d * Direction;
         }
 
+
+        // conversion operators
+        public static implicit operator Ray3d(Ray3f v)
+        {
+            return new Ray3d(v.Origin, v.Direction);
+        }
+        public static explicit operator Ray3f(Ray3d v)
+        {
+            return new Ray3f((Vector3f)v.Origin, (Vector3f)v.Direction);
+        }
+
+
 #if G3_USING_UNITY
         public static implicit operator Ray3d(UnityEngine.Ray r)
         {

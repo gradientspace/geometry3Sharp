@@ -39,6 +39,20 @@ namespace g3
             DistanceSquared = -1.0f;
         }
 
+
+        static public double MinDistance(Ray3d r, Segment3d s) {
+            return new DistRay3Segment3(r, s).Get();
+        }
+        static public double MinDistanceSegmentParam(Ray3d r, Segment3d s) {
+            return new DistRay3Segment3(r, s).Compute().SegmentParameter;
+        }
+
+
+        public DistRay3Segment3 Compute() {
+            GetSquared();
+            return this;
+        }
+
         public double Get() {
             return Math.Sqrt(GetSquared());
         }

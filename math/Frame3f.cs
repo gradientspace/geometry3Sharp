@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using g3;
 
-
+#if G3_USING_UNITY
+using UnityEngine;
+using f3;       // yuck? will go away though...
+#endif
 
 namespace g3
 {
@@ -203,6 +206,18 @@ namespace g3
             return string.Format("[Frame3f: Origin={0}, X={1}, Y={2}, Z={3}]", Origin.ToString(fmt), X.ToString(fmt), Y.ToString(fmt), Z.ToString(fmt));
         }
 
+
+
+#if G3_USING_UNITY
+        public static implicit operator Frame3f(f3.Frame3 f)
+        {
+            return new Frame3f(f.Origin, f.Rotation);
+        }
+        public static implicit operator Frame3(Frame3f f)
+        {
+            return new Frame3(f.origin, f.rotation);
+        }
+#endif
 
     }
 }

@@ -7,15 +7,15 @@ namespace g3
     public class MathUtil
     {
 
-        public const double Deg2Rad = (180.0 / Math.PI);
-        public const double Rad2Deg = (Math.PI / 180.0);
+        public const double Deg2Rad = (Math.PI / 180.0);
+        public const double Rad2Deg = (180.0 / Math.PI);
         public const double TwoPI = 2.0 * Math.PI;
         public const double HalfPI = 0.5 * Math.PI;
         public const double ZeroTolerance = 1e-08;
         public const double Epsilon = 2.2204460492503131e-016;
 
-        public const float Rad2Degf = (float)(180.0 / Math.PI);
         public const float Deg2Radf = (float)(Math.PI / 180.0);
+        public const float Rad2Degf = (float)(180.0 / Math.PI);
         public const float PIf = (float)(Math.PI);
         public const float TwoPIf = 2.0f * PIf;
         public const float HalfPIf = 0.5f * PIf;
@@ -86,6 +86,16 @@ namespace g3
         }
 
 
+
+
+
+        public static int MostParallelAxis(Frame3f f, Vector3f vDir) {
+            double dot0 = Math.Abs(f.X.Dot(vDir));
+            double dot1 = Math.Abs(f.Y.Dot(vDir));
+            double dot2 = Math.Abs(f.Z.Dot(vDir));
+            double m = Math.Max(dot0, Math.Max(dot1, dot2));
+            return (m == dot0) ? 0 : (m == dot1) ? 1 : 2;
+        }
 
 
 
