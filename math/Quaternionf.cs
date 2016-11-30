@@ -108,7 +108,7 @@ namespace g3
             if (norm > 0) {
                 float invNorm = 1.0f / norm;
                 return new Quaternionf(
-                    -v[0] * invNorm, -v[1] * invNorm, -v[2] * invNorm, -v[3] * invNorm);
+                    -v[0] * invNorm, -v[1] * invNorm, -v[2] * invNorm, v[3] * invNorm);
             } else 
                 return Quaternionf.Zero;
         }
@@ -162,18 +162,18 @@ namespace g3
                 v[2] = cross[2];
             } else {
                 float invLength;
-                if (Math.Abs(from[3]) >= Math.Abs(from[0])) {
+                if (Math.Abs(from[0]) >= Math.Abs(from[1])) {
                     // V1.x or V1.z is the largest magnitude component.
-                    invLength = (float)(1.0 / Math.Sqrt(from[3] * from[3] + from[1] * from[1]));
-                    v[0] = -from[1] * invLength;
+                    invLength = (float)(1.0 / Math.Sqrt(from[0] * from[0] + from[2] * from[2]));
+                    v[0] = -from[2] * invLength;
                     v[1] = 0;
-                    v[2] = +from[3] * invLength;
+                    v[2] = +from[0] * invLength;
                 } else {
                     // V1.y or V1.z is the largest magnitude component.
-                    invLength = (float)(1.0 / Math.Sqrt(from[0] * from[0] + from[1] * from[1]));
+                    invLength = (float)(1.0 / Math.Sqrt(from[1] * from[1] + from[2] * from[2]));
                     v[0] = 0;
-                    v[1] = +from[1] * invLength;
-                    v[2] = -from[0] * invLength;
+                    v[1] = +from[2] * invLength;
+                    v[2] = -from[1] * invLength;
                 }
             }
             Normalize();   // aaahhh just to be safe...
