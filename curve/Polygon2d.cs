@@ -14,6 +14,11 @@ namespace g3
             vertices = new List<Vector2d>();
         }
 
+        public Polygon2d(Polygon2d copy)
+        {
+            vertices = new List<Vector2d>(copy.vertices);
+        }
+
         public Polygon2d(Vector2d[] v)
         {
             vertices = new List<Vector2d>(v);
