@@ -12,6 +12,6 @@ namespace g3
 
         Vector3d GetVertex(int i);
 
-        IEnumerable<Vector3d> Vertices();
+        IEnumerable<Vector3d> Vertices { get; }
     }
 }

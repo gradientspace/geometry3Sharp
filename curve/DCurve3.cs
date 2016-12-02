@@ -9,7 +9,7 @@ namespace g3
     {
         // [TODO] use dvector? or double-indirection indexing?
         //   question is how to insert efficiently...
-        public List<Vector3d> vertices;
+        protected List<Vector3d> vertices;
         public bool Closed { get; set; }
         public int Timestamp;
 
@@ -44,6 +44,14 @@ namespace g3
             Timestamp++;
         }
 
+        public void SetVertices(VectorArray3d v)
+        {
+            vertices = new List<Vector3d>();
+            for (int i = 0; i < v.Count; ++i)
+                vertices.Add(v[i]);
+            Timestamp++;
+        }
+
         public Vector3d this[int key]
         {
             get { return vertices[key]; }
@@ -57,8 +65,8 @@ namespace g3
             get { return vertices.Last(); }
         }
 
-        public IEnumerable<Vector3d> Vertices() {
-            return vertices;
+        public IEnumerable<Vector3d> Vertices {
+            get { return vertices; }
         }
 
 
