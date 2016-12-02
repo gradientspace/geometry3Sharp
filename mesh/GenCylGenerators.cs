@@ -44,6 +44,7 @@ namespace g3
             Vector3d dv = CurveUtils.GetTangent(Vertices, 0); ;
             fCur.Origin = (Vector3f)Vertices[0];
             fCur.AlignAxis(2, (Vector3f)dv);
+            Frame3f fStart = new Frame3f(fCur);
 
             // generate tube
             for (int ri = 0; ri < nRings; ++ri) {
@@ -90,51 +91,46 @@ namespace g3
                 }
             }
 
-
-/*
             if (Capped) {
                 // add endcap verts
-                var s0 = Sections[0];
-                var sN = Sections.Last();
                 int nBottomC = nRings * nRingSize;
-                vertices[nBottomC] = new Vector3d(0, s0.SectionY, 0);
+                vertices[nBottomC] = fStart.Origin;
                 uv[nBottomC] = new Vector2f(0.5f, 0.5f);
-                normals[nBottomC] = new Vector3f(0, -1, 0);
+                normals[nBottomC] = -fStart.Z;
                 startCapCenterIndex = nBottomC;
 
                 int nTopC = nBottomC + 1;
-                vertices[nTopC] = new Vector3d(0, sN.SectionY, 0);
+                vertices[nTopC] = fCur.Origin;
                 uv[nTopC] = new Vector2f(0.5f, 0.5f);
-                normals[nTopC] = new Vector3f(0, 1, 0);
+                normals[nTopC] = fCur.Z;
                 endCapCenterIndex = nTopC;
 
                 if (NoSharedVertices) {
+                    // duplicate first loop and make a fan w/ bottom-center
+                    int nExistingB = 0;
                     int nStartB = nTopC + 1;
                     for (int k = 0; k < Slices; ++k) {
-                        float a = (float)k * fDelta;
-                        double cosa = Math.Cos(a), sina = Math.Sin(a);
-                        vertices[nStartB + k] = new Vector3d(s0.Radius * cosa, s0.SectionY, s0.Radius * sina);
-                        uv[nStartB + k] = new Vector2f(0.5f * (1.0f + cosa), 0.5f * (1 + sina));
-                        normals[nStartB + k] = -Vector3f.AxisY;
+                        vertices[nStartB + k] = vertices[nExistingB + k];
+                        uv[nStartB + k] = (Vector2f)Polygon.Vertices[k].Normalized;
+                        normals[nStartB + k] = normals[nBottomC];
                     }
                     append_disc(Slices, nBottomC, nStartB, true, Clockwise, ref ti);
 
+                    // duplicate second loop and make fan
+                    int nExistingT = nRingSize * (nRings - 1);
                     int nStartT = nStartB + Slices;
                     for (int k = 0; k < Slices; ++k) {
-                        float a = (float)k * fDelta;
-                        double cosa = Math.Cos(a), sina = Math.Sin(a);
-                        vertices[nStartT + k] = new Vector3d(sN.Radius * cosa, sN.SectionY, sN.Radius * sina);
-                        uv[nStartT + k] = new Vector2f(0.5f * (1.0f + cosa), 0.5f * (1 + sina));
-                        normals[nStartT + k] = Vector3f.AxisY;
+                        vertices[nStartT + k] = vertices[nExistingT + k];
+                        uv[nStartT + k] = (Vector2f)Polygon.Vertices[k].Normalized;
+                        normals[nStartT + k] = normals[nTopC];
                     }
                     append_disc(Slices, nTopC, nStartT, true, !Clockwise, ref ti);
 
                 } else {
                     append_disc(Slices, nBottomC, 0, true, Clockwise, ref ti);
-                    append_disc(Slices, nTopC, nRingSize * (Sections.Length - 1), true, !Clockwise, ref ti);
+                    append_disc(Slices, nTopC, nRingSize * (nRings-1), true, !Clockwise, ref ti);
                 }
             }
-            */
 
         }
     }
