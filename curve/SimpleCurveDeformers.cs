@@ -5,6 +5,62 @@ using System.Text;
 
 namespace g3
 {
+
+    public class InPlaceIterativeCurveSmooth
+    {
+        DCurve3 _curve;
+        public DCurve3 Curve {
+            get { return _curve; }
+            set { if (_curve != value) { _curve = value; } }
+        }
+
+        int _startRange;
+        public int Start {
+            get { return _startRange; }
+            set { _startRange = value; }
+        }
+
+        int _endRange;
+        public int End {
+            get { return _endRange; }
+            set { _endRange = value; }
+        }
+
+        float _alpha;
+        public float Alpha {
+            get { return _alpha; }
+            set { _alpha = MathUtil.Clamp(value, 0.0f, 1.0f); }
+        }
+
+        public InPlaceIterativeCurveSmooth()
+        {
+            Start = End = -1;
+        }
+
+        public void UpdateDeformation(int nIterations = 1)
+        {
+            if (Start < 0 || Start >= Curve.VertexCount || End >= Curve.VertexCount)
+                throw new ArgumentOutOfRangeException("InPlaceIterativeCurveSmooth.UpdateDeformation: range is invalid");
+
+            for (int i = Start; i <= End; ++i) {
+                if (i == 0 || i >= Curve.VertexCount - 1)
+                    continue;
+
+                Vector3d prev = Curve[i - 1], next = Curve[i + 1];
+                Vector3d c = (prev + next) * 0.5f;
+                Curve[i] = (1 - Alpha) * Curve[i] + (Alpha) * c;
+            }
+        }
+
+    }
+
+
+
+
+
+
+
+
     public class ArcLengthSoftTranslation
     {
         DCurve3 _curve;

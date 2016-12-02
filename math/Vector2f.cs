@@ -3,6 +3,10 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Text;
 
+#if G3_USING_UNITY
+using UnityEngine;
+#endif
+
 namespace g3
 {
     public class Vector2f
@@ -130,6 +134,20 @@ namespace g3
         public override string ToString() {
             return string.Format("{0:F8} {1:F8}", v[0], v[1]);
         }
+
+
+
+
+#if G3_USING_UNITY
+        public static implicit operator Vector2f(UnityEngine.Vector2 v)
+        {
+            return new Vector2f(v[0], v[1]);
+        }
+        public static implicit operator Vector2(Vector2f v)
+        {
+            return new Vector2(v[0], v[1]);
+        }
+#endif
 
     }
 }

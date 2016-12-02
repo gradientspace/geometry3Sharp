@@ -40,7 +40,7 @@ namespace g3
             int nCapTris = (Capped) ? 2 * Slices : 0;
             triangles = new VectorArray3i(nSpanTris + nCapTris);
 
-            Frame3f fCur = Frame;
+            Frame3f fCur = new Frame3f(Frame);
             Vector3d dv = CurveUtils.GetTangent(Vertices, 0); ;
             fCur.Origin = (Vector3f)Vertices[0];
             fCur.AlignAxis(2, (Vector3f)dv);

@@ -20,6 +20,13 @@ namespace g3
             Timestamp = 0;
         }
 
+        public DCurve3(DCurve3 copy)
+        {
+            vertices = new List<Vector3d>(copy.vertices);
+            Closed = copy.Closed;
+            Timestamp = 0;
+        }
+
         public void AppendVertex(Vector3d v) {
             vertices.Add(v);
             Timestamp++;
@@ -35,6 +42,12 @@ namespace g3
         public void SetVertex(int i, Vector3d v) {
             vertices[i] = v;
             Timestamp++;
+        }
+
+        public Vector3d this[int key]
+        {
+            get { return vertices[key]; }
+            set { vertices[key] = value; Timestamp++; }
         }
 
         public Vector3d Start {
@@ -55,6 +68,15 @@ namespace g3
             foreach (Vector3d v in vertices)
                 box.Contain(v);
             return box;
+        }
+
+        public double ArcLength {
+            get {
+                double dLen = 0;
+                for (int i = 1; i < vertices.Count; ++i)
+                    dLen += (vertices[i] - vertices[i - 1]).Length;
+                return dLen;
+            }
         }
     }
 }
