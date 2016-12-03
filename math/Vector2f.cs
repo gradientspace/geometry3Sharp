@@ -25,6 +25,7 @@ namespace g3
 
 
         static public readonly Vector2f Zero = new Vector2f(0.0f, 0.0f);
+        static public readonly Vector2f One = new Vector2f(1.0f, 1.0f);
         static public readonly Vector2f AxisX = new Vector2f(1.0f, 0.0f);
         static public readonly Vector2f AxisY = new Vector2f(0.0f, 1.0f);
 

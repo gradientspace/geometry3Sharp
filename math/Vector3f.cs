@@ -24,6 +24,7 @@ namespace g3
         public Vector3f(Vector3d copy) { v[0] = (float)copy.v[0]; v[1] = (float)copy.v[1]; v[2] = (float)copy.v[2]; }
 
         static public readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
+        static public readonly Vector3f One = new Vector3f(1.0f, 1.0f, 1.0f);
         static public readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
         static public readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);
         static public readonly Vector3f AxisZ = new Vector3f(0.0f, 0.0f, 1.0f);

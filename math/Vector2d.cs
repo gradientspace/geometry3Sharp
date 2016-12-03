@@ -21,6 +21,7 @@ namespace g3
 
 
         static public readonly Vector2d Zero = new Vector2d(0.0f, 0.0f);
+        static public readonly Vector2d One = new Vector2d(1.0f, 1.0f);
         static public readonly Vector2d AxisX = new Vector2d(1.0f, 0.0f);
         static public readonly Vector2d AxisY = new Vector2d(0.0f, 1.0f);
 
