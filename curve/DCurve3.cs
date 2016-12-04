@@ -86,5 +86,16 @@ namespace g3
                 return dLen;
             }
         }
+
+        public Vector3d Tangent(int i)
+        {
+            if (i == 0)
+                return (vertices[1] - vertices[0]).Normalized;
+            else if (i == vertices.Count - 1)
+                return (vertices.Last() - vertices[vertices.Count - 2]).Normalized;
+            else
+                return (vertices[i + 1] - vertices[i - 1]).Normalized;
+        }
+
     }
 }
