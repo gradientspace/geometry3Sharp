@@ -157,10 +157,20 @@ namespace g3
 
 
         static public readonly Colorf Purple = new Colorf(161, 16, 193, 255);
+        static public readonly Colorf DarkRed = new Colorf(128, 16, 16, 255);
+        static public readonly Colorf FireBrick = new Colorf(178, 34, 34, 255);
+        static public readonly Colorf HotPink = new Colorf(235, 105, 180, 255);
+
+        static public readonly Colorf BlueMetal = new Colorf(176, 197, 235, 255);
+        static public readonly Colorf Navy = new Colorf(16, 16, 128, 255);
+
+        static public readonly Colorf Teal = new Colorf(16, 128, 128, 255);
+        static public readonly Colorf ForestGreen = new Colorf(16, 139, 16, 255);
+        static public readonly Colorf LightGreen = new Colorf(144, 238, 144, 255);
+
         static public readonly Colorf Orange = new Colorf(230, 73, 16, 255);
         static public readonly Colorf Gold = new Colorf(235, 115, 63, 255);
         static public readonly Colorf DarkYellow = new Colorf(235, 200, 95, 255);
-        static public readonly Colorf BlueMetal = new Colorf(176, 197, 235, 255);
 
 
 
