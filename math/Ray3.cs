@@ -26,6 +26,19 @@ namespace g3
         }
 
 
+        public double Project(Vector3d p)
+        {
+            return (p - Origin).Dot(Direction);
+        }
+
+        public double DistanceSquared(Vector3d p)
+        {
+            double t = (p - Origin).Dot(Direction);
+            Vector3d proj = Origin + t * Direction;
+            return (proj - p).LengthSquared;
+        }
+
+
         // conversion operators
         public static implicit operator Ray3d(Ray3f v)
         {
@@ -68,6 +81,19 @@ namespace g3
         {
             return Origin + d * Direction;
         }
+
+        public float Project(Vector3f p)
+        {
+            return (p - Origin).Dot(Direction);
+        }
+
+        public float DistanceSquared(Vector3f p)
+        {
+            float t = (p - Origin).Dot(Direction);
+            Vector3f proj = Origin + t * Direction;
+            return (proj - p).LengthSquared;
+        }
+
 
 #if G3_USING_UNITY
         public static implicit operator Ray3f(UnityEngine.Ray r)

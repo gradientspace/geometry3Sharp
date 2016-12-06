@@ -8,6 +8,7 @@ namespace g3
     public class Segment3d
     {
         // Center-direction-extent representation.
+        // Extent is half length of segment
         public Vector3d Center;
         public Vector3d Direction;
         public double Extent;
@@ -56,6 +57,7 @@ namespace g3
     public class Segment3f
     {
         // Center-direction-extent representation.
+        // Extent is half length of segment
         public Vector3f Center;
         public Vector3f Direction;
         public float Extent;
@@ -95,6 +97,25 @@ namespace g3
         // t ranges from [0,1] over [P0,P1]
         public Vector3f PointBetween(float t) {
             return Center + (2 * t - 1) * Extent * Direction;
+        }
+
+
+        public float Project(Vector3f p)
+        {
+            return (p - Center).Dot(Direction);
+        }
+
+        public float DistanceSquared(Vector3f p)
+        {
+            float t = (p - Center).Dot(Direction);
+            if (t <= -Extent) {
+                return (p - (Center - Extent * Direction)).LengthSquared;
+            } else if (t >= Extent) {
+                return (p - (Center + Extent * Direction)).LengthSquared;
+            } else {
+                Vector3f proj = Center + t * Direction;
+                return (proj - p).LengthSquared;
+            }
         }
 
 
