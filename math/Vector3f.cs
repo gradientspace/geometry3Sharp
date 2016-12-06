@@ -162,11 +162,21 @@ namespace g3
         {
             return new Vector3f(f * v[0], f * v[1], f * v[2]);
         }
-
         public static Vector3f operator /(Vector3f v, float f)
         {
             return new Vector3f(v[0]/f, v[1]/f, v[2]/f);
         }
+
+
+        public static Vector3f operator *(Vector3f a, Vector3f b)
+        {
+            return new Vector3f(a[0] * b[0], a[1] * b[1], a[2] * b[2]);
+        }
+        public static Vector3f operator /(Vector3f a, Vector3f b)
+        {
+            return new Vector3f(a[0] / b[0], a[1] / b[1], a[2] / b[2]);
+        }
+
 
         public static Vector3f operator +(Vector3f v0, Vector3f v1)
         {
