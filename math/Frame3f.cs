@@ -208,6 +208,59 @@ namespace g3
 
 
 
+        // finds minimal rotation that aligns source frame with axes of target frame.
+        // considers all signs
+        //   1) find smallest angle(axis_source, axis_target), considering all sign permutations
+        //   2) rotate source to align axis_source with sign*axis_target
+        //   3) now rotate around alined_axis_source to align second-best pair of axes
+        public static Frame3f SolveMinRotation(Frame3f source, Frame3f target)
+        {
+            int best_i = -1, best_j = -1;
+            double fMaxAbsDot = 0, fMaxSign = 0;
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    double d = source.GetAxis(i).Dot(target.GetAxis(j));
+                    double a = Math.Abs(d);
+                    if (a > fMaxAbsDot) {
+                        fMaxAbsDot = a;
+                        fMaxSign = Math.Sign(d);
+                        best_i = i;
+                        best_j = j;
+                    }
+                }
+            }
+
+            Frame3f R1 = source.Rotated(
+                Quaternionf.FromTo(source.GetAxis(best_i), (float)fMaxSign * target.GetAxis(best_j)));
+            Vector3f vAround = R1.GetAxis(best_i);
+
+            int second_i = -1, second_j = -1;
+            double fSecondDot = 0, fSecondSign = 0;
+            for (int i = 0; i < 3; ++i) {
+                if (i == best_i)
+                    continue;
+                for (int j = 0; j < 3; ++j) {
+                    if (j == best_j)
+                        continue;
+                    double d = R1.GetAxis(i).Dot(target.GetAxis(j));
+                    double a = Math.Abs(d);
+                    if (a > fSecondDot) {
+                        fSecondDot = a;
+                        fSecondSign = Math.Sign(d);
+                        second_i = i;
+                        second_j = j;
+                    }
+                }
+            }
+
+            R1.ConstrainedAlignAxis(second_i, (float)fSecondSign * target.GetAxis(second_j), vAround);
+
+            return R1;
+        }
+
+
+
+
 #if G3_USING_UNITY
         public static implicit operator Frame3f(f3.Frame3 f)
         {
