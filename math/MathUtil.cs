@@ -109,6 +109,15 @@ namespace g3
 
 
 
+        public static float Lerp(float a, float b, float t) {
+            return (1 - t) * a + (t) * b;
+        }
+        public static double Lerp(double a, double b, double t) {
+            return (1 - t) * a + (t) * b;
+        }
+
+
+
 
         //! if yshift is 0, function approaches y=1 at xZero from y=0. 
         //! speed (> 0) controls how fast it gets there
