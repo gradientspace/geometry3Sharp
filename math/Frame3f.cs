@@ -146,6 +146,13 @@ namespace g3
             return this.rotation * dv + this.origin;
         }
 
+        public Vector3f ProjectToPlane(Vector3f p, int nNormal)
+        {
+            Vector3f d = p - origin;
+            Vector3f n = GetAxis(nNormal);
+            return origin + (d - d.Dot(n) * n);
+        }
+
 
 
         public Vector3f ToFrameP(Vector3f v)
