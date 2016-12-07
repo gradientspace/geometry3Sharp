@@ -50,6 +50,19 @@ namespace g3
             Direction = p1 - p0;
             Extent = 0.5* Direction.Normalize();
         }
+
+
+        // conversion operators
+        public static implicit operator Segment3d(Segment3f v)
+        {
+            return new Segment3d(v.Center, v.Direction, v.Extent);
+        }
+        public static explicit operator Segment3f(Segment3d v)
+        {
+            return new Segment3f((Vector3f)v.Center, (Vector3f)v.Direction, (float)v.Extent);
+        }
+
+
     }
 
 
