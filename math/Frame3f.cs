@@ -62,15 +62,15 @@ namespace g3
 
         public Vector3f X
         {
-            get { return rotation * Vector3f.AxisX; }
+            get { return rotation.AxisX; }
         }
         public Vector3f Y
         {
-            get { return rotation * Vector3f.AxisY; }
+            get { return rotation.AxisY; }
         }
         public Vector3f Z
         {
-            get { return rotation * Vector3f.AxisZ; }
+            get { return rotation.AxisZ; }
         }
 
         public Vector3f GetAxis(int nAxis)

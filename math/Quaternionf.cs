@@ -93,12 +93,52 @@ namespace g3
         }
 
 
+
         public static Quaternionf operator -(Quaternionf q1, Quaternionf q2) {
             return new Quaternionf(q1.v[0] - q2.v[0], q1.v[1] - q2.v[1], q1.v[2] - q2.v[2], q1.v[3] - q2.v[3]);
         }
 
         public static Vector3f operator *(Quaternionf q, Vector3f v) {
-            return q.ToRotationMatrix() * v;
+            //return q.ToRotationMatrix() * v;
+            // inline-expansion of above:
+            float twoX = 2 * q.v[0]; float twoY = 2 * q.v[1]; float twoZ = 2 * q.v[2];
+            float twoWX = twoX * q.v[3]; float twoWY = twoY * q.v[3]; float twoWZ = twoZ * q.v[3];
+            float twoXX = twoX * q.v[0]; float twoXY = twoY * q.v[0]; float twoXZ = twoZ * q.v[0];
+            float twoYY = twoY * q.v[1]; float twoYZ = twoZ * q.v[1]; float twoZZ = twoZ * q.v[2];
+            return new Vector3f(
+                v[0] * (1 - (twoYY + twoZZ)) + v[1] * (twoXY - twoWZ) + v[2] * (twoXZ + twoWY),
+                v[0] * (twoXY + twoWZ) + v[1] * (1 - (twoXX + twoZZ)) + v[2] * (twoYZ - twoWX),
+                v[0] * (twoXZ - twoWY) + v[1] * (twoYZ + twoWX) + v[2] * (1 - (twoXX + twoYY))); ;
+        }
+
+
+
+        // these multiply quaternion by (1,0,0), (0,1,0), (0,0,1), respectively.
+        // faster than full multiply, because of all the zeros
+        public Vector3f AxisX {
+            get {
+                float twoY = 2 * v[1]; float twoZ = 2 * v[2];
+                float twoWY = twoY * v[3]; float twoWZ = twoZ * v[3];
+                float twoXY = twoY * v[0]; float twoXZ = twoZ * v[0];
+                float twoYY = twoY * v[1]; float twoZZ = twoZ * v[2];
+                return new Vector3f(1 - (twoYY + twoZZ), twoXY + twoWZ, twoXZ - twoWY);
+            }
+        }
+        public Vector3f AxisY {
+            get {
+                float twoX = 2 * v[0]; float twoY = 2 * v[1]; float twoZ = 2 * v[2];
+                float twoWX = twoX * v[3]; float twoWZ = twoZ * v[3]; float twoXX = twoX * v[0];
+                float twoXY = twoY * v[0]; float twoYZ = twoZ * v[1]; float twoZZ = twoZ * v[2];
+                return new Vector3f(twoXY - twoWZ, 1 - (twoXX + twoZZ), twoYZ + twoWX);
+            }
+        }
+        public Vector3f AxisZ {
+            get {
+                float twoX = 2 * v[0]; float twoY = 2 * v[1]; float twoZ = 2 * v[2];
+                float twoWX = twoX * v[3]; float twoWY = twoY * v[3]; float twoXX = twoX * v[0];
+                float twoXZ = twoZ * v[0]; float twoYY = twoY * v[1]; float twoYZ = twoZ * v[1];
+                return new Vector3f(twoXZ + twoWY, twoYZ - twoWX, 1 - (twoXX + twoYY));
+            }
         }
 
 
