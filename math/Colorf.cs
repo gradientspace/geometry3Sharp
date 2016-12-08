@@ -8,21 +8,22 @@ using UnityEngine;
 
 namespace g3
 {
-    public class Colorf
+    public struct Colorf
     {
-        public float[] v = { 0, 0, 0, 1 };
+        private float[] v;
 
-        public Colorf() { }
-        public Colorf(float greylevel, float a = 1) { v[0] = v[1] = v[2] = greylevel; v[3] = 1.0f; }
-        public Colorf(float r, float g, float b, float a = 1) { v[0] = r; v[1] = g; v[2] = b; v[3] = a; }
+        public Colorf(float greylevel, float a = 1) { v = new float[4]; v[0] = v[1] = v[2] = greylevel; v[3] = 1.0f; }
+        public Colorf(float r, float g, float b, float a = 1) { v = new float[4]; v[0] = r; v[1] = g; v[2] = b; v[3] = a; }
         public Colorf(int r, int g, int b, int a = 255) {
+            v = new float[4];
             v[0] = MathUtil.Clamp((float)r, 0.0f, 255.0f) / 255.0f;
             v[1] = MathUtil.Clamp((float)g, 0.0f, 255.0f) / 255.0f;
             v[2] = MathUtil.Clamp((float)b, 0.0f, 255.0f) / 255.0f;
             v[3] = MathUtil.Clamp((float)a, 0.0f, 255.0f) / 255.0f;
         }
-        public Colorf(float[] v2) { v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; v[3] = v2[3]; }
-        public Colorf(Colorf copy) { v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; v[3] = copy.v[3]; }
+        public Colorf(float[] v2) { v = new float[4]; v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; v[3] = v2[3]; }
+        public Colorf(Colorf copy) { v = new float[4]; v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; v[3] = copy.v[3]; }
+        public Colorf(Colorf copy, float newAlpha) { v = new float[4]; v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; v[3] = newAlpha; }
 
 
         public float r
@@ -130,7 +131,7 @@ namespace g3
         {
             return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", v[0], v[1], v[2], v[3]);
         }
-        public virtual string ToString(string fmt)
+        public string ToString(string fmt)
         {
             return string.Format("{0} {1} {2} {3}", v[0].ToString(fmt), v[1].ToString(fmt), v[2].ToString(fmt), v[3].ToString(fmt));
         }

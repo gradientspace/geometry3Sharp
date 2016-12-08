@@ -9,19 +9,18 @@ using UnityEngine;
 
 namespace g3
 {
-    public class Vector2f
+    public struct Vector2f
     {
-        public float[] v = { 0, 0 };
+        private float[] v;
 
-        public Vector2f() { }
-        public Vector2f(float f) { v[0] = v[1] = f; }
-        public Vector2f(float x, float y) { v[0] = x; v[1] = y; }
-        public Vector2f(float[] v2) { v[0] = v2[0]; v[1] = v2[1]; }
-        public Vector2f(double f) { v[0] = v[1] = (float)f; }
-        public Vector2f(double x, double y) { v[0] = (float)x; v[1] = (float)y; }
-        public Vector2f(double[] v2) { v[0] = (float)v2[0]; v[1] = (float)v2[1]; }
-        public Vector2f(Vector2f copy) { v[0] = copy[0]; v[1] = copy[1]; }
-        public Vector2f(Vector2d copy) { v[0] = (float)copy[0]; v[1] = (float)copy[1]; }
+        public Vector2f(float f) { v = new float[2]; v[0] = v[1] = f; }
+        public Vector2f(float x, float y) { v = new float[2]; v[0] = x; v[1] = y; }
+        public Vector2f(float[] v2) { v = new float[2]; v[0] = v2[0]; v[1] = v2[1]; }
+        public Vector2f(double f) { v = new float[2]; v[0] = v[1] = (float)f; }
+        public Vector2f(double x, double y) { v = new float[2]; v[0] = (float)x; v[1] = (float)y; }
+        public Vector2f(double[] v2) { v = new float[2]; v[0] = (float)v2[0]; v[1] = (float)v2[1]; }
+        public Vector2f(Vector2f copy) { v = new float[2]; v[0] = copy[0]; v[1] = copy[1]; }
+        public Vector2f(Vector2d copy) { v = new float[2]; v[0] = (float)copy[0]; v[1] = (float)copy[1]; }
 
 
         static public readonly Vector2f Zero = new Vector2f(0.0f, 0.0f);

@@ -7,22 +7,24 @@ using UnityEngine;
 
 namespace g3
 {
-    public class Quaternionf
+    public struct Quaternionf
     {
-        public float[] v = { 0, 0, 0, 1 };
+        private float[] v;
 
-        public Quaternionf() { }
-        public Quaternionf(float x, float y, float z, float w) { v[0] = x; v[1] = y; v[2] = z; v[3] = w; }
-        public Quaternionf(float[] v2) { v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; v[3] = v2[3]; }
-        public Quaternionf(Quaternionf q2) { v[0] = q2.v[0]; v[1] = q2.v[1]; v[2] = q2.v[2]; v[3] = q2.v[3]; }
+        public Quaternionf(float x, float y, float z, float w) { v = new float[4]; v[0] = x; v[1] = y; v[2] = z; v[3] = w; }
+        public Quaternionf(float[] v2) { v = new float[4]; v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; v[3] = v2[3]; }
+        public Quaternionf(Quaternionf q2) { v = new float[4]; v[0] = q2.v[0]; v[1] = q2.v[1]; v[2] = q2.v[2]; v[3] = q2.v[3]; }
 
         public Quaternionf(Vector3f axis, float AngleDeg) {
+            v = new float[4];
             SetAxisAngleD(axis, AngleDeg);
         }
         public Quaternionf(Vector3f vFrom, Vector3f vTo) {
+            v = new float[4];
             SetFromTo(vFrom, vTo);
         }
         public Quaternionf(Quaternionf p, Quaternionf q, float t) {
+            v = new float[4];
             SetToSlerp(p, q, t);
         }
 
@@ -256,7 +258,7 @@ namespace g3
         public override string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", v[0], v[1], v[2], v[3]);
         }
-        public virtual string ToString(string fmt) {
+        public string ToString(string fmt) {
             return string.Format("{0} {1} {2} {3}", v[0].ToString(fmt), v[1].ToString(fmt), v[2].ToString(fmt), v[3].ToString(fmt));
         }
 

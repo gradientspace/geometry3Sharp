@@ -5,11 +5,20 @@ using System.Text;
 
 namespace g3
 {
-    public class Matrix3f
+    public struct Matrix3f
     {
-        public float[] m = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+        private float[] m;
 
-        public Matrix3f() { }
+        public Matrix3f(bool bIdentity) {
+            if (bIdentity)
+                m = new float[9] { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+            else
+                m = new float[9] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        }
+
+
+        public static readonly Matrix3f Identity = new Matrix3f(true);
+        public static readonly Matrix3f Zero = new Matrix3f(false);
 
 
         public float this[int r, int c] {
@@ -32,7 +41,7 @@ namespace g3
             return string.Format("[{0:F8} {1:F8} {2:F8}] [{3:F8} {4:F8} {5:F8}] [{6:F8} {7:F8} {8:F8}]",
                 m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
         }
-        public virtual string ToString(string fmt) {
+        public string ToString(string fmt) {
             return string.Format("[{0} {1} {2}] [{3} {4} {5}] [{6} {7} {8}]",
                 m[0].ToString(fmt), m[1].ToString(fmt), m[2].ToString(fmt), 
                 m[3].ToString(fmt), m[4].ToString(fmt), m[5].ToString(fmt), 

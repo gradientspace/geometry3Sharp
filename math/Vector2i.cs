@@ -2,14 +2,13 @@
 
 namespace g3
 {
-    public class Vector2i
+    public struct Vector2i
     {
-        public int[] v = { 0, 0 };
+        private int[] v;
 
-        public Vector2i() { }
-        public Vector2i(int f) { v[0] = v[1] = f; }
-        public Vector2i(int x, int y) { v[0] = x; v[1] = y;}
-        public Vector2i(int[] v2) { v[0] = v2[0]; v[1] = v2[1];}
+        public Vector2i(int f) { v = new int[2];  v[0] = v[1] = f; }
+        public Vector2i(int x, int y) { v = new int[2]; v[0] = x; v[1] = y;}
+        public Vector2i(int[] v2) { v = new int[2]; v[0] = v2[0]; v[1] = v2[1];}
 
         static public readonly Vector2i Zero = new Vector2i(0, 0);
 

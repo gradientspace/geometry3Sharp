@@ -8,16 +8,15 @@ using UnityEngine;
 
 namespace g3
 {
-    public class Vector3d
+    public struct Vector3d
     {
-        public double[] v = { 0, 0, 0 };
+        private double[] v;
 
-        public Vector3d() {}
-        public Vector3d(double f) { v[0] = v[1] = v[2] = f; }
-        public Vector3d(double x, double y, double z) { v[0] = x; v[1] = y; v[2] = z; }
-        public Vector3d(double[] v2) { v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; }
-        public Vector3d(Vector3d copy) { v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; }
-        public Vector3d(Vector3f copy) { v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; }
+        public Vector3d(double f) { v = new double[3]; v[0] = v[1] = v[2] = f; }
+        public Vector3d(double x, double y, double z) { v = new double[3]; v[0] = x; v[1] = y; v[2] = z; }
+        public Vector3d(double[] v2) { v = new double[3]; v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; }
+        public Vector3d(Vector3d copy) { v = new double[3]; v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; }
+        public Vector3d(Vector3f copy) { v = new double[3]; v[0] = copy[0]; v[1] = copy[1]; v[2] = copy[2]; }
 
         static public readonly Vector3d Zero = new Vector3d(0.0f, 0.0f, 0.0f);
         static public readonly Vector3d One = new Vector3d(1.0f, 1.0f, 1.0f);
@@ -196,6 +195,26 @@ namespace g3
         }
 
 
+
+        public static bool operator ==(Vector3d a, Vector3d b)
+        {
+            return (a[0] == b[0] && a[1] == b[1] && a[2] == b[2]);
+        }
+        public static bool operator !=(Vector3d a, Vector3d b)
+        {
+            return (a[0] != b[0] || a[1] != b[1] || a[2] != b[2]);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Vector3d)obj;
+        }
+        public override int GetHashCode()
+        {
+            return v.GetHashCode();
+        }
+
+
+
         public static Vector3d Lerp(Vector3d a, Vector3d b, double t)
         {
             double s = 1 - t;
@@ -207,7 +226,7 @@ namespace g3
         public override string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8}", v[0], v[1], v[2]);
         }
-        public virtual string ToString(string fmt) {
+        public string ToString(string fmt) {
             return string.Format("{0} {1} {2}", v[0].ToString(fmt), v[1].ToString(fmt), v[2].ToString(fmt));
         }
 

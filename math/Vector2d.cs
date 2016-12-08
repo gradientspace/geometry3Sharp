@@ -5,19 +5,18 @@ using System.Text;
 
 namespace g3
 {
-    public class Vector2d
+    public struct Vector2d
     {
-        public double[] v = { 0, 0 };
+        private double[] v;
 
-        public Vector2d() { }
-        public Vector2d(double f) { v[0] = v[1] = f; }
-        public Vector2d(double x, double y) { v[0] = x; v[1] = y; }
-        public Vector2d(double[] v2) { v[0] = v2[0]; v[1] = v2[1]; }
-        public Vector2d(float f) { v[0] = v[1] = f; }
-        public Vector2d(float x, float y) { v[0] = x; v[1] = y; }
-        public Vector2d(float[] v2) { v[0] = v2[0]; v[1] = v2[1]; }
-        public Vector2d(Vector2d copy) { v[0] = copy[0]; v[1] = copy[1]; }
-        public Vector2d(Vector2f copy) { v[0] = copy[0]; v[1] = copy[1]; }
+        public Vector2d(double f) { v = new double[2];  v[0] = v[1] = f; }
+        public Vector2d(double x, double y) { v = new double[2]; v[0] = x; v[1] = y; }
+        public Vector2d(double[] v2) { v = new double[2]; v[0] = v2[0]; v[1] = v2[1]; }
+        public Vector2d(float f) { v = new double[2]; v[0] = v[1] = f; }
+        public Vector2d(float x, float y) { v = new double[2]; v[0] = x; v[1] = y; }
+        public Vector2d(float[] v2) { v = new double[2]; v[0] = v2[0]; v[1] = v2[1]; }
+        public Vector2d(Vector2d copy) { v = new double[2]; v[0] = copy[0]; v[1] = copy[1]; }
+        public Vector2d(Vector2f copy) { v = new double[2]; v[0] = copy[0]; v[1] = copy[1]; }
 
 
         static public readonly Vector2d Zero = new Vector2d(0.0f, 0.0f);
