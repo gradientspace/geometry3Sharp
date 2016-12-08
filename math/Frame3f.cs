@@ -3,14 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using g3;
 
-#if G3_USING_UNITY
-using UnityEngine;
-using f3;       // yuck? will go away though...
-#endif
-
 namespace g3
 {
-    public class Frame3f
+    public struct Frame3f
     {
         Quaternionf rotation;
         Vector3f origin;
@@ -186,6 +181,11 @@ namespace g3
         }
 
 
+        public Ray3f ToFrame(Ray3f r)
+        {
+            return new Ray3f(ToFrameP(r.Origin), ToFrameV(r.Direction));
+        }
+
         public Frame3f ToFrame(Frame3f f)
         {
             return new Frame3f(ToFrameP(f.origin), ToFrame(f.rotation));
@@ -209,7 +209,7 @@ namespace g3
         public override string ToString() {
             return ToString("F4");
         }
-        public virtual string ToString(string fmt) {
+        public string ToString(string fmt) {
             return string.Format("[Frame3f: Origin={0}, X={1}, Y={2}, Z={3}]", Origin.ToString(fmt), X.ToString(fmt), Y.ToString(fmt), Z.ToString(fmt));
         }
 
@@ -265,19 +265,6 @@ namespace g3
             return R1;
         }
 
-
-
-
-#if G3_USING_UNITY
-        public static implicit operator Frame3f(f3.Frame3 f)
-        {
-            return new Frame3f(f.Origin, f.Rotation);
-        }
-        public static implicit operator Frame3(Frame3f f)
-        {
-            return new Frame3(f.origin, f.rotation);
-        }
-#endif
 
     }
 }
