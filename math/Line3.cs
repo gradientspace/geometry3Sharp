@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class Line3d
+    public struct Line3d
     {
         public Vector3d Origin;
         public Vector3d Direction;
@@ -47,7 +47,7 @@ namespace g3
     }
 
 
-    public class Line3f
+    public struct Line3f
     {
         public Vector3f Origin;
         public Vector3f Direction;

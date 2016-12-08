@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class Segment2d
+    public struct Segment2d
     {
         // Center-direction-extent representation.
         public Vector2d Center;
@@ -14,7 +14,10 @@ namespace g3
 
         public Segment2d(Vector2d p0, Vector2d p1)
         {
-            update_from_endpoints(p0, p1);
+            //update_from_endpoints(p0, p1);
+            Center = 0.5 * (p0 + p1);
+            Direction = p1 - p0;
+            Extent = 0.5 * Direction.Normalize();
         }
         public Segment2d(Vector2d center, Vector2d direction, double extent)
         {
@@ -43,7 +46,7 @@ namespace g3
 
 
 
-    public class Segment2f
+    public struct Segment2f
     {
         // Center-direction-extent representation.
         public Vector2f Center;
@@ -52,7 +55,10 @@ namespace g3
 
         public Segment2f(Vector2f p0, Vector2f p1)
         {
-            update_from_endpoints(p0, p1);
+            //update_from_endpoints(p0, p1);
+            Center = 0.5f * (p0 + p1);
+            Direction = p1 - p0;
+            Extent = 0.5f * Direction.Normalize();
         }
         public Segment2f(Vector2f center, Vector2f direction, float extent)
         {

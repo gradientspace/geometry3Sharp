@@ -7,8 +7,8 @@ namespace g3
         public Vector3d Min;
         public Vector3d Max;
 
-        public static AxisAlignedBox3d Empty = new AxisAlignedBox3d(false);
-        public static AxisAlignedBox3d Infinite = 
+        public static readonly AxisAlignedBox3d Empty = new AxisAlignedBox3d(false);
+        public static readonly AxisAlignedBox3d Infinite = 
             new AxisAlignedBox3d(Double.MinValue, Double.MinValue, Double.MinValue, Double.MaxValue, Double.MaxValue, Double.MaxValue);
 
 

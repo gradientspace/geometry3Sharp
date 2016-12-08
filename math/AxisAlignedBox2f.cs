@@ -7,8 +7,8 @@ namespace g3
         public Vector2f Min;
         public Vector2f Max;
 
-        public static AxisAlignedBox2f Empty = new AxisAlignedBox2f(false);
-        public static AxisAlignedBox2f Infinite = new AxisAlignedBox2f(Single.MinValue, Single.MinValue, Single.MaxValue, Single.MaxValue);
+        public static readonly AxisAlignedBox2f Empty = new AxisAlignedBox2f(false);
+        public static readonly AxisAlignedBox2f Infinite = new AxisAlignedBox2f(Single.MinValue, Single.MinValue, Single.MaxValue, Single.MaxValue);
 
 
         public AxisAlignedBox2f(bool bIgnore) {

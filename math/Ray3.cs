@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace g3
 {
-    public class Ray3d
+    public struct Ray3d
     {
         public Vector3d Origin;
         public Vector3d Direction;
@@ -65,7 +65,7 @@ namespace g3
 
 
 
-    public class Ray3f
+    public struct Ray3f
     {
         public Vector3f Origin;
         public Vector3f Direction;

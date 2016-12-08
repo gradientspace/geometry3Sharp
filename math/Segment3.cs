@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class Segment3d
+    public struct Segment3d
     {
         // Center-direction-extent representation.
         // Extent is half length of segment
@@ -14,7 +14,10 @@ namespace g3
         public double Extent;
 
         public Segment3d(Vector3d p0, Vector3d p1) {
-            update_from_endpoints(p0, p1);
+            //update_from_endpoints(p0, p1);
+            Center = 0.5 * (p0 + p1);
+            Direction = p1 - p0;
+            Extent = 0.5 * Direction.Normalize();
         }
         public Segment3d(Vector3d center, Vector3d direction, double extent) {
             Center = center; Direction = direction; Extent = extent;
@@ -67,7 +70,7 @@ namespace g3
 
 
 
-    public class Segment3f
+    public struct Segment3f
     {
         // Center-direction-extent representation.
         // Extent is half length of segment
@@ -77,7 +80,10 @@ namespace g3
 
         public Segment3f(Vector3f p0, Vector3f p1)
         {
-            update_from_endpoints(p0, p1);
+            //update_from_endpoints(p0, p1);
+            Center = 0.5f * (p0 + p1);
+            Direction = p1 - p0;
+            Extent = 0.5f * Direction.Normalize();
         }
         public Segment3f(Vector3f center, Vector3f direction, float extent)
         {
