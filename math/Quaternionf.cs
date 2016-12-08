@@ -185,7 +185,9 @@ namespace g3
         public static Quaternionf AxisAngleD(Vector3f axis, float angleDeg) {
             return new Quaternionf(axis, angleDeg);
         }
-
+        public static Quaternionf AxisAngleR(Vector3f axis, float angleRad) {
+            return new Quaternionf(axis, angleRad * MathUtil.Rad2Degf);
+        }
 
         // this function can take non-normalized vectors vFrom and vTo (normalizes internally)
         public void SetFromTo(Vector3f vFrom, Vector3f vTo) {

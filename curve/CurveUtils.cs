@@ -19,6 +19,29 @@ namespace g3
         }
 
 
+        public static double ArcLength(List<Vector3d> vertices) {
+            double sum = 0;
+            for (int i = 1; i < vertices.Count; ++i)
+                sum += (vertices[i] - vertices[i - 1]).Length;
+            return sum;
+        }
+        public static double ArcLength(Vector3d[] vertices) {
+            double sum = 0;
+            for (int i = 1; i < vertices.Length ; ++i)
+                sum += (vertices[i] - vertices[i - 1]).Length;
+            return sum;
+        }
+        public static double ArcLength(IEnumerable<Vector3d> vertices) {
+            double sum = 0;
+            Vector3d prev = Vector3f.Zero;
+            int i = 0;
+            foreach (Vector3d v in vertices) {
+                if (i++ > 0)
+                    sum += (v - prev).Length;
+            }
+            return sum;
+        }
+
 
 
         public static int FindNearestIndex(ICurve c, Vector3d v)

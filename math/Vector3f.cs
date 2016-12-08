@@ -197,6 +197,16 @@ namespace g3
         }
 
 
+
+        public static Vector3f Lerp(Vector3f a, Vector3f b, float t)
+        {
+            float s = 1 - t;
+            return new Vector3f(s * a[0] + t * b[0], s * a[1] + t * b[1], s * a[2] + t * b[2]);
+        }
+
+
+
+
         public override string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8}", v[0], v[1], v[2]);
         }
