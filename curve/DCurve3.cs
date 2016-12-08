@@ -72,7 +72,9 @@ namespace g3
 
         public AxisAlignedBox3d GetBoundingBox()
         {
-            AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+            // [RMS] problem w/ readonly because vector is a class...
+            //AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+            AxisAlignedBox3d box = new AxisAlignedBox3d(false);
             foreach (Vector3d v in vertices)
                 box.Contain(v);
             return box;
