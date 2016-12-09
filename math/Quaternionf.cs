@@ -108,9 +108,9 @@ namespace g3
             float twoXX = twoX * q.v[0]; float twoXY = twoY * q.v[0]; float twoXZ = twoZ * q.v[0];
             float twoYY = twoY * q.v[1]; float twoYZ = twoZ * q.v[1]; float twoZZ = twoZ * q.v[2];
             return new Vector3f(
-                v[0] * (1 - (twoYY + twoZZ)) + v[1] * (twoXY - twoWZ) + v[2] * (twoXZ + twoWY),
-                v[0] * (twoXY + twoWZ) + v[1] * (1 - (twoXX + twoZZ)) + v[2] * (twoYZ - twoWX),
-                v[0] * (twoXZ - twoWY) + v[1] * (twoYZ + twoWX) + v[2] * (1 - (twoXX + twoYY))); ;
+                v.x * (1 - (twoYY + twoZZ)) + v.y * (twoXY - twoWZ) + v.z * (twoXZ + twoWY),
+                v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
+                v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
         }
 
 
@@ -180,9 +180,9 @@ namespace g3
             double halfAngle = 0.5 * angle_rad;
             double sn = Math.Sin(halfAngle);
             v[3] = (float)Math.Cos(halfAngle);
-            v[0] = (float)(sn * axis[0]);
-            v[1] = (float)(sn * axis[1]);
-            v[2] = (float)(sn * axis[2]);
+            v[0] = (float)(sn * axis.x);
+            v[1] = (float)(sn * axis.y);
+            v[2] = (float)(sn * axis.z);
         }
         public static Quaternionf AxisAngleD(Vector3f axis, float angleDeg) {
             return new Quaternionf(axis, angleDeg);
@@ -201,23 +201,23 @@ namespace g3
             v[3] = from.Dot(bisector);
             if (v[3] != 0) {
                 Vector3f cross = from.Cross(bisector);
-                v[0] = cross[0];
-                v[1] = cross[1];
-                v[2] = cross[2];
+                v[0] = cross.x;
+                v[1] = cross.y;
+                v[2] = cross.z;
             } else {
                 float invLength;
                 if (Math.Abs(from[0]) >= Math.Abs(from[1])) {
                     // V1.x or V1.z is the largest magnitude component.
-                    invLength = (float)(1.0 / Math.Sqrt(from[0] * from[0] + from[2] * from[2]));
-                    v[0] = -from[2] * invLength;
+                    invLength = (float)(1.0 / Math.Sqrt(from.x * from.x + from.z * from.z));
+                    v[0] = -from.z * invLength;
                     v[1] = 0;
-                    v[2] = +from[0] * invLength;
+                    v[2] = +from.x * invLength;
                 } else {
                     // V1.y or V1.z is the largest magnitude component.
-                    invLength = (float)(1.0 / Math.Sqrt(from[1] * from[1] + from[2] * from[2]));
+                    invLength = (float)(1.0 / Math.Sqrt(from.y * from.y + from.z * from.z));
                     v[0] = 0;
-                    v[1] = +from[2] * invLength;
-                    v[2] = -from[1] * invLength;
+                    v[1] = +from.z * invLength;
+                    v[2] = -from.y * invLength;
                 }
             }
             Normalize();   // aaahhh just to be safe...

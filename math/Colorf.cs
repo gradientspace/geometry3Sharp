@@ -10,130 +10,113 @@ namespace g3
 {
     public struct Colorf
     {
-        private float[] v;
+        public float r;
+        public float g;
+        public float b;
+        public float a;
 
-        public Colorf(float greylevel, float a = 1) { v = new float[4]; v[0] = v[1] = v[2] = greylevel; v[3] = 1.0f; }
-        public Colorf(float r, float g, float b, float a = 1) { v = new float[4]; v[0] = r; v[1] = g; v[2] = b; v[3] = a; }
+        public Colorf(float greylevel, float a = 1) { r = g = b = greylevel; this.a = a; }
+        public Colorf(float r, float g, float b, float a = 1) { this.r = r; this.g = g; this.b = b; this.a = a; }
         public Colorf(int r, int g, int b, int a = 255) {
-            v = new float[4];
-            v[0] = MathUtil.Clamp((float)r, 0.0f, 255.0f) / 255.0f;
-            v[1] = MathUtil.Clamp((float)g, 0.0f, 255.0f) / 255.0f;
-            v[2] = MathUtil.Clamp((float)b, 0.0f, 255.0f) / 255.0f;
-            v[3] = MathUtil.Clamp((float)a, 0.0f, 255.0f) / 255.0f;
+            this.r = MathUtil.Clamp((float)r, 0.0f, 255.0f) / 255.0f;
+            this.g = MathUtil.Clamp((float)g, 0.0f, 255.0f) / 255.0f;
+            this.b = MathUtil.Clamp((float)b, 0.0f, 255.0f) / 255.0f;
+            this.a = MathUtil.Clamp((float)a, 0.0f, 255.0f) / 255.0f;
         }
-        public Colorf(float[] v2) { v = new float[4]; v[0] = v2[0]; v[1] = v2[1]; v[2] = v2[2]; v[3] = v2[3]; }
-        public Colorf(Colorf copy) { v = new float[4]; v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; v[3] = copy.v[3]; }
-        public Colorf(Colorf copy, float newAlpha) { v = new float[4]; v[0] = copy.v[0]; v[1] = copy.v[1]; v[2] = copy.v[2]; v[3] = newAlpha; }
+        public Colorf(float[] v2) { r = v2[0]; g = v2[1]; b = v2[2]; a = v2[3]; }
+        public Colorf(Colorf copy) { r = copy.r; g = copy.g; b = copy.b; a = copy.a; }
+        public Colorf(Colorf copy, float newAlpha) { r = copy.r; g = copy.g; b = copy.b; a = newAlpha; }
 
 
-        public float r
-        {
-            get { return v[0]; }
-            set { v[0] = value; }
-        }
-        public float g
-        {
-            get { return v[1]; }
-            set { v[1] = value; }
-        }
-        public float b
-        {
-            get { return v[2]; }
-            set { v[2] = value; }
-        }
-        public float a
-        {
-            get { return v[3]; }
-            set { v[3] = value; }
-        }
         public float this[int key]
         {
-            get { return v[key]; }
-            set { v[key] = value; }
+            get { if (key == 0) return r; else if (key == 1) return g; else if (key == 2) return b; else return a; }
+            set { if (key == 0) r = value; else if (key == 1) g = value; else if (key == 2) b = value; else a = value; }
+
         }
 
         public float SqrDistance(Colorf v2)
         {
-            float a = (v[0] - v2[0]), b = (v[1] - v2[1]), c = (v[2] - v2[2]), d = (v[3] - v2[3]);
+            float a = (r - v2.r), b = (g - v2.g), c = (b - v2.b), d = (a - v2.a);
             return a * a + b * b + c * c + d*d;
         }
 
 
         public Vector3f ToRGB() {
-            return new Vector3f(v[0], v[1], v[2]);
+            return new Vector3f(r, g, b);
         }
         public byte[] ToBytes() {
             return new byte[4] {
-                (byte)MathUtil.Clamp((int)(v[0]*255.0f), 0, 255),
-                (byte)MathUtil.Clamp((int)(v[1]*255.0f), 0, 255),
-                (byte)MathUtil.Clamp((int)(v[2]*255.0f), 0, 255),
-                (byte)MathUtil.Clamp((int)(v[3]*255.0f), 0, 255),
+                (byte)MathUtil.Clamp((int)(r*255.0f), 0, 255),
+                (byte)MathUtil.Clamp((int)(g*255.0f), 0, 255),
+                (byte)MathUtil.Clamp((int)(b*255.0f), 0, 255),
+                (byte)MathUtil.Clamp((int)(a*255.0f), 0, 255),
             };
         }
 
         public void Set(Colorf o)
         {
-            v[0] = o[0]; v[1] = o[1]; v[2] = o[2]; v[3] = o[3];
+            r = o.r; g = o.g; b = o.b; a = o.a;
         }
         public void Set(float fR, float fG, float fB, float fA)
         {
-            v[0] = fR; v[1] = fG; v[2] = fB; v[3] = fA;
+            r = fR; g = fG; b = fB; a = fA;
         }
         public Colorf SetAlpha(float a) {
-            v[3] = a;
+            this.a = a;
             return this;
         }
         public void Add(Colorf o)
         {
-            v[0] += o[0]; v[1] += o[1]; v[2] += o[2]; v[3] += o[3];
+            r += o.r; g += o.g; b += o.b; a += o.a;
         }
         public void Subtract(Colorf o)
         {
-            v[0] -= o[0]; v[1] -= o[1]; v[2] -= o[2]; v[3] -= o[3];
+            r -= o.r; g -= o.g; b -= o.b; a -= o.a;
         }
 
 
 
         public static Colorf operator -(Colorf v)
         {
-            return new Colorf(-v[0], -v[1], -v[2], -v[3]);
+            return new Colorf(-v.r, -v.g, -v.b, -v.a);
         }
 
         public static Colorf operator *(float f, Colorf v)
         {
-            return new Colorf(f * v[0], f * v[1], f * v[2], f * v[3]);
+            return new Colorf(f * v.r, f * v.g, f * v.b, f * v.a);
         }
         public static Colorf operator *(Colorf v, float f)
         {
-            return new Colorf(f * v[0], f * v[1], f * v[2], f * v[3]);
+            return new Colorf(f * v.r, f * v.g, f * v.b, f * v.a);
         }
 
         public static Colorf operator +(Colorf v0, Colorf v1)
         {
-            return new Colorf(v0[0] + v1[0], v0[1] + v1[1], v0[2] + v1[2], v0[3] + v1[3]);
+            return new Colorf(v0.r + v1.r, v0.g + v1.g, v0.b + v1.b, v0.a + v1.a);
         }
         public static Colorf operator +(Colorf v0, float f)
         {
-            return new Colorf(v0[0] + f, v0[1] + f, v0[2] + f, v0[3] + f);
+            return new Colorf(v0.r + f, v0.g + f, v0.b + f, v0.a + f);
         }
 
         public static Colorf operator -(Colorf v0, Colorf v1)
         {
-            return new Colorf(v0[0] - v1[0], v0[1] - v1[1], v0[2] - v1[2], v0[3]-v1[3]);
+            return new Colorf(v0.r - v1.r, v0.g - v1.g, v0.b - v1.b, v0.a-v1.a);
         }
         public static Colorf operator -(Colorf v0, float f)
         {
-            return new Colorf(v0[0] - f, v0[1] - f, v0[2] - f, v0[3] = f);
+            return new Colorf(v0.r - f, v0.g - f, v0.b - f, v0.a = f);
         }
 
 
         public override string ToString()
         {
-            return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", v[0], v[1], v[2], v[3]);
+            return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", r, g, b, a);
         }
         public string ToString(string fmt)
         {
-            return string.Format("{0} {1} {2} {3}", v[0].ToString(fmt), v[1].ToString(fmt), v[2].ToString(fmt), v[3].ToString(fmt));
+            return string.Format("{0} {1} {2} {3}", r.ToString(fmt), g.ToString(fmt), b.ToString(fmt), a.ToString(fmt));
         }
 
 
@@ -199,7 +182,7 @@ namespace g3
         }
         public static implicit operator Color(Colorf c)
         {
-            return new Color(c[0], c[1], c[2], c[3]);
+            return new Color(c.r, c.g, c.b, c.a);
         }
 #endif
 

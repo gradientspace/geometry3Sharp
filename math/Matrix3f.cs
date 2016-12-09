@@ -5,6 +5,9 @@ using System.Text;
 
 namespace g3
 {
+    // [RMS] this class is dangerous because of internal array...really should
+    //   replace with 9 internal members, except that is really shit!
+    //   (could do 6, for symmetric matrix?)
     public struct Matrix3f
     {
         private float[] m;
