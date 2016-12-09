@@ -34,13 +34,6 @@ namespace g3
             this.ray1 = ray1; this.ray2 = ray2;
         }
 
-        // have to do this if you are changing Ray/Segment yourself and want to reuse this object
-        public void Reset()
-        {
-            DistanceSquared = -1.0f;
-        }
-
-
         static public double MinDistance(Ray3d r1, Ray3d r2) {
             return new DistRay3Ray3(r1, r2).Get();
         }

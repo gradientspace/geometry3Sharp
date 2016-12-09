@@ -34,13 +34,6 @@ namespace g3
             this.ray = ray; this.line = Line;
         }
 
-        // have to do this if you are changing Ray/Line yourself and want to reuse this object
-        public void Reset()
-        {
-            DistanceSquared = -1.0f;
-        }
-
-
         static public double MinDistance(Ray3d r, Line3d s)
         {
             return new DistLine3Ray3(r, s).Get();
