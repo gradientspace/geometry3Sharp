@@ -52,6 +52,12 @@ namespace g3
             Timestamp++;
         }
 
+        public void SetVertices(IEnumerable<Vector3d> v)
+        {
+            vertices = new List<Vector3d>(v);
+            Timestamp++;
+        }
+
         public Vector3d this[int key]
         {
             get { return vertices[key]; }
