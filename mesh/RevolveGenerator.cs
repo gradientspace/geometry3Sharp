@@ -37,9 +37,6 @@ namespace g3
             float fDelta = (float)((Math.PI * 2.0) / Slices);
 
             Frame3f f = Axis;
-            Vector3d vAround = f.GetAxis(RevolveAxis);
-            Vector3d cX = f.GetAxis((RevolveAxis + 1) % 3);
-            Vector3d cY = f.GetAxis((RevolveAxis + 2) % 3);
 
             // generate tube
             for (int ri = 0; ri < nRings; ++ri) {

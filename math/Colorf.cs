@@ -32,7 +32,6 @@ namespace g3
         {
             get { if (key == 0) return r; else if (key == 1) return g; else if (key == 2) return b; else return a; }
             set { if (key == 0) r = value; else if (key == 1) g = value; else if (key == 2) b = value; else a = value; }
-
         }
 
         public float SqrDistance(Colorf v2)
