@@ -373,7 +373,7 @@ namespace g3
         }
 
 
-        bool tri_has_v(int tID, int vID) {
+        public bool tri_has_v(int tID, int vID) {
             return triangles[3 * tID] == vID 
                 || triangles[3 * tID + 1] == vID
                 || triangles[3 * tID + 2] == vID;
@@ -400,12 +400,28 @@ namespace g3
             return false;
         }
 
-		int replace_tri_vertex(int tID, int vOld, int vNew) {
-			if ( triangles[3 * tID] == vOld ) { triangles[3 * tID] = vNew; return 0; }
-			if ( triangles[3 * tID+1] == vOld ) { triangles[3 * tID+1] = vNew; return 1; }
-			if ( triangles[3 * tID+2] == vOld ) { triangles[3 * tID+2] = vNew; return 2; }
-			return -1;
+		//! returns edge ID
+		public int find_tri_neighbour_edge(int tID, int vA, int vB)
+		{
+			int tv0 = triangles[3*tID], tv1 = triangles[3*tID+1];
+			if ( IndexUtil.same_pair_unordered(tv0, tv1, vA, vB) ) return triangle_edges[3*tID];
+			int tv2 = triangles[3*tID+2];
+			if ( IndexUtil.same_pair_unordered(tv1, tv2, vA, vB) ) return triangle_edges[3*tID+1];
+			if ( IndexUtil.same_pair_unordered(tv2, tv0, vA, vB) ) return triangle_edges[3*tID+2];
+			return InvalidID;	
 		}
+
+		// returns 0/1/2
+		public int find_tri_neighbour_index(int tID, int vA, int vB)
+		{
+			int tv0 = triangles[3*tID], tv1 = triangles[3*tID+1];
+			if ( IndexUtil.same_pair_unordered(tv0, tv1, vA, vB) ) return 0;
+			int tv2 = triangles[3*tID+2];
+			if ( IndexUtil.same_pair_unordered(tv1, tv2, vA, vB) ) return 1;
+			if ( IndexUtil.same_pair_unordered(tv2, tv0, vA, vB) ) return 2;
+			return InvalidID;	
+		}
+
 
         public bool edge_is_boundary(int eid) {
             return edges[4 * eid + 3] == InvalidID;
@@ -460,6 +476,13 @@ namespace g3
             return eid;
         }
 
+		int replace_tri_vertex(int tID, int vOld, int vNew) {
+			if ( triangles[3 * tID] == vOld ) { triangles[3 * tID] = vNew; return 0; }
+			if ( triangles[3 * tID+1] == vOld ) { triangles[3 * tID+1] = vNew; return 1; }
+			if ( triangles[3 * tID+2] == vOld ) { triangles[3 * tID+2] = vNew; return 2; }
+			return -1;
+		}
+
 		int add_triangle_only(int a, int b, int c, int e0, int e1, int e2) {
 			int tid = triangles_refcount.allocate();
 			triangles.insert(c, 3 * tid + 2);
@@ -482,6 +505,10 @@ namespace g3
 		void set_edge_vertices(int eID, int a, int b) {
 			edges[4 * eID] = Math.Min(a,b);
 			edges[4 * eID + 1] = Math.Max(a,b);
+		}
+		void set_edge_triangles(int eID, int t0, int t1) {
+			edges[4 * eID + 2] = t0;
+			edges[4 * eID + 3] = t1;
 		}
 
 		int replace_edge_vertex(int eID, int vOld, int vNew) {
@@ -563,11 +590,8 @@ namespace g3
 		public MeshResult SplitEdge(int eab, out EdgeSplitInfo split)
 		{
 			split = new EdgeSplitInfo();
-
 			if (! IsEdge(eab) )
 				return MeshResult.Failed_NotAnEdge;
-
-			//Edge * eAB = & m_vEdges[eab];
 
 			// look up primary edge & triangle
 			int a = edges[4 * eab], b = edges[4 * eab + 1];
@@ -575,8 +599,6 @@ namespace g3
 			Vector3i T0tv = GetTriangle(t0);
 			int[] T0tv_array = T0tv.array;
 			int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, T0tv_array);
-
-			//Triangle & T0 = m_vTriangles[t0];
 
 			// create new vertex
 			Vector3d vNew = 0.5 * ( GetVertex(a) + GetVertex(b) );
@@ -589,7 +611,6 @@ namespace g3
 				// look up edge bc, which needs to be modified
 				Vector3i T0te = GetTriEdges(t0);
 				int ebc = T0te[ IndexUtil.find_edge_index_in_tri(b, c, T0tv_array) ];
-				//Edge & eBC = m_vEdges[ebc];
 
 				// rewrite existing triangle
 				replace_tri_vertex(t0, b, f);
@@ -598,13 +619,10 @@ namespace g3
 				int t2 = add_triangle_only(f,b,c, InvalidID, InvalidID, InvalidID);
 				if ( triangle_groups != null )
 					triangle_groups.insert(triangle_groups[t0], t2);
-				
-				//Triangle & T2 = m_vTriangles[t2];
 
 				// rewrite edge bc, create edge af
 				replace_edge_triangle(ebc, t0, t2);
 				int eaf = eab; 
-				//Edge * eAF = eAB;
 				replace_edge_vertex(eaf, b, f);
 				vertex_edges[b].Remove(eab);
 				vertex_edges[f].Add(eaf);
@@ -631,7 +649,6 @@ namespace g3
 				
 				// look up other triangle
 				int t1 = edges[4 * eab + 3];
-				//Triangle & T1 = m_vTriangles[t1];
 				Vector3i T1tv = GetTriangle(t1);
 				int[] T1tv_array = T1tv.array;
 				int d = IndexUtil.find_tri_other_vtx( a, b, T1tv_array );
@@ -640,10 +657,8 @@ namespace g3
 				// [TODO OPT] could use ordering to reduce # of compares here
 				Vector3i T0te = GetTriEdges(t0);
 				int ebc = T0te[IndexUtil.find_edge_index_in_tri( b, c, T0tv_array )];
-				//Edge & eBC = m_vEdges[ebc];
 				Vector3i T1te = GetTriEdges(t1);
 				int edb = T1te[IndexUtil.find_edge_index_in_tri( d, b, T1tv_array )];
-				//Edge & eDB = m_vEdges[edb];
 
 				// rewrite existing triangles
 				replace_tri_vertex(t0, b, f);
@@ -656,9 +671,6 @@ namespace g3
 					triangle_groups.insert(triangle_groups[t0], t2);
 					triangle_groups.insert(triangle_groups[t1], t3);
 				}
-				
-				//Triangle & T2 = m_vTriangles[t2];
-				//Triangle & T3 = m_vTriangles[t3];
 
 				// update the edges we found above, to point to new triangles
 				replace_edge_triangle(ebc, t0, t2);
@@ -696,6 +708,102 @@ namespace g3
 			}
 
 		}
+
+
+
+
+
+
+		public struct EdgeFlipInfo {
+			public int eID;
+			public int v0,v1;
+			public int ov0,ov1;
+			public int t0,t1;
+		}
+		public MeshResult FlipEdge(int vA, int vB, out EdgeFlipInfo flip) {
+			int eid = find_edge(vA, vB);
+			if ( eid == InvalidID ) {
+				flip = new EdgeFlipInfo();
+				return MeshResult.Failed_NotAnEdge;
+			}
+			return FlipEdge(eid, out flip);
+		}
+		public MeshResult FlipEdge(int eab, out EdgeFlipInfo flip) 
+		{
+			flip = new EdgeFlipInfo();
+			if (! IsEdge(eab) )
+				return MeshResult.Failed_NotAnEdge;
+			if ( edge_is_boundary(eab) )
+				return MeshResult.Failed_IsBoundaryEdge;
+
+			// find oriented edge [a,b], tris t0,t1, and other verts c in t0, d in t1
+			int a = edges[4 * eab], b = edges[4 * eab + 1];
+			int t0 = edges[4 * eab + 2], t1 = edges[4 * eab + 3];
+			int[] T0tv = GetTriangle(t0).array;
+			int[] T1tv = GetTriangle(t1).array;
+			int c = IndexUtil.orient_tri_edge_and_find_other_vtx( ref a, ref b, T0tv );
+			int d = IndexUtil.find_tri_other_vtx(a, b, T1tv);
+			if ( c == InvalidID || d == InvalidID ) {
+				return MeshResult.Failed_BrokenTopology;
+			}
+
+			int flipped = find_edge(c,d);
+			if ( flipped != InvalidID )
+				return MeshResult.Failed_FlippedEdgeExists;
+
+			// find edges bc, ca, ad, db
+			int ebc = find_tri_neighbour_edge(t0, b, c);
+			int eca = find_tri_neighbour_edge(t0, c, a);
+			int ead = find_tri_neighbour_edge(t1,a,d);
+			int edb = find_tri_neighbour_edge(t1,d,b);
+
+			// update triangles
+			set_triangle(t0, c, d, b);
+			set_triangle(t1, d, c, a);
+
+			// update edge AB, which becomes flipped edge CD
+			set_edge_vertices(eab, c, d);
+			set_edge_triangles(eab, t0,t1);
+			int ecd = eab;
+
+			// update the two other edges whose triangle nbrs have changed
+			if ( replace_edge_triangle(eca, t0,t1) == -1 )
+				throw new ArgumentException("DMesh3.FlipEdge: first replace_edge_triangle failed");
+			if ( replace_edge_triangle(edb, t1, t0) == -1 )
+				throw new ArgumentException("DMesh3.FlipEdge: second replace_edge_triangle failed");
+
+			// update triangle nbr lists (these are edges)
+			set_triangle_edges(t0, ecd, edb, ebc);
+			set_triangle_edges(t1, ecd, eca, ead);
+
+			// remove old eab from verts a and b, and decrement ref counts
+			if ( vertex_edges[a].Remove(eab) == false ) 
+				throw new ArgumentException("DMesh3.FlipEdge: first vertex_edges remove failed");
+			if ( vertex_edges[b].Remove(eab) == false ) 
+				throw new ArgumentException("DMesh3.FlipEdge: second vertex_edges remove failed");
+			vertices_refcount.decrement(a);
+			vertices_refcount.decrement(b);
+			if ( IsVertex(a) == false || IsVertex(b) == false )
+				throw new ArgumentException("DMesh3.FlipEdge: either a or b is not a vertex?");
+
+			// add new edge ecd to verts c and d, and increment ref counts
+			vertex_edges[c].Add(ecd);
+			vertex_edges[d].Add(ecd);
+			vertices_refcount.increment(c);
+			vertices_refcount.increment(d);
+
+			// success! collect up results
+			flip.eID = eab;
+			flip.v0 = a; flip.v1 = b;
+			flip.ov0 = c; flip.ov1 = d;
+			flip.t0 = t0; flip.t1 = t1;
+
+			updateTimeStamp();
+			return MeshResult.Ok;
+		}
+
+
+
 
 
 
