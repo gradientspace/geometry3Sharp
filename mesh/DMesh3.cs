@@ -37,6 +37,9 @@ namespace g3
 
         RefCountVector vertices_refcount;
         DVector<double> vertices;
+		DVector<float> normals;
+		DVector<float> colors;
+
         // [TODO] this seems like it will not be efficient! 
         //   do our own short_list backed my a memory pool?
         // [TODO] this is optional if we only want to use this class as an iterable mesh-with-nbrs
@@ -52,9 +55,13 @@ namespace g3
 
 
 
-        public DMesh3()
+        public DMesh3(bool bWantNormals = true, bool bWantColors = true)
         {
             vertices = new DVector<double>();
+			if ( bWantNormals)
+				normals = new DVector<float>();
+			if ( bWantColors )
+				colors = new DVector<float>();
             vertex_edges = new DVector<List<int>>();
             vertices_refcount = new RefCountVector();
 
@@ -77,12 +84,10 @@ namespace g3
             get { return triangles_refcount.count; }
         }
 
-        public bool HasVertexColors { get { return false; } }
-        public bool HasVertexNormals { get { return false; } }
+        public bool HasVertexColors { get { return colors != null; } }
+        public bool HasVertexNormals { get { return normals != null; } }
         public bool HasVertexUVs { get { return false; } }
 
-        public Vector3d GetVertexNormal(int i) { return Vector3d.AxisY; }
-        public Vector3d GetVertexColor(int i) { return Vector3d.Zero; }
         public Vector2f GetVertexUV(int i) { return Vector2f.Zero; }
 
         public bool HasTriangleGroups { get { return false; } }
@@ -120,6 +125,15 @@ namespace g3
             return vertices_refcount.isValid(vID) ?
                 new Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]) : InvalidVertex;
         }
+		public Vector3d GetVertexNormal(int vID) { 
+			return vertices_refcount.isValid(vID) ?
+                new Vector3d(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3d.AxisY;
+		}
+		public Vector3d GetVertexColor(int vID) { 
+			return vertices_refcount.isValid(vID) ?
+                new Vector3d(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]) : Vector3d.One;
+		}
+
         public IReadOnlyCollection<int> GetVtxEdges(int vID) {
             return vertices_refcount.isValid(vID) ?
                 vertex_edges[vID].AsReadOnly() : null;
@@ -160,7 +174,14 @@ namespace g3
             vertices.insert(info.v[1], 3 * vid + 1);
             vertices.insert(info.v[0], 3 * vid);
 
-            // TODO normals, colors
+			if ( normals != null ) {
+				Vector3f n = (info.bHaveN) ? info.n : Vector3f.AxisY;
+				normals.insert(n[2], 3 * vid + 2);
+				normals.insert(n[1], 3 * vid + 1);
+				normals.insert(n[0], 3 * vid);
+			}
+
+            // TODO colors
 
             vertex_edges.insert(new List<int>(), vid);
 
@@ -420,6 +441,9 @@ namespace g3
         public bool CheckValidity() {
 
             int[] triToVtxRefs = new int[GetMaxVertexID()];
+
+			if ( normals != null )
+				DMESH_CHECK_OR_FAIL(normals.size == vertices.size);
 
             foreach (int tID in TriangleIndices() ) { 
 
