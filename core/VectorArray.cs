@@ -40,11 +40,28 @@ namespace g3
     }
     public class VectorArray3d : VectorArray3<double>
     {
-        public VectorArray3d(int nCount) : base(nCount) { }
+        const double invalid_value = -99999999.0;
+
+        bool __debug = false;
+        public VectorArray3d(int nCount, bool debug = false) : base(nCount)
+        {
+#if DEBUG  
+            __debug = debug;
+            if (__debug)
+                for (int i = 0; i < Count; ++i)
+                    Set(i, invalid_value, invalid_value, invalid_value);
+#endif
+        }
         public VectorArray3d(double[] data) : base(data) { }
         public Vector3d this[int i] {
             get { return new Vector3d(array[3 * i], array[3 * i + 1], array[3 * i + 2]); }
-            set { Set(i, value[0], value[1], value[2]); }
+            set {
+#if DEBUG  
+                if (__debug && this[i][0] != invalid_value)
+                    throw new InvalidOperationException(string.Format("VectorArray3d.set - value {0} is already set!",i));
+#endif
+                Set(i, value[0], value[1], value[2]);
+            }
         }
     };
     public class VectorArray3f : VectorArray3<float>
@@ -119,6 +136,11 @@ namespace g3
             get { return new Vector2d(array[2 * i], array[2 * i + 1]); }
             set { Set(i, value[0], value[1]); }
         }
+
+        public IEnumerable<Vector2d> AsVector2d() {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
+        }
     };
     public class VectorArray2f : VectorArray2<float>
     {
@@ -127,6 +149,11 @@ namespace g3
         public Vector2f this[int i] {
             get { return new Vector2f(array[2 * i], array[2 * i + 1]); }
             set { Set(i, value[0], value[1]); }
+        }
+
+        public IEnumerable<Vector2d> AsVector2f() {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
         }
     };
 

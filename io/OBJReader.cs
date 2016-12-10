@@ -8,6 +8,8 @@ namespace g3
 {
     internal unsafe struct Triangle
     {
+        public const int InvalidMaterialID = -1;
+
         public fixed int vIndices[3];
         public fixed int vNormals[3];
         public fixed int vUVs[3];
@@ -15,7 +17,7 @@ namespace g3
 
         public void clear()
         {
-            nMaterialID = -1;
+            nMaterialID = InvalidMaterialID;
             fixed (int* v = this.vIndices) { v[0] = -1; v[1] = -1; v[2] = -1; }
             fixed (int* n = this.vNormals) { n[0] = -1; n[1] = -1; n[2] = -1; }
             fixed (int* u = this.vUVs) { u[0] = -1; u[1] = -1; u[2] = -1; }
@@ -258,11 +260,17 @@ namespace g3
             bool bHaveColors = (vColors.Length > 0);
             bool bHaveUVs = (vUVs.Length > 0);
 
-            foreach ( int material_id in UsedMaterials.Keys ) {
-                string sMatName = UsedMaterials[material_id];
-                OBJMaterial useMat = Materials[sMatName];
-                int matID = builder.BuildMaterial( useMat );
-                int meshID = builder.AppendNewMesh(bHaveNormals, bHaveColors, bHaveUVs, false);
+            List<int> usedMaterialIDs = new List<int>(UsedMaterials.Keys);
+            usedMaterialIDs.Add(Triangle.InvalidMaterialID);
+            foreach ( int material_id in usedMaterialIDs) {
+                int matID = Triangle.InvalidMaterialID;
+                if (material_id != Triangle.InvalidMaterialID) {
+                    string sMatName = UsedMaterials[material_id];
+                    OBJMaterial useMat = Materials[sMatName];
+                    matID = builder.BuildMaterial(useMat);
+                }
+                bool bMatHaveUVs = (material_id == Triangle.InvalidMaterialID) ? false : bHaveUVs;
+                int meshID = builder.AppendNewMesh(bHaveNormals, bHaveColors, bMatHaveUVs, false);
 
                 Dictionary<vtx_key, int> mapV = new Dictionary<vtx_key, int>();
 
@@ -279,7 +287,7 @@ namespace g3
 
                             int use_vtx = -1;
                             if (mapV.ContainsKey(vk) == false) {
-                                use_vtx = append_vertex(builder, vk, bHaveNormals, bHaveColors, bHaveUVs);
+                                use_vtx = append_vertex(builder, vk, bHaveNormals, bHaveColors, bMatHaveUVs);
                                 mapV[vk] = use_vtx;
                             } else
                                 use_vtx = mapV[vk];
@@ -290,7 +298,8 @@ namespace g3
                     }
                 }
 
-                builder.AssignMaterial(matID, meshID);
+                if ( matID != Triangle.InvalidMaterialID )
+                    builder.AssignMaterial(matID, meshID);
             }
 
             return new IOReadResult(ReadResult.Ok, "");

@@ -2,29 +2,37 @@
 
 namespace g3
 {
-    public class Vector2i
+    public struct Vector2i
     {
-        public int[] v = { 0, 0 };
+        public int x;
+        public int y;
 
-        public Vector2i() { }
-        public Vector2i(int f) { v[0] = v[1] = f; }
-        public Vector2i(int x, int y) { v[0] = x; v[1] = y;}
-        public Vector2i(int[] v2) { v[0] = v2[0]; v[1] = v2[1];}
+        public Vector2i(int f) { x = y = f; }
+        public Vector2i(int x, int y) { this.x = x; this.y = y; }
+        public Vector2i(int[] v2) { x = v2[0]; y = v2[1]; }
 
-        static public readonly Vector2i Zero = new Vector2i(0, 0);
+        static public readonly Vector3i Zero = new Vector3i(0, 0, 0);
+        static public readonly Vector3i AxisX = new Vector3i(1, 0, 0);
+        static public readonly Vector3i AxisY = new Vector3i(0, 1, 0);
+        static public readonly Vector3i AxisZ = new Vector3i(0, 0, 1);
 
         public int this[int key]
         {
-            get { return v[key]; }
-            set { v[key] = value; }
+            get { return (key == 0) ? x : y; }
+            set { if (key == 0) x = value; else y = value; }
         }
 
-        public void Add(int s) { v[0] += s; v[1] += s; }
+        public int[] array
+        {
+            get { return new int[] { x, y }; }
+        }
+
+        public void Add(int s) { x += s; y += s; }
 
 
-
-        public override string ToString() {
-            return string.Format("{0} {1}", v[0], v[1]);
+        public override string ToString()
+        {
+            return string.Format("{0} {1}", x, y);
         }
 
     }

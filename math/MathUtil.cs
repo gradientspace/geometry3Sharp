@@ -7,11 +7,21 @@ namespace g3
     public class MathUtil
     {
 
-        public const double Deg2Rad = (180.0 / Math.PI);
-        public const double Rad2Deg = (Math.PI / 180.0);
-        public const float Rad2Degf = (float)(180.0 / Math.PI);
+        public const double Deg2Rad = (Math.PI / 180.0);
+        public const double Rad2Deg = (180.0 / Math.PI);
+        public const double TwoPI = 2.0 * Math.PI;
+        public const double HalfPI = 0.5 * Math.PI;
+        public const double ZeroTolerance = 1e-08;
+        public const double Epsilon = 2.2204460492503131e-016;
+
         public const float Deg2Radf = (float)(Math.PI / 180.0);
+        public const float Rad2Degf = (float)(180.0 / Math.PI);
         public const float PIf = (float)(Math.PI);
+        public const float TwoPIf = 2.0f * PIf;
+        public const float HalfPIf = 0.5f * PIf;
+
+        public const float ZeroTolerancef = 1e-06f;
+        public const float Epsilonf = 1.192092896e-07F;
 
 
         // ugh C# generics so limiting...
@@ -21,14 +31,91 @@ namespace g3
             else if (f.CompareTo(high) > 0) return high;
             else return f;
         }
-
-
+        public static float Clamp(float f, float low, float high) {
+            return (f < low) ? low : (f > high) ? high : f;
+        }
+        public static double Clamp(double f, double low, double high) {
+            return (f < low) ? low : (f > high) ? high : f;
+        }
+        public static int Clamp(int f, int low, int high) {
+            return (f < low) ? low : (f > high) ? high : f;
+        }
 
         // fMinMaxValue may be signed
         public static float RangeClamp(float fValue, float fMinMaxValue)
         {
             return Clamp(fValue, -Math.Abs(fMinMaxValue), Math.Abs(fMinMaxValue));
         }
+        public static double RangeClamp(double fValue, double fMinMaxValue)
+        {
+            return Clamp(fValue, -Math.Abs(fMinMaxValue), Math.Abs(fMinMaxValue));
+        }
+
+
+        public static float SignedClamp(float f, float fMax) {
+            return Clamp(Math.Abs(f), 0, fMax) * Math.Sign(f);
+        }
+        public static double SignedClamp(double f, double fMax) {
+            return Clamp(Math.Abs(f), 0, fMax) * Math.Sign(f);
+        }
+
+        public static float SignedClamp(float f, float fMin, float fMax) {
+            return Clamp(Math.Abs(f), fMin, fMax) * Math.Sign(f);
+        }
+        public static double SignedClamp(double f, double fMin, double fMax) {
+            return Clamp(Math.Abs(f), fMin, fMax) * Math.Sign(f);
+        }
+
+
+        public static float PlaneAngleD(Vector3f a, Vector3f b, int nPlaneNormalIdx = 1)
+        {
+            a[nPlaneNormalIdx] = b[nPlaneNormalIdx] = 0.0f;
+            a.Normalize();
+            b.Normalize();
+            return Vector3f.AngleD(a, b);
+        }
+        public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, int nPlaneNormalIdx = 1)
+        {
+            vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0f;
+            vFrom.Normalize();
+            vTo.Normalize();
+            float fSign = Math.Sign(vFrom.Cross(vTo)[nPlaneNormalIdx]);
+            float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+        public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, Vector3f planeN)
+        {
+            vFrom = vFrom - Vector3f.Dot(vFrom, planeN) * planeN;
+            vTo = vTo - Vector3f.Dot(vTo, planeN) * planeN;
+            vFrom.Normalize();
+            vTo.Normalize();
+            Vector3f c = Vector3f.Cross(vFrom, vTo);
+            float fSign = Math.Sign(Vector3f.Dot(c, planeN));
+            float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+
+
+
+
+
+        public static int MostParallelAxis(Frame3f f, Vector3f vDir) {
+            double dot0 = Math.Abs(f.X.Dot(vDir));
+            double dot1 = Math.Abs(f.Y.Dot(vDir));
+            double dot2 = Math.Abs(f.Z.Dot(vDir));
+            double m = Math.Max(dot0, Math.Max(dot1, dot2));
+            return (m == dot0) ? 0 : (m == dot1) ? 1 : 2;
+        }
+
+
+
+        public static float Lerp(float a, float b, float t) {
+            return (1 - t) * a + (t) * b;
+        }
+        public static double Lerp(double a, double b, double t) {
+            return (1 - t) * a + (t) * b;
+        }
+
 
 
 
@@ -42,20 +129,22 @@ namespace g3
             return Clamp(fY, 0, 1);
         }
 
-        public static float WyvillRise01(float fX)
-        {
+        public static float WyvillRise01(float fX) {
             float d = 1 - fX * fX;
-            if (d > 0)
-                return 1 - (d * d * d);
-            return 0;
+            return (d > 0) ? 1 - (d * d * d) : 0;
+        }
+        public static double WyvillRise01(double fX) {
+            double d = 1 - fX * fX;
+            return (d > 0) ? 1 - (d * d * d) : 0;
         }
 
-        public static float WyvillFalloff01(float fX)
-        {
+        public static float WyvillFalloff01(float fX) {
             float d = 1 - fX * fX;
-            if (d > 0)
-                return (d * d * d);
-            return 0;
+            return (d > 0) ? (d * d * d) : 0;
+        }
+        public static double WyvillFalloff01(double fX) {
+            double d = 1 - fX * fX;
+            return (d > 0) ? (d * d * d) : 0;
         }
 
 

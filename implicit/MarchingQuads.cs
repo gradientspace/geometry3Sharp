@@ -11,7 +11,7 @@ namespace g3
 	{
 		PolyLine m_stroke;
 
-		Box2f m_bounds;
+		AxisAlignedBox2f m_bounds;
 		float m_fXShift;
 		float m_fYShift;
 		float m_fScale;
@@ -72,9 +72,9 @@ namespace g3
 		bool[] m_bEdgeSigns;
 
 
-		public MarchingQuads(int nSubdivisions, Box2f bounds, float fIsoValue) {
+		public MarchingQuads(int nSubdivisions, AxisAlignedBox2f bounds, float fIsoValue) {
 			m_stroke = new PolyLine();
-			m_bounds = new Box2f();
+			m_bounds = new AxisAlignedBox2f();
 			
 			m_nCells = nSubdivisions;
 			SetBounds(bounds);
@@ -95,7 +95,7 @@ namespace g3
 			set { m_nCells = value; SetBounds( m_bounds ); InitializeCells(); }
 		}
 
-		public Box2f Bounds {
+		public AxisAlignedBox2f Bounds {
 			get { return m_bounds; }
 			set { SetBounds(value); }
 		}
@@ -105,7 +105,7 @@ namespace g3
 		}
 
 
-		public 	Box2f GetBounds() {
+		public 	AxisAlignedBox2f GetBounds() {
 			return m_bounds;
 		}
 
@@ -437,7 +437,7 @@ namespace g3
 			}
 		}
 
-		void SetBounds( Box2f bounds ) {
+		void SetBounds( AxisAlignedBox2f bounds ) {
             m_bounds = bounds;
 
 			m_fXShift = (bounds.Min.x < 0) ? bounds.Min.x : -bounds.Min.x;

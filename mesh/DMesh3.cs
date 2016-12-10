@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Collections.Generic;
 
 namespace g3
@@ -125,6 +126,7 @@ namespace g3
             return vertices_refcount.isValid(vID) ?
                 new Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]) : InvalidVertex;
         }
+
 		public Vector3d GetVertexNormal(int vID) { 
 			return vertices_refcount.isValid(vID) ?
                 new Vector3d(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3d.AxisY;
@@ -134,7 +136,7 @@ namespace g3
                 new Vector3d(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]) : Vector3d.One;
 		}
 
-        public IReadOnlyCollection<int> GetVtxEdges(int vID) {
+        public ReadOnlyCollection<int> GetVtxEdges(int vID) {
             return vertices_refcount.isValid(vID) ?
                 vertex_edges[vID].AsReadOnly() : null;
         }
@@ -271,9 +273,9 @@ namespace g3
         {
             int a = edges[4 * eID], b = edges[4 * eID + 1];
             int t0 = edges[4 * eID + 2], t1 = edges[4 * eID + 3];
-            int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, GetTriangle(t0).v);
+            int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, GetTriangle(t0).array);
             if (t1 != InvalidID) {
-                int d = IndexUtil.find_tri_other_vtx(a, b, GetTriangle(t1).v);
+                int d = IndexUtil.find_tri_other_vtx(a, b, GetTriangle(t1).array);
                 return new Vector2i(c, d);
             } else
                 return new Vector2i(c, InvalidID);
@@ -487,7 +489,7 @@ namespace g3
 
                     // also check that nbr edge has opposite orientation
                     Vector3i othertv = GetTriangle(tOther);
-                    int found = IndexUtil.find_tri_ordered_edge(b, a, othertv.v);
+                    int found = IndexUtil.find_tri_ordered_edge(b, a, othertv.array);
                     DMESH_CHECK_OR_FAIL(found != InvalidID);
                 }
             }
