@@ -24,7 +24,22 @@ namespace g3
     };
 
 
-
+	//
+	// DMesh3 is a dynamic triangle mesh class. The mesh has has connectivity, 
+	//  is an inexed mesh, and allows for gaps in the index space.
+	//
+	// internally, all data is stored in POD-type buffers, except for the vertex->edge
+	// links, which are stored as List<int>'s. The arrays of POD data are stored in
+	// DVector's, so they grow in chunks, which is relatively efficient. 
+	//
+	// Reference counts for verts/tris/edges are stored as separate RefCountVector
+	// instances. 
+	//
+	// For each vertex, vertex_edges[i] is the unordered list of connected edges. This
+	// can be traversed in-order at some cost
+	//
+	// For each triangle, triangle_edges stores the three nbr edges. 
+	//
     public class DMesh3 : IMesh
     {
         public const int InvalidID = -1;
@@ -81,6 +96,9 @@ namespace g3
         }
 
 
+		void updateTimeStamp() {
+		}
+
 
         // IMesh impl
 
@@ -90,6 +108,9 @@ namespace g3
         public int TriangleCount {
             get { return triangles_refcount.count; }
         }
+		public int EdgeCount {
+			get { return edges_refcount.count; }
+		}
 
         public bool HasVertexColors { get { return colors != null; } }
         public bool HasVertexNormals { get { return normals != null; } }
@@ -248,7 +269,7 @@ namespace g3
             triangles.insert(tv[1], 3 * tid + 1);
             triangles.insert(tv[0], 3 * tid);
 			if ( triangle_groups != null )
-				triangles.insert(gid, tid);
+				triangle_groups.insert(gid, tid);
 
             // increment ref counts and update/create edges
             vertices_refcount.increment(tv[0]);
@@ -379,6 +400,12 @@ namespace g3
             return false;
         }
 
+		int replace_tri_vertex(int tID, int vOld, int vNew) {
+			if ( triangles[3 * tID] == vOld ) { triangles[3 * tID] = vNew; return 0; }
+			if ( triangles[3 * tID+1] == vOld ) { triangles[3 * tID+1] = vNew; return 1; }
+			if ( triangles[3 * tID+2] == vOld ) { triangles[3 * tID+2] = vNew; return 2; }
+			return -1;
+		}
 
         public bool edge_is_boundary(int eid) {
             return edges[4 * eid + 3] == InvalidID;
@@ -398,6 +425,8 @@ namespace g3
             int et0 = edges[4 * eID + 2], et1 = edges[4 * eID + 3];
             return (et0 == tid) ? et1 : ((et1 == tid) ? et0 : InvalidID);
         }
+
+
 
 
         // internal
@@ -431,6 +460,17 @@ namespace g3
             return eid;
         }
 
+		int add_triangle_only(int a, int b, int c, int e0, int e1, int e2) {
+			int tid = triangles_refcount.allocate();
+			triangles.insert(c, 3 * tid + 2);
+			triangles.insert(b, 3 * tid + 1);
+			triangles.insert(a, 3 * tid);
+			triangle_edges.insert(e2, 3*tid+2);
+			triangle_edges.insert(e1, 3*tid+1);
+			triangle_edges.insert(e0, 3*tid+0);	
+			return tid;
+		}
+
         int find_edge(int vA, int vB)
         {
             int vO = Math.Max(vA, vB);
@@ -439,8 +479,55 @@ namespace g3
             return (idx == -1) ? InvalidID : e0[idx];
         }
 
+		void set_edge_vertices(int eID, int a, int b) {
+			edges[4 * eID] = Math.Min(a,b);
+			edges[4 * eID + 1] = Math.Max(a,b);
+		}
+
+		int replace_edge_vertex(int eID, int vOld, int vNew) {
+			int a = edges[4*eID], b = edges[4*eID+1];
+			if ( a == vOld ) {
+				edges[4*eID] = Math.Min(b, vNew);
+				edges[4*eID+1] = Math.Max(b, vNew);
+				return 0;
+			} else if ( b == vOld ) {
+				edges[4*eID] = Math.Min(a, vNew);
+				edges[4*eID+1] = Math.Max(a, vNew);
+				return 1;				
+			} else
+				return -1;
+		}
 
 
+		int replace_edge_triangle(int eID, int tOld, int tNew) {
+			int a = edges[4*eID+2], b = edges[4*eID+3];
+			if ( a == tOld ) {
+				if ( tNew == InvalidID ) {
+					edges[4*eID+2] = b;
+					edges[4*eID+3] = InvalidID;
+				} else 
+					edges[4*eID+2] = tNew;
+				return 0;
+			} else if ( b == tOld ) {
+				edges[4*eID+3] = tNew;
+				return 1;				
+			} else
+				return -1;
+		}
+
+		int replace_triangle_edge(int tID, int eOld, int eNew) {
+			if ( triangle_edges[3*tID] == eOld ) {
+				triangle_edges[3*tID] = eNew;
+				return 0;
+			} else if ( triangle_edges[3*tID+1] == eOld ) {
+				triangle_edges[3*tID+1] = eNew;
+				return 1;
+			} else if ( triangle_edges[3*tID+2] == eOld ) {
+				triangle_edges[3*tID+2] = eNew;
+				return 2;
+			} else
+				return -1;
+		}
 
 
 
@@ -458,6 +545,153 @@ namespace g3
             set_triangle_edges(tID, te[0], te[2], te[1]);
             return MeshResult.Ok;
         }
+
+
+		public struct EdgeSplitInfo {
+			public bool bIsBoundary;
+			public int vNew;
+		}
+		public MeshResult SplitEdge(int vA, int vB, out EdgeSplitInfo split)
+		{
+			int eid = find_edge(vA, vB);
+			return SplitEdge(eid, out split);
+		}
+		public MeshResult SplitEdge(int eab, out EdgeSplitInfo split)
+		{
+			split = new EdgeSplitInfo();
+
+			if (! IsEdge(eab) )
+				return MeshResult.Failed_NotAnEdge;
+
+			//Edge * eAB = & m_vEdges[eab];
+
+			// look up primary edge & triangle
+			int a = edges[4 * eab], b = edges[4 * eab + 1];
+			int t0 = edges[4 * eab + 2];
+			Vector3i T0tv = GetTriangle(t0);
+			int[] T0tv_array = T0tv.array;
+			int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, T0tv_array);
+
+			//Triangle & T0 = m_vTriangles[t0];
+
+			// create new vertex
+			Vector3d vNew = 0.5 * ( GetVertex(a) + GetVertex(b) );
+			int f = AppendVertex( vNew );
+
+			// quite a bit of code is duplicated between boundary and non-boundary case, but it
+			//  is too hard to follow later if we factor it out...
+			if ( edge_is_boundary(eab) ) {
+
+				// look up edge bc, which needs to be modified
+				Vector3i T0te = GetTriEdges(t0);
+				int ebc = T0te[ IndexUtil.find_edge_index_in_tri(b, c, T0tv_array) ];
+				//Edge & eBC = m_vEdges[ebc];
+
+				// rewrite existing triangle
+				replace_tri_vertex(t0, b, f);
+
+				// add new second triangle
+				int t2 = add_triangle_only(f,b,c, InvalidID, InvalidID, InvalidID);
+				if ( triangle_groups != null )
+					triangle_groups.insert(triangle_groups[t0], t2);
+				
+				//Triangle & T2 = m_vTriangles[t2];
+
+				// rewrite edge bc, create edge af
+				replace_edge_triangle(ebc, t0, t2);
+				int eaf = eab; 
+				//Edge * eAF = eAB;
+				replace_edge_vertex(eaf, b, f);
+				vertex_edges[b].Remove(eab);
+				vertex_edges[f].Add(eaf);
+
+				// create new edges fb and fc 
+				int efb = add_edge(f, b, t2);
+				int efc = add_edge(f, c, t0, t2);
+
+				// update triangle edge-nbrs
+				replace_triangle_edge(t0, ebc, efc);
+				set_triangle_edges(t2, efb, ebc, efc);
+
+				// update vertex refcounts
+				vertices_refcount.increment(c);
+				vertices_refcount.increment(f, 2);
+
+				split.bIsBoundary = true;
+				split.vNew = f;
+
+				updateTimeStamp();
+				return MeshResult.Ok;
+
+			} else {		// interior triangle branch
+				
+				// look up other triangle
+				int t1 = edges[4 * eab + 3];
+				//Triangle & T1 = m_vTriangles[t1];
+				Vector3i T1tv = GetTriangle(t1);
+				int[] T1tv_array = T1tv.array;
+				int d = IndexUtil.find_tri_other_vtx( a, b, T1tv_array );
+
+				// look up edges that we are going to need to update
+				// [TODO OPT] could use ordering to reduce # of compares here
+				Vector3i T0te = GetTriEdges(t0);
+				int ebc = T0te[IndexUtil.find_edge_index_in_tri( b, c, T0tv_array )];
+				//Edge & eBC = m_vEdges[ebc];
+				Vector3i T1te = GetTriEdges(t1);
+				int edb = T1te[IndexUtil.find_edge_index_in_tri( d, b, T1tv_array )];
+				//Edge & eDB = m_vEdges[edb];
+
+				// rewrite existing triangles
+				replace_tri_vertex(t0, b, f);
+				replace_tri_vertex(t1, b, f);
+
+				// add two new triangles to close holes we just created
+				int t2 = add_triangle_only(f,b,c, InvalidID, InvalidID, InvalidID);
+				int t3 = add_triangle_only(f, d, b, InvalidID, InvalidID, InvalidID);
+				if ( triangle_groups != null ) {
+					triangle_groups.insert(triangle_groups[t0], t2);
+					triangle_groups.insert(triangle_groups[t1], t3);
+				}
+				
+				//Triangle & T2 = m_vTriangles[t2];
+				//Triangle & T3 = m_vTriangles[t3];
+
+				// update the edges we found above, to point to new triangles
+				replace_edge_triangle(ebc, t0, t2);
+				replace_edge_triangle(edb, t1, t3);
+
+				// edge eab became eaf
+				int eaf = eab; //Edge * eAF = eAB;
+				replace_edge_vertex(eaf, b, f);
+
+				// update a/b/f vertex-edges
+				vertex_edges[b].Remove( eab );
+				vertex_edges[f].Add( eaf );
+
+				// create new edges connected to f  (also updates vertex-edges)
+				int efb = add_edge( f, b, t2, t3 );
+				int efc = add_edge( f, c, t0, t2 );
+				int edf = add_edge( d, f, t1, t3 );
+
+				// update triangle edge-nbrs
+				replace_triangle_edge(t0, ebc, efc);
+				replace_triangle_edge(t1, edb, edf);
+				set_triangle_edges(t2, efb, ebc, efc);
+				set_triangle_edges(t3, edf, edb, efb);
+
+				// update vertex refcounts
+				vertices_refcount.increment( c );
+				vertices_refcount.increment( d );
+				vertices_refcount.increment( f, 4 );
+
+				split.bIsBoundary = false;
+				split.vNew = f;
+
+				updateTimeStamp();
+				return MeshResult.Ok;
+			}
+
+		}
 
 
 
