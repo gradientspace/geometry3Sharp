@@ -554,6 +554,10 @@ namespace g3
 		public MeshResult SplitEdge(int vA, int vB, out EdgeSplitInfo split)
 		{
 			int eid = find_edge(vA, vB);
+			if ( eid == InvalidID ) {
+				split = new EdgeSplitInfo();
+				return MeshResult.Failed_NotAnEdge;
+			}
 			return SplitEdge(eid, out split);
 		}
 		public MeshResult SplitEdge(int eab, out EdgeSplitInfo split)
