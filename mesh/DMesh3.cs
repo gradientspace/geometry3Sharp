@@ -40,6 +40,7 @@ namespace g3
         DVector<double> vertices;
 		DVector<float> normals;
 		DVector<float> colors;
+		DVector<float> uv;
 
         // [TODO] this seems like it will not be efficient! 
         //   do our own short_list backed my a memory pool?
@@ -50,25 +51,30 @@ namespace g3
         RefCountVector triangles_refcount;
         DVector<int> triangles;
         DVector<int> triangle_edges;
+		DVector<int> triangle_groups;
 
         RefCountVector edges_refcount;
         DVector<int> edges;
 
 
 
-        public DMesh3(bool bWantNormals = true, bool bWantColors = true)
+        public DMesh3(bool bWantNormals = true, bool bWantColors = false, bool bWantUVs = false, bool bWantTriGroups = false)
         {
             vertices = new DVector<double>();
 			if ( bWantNormals)
 				normals = new DVector<float>();
 			if ( bWantColors )
 				colors = new DVector<float>();
+			if ( bWantUVs )
+				uv = new DVector<float>();
             vertex_edges = new DVector<List<int>>();
             vertices_refcount = new RefCountVector();
 
             triangles = new DVector<int>();
             triangle_edges = new DVector<int>();
             triangles_refcount = new RefCountVector();
+			if ( bWantTriGroups )
+				triangle_groups = new DVector<int>();
 
             edges = new DVector<int>();
             edges_refcount = new RefCountVector();
@@ -87,12 +93,8 @@ namespace g3
 
         public bool HasVertexColors { get { return colors != null; } }
         public bool HasVertexNormals { get { return normals != null; } }
-        public bool HasVertexUVs { get { return false; } }
-
-        public Vector2f GetVertexUV(int i) { return Vector2f.Zero; }
-
-        public bool HasTriangleGroups { get { return false; } }
-        public int GetTriangleGroup(int i) { return 0; }
+        public bool HasVertexUVs { get { return uv != null; } }
+		public bool HasTriangleGroups { get { return triangle_groups != null; } }
 
         // info
 
@@ -131,10 +133,17 @@ namespace g3
 			return vertices_refcount.isValid(vID) ?
                 new Vector3d(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3d.AxisY;
 		}
+
 		public Vector3d GetVertexColor(int vID) { 
 			return vertices_refcount.isValid(vID) ?
                 new Vector3d(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]) : Vector3d.One;
 		}
+
+		public Vector2f GetVertexUV(int vID) { 
+			return vertices_refcount.isValid(vID) ?
+                new Vector2f(uv[2 * vID], uv[2 * vID + 1]) : Vector2f.Zero;
+		}
+
 
         public ReadOnlyCollection<int> GetVtxEdges(int vID) {
             return vertices_refcount.isValid(vID) ?
@@ -145,10 +154,17 @@ namespace g3
             return triangles_refcount.isValid(tID) ?
                 new Vector3i(triangles[3 * tID], triangles[3 * tID + 1], triangles[3 * tID + 2]) : InvalidTriangle;
         }
+
         public Vector3i GetTriEdges(int tID) {
             return triangles_refcount.isValid(tID) ?
                 new Vector3i(triangle_edges[3 * tID], triangle_edges[3 * tID + 1], triangle_edges[3 * tID + 2]) : InvalidTriangle;
         }
+
+		public int GetTriangleGroup(int tID) { 
+			return triangles_refcount.isValid(tID) ?
+                 triangle_groups[tID] : 0;
+		}
+
 
         public Vector2i GetEdgeV(int eID) {
             return edges_refcount.isValid(eID) ?
@@ -183,7 +199,18 @@ namespace g3
 				normals.insert(n[0], 3 * vid);
 			}
 
-            // TODO colors
+			if ( colors != null ) {
+				Vector3f c = (info.bHaveC) ? info.c : Vector3f.One;
+				colors.insert(c[2], 3 * vid + 2);
+				colors.insert(c[1], 3 * vid + 1);
+				colors.insert(c[0], 3 * vid);
+			}
+
+			if ( uv != null ) {
+				Vector2f u = (info.bHaveUV) ? info.uv : Vector2f.Zero;
+				uv.insert(u[1], 2*vid + 1);
+				uv.insert(u[0], 2*vid);
+			}
 
             vertex_edges.insert(new List<int>(), vid);
 
@@ -191,10 +218,10 @@ namespace g3
         }
 
 
-        public int AppendTriangle(int v0, int v1, int v2) {
-            return AppendTriangle(new Vector3i(v0, v1, v2));
+        public int AppendTriangle(int v0, int v1, int v2, int gid = -1) {
+            return AppendTriangle(new Vector3i(v0, v1, v2), gid);
         }
-        public int AppendTriangle(Vector3i tv) {
+        public int AppendTriangle(Vector3i tv, int gid = -1) {
             if (IsVertex(tv[0]) == false || IsVertex(tv[1]) == false || IsVertex(tv[2]) == false) {
                 Util.gDevAssert(false);
                 return InvalidID;
@@ -220,6 +247,8 @@ namespace g3
             triangles.insert(tv[2], 3 * tid + 2);
             triangles.insert(tv[1], 3 * tid + 1);
             triangles.insert(tv[0], 3 * tid);
+			if ( triangle_groups != null )
+				triangles.insert(gid, tid);
 
             // increment ref counts and update/create edges
             vertices_refcount.increment(tv[0]);
@@ -446,6 +475,12 @@ namespace g3
 
 			if ( normals != null )
 				DMESH_CHECK_OR_FAIL(normals.size == vertices.size);
+			if ( colors != null )
+				DMESH_CHECK_OR_FAIL(colors.size == vertices.size);
+			if ( uv != null )
+				DMESH_CHECK_OR_FAIL(uv.size/2 == vertices.size/3);
+			if ( triangle_groups != null )
+				DMESH_CHECK_OR_FAIL(triangle_groups.size == triangles.size/3);
 
             foreach (int tID in TriangleIndices() ) { 
 

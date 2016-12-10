@@ -23,8 +23,7 @@ namespace g3
         public int AppendNewMesh(bool bHaveVtxNormals, bool bHaveVtxColors, bool bHaveVtxUVs, bool bHaveFaceGroups)
         {
             int index = Meshes.Count;
-            DMesh3 m = new DMesh3();
-            //m.Initialize(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
+			DMesh3 m = new DMesh3(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
             Meshes.Add(m);
             MaterialAssignment.Add(-1);     // no material is known
             nActiveMesh = index;
@@ -46,8 +45,7 @@ namespace g3
 
         public int AppendTriangle(int i, int j, int k, int g)
         {
-            //return Meshes[nActiveMesh].AppendTriangle(i, j, k, g);
-            return Meshes[nActiveMesh].AppendTriangle(i, j, k);
+            return Meshes[nActiveMesh].AppendTriangle(i, j, k, g);
         }
 
         public int AppendVertex(double x, double y, double z)

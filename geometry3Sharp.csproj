@@ -81,6 +81,26 @@
     <Compile Include="math\Vector3f.cs" />
     <Compile Include="queries\Distance.cs" />
     <Compile Include="queries\RayIntersection.cs" />
+    <Compile Include="math\AxisAlignedBox2f.cs" />
+    <Compile Include="math\AxisAlignedBox3d.cs" />
+    <Compile Include="math\AxisAlignedBox3f.cs" />
+    <Compile Include="math\Colorf.cs" />
+    <Compile Include="math\Line3.cs" />
+    <Compile Include="math\Ray3.cs" />
+    <Compile Include="math\Segment2.cs" />
+    <Compile Include="math\Segment3.cs" />
+    <Compile Include="mesh\GenCylGenerators.cs" />
+    <Compile Include="mesh\RevolveGenerator.cs" />
+    <Compile Include="curve\ArcLengthParam.cs" />
+    <Compile Include="curve\CurveGenerators.cs" />
+    <Compile Include="curve\CurveUtils.cs" />
+    <Compile Include="curve\DCurve3.cs" />
+    <Compile Include="curve\ICurve.cs" />
+    <Compile Include="curve\Polygon2d.cs" />
+    <Compile Include="curve\SimpleCurveDeformers.cs" />
+    <Compile Include="queries\DistLine3Ray3.cs" />
+    <Compile Include="queries\DistRay3Ray3.cs" />
+    <Compile Include="queries\DistRay3Segment3.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

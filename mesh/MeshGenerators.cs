@@ -30,7 +30,16 @@ namespace g3
         {
             int nV = vertices.Count;
             for (int i = 0; i < nV; ++i) {
-                int vID = m.AppendVertex(vertices[i]);
+				NewVertexInfo ni = new NewVertexInfo() { v = vertices[i] };
+				if ( WantNormals ) {
+					ni.bHaveN = true; 
+					ni.n = normals[i];
+				}
+				if ( WantUVs ) {
+					ni.bHaveUV = true;
+					ni.uv = uv[i];
+				}
+                int vID = m.AppendVertex(ni);
                 Util.gDevAssert(vID == i);
             }
             int nT = triangles.Count;
