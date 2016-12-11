@@ -48,6 +48,14 @@ namespace g3
             }
             return DMesh3.InvalidID;
         }
+		public static int find_tri_other_vtx(int a, int b, Vector3i tri_verts)
+		{
+			for (int j = 0; j < 3; ++j) {
+				if (same_pair_unordered(a, b, tri_verts[j], tri_verts[(j + 1) % 3]))
+					return tri_verts[(j + 2) % 3];
+			}
+			return DMesh3.InvalidID;
+		}
 
         // find sequence [a,b] in tri_verts (mod3) then return the third **index**, or InvalidID if not found
         public static int find_tri_other_index(int a, int b, int[] tri_verts)

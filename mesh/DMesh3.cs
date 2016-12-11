@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace g3
 {
@@ -803,6 +804,235 @@ namespace g3
 		}
 
 
+
+		void debug_fail(string s) {
+		#if DEBUG
+			Debug.Assert(false);
+			//throw new Exception("DMesh3.CollapseEdge: check failed: " + s);
+		#endif
+		}
+
+
+		void check_tri(int t) {
+			Vector3i tv = GetTriangle(t);
+			if ( tv[0] == tv[1] || tv[0] == tv[2] || tv[1] == tv[2] )
+				Debug.Assert(false);
+		}
+		void check_edge(int e) {
+			Vector2i tv = GetEdgeT(e);
+			if ( tv[0] == -1 )
+				Debug.Assert(false);
+		}
+
+
+		public struct EdgeCollapseInfo {
+			public int vKept;
+			public int vRemoved;
+			public bool bIsBoundary;	
+		}
+		public MeshResult CollapseEdge(int vKeep, int vRemove, out EdgeCollapseInfo collapse)
+		{
+			collapse = new EdgeCollapseInfo();
+				
+			if ( IsVertex(vKeep) == false || IsVertex(vRemove) == false )
+				return MeshResult.Failed_NotAnEdge;
+
+			int b = vKeep;		// renaming for sanity. We remove a and keep b
+			int a = vRemove;
+			List<int> edges_b = vertex_edges[b];
+
+			int eab = find_edge( a, b );
+			if (eab == InvalidID)
+				return MeshResult.Failed_NotAnEdge;
+
+			int t0 = edges[4*eab+2];
+			Vector3i T0tv = GetTriangle(t0);
+			//Triangle & T0 = m_vTriangles[t0];
+			int c = IndexUtil.find_tri_other_vtx(a, b, T0tv);
+
+			// look up opposing triangle/vtx if we are not in boundary case
+			bool bIsBoundary = false;
+			int d = InvalidID;
+			int t1 = edges[4*eab+3];
+			if (t1 != InvalidID) {
+				Vector3i T1tv = GetTriangle(t1);
+				d = IndexUtil.find_tri_other_vtx( a, b, T1tv );
+				if (c == d)
+					return MeshResult.Failed_FoundDuplicateTriangle;
+			} else {
+				bIsBoundary = true;
+			}
+
+			// We cannot collapse if edge lists of a and b share vertices other
+			//  than c and d  (because then we will make a triangle [x b b].
+			//  Unfortunately I cannot see a way to do this more efficiently than brute-force search
+			//  [TODO] if we had tri iterator for a, couldn't we check each tri for b  (skipping t0 and t1) ?
+			List<int> edges_a = vertex_edges[a];
+			int edges_a_count = 0;
+			foreach (int eid_a in edges_a) {
+				int vax =  edge_other_v(eid_a, a);
+				edges_a_count++;
+				if ( vax == b || vax == c || vax == d )
+					continue;
+				foreach (int eid_b in edges_b) {
+					if ( edge_other_v(eid_b, b) == vax )
+						return MeshResult.Failed_InvalidNeighbourhood;
+				}
+			}
+
+
+			// We cannot collapse if we have a tetrahedron. In this case a has 3 nbr edges,
+			//  and edge cd exists. But that is not conclusive, we also have to check that
+			//  cd is an internal edge, and that each of its tris contain a or b
+			if (edges_a_count == 3 && bIsBoundary == false) {
+				int edc = find_edge( d, c );
+				if (edc != InvalidID && edges[4*edc+3] != InvalidID ) {
+					int edc_t0 = edges[4*edc+2];
+					int edc_t1 = edges[4*edc+3];
+
+				    if ( (tri_has_v(edc_t0,a) && tri_has_v(edc_t1, b)) 
+					    || (tri_has_v(edc_t0, b) && tri_has_v(edc_t1, a)) )
+					return MeshResult.Failed_CollapseTetrahedron;
+				}
+
+			} else if (edges_a_count == 2 && bIsBoundary == true) {
+				// cannot collapse edge if we are down to a single triangle
+				if ( edges_b.Count == 2 && vertex_edges[c].Count == 2 )
+					return MeshResult.Failed_CollapseTriangle;
+			}
+
+
+			// 1) remove edge ab from vtx b
+			// 2) find edges ad and ac, and tris tad, tac across those edges  (will use later)
+			// 3) for other edges, replace a with b, and add that edge to b
+			// 4) replace a with b in all triangles connected to a
+			int ead = InvalidID, eac = InvalidID;
+			int tad = InvalidID, tac = InvalidID;
+			foreach (int eid in edges_a) {
+				//Edge & e = m_vEdges[eid];
+				int o = edge_other_v(eid, a);
+				if (o == b) {
+					if (edges_b.Remove(eid) != true )
+						debug_fail("remove case o == b");
+				} else if (o == c) {
+					eac = eid;
+					if ( vertex_edges[c].Remove(eid) != true )
+						debug_fail("remove case o == c");
+					tac = edge_other_t(eid, t0);
+				} else if (o == d) {
+					ead = eid;
+					if ( vertex_edges[d].Remove(eid) != true )
+						debug_fail("remove case o == c, step 1");
+					tad = edge_other_t(eid, t1);
+
+					// WTF tad can be InvalidID here, because it might not exist...
+					//if ( tad == InvalidID )
+						//debug_fail("remove case o == c, step 2");
+				} else {
+					if ( replace_edge_vertex(eid, a, b) == -1 )
+						debug_fail("remove case else");
+					edges_b.Add(eid);
+				}
+
+				// [TODO] perhaps we can already have unique tri list because of the manifold-nbrhood check we need to do...
+				for (int j = 0; j < 2; ++j) {
+					int t_j = edges[4*eid + 2 + j];
+					if (t_j != InvalidID && t_j != t0 && t_j != t1) {
+						if ( tri_has_v(t_j, a) ) {
+							if ( replace_tri_vertex(t_j, a, b) == -1 )
+								debug_fail("remove last check");
+							vertices_refcount.increment(b);
+							vertices_refcount.decrement(a);
+						}
+					}
+				}
+			}
+
+
+			if (bIsBoundary == false) {
+
+				// remove all edges from vtx a, then remove vtx a
+				edges_a.Clear();
+				Debug.Assert( vertices_refcount.refCount(a) == 3 );		// in t0,t1, and initial ref
+				vertices_refcount.decrement( a, 3 );
+				Debug.Assert( vertices_refcount.isValid( a ) == false );
+
+				// remove triangles T0 and T1, and update b/c/d refcounts
+				triangles_refcount.decrement( t0 );
+				triangles_refcount.decrement( t1 );
+				vertices_refcount.decrement( c );
+				vertices_refcount.decrement( d );
+				vertices_refcount.decrement( b, 2 );
+				Debug.Assert( triangles_refcount.isValid( t0 ) == false );
+				Debug.Assert( triangles_refcount.isValid( t1 ) == false );
+
+				// remove edges ead, eab, eac
+				edges_refcount.decrement( ead );
+				edges_refcount.decrement( eab );
+				edges_refcount.decrement( eac );
+				Debug.Assert( edges_refcount.isValid( ead ) == false );
+				Debug.Assert( edges_refcount.isValid( eab ) == false );
+				Debug.Assert( edges_refcount.isValid( eac ) == false );
+
+				// replace t0 and t1 in edges ebd and ebc that we kept
+				int ebd = find_edge( b, d );
+				int ebc = find_edge( b, c );
+				if( replace_edge_triangle(ebd, t1, tad ) == -1 )
+					debug_fail("isboundary=false branch, ebd replace triangle");
+				if ( replace_edge_triangle(ebc, t0, tac ) == -1 )
+					debug_fail("isboundary=false branch, ebc replace triangle");
+
+				// update tri-edge-nbrs in tad and tac
+				if (tad != InvalidID) {
+					if ( replace_triangle_edge(tad, ead, ebd ) == -1 )
+						debug_fail("isboundary=false branch, ebd replace triangle");
+				}
+				if (tac != InvalidID) {
+					if ( replace_triangle_edge(tac, eac, ebc ) == -1 )
+						debug_fail("isboundary=false branch, ebd replace triangle");
+				}
+
+			} else {
+
+				//  this is basically same code as above, just not referencing t0/d
+
+				// remove all edges from vtx a, then remove vtx a
+				edges_a.Clear();
+				Debug.Assert( vertices_refcount.refCount( a ) == 2 );		// in t0 and initial ref
+				vertices_refcount.decrement( a, 2 );
+				Debug.Assert( vertices_refcount.isValid( a ) == false );
+
+				// remove triangle T0 and update b/c refcounts
+				triangles_refcount.decrement( t0 );
+				vertices_refcount.decrement( c );
+				vertices_refcount.decrement( b );
+				Debug.Assert( triangles_refcount.isValid( t0 ) == false );
+
+				// remove edges eab and eac
+				edges_refcount.decrement( eab );
+				edges_refcount.decrement( eac );
+				Debug.Assert( edges_refcount.isValid( eab ) == false );
+				Debug.Assert( edges_refcount.isValid( eac ) == false );
+
+				// replace t0 in edge ebc that we kept
+				int ebc = find_edge( b, c );
+				if ( replace_edge_triangle(ebc, t0, tac ) == -1 )
+					debug_fail("isboundary=false branch, ebc replace triangle");
+
+				// update tri-edge-nbrs in tac
+				if (tac != InvalidID) {
+					if ( replace_triangle_edge(tac, eac, ebc ) == -1 )
+						debug_fail("isboundary=true branch, ebd replace triangle");
+				}
+			}
+
+			collapse.vKept = vKeep;
+			collapse.vRemoved = vRemove;
+			collapse.bIsBoundary = bIsBoundary;
+
+			updateTimeStamp();
+			return MeshResult.Ok;
+		}
 
 
 
