@@ -847,7 +847,6 @@ namespace g3
 
 			int t0 = edges[4*eab+2];
 			Vector3i T0tv = GetTriangle(t0);
-			//Triangle & T0 = m_vTriangles[t0];
 			int c = IndexUtil.find_tri_other_vtx(a, b, T0tv);
 
 			// look up opposing triangle/vtx if we are not in boundary case
@@ -901,12 +900,34 @@ namespace g3
 					return MeshResult.Failed_CollapseTriangle;
 			}
 
+			// [RMS] this was added from C++ version...seems like maybe I never hit
+			//   this case? Conceivably could be porting bug but looking at the
+			//   C++ code I cannot see how we could possibly have caught this case...
+			//
+			// could we do this w/o having to look up all the edges here? Seems
+			// like just testing if c or d have valence 2 would be sufficient, but
+			// it doesn't work..
+			//
+			// if edge bd or bc is a boundary edge, we cannot collapse because
+			// then we would have created a degenerate edge & stray vertex!
+			int ebc = find_edge(b,c);
+			int eac = find_edge(a,c);
+			if ( edge_is_boundary(ebc) && edge_is_boundary(eac) )
+				return MeshResult.Failed_InvalidNeighbourhood;
+			int ebd = InvalidID, ead = InvalidID;
+			if ( d != InvalidID ) {
+				ebd = find_edge( b, d );
+				ead = find_edge( a, d);
+				if ( edge_is_boundary(ebd) && edge_is_boundary(ead) )
+					return MeshResult.Failed_InvalidNeighbourhood;
+			}
+			
 
 			// 1) remove edge ab from vtx b
 			// 2) find edges ad and ac, and tris tad, tac across those edges  (will use later)
 			// 3) for other edges, replace a with b, and add that edge to b
 			// 4) replace a with b in all triangles connected to a
-			int ead = InvalidID, eac = InvalidID;
+			//int ead = InvalidID, eac = InvalidID;
 			int tad = InvalidID, tac = InvalidID;
 			foreach (int eid in edges_a) {
 				//Edge & e = m_vEdges[eid];
@@ -915,12 +936,12 @@ namespace g3
 					if (edges_b.Remove(eid) != true )
 						debug_fail("remove case o == b");
 				} else if (o == c) {
-					eac = eid;
+					//eac = eid;
 					if ( vertex_edges[c].Remove(eid) != true )
 						debug_fail("remove case o == c");
 					tac = edge_other_t(eid, t0);
 				} else if (o == d) {
-					ead = eid;
+					//ead = eid;
 					if ( vertex_edges[d].Remove(eid) != true )
 						debug_fail("remove case o == c, step 1");
 					tad = edge_other_t(eid, t1);
@@ -975,10 +996,12 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 and t1 in edges ebd and ebc that we kept
-				int ebd = find_edge( b, d );
-				int ebc = find_edge( b, c );
+				//int ebd = find_edge( b, d );
+				//int ebc = find_edge( b, c );
+
 				if( replace_edge_triangle(ebd, t1, tad ) == -1 )
 					debug_fail("isboundary=false branch, ebd replace triangle");
+
 				if ( replace_edge_triangle(ebc, t0, tac ) == -1 )
 					debug_fail("isboundary=false branch, ebc replace triangle");
 
@@ -1015,7 +1038,7 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 in edge ebc that we kept
-				int ebc = find_edge( b, c );
+				//int ebc = find_edge( b, c );
 				if ( replace_edge_triangle(ebc, t0, tac ) == -1 )
 					debug_fail("isboundary=false branch, ebc replace triangle");
 
@@ -1145,6 +1168,19 @@ namespace g3
                 foreach( int tID in vTris) {
                     DMESH_CHECK_OR_FAIL(tri_has_v(tID, vID));
                 }
+
+				// check that edges around vert only references tris above, and reference all of them!
+				List<int> vRemoveTris = new List<int>(vTris);
+				foreach ( int edgeid in l ) {
+					Vector2i edget = GetEdgeT(edgeid);
+					DMESH_CHECK_OR_FAIL( vTris.Contains(edget[0]) );
+					if ( edget[1] != InvalidID )
+						DMESH_CHECK_OR_FAIL( vTris.Contains(edget[1]) );
+					vRemoveTris.Remove(edget[0]);
+					if ( edget[1] != InvalidID )
+						vRemoveTris.Remove(edget[1]);
+				}
+				DMESH_CHECK_OR_FAIL(vRemoveTris.Count == 0);
             }
             return true;
         }
