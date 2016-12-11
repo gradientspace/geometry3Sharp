@@ -935,9 +935,8 @@ namespace g3
 			//
 			// NOTE: potentially scanning all edges here...couldn't we
 			//  pick up eac/bc/ad/bd as we go? somehow?
-			if ( vertex_is_boundary(a) && vertex_is_boundary(b) && d != InvalidID )
+			if ( bIsBoundaryEdge == false && vertex_is_boundary(a) && vertex_is_boundary(b) )
 				return MeshResult.Failed_InvalidNeighbourhood;
-
 
 
 			// 1) remove edge ab from vtx b
