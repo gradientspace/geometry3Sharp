@@ -26,7 +26,10 @@ namespace g3
                 bool bVtxColors = options.bPerVertexColors && mesh.HasVertexColors;
                 bool bNormals = options.bPerVertexNormals && mesh.HasVertexNormals;
 
+				int[] mapV = new int[mesh.MaxVertexID];
+
                 foreach ( int vi in mesh.VertexIndices() ) { 
+					mapV[vi] = nAccumCountV++;
                     Vector3d v = mesh.GetVertex(vi);
                     if ( bVtxColors ) {
                         Vector3d c = mesh.GetVertexColor(vi);
@@ -43,7 +46,9 @@ namespace g3
 
                 foreach (int ti in mesh.TriangleIndices() ) { 
                     Vector3i t = mesh.GetTriangle(ti);
-                    t.Add(nAccumCountV);
+					t[0] = mapV[t[0]];
+					t[1] = mapV[t[1]];
+					t[2] = mapV[t[2]];
                     
                     if ( bNormals ) {
                         writer.WriteLine("f {0}//{0} {1}//{1} {2}//{2}", t[0], t[1], t[2]);
@@ -53,7 +58,6 @@ namespace g3
 
                 }
 
-                nAccumCountV += mesh.VertexCount;
             }
 
 

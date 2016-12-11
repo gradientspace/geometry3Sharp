@@ -112,6 +112,15 @@ namespace g3
 		public int EdgeCount {
 			get { return edges_refcount.count; }
 		}
+		public int MaxVertexID {
+			get { return vertices_refcount.max_index; }
+		}
+		public int MaxTriangleID {
+			get { return triangles_refcount.max_index; }
+		}
+		public int MaxEdgeID {
+			get { return edges_refcount.max_index; }
+		}
 
         public bool HasVertexColors { get { return colors != null; } }
         public bool HasVertexNormals { get { return normals != null; } }
@@ -131,18 +140,6 @@ namespace g3
         }
 
 
-        public int GetMaxVertexID() {
-            return vertices_refcount.max_index;
-        }
-        public int GetMaxTriangleID() {
-            return triangles_refcount.max_index;
-        }
-        public int GetMaxEdgeID(int vID) {
-            return edges_refcount.max_index;
-        }
-
-
-
         // getters
 
 
@@ -151,14 +148,14 @@ namespace g3
                 new Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]) : InvalidVertex;
         }
 
-		public Vector3d GetVertexNormal(int vID) { 
+		public Vector3f GetVertexNormal(int vID) { 
 			return vertices_refcount.isValid(vID) ?
-                new Vector3d(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3d.AxisY;
+                new Vector3f(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3f.AxisY;
 		}
 
-		public Vector3d GetVertexColor(int vID) { 
+		public Vector3f GetVertexColor(int vID) { 
 			return vertices_refcount.isValid(vID) ?
-                new Vector3d(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]) : Vector3d.One;
+                new Vector3f(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]) : Vector3f.One;
 		}
 
 		public Vector2f GetVertexUV(int vID) { 
@@ -166,11 +163,33 @@ namespace g3
                 new Vector2f(uv[2 * vID], uv[2 * vID + 1]) : Vector2f.Zero;
 		}
 
-
         public ReadOnlyCollection<int> GetVtxEdges(int vID) {
             return vertices_refcount.isValid(vID) ?
                 vertex_edges[vID].AsReadOnly() : null;
         }
+
+		public NewVertexInfo GetVertexAll(int i) {
+			NewVertexInfo vi = new NewVertexInfo();
+			vi.v = GetVertex(i);
+			if ( HasVertexNormals ) {
+				vi.bHaveN = true;
+				vi.n = GetVertexNormal(i);
+			} else
+				vi.bHaveN = false;
+			if ( HasVertexColors ) {
+				vi.bHaveC = true;
+				vi.c = GetVertexColor(i);
+			} else
+				vi.bHaveC = false;
+			if ( HasVertexUVs ) {
+				vi.bHaveUV = true;
+				vi.uv = GetVertexUV(i);
+			} else
+				vi.bHaveUV = false;
+			return vi;
+		}
+
+
 
         public Vector3i GetTriangle(int tID) {
             return triangles_refcount.isValid(tID) ?
@@ -857,7 +876,7 @@ namespace g3
 			int c = IndexUtil.find_tri_other_vtx(a, b, T0tv);
 
 			// look up opposing triangle/vtx if we are not in boundary case
-			bool bIsBoundary = false;
+			bool bIsBoundaryEdge = false;
 			int d = InvalidID;
 			int t1 = edges[4*eab+3];
 			if (t1 != InvalidID) {
@@ -866,7 +885,7 @@ namespace g3
 				if (c == d)
 					return MeshResult.Failed_FoundDuplicateTriangle;
 			} else {
-				bIsBoundary = true;
+				bIsBoundaryEdge = true;
 			}
 
 			// We cannot collapse if edge lists of a and b share vertices other
@@ -890,7 +909,7 @@ namespace g3
 			// We cannot collapse if we have a tetrahedron. In this case a has 3 nbr edges,
 			//  and edge cd exists. But that is not conclusive, we also have to check that
 			//  cd is an internal edge, and that each of its tris contain a or b
-			if (edges_a_count == 3 && bIsBoundary == false) {
+			if (edges_a_count == 3 && bIsBoundaryEdge == false) {
 				int edc = find_edge( d, c );
 				if (edc != InvalidID && edges[4*edc+3] != InvalidID ) {
 					int edc_t0 = edges[4*edc+2];
@@ -901,7 +920,7 @@ namespace g3
 					return MeshResult.Failed_CollapseTetrahedron;
 				}
 
-			} else if (edges_a_count == 2 && bIsBoundary == true) {
+			} else if (edges_a_count == 2 && bIsBoundaryEdge == true) {
 				// cannot collapse edge if we are down to a single triangle
 				if ( edges_b.Count == 2 && vertex_edges[c].Count == 2 )
 					return MeshResult.Failed_CollapseTriangle;
@@ -962,7 +981,7 @@ namespace g3
 				}
 			}
 
-			if (bIsBoundary == false) {
+			if (bIsBoundaryEdge == false) {
 
 				// remove all edges from vtx a, then remove vtx a
 				edges_a.Clear();
@@ -1043,7 +1062,7 @@ namespace g3
 
 			collapse.vKept = vKeep;
 			collapse.vRemoved = vRemove;
-			collapse.bIsBoundary = bIsBoundary;
+			collapse.bIsBoundary = bIsBoundaryEdge;
 
 			updateTimeStamp();
 			return MeshResult.Ok;
@@ -1089,7 +1108,7 @@ namespace g3
         // structures are consistent
         public bool CheckValidity() {
 
-            int[] triToVtxRefs = new int[GetMaxVertexID()];
+			int[] triToVtxRefs = new int[this.MaxVertexID];
 
 			if ( normals != null )
 				DMESH_CHECK_OR_FAIL(normals.size == vertices.size);

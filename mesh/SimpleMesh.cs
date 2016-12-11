@@ -37,6 +37,26 @@ namespace g3
         //    return mTo;
         //}
 
+		public SimpleMesh(IMesh copy) {
+			Initialize(copy.HasVertexNormals, copy.HasVertexColors, copy.HasVertexUVs, copy.HasTriangleGroups);
+			int[] mapV = new int[copy.MaxVertexID];
+			foreach ( int vid in copy.VertexIndices() ) {
+				NewVertexInfo vi = copy.GetVertexAll(vid);
+				int new_vid = AppendVertex(vi);
+				mapV[vid] = new_vid;
+			}
+			foreach ( int tid in copy.TriangleIndices() ){
+				Vector3i t = copy.GetTriangle(tid);
+				t[0] = mapV[t[0]];
+				t[1] = mapV[t[1]];
+				t[2] = mapV[t[2]];
+				if ( copy.HasTriangleGroups )
+					AppendTriangle(t[0],t[1],t[2], copy.GetTriangleGroup(tid));
+				else
+					AppendTriangle(t[0],t[1],t[2]);
+			}
+		}
+
 
         public void Initialize(bool bWantNormals = true, bool bWantColors = true, bool bWantUVs = true, bool bWantFaceGroups = true)
         {
@@ -46,34 +66,6 @@ namespace g3
             UVs = (bWantUVs) ? new DVector<float>() : null;
             Triangles = new DVector<int>();
             FaceGroups = (bWantFaceGroups) ? new DVector<int>() : null;
-        }
-
-
-
-        public double[] GetVertex(int i)
-        {
-            return new[] { Vertices[3 * i], Vertices[3 * i + 1], Vertices[3 * i + 2] };
-        }
-        public float[] GetNormal(int i)
-        {
-            return new[] { Normals[3 * i], Normals[3 * i + 1], Normals[3 * i + 2] };
-        }
-        public float[] GetColor(int i)
-        {
-            return new[] { Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2] };
-        }
-        public float[] GetUV(int i)
-        {
-            return new[] { UVs[2 * i], UVs[2 * i + 1] };
-        }
-
-        public int[] GetTriangle(int i)
-        {
-            return new[] { Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2] };
-        }
-        public int GetFaceGroup(int i)
-        {
-            return FaceGroups[i];
         }
 
 
@@ -209,7 +201,14 @@ namespace g3
         {
             get { return Triangles.Length / 3; }
         }
-
+		public int MaxVertexID
+		{
+			get { return VertexCount; }
+		}
+		public int MaxTriangleID
+		{
+			get { return TriangleCount; }
+		}
 
         public bool HasVertexColors
         {
@@ -226,19 +225,19 @@ namespace g3
             get { return UVs != null && UVs.Length/2 == Vertices.Length/3; }
         }
 
-        Vector3d IMesh.GetVertex(int i)
+        public Vector3d GetVertex(int i)
         {
             return new Vector3d(Vertices[3 * i], Vertices[3 * i + 1], Vertices[3 * i + 2]);
         }
 
-        public Vector3d GetVertexNormal(int i)
+        public Vector3f GetVertexNormal(int i)
         {
-            return new Vector3d(Normals[3 * i], Normals[3 * i + 1], Normals[3 * i + 2]);
+            return new Vector3f(Normals[3 * i], Normals[3 * i + 1], Normals[3 * i + 2]);
         }
 
-        public Vector3d GetVertexColor(int i)
+        public Vector3f GetVertexColor(int i)
         {
-            return new Vector3d(Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2]);
+            return new Vector3f(Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2]);
         }
 
         public Vector2f GetVertexUV(int i)
@@ -246,12 +245,34 @@ namespace g3
             return new Vector2f(UVs[2 * i], UVs[2 * i + 1]);
         }
 
+		public NewVertexInfo GetVertexAll(int i) {
+			NewVertexInfo vi = new NewVertexInfo();
+			vi.v = GetVertex(i);
+			if ( HasVertexNormals ) {
+				vi.bHaveN = true;
+				vi.n = GetVertexNormal(i);
+			} else
+				vi.bHaveN = false;
+			if ( HasVertexColors ) {
+				vi.bHaveC = true;
+				vi.c = GetVertexColor(i);
+			} else
+				vi.bHaveC = false;
+			if ( HasVertexUVs ) {
+				vi.bHaveUV = true;
+				vi.uv = GetVertexUV(i);
+			} else
+				vi.bHaveUV = false;
+			return vi;
+		}
+
+
         public bool HasTriangleGroups
         {
             get { return FaceGroups != null && FaceGroups.Length == Triangles.Length / 3; }
         }
 
-        Vector3i IMesh.GetTriangle(int i)
+        public Vector3i GetTriangle(int i)
         {
             return new Vector3i(Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2]);
         }

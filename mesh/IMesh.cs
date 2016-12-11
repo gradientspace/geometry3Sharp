@@ -10,15 +10,18 @@ namespace g3
     {
         int VertexCount { get; }
         int TriangleCount { get; }
+		int MaxVertexID { get; }
+		int MaxTriangleID { get; }
 
         bool HasVertexColors { get; }
         bool HasVertexNormals { get; }
         bool HasVertexUVs { get; }
 
         Vector3d GetVertex(int i);
-        Vector3d GetVertexNormal(int i);
-        Vector3d GetVertexColor(int i);
+        Vector3f GetVertexNormal(int i);
+        Vector3f GetVertexColor(int i);
         Vector2f GetVertexUV(int i);
+		NewVertexInfo GetVertexAll(int i);
 
 
         bool HasTriangleGroups { get; }
