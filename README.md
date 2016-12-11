@@ -22,7 +22,7 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - Vector2/3, AxisAlignedBox2/3, Matrix3, Quaternion, Segment2/3, Line3, Ray3
     - double & float versions of vector types
     - implicit float->double conversion operators between types, explicit double->float operators
-    - define **G3_USING_UNITY** for implicit/explicit conversion ops to/from Unity types
+    - transparent Unity interop (see below)
 
 - **Colorf**: float rgba color, with many standard colors pre-defined
 
@@ -79,4 +79,33 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 - 2D implicit blobs
 - 2D Marching Quads
 
+
+
+
+# Unity Interop
+
+geometry3Sharp supports transparent conversion with Unity types.
+To enable this, define **G3_USING_UNITY** in your Unity project, by adding this
+string to the **Scripting Define Symbols** box in the **Player Settings**.  
+
+Once enabled, code like this will work transparently:
+
+~~~~
+Vector3 unityVec;
+Vector3f g3Vec;
+unityVec = g3vec;
+g3vec = unityVec;
+~~~~
+
+float->double types will work transparently, while double->float will require an explicit cast:
+
+~~~~
+Vector3d g3vecd;
+g3vecd = gameObject.transform.position;
+gameObject.transform.position = (Vector3)g3vecd;
+~~~~
+
+This will work for **Vector2**, **Vector3**, **Quaterion**, **Ray*, and **Color**.
+Note that these conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
+will need to explicitly cast one to the other.
 
