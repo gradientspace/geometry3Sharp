@@ -50,12 +50,10 @@
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="io\MaterialTypes.cs" />
-    <Compile Include="math\BufferUtil.cs" />
     <Compile Include="math\Frame3f.cs" />
     <Compile Include="math\IndexUtil.cs" />
     <Compile Include="math\MathUtil.cs" />
     <Compile Include="math\Matrix3f.cs" />
-    <Compile Include="math\PolyLine2f.cs" />
     <Compile Include="math\Quaternionf.cs" />
     <Compile Include="math\Vector2d.cs" />
     <Compile Include="math\Vector2f.cs" />
@@ -101,6 +99,8 @@
     <Compile Include="queries\DistLine3Ray3.cs" />
     <Compile Include="queries\DistRay3Ray3.cs" />
     <Compile Include="queries\DistRay3Segment3.cs" />
+    <Compile Include="curve\PolyLine2f.cs" />
+    <Compile Include="core\BufferUtil.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
