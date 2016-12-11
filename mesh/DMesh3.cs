@@ -27,20 +27,43 @@ namespace g3
 
 	//
 	// DMesh3 is a dynamic triangle mesh class. The mesh has has connectivity, 
-	//  is an inexed mesh, and allows for gaps in the index space.
+	//  is an indexed mesh, and allows for gaps in the index space.
 	//
 	// internally, all data is stored in POD-type buffers, except for the vertex->edge
 	// links, which are stored as List<int>'s. The arrays of POD data are stored in
-	// DVector's, so they grow in chunks, which is relatively efficient. 
+	// DVector's, so they grow in chunks, which is relatively efficient. The actual
+	// blocks are arrays, so they can be efficiently mem-copied into larger buffers
+	// if necessary.
 	//
 	// Reference counts for verts/tris/edges are stored as separate RefCountVector
 	// instances. 
 	//
-	// For each vertex, vertex_edges[i] is the unordered list of connected edges. This
-	// can be traversed in-order at some cost
+	// Vertices are stored as doubles, although this should be easily changed
+	// if necessary, as the internal data structure is not exposed
 	//
-	// For each triangle, triangle_edges stores the three nbr edges. 
+	// Per-vertex Vertex Normals, Colors, and UVs are optional and stored as floats.
 	//
+	// For each vertex, vertex_edges[i] is the unordered list of connected edges. The
+	// elements of the list are indices into the edges list.
+	// This list is unsorted but can be traversed in-order (ie cw/ccw) at some additional cost. 
+	//
+	// Triangles are stored as 3 ints, with optionally a per-triangle integer group id.
+	//
+	// The edges of a triangle are similarly stored as 3 ints, in triangle_edes. If the 
+	// triangle is [v1,v2,v3], then the triangle edges [e1,e2,e3] are 
+	// e1=edge(v1,v2), e2=edge(v2,v3), e3=edge(v3,v1), where the e# are indexes into edges.
+	//
+	// Edges are stored as tuples of 4 ints. If the edge is between v1 and v2, with neighbour
+	// tris t1 and t2, then the edge is [min(v1,v2), max(v1,v2), t1, t2]. For a boundary
+	// edge, t2 is InvalidID. t1 is never InvalidID.
+	//
+	// Most of the class assumes that the mesh is manifold. Many functions will
+	// work if the topology is non-manifold, but behavior of operators like Split/Flip/Collapse
+	// edge is untested. 
+	//
+	// The function CheckValidity() does extensive sanity checking on the mesh data structure.
+	// Use this to test your code, both for mesh construction and editing!!
+	// 
     public class DMesh3 : IMesh
     {
         public const int InvalidID = -1;
@@ -229,28 +252,30 @@ namespace g3
         public int AppendVertex(NewVertexInfo info)
         {
             int vid = vertices_refcount.allocate();
-            vertices.insert(info.v[2], 3 * vid + 2);
-            vertices.insert(info.v[1], 3 * vid + 1);
-            vertices.insert(info.v[0], 3 * vid);
+			int i = 3*vid;
+            vertices.insert(info.v[2], i + 2);
+            vertices.insert(info.v[1], i + 1);
+            vertices.insert(info.v[0], i);
 
 			if ( normals != null ) {
 				Vector3f n = (info.bHaveN) ? info.n : Vector3f.AxisY;
-				normals.insert(n[2], 3 * vid + 2);
-				normals.insert(n[1], 3 * vid + 1);
-				normals.insert(n[0], 3 * vid);
+				normals.insert(n[2], i + 2);
+				normals.insert(n[1], i + 1);
+				normals.insert(n[0], i);
 			}
 
 			if ( colors != null ) {
 				Vector3f c = (info.bHaveC) ? info.c : Vector3f.One;
-				colors.insert(c[2], 3 * vid + 2);
-				colors.insert(c[1], 3 * vid + 1);
-				colors.insert(c[0], 3 * vid);
+				colors.insert(c[2], i + 2);
+				colors.insert(c[1], i + 1);
+				colors.insert(c[0], i);
 			}
 
 			if ( uv != null ) {
 				Vector2f u = (info.bHaveUV) ? info.uv : Vector2f.Zero;
-				uv.insert(u[1], 2*vid + 1);
-				uv.insert(u[0], 2*vid);
+				int j = 2*vid;
+				uv.insert(u[1], j + 1);
+				uv.insert(u[0], j);
 			}
 
             vertex_edges.insert(new List<int>(), vid);
@@ -285,9 +310,10 @@ namespace g3
 
             // now safe to insert triangle
             int tid = triangles_refcount.allocate();
-            triangles.insert(tv[2], 3 * tid + 2);
-            triangles.insert(tv[1], 3 * tid + 1);
-            triangles.insert(tv[0], 3 * tid);
+			int i = 3*tid;
+            triangles.insert(tv[2], i + 2);
+            triangles.insert(tv[1], i + 1);
+            triangles.insert(tv[0], i);
 			if ( triangle_groups != null )
 				triangle_groups.insert(gid, tid);
 
@@ -341,8 +367,9 @@ namespace g3
         }
         Vector2i GetEdgeOpposingV(int eID)
         {
-            int a = edges[4 * eID], b = edges[4 * eID + 1];
-            int t0 = edges[4 * eID + 2], t1 = edges[4 * eID + 3];
+			int i = 4*eID;
+            int a = edges[i], b = edges[i + 1];
+            int t0 = edges[i + 2], t1 = edges[i + 3];
             int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, GetTriangle(t0).array);
             if (t1 != InvalidID) {
                 int d = IndexUtil.find_tri_other_vtx(a, b, GetTriangle(t1).array);
@@ -356,10 +383,11 @@ namespace g3
         Vector3i GetTriTriangles(int tID) {
             if (!IsTriangle(tID))
                 return InvalidTriangle;
+			int i = 3*tID;
             return new Vector3i(
-                edge_other_t(triangle_edges[3 * tID], tID),
-                edge_other_t(triangle_edges[3 * tID + 1], tID),
-                edge_other_t(triangle_edges[3 * tID + 2], tID));
+                edge_other_t(triangle_edges[i], tID),
+                edge_other_t(triangle_edges[i + 1], tID),
+                edge_other_t(triangle_edges[i + 2], tID));
         }
 
         MeshResult GetVtxTriangles(int vID, List<int> vTriangles, bool bUseOrientation)
@@ -371,20 +399,22 @@ namespace g3
             if (bUseOrientation) {
                 foreach (int eid in vedges) {
                     int vOther = edge_other_v(eid, vID);
-                    int et0 = edges[4 * eid + 2];
+					int i = 4*eid;
+                    int et0 = edges[i + 2];
                     if (tri_has_sequential_v(et0, vID, vOther))
                         vTriangles.Add(et0);
-                    int et1 = edges[4 * eid + 3];
+                    int et1 = edges[i + 3];
                     if (et1 != InvalidID && tri_has_sequential_v(et1, vID, vOther))
                         vTriangles.Add(et1);
                 }
             } else {
                 // brute-force method
                 foreach (int eid in vedges) {
-                    int t0 = edges[4 * eid + 2];
+					int i = 4*eid;					
+                    int t0 = edges[i + 2];
                     if (vTriangles.Contains(t0) == false)
                         vTriangles.Add(t0);
-                    int t1 = edges[4 * eid + 3];
+                    int t1 = edges[i + 3];
                     if (t1 != InvalidID && vTriangles.Contains(t1) == false)
                         vTriangles.Add(t1);
                 }
@@ -394,26 +424,30 @@ namespace g3
 
 
         public bool tri_has_v(int tID, int vID) {
-            return triangles[3 * tID] == vID 
-                || triangles[3 * tID + 1] == vID
-                || triangles[3 * tID + 2] == vID;
+			int i = 3*tID;
+            return triangles[i] == vID 
+                || triangles[i + 1] == vID
+                || triangles[i + 2] == vID;
         }
 
         public bool tri_is_boundary(int tID) {
-            return edge_is_boundary(triangle_edges[3 * tID])
-                || edge_is_boundary(triangle_edges[3 * tID + 1])
-                || edge_is_boundary(triangle_edges[3 * tID + 2]);
+			int i = 3*tID;
+            return edge_is_boundary(triangle_edges[i])
+                || edge_is_boundary(triangle_edges[i + 1])
+                || edge_is_boundary(triangle_edges[i + 2]);
         }
 
         public bool tri_has_neighbour_t(int tCheck, int tNbr) {
-            return edge_has_t(triangle_edges[3 * tCheck], tNbr)
-                || edge_has_t(triangle_edges[3 * tCheck + 1], tNbr)
-                || edge_has_t(triangle_edges[3 * tCheck + 2], tNbr);
+			int i = 3*tCheck;
+            return edge_has_t(triangle_edges[i], tNbr)
+                || edge_has_t(triangle_edges[i + 1], tNbr)
+                || edge_has_t(triangle_edges[i + 2], tNbr);
         }
 
         public bool tri_has_sequential_v(int tID, int vA, int vB)
         {
-            int v0 = triangles[3 * tID], v1 = triangles[3 * tID + 1], v2 = triangles[3 * tID + 2];
+			int i = 3*tID;
+            int v0 = triangles[i], v1 = triangles[i + 1], v2 = triangles[i + 2];
             if (v0 == vA && v1 == vB) return true;
             if (v1 == vA && v2 == vB) return true;
             if (v2 == vA && v0 == vB) return true;
@@ -423,9 +457,10 @@ namespace g3
 		//! returns edge ID
 		public int find_tri_neighbour_edge(int tID, int vA, int vB)
 		{
-			int tv0 = triangles[3*tID], tv1 = triangles[3*tID+1];
+			int i = 3*tID;
+			int tv0 = triangles[i], tv1 = triangles[i+1];
 			if ( IndexUtil.same_pair_unordered(tv0, tv1, vA, vB) ) return triangle_edges[3*tID];
-			int tv2 = triangles[3*tID+2];
+			int tv2 = triangles[i+2];
 			if ( IndexUtil.same_pair_unordered(tv1, tv2, vA, vB) ) return triangle_edges[3*tID+1];
 			if ( IndexUtil.same_pair_unordered(tv2, tv0, vA, vB) ) return triangle_edges[3*tID+2];
 			return InvalidID;	
@@ -434,9 +469,10 @@ namespace g3
 		// returns 0/1/2
 		public int find_tri_neighbour_index(int tID, int vA, int vB)
 		{
-			int tv0 = triangles[3*tID], tv1 = triangles[3*tID+1];
+			int i = 3*tID;
+			int tv0 = triangles[i], tv1 = triangles[i+1];
 			if ( IndexUtil.same_pair_unordered(tv0, tv1, vA, vB) ) return 0;
-			int tv2 = triangles[3*tID+2];
+			int tv2 = triangles[i+2];
 			if ( IndexUtil.same_pair_unordered(tv1, tv2, vA, vB) ) return 1;
 			if ( IndexUtil.same_pair_unordered(tv2, tv0, vA, vB) ) return 2;
 			return InvalidID;	
@@ -447,18 +483,22 @@ namespace g3
             return edges[4 * eid + 3] == InvalidID;
         }
         public bool edge_has_v(int eid, int vid) {
-            return (edges[4 * eid] == vid) || (edges[4 * eid + 1] == vid);
+			int i = 4*eid;
+            return (edges[i] == vid) || (edges[i + 1] == vid);
         }
         public bool edge_has_t(int eid, int tid) {
-            return (edges[4 * eid + 2] == tid) || (edges[4 * eid + 3] == tid);
+			int i = 4*eid;
+            return (edges[i + 2] == tid) || (edges[i + 3] == tid);
         }
         public int edge_other_v(int eID, int vID)
         {
-            int ev0 = edges[4 * eID], ev1 = edges[4 * eID + 1];
+			int i = 4*eID;
+            int ev0 = edges[i], ev1 = edges[i + 1];
             return (ev0 == vID) ? ev1 : ((ev1 == vID) ? ev0 : InvalidID);
         }
         public int edge_other_t(int eID, int tid) {
-            int et0 = edges[4 * eID + 2], et1 = edges[4 * eID + 3];
+			int i = 4*eID;
+            int et0 = edges[i + 2], et1 = edges[i + 3];
             return (et0 == tid) ? et1 : ((et1 == tid) ? et0 : InvalidID);
         }
 
@@ -475,15 +515,17 @@ namespace g3
 
         void set_triangle(int tid, int v0, int v1, int v2)
         {
-            triangles[3 * tid] = v0;
-            triangles[3 * tid + 1] = v1;
-            triangles[3 * tid + 2] = v2;
+			int i = 3*tid;
+            triangles[i] = v0;
+            triangles[i + 1] = v1;
+            triangles[i + 2] = v2;
         }
         void set_triangle_edges(int tid, int e0, int e1, int e2)
         {
-            triangle_edges[3 * tid] = e0;
-            triangle_edges[3 * tid + 1] = e1;
-            triangle_edges[3 * tid + 2] = e2;
+			int i = 3*tid;
+            triangle_edges[i] = e0;
+            triangle_edges[i + 1] = e1;
+            triangle_edges[i + 2] = e2;
         }
 
         int add_edge(int vA, int vB, int tA, int tB = InvalidID)
@@ -492,10 +534,11 @@ namespace g3
                 int t = vB; vB = vA; vA = t;
             }
             int eid = edges_refcount.allocate();
-            edges.insert(vA, 4 * eid);
-            edges.insert(vB, 4 * eid + 1);
-            edges.insert(tA, 4 * eid + 2);
-            edges.insert(tB, 4 * eid + 3);
+			int i = 4*eid;
+            edges.insert(vA, i);
+            edges.insert(vB, i + 1);
+            edges.insert(tA, i + 2);
+            edges.insert(tB, i + 3);
 
             vertex_edges[vA].Add(eid);
             vertex_edges[vB].Add(eid);
@@ -503,20 +546,22 @@ namespace g3
         }
 
 		int replace_tri_vertex(int tID, int vOld, int vNew) {
-			if ( triangles[3 * tID] == vOld ) { triangles[3 * tID] = vNew; return 0; }
-			if ( triangles[3 * tID+1] == vOld ) { triangles[3 * tID+1] = vNew; return 1; }
-			if ( triangles[3 * tID+2] == vOld ) { triangles[3 * tID+2] = vNew; return 2; }
+			int i = 3*tID;
+			if ( triangles[i] == vOld ) { triangles[i] = vNew; return 0; }
+			if ( triangles[i+1] == vOld ) { triangles[i+1] = vNew; return 1; }
+			if ( triangles[i+2] == vOld ) { triangles[i+2] = vNew; return 2; }
 			return -1;
 		}
 
 		int add_triangle_only(int a, int b, int c, int e0, int e1, int e2) {
 			int tid = triangles_refcount.allocate();
-			triangles.insert(c, 3 * tid + 2);
-			triangles.insert(b, 3 * tid + 1);
-			triangles.insert(a, 3 * tid);
-			triangle_edges.insert(e2, 3*tid+2);
-			triangle_edges.insert(e1, 3*tid+1);
-			triangle_edges.insert(e0, 3*tid+0);	
+			int i = 3*tid;
+			triangles.insert(c, i + 2);
+			triangles.insert(b, i + 1);
+			triangles.insert(a, i);
+			triangle_edges.insert(e2, i+2);
+			triangle_edges.insert(e1, i+1);
+			triangle_edges.insert(e0, i+0);	
 			return tid;
 		}
 
@@ -529,23 +574,26 @@ namespace g3
         }
 
 		void set_edge_vertices(int eID, int a, int b) {
-			edges[4 * eID] = Math.Min(a,b);
-			edges[4 * eID + 1] = Math.Max(a,b);
+			int i = 4*eID;
+			edges[i] = Math.Min(a,b);
+			edges[i + 1] = Math.Max(a,b);
 		}
 		void set_edge_triangles(int eID, int t0, int t1) {
-			edges[4 * eID + 2] = t0;
-			edges[4 * eID + 3] = t1;
+			int i = 4*eID;
+			edges[i + 2] = t0;
+			edges[i + 3] = t1;
 		}
 
 		int replace_edge_vertex(int eID, int vOld, int vNew) {
-			int a = edges[4*eID], b = edges[4*eID+1];
+			int i = 4*eID;
+			int a = edges[i], b = edges[i+1];
 			if ( a == vOld ) {
-				edges[4*eID] = Math.Min(b, vNew);
-				edges[4*eID+1] = Math.Max(b, vNew);
+				edges[i] = Math.Min(b, vNew);
+				edges[i+1] = Math.Max(b, vNew);
 				return 0;
 			} else if ( b == vOld ) {
-				edges[4*eID] = Math.Min(a, vNew);
-				edges[4*eID+1] = Math.Max(a, vNew);
+				edges[i] = Math.Min(a, vNew);
+				edges[i+1] = Math.Max(a, vNew);
 				return 1;				
 			} else
 				return -1;
@@ -553,30 +601,32 @@ namespace g3
 
 
 		int replace_edge_triangle(int eID, int tOld, int tNew) {
-			int a = edges[4*eID+2], b = edges[4*eID+3];
+			int i = 4*eID;
+			int a = edges[i+2], b = edges[i+3];
 			if ( a == tOld ) {
 				if ( tNew == InvalidID ) {
-					edges[4*eID+2] = b;
-					edges[4*eID+3] = InvalidID;
+					edges[i+2] = b;
+					edges[i+3] = InvalidID;
 				} else 
-					edges[4*eID+2] = tNew;
+					edges[i+2] = tNew;
 				return 0;
 			} else if ( b == tOld ) {
-				edges[4*eID+3] = tNew;
+				edges[i+3] = tNew;
 				return 1;				
 			} else
 				return -1;
 		}
 
 		int replace_triangle_edge(int tID, int eOld, int eNew) {
-			if ( triangle_edges[3*tID] == eOld ) {
-				triangle_edges[3*tID] = eNew;
+			int i = 3*tID;
+			if ( triangle_edges[i] == eOld ) {
+				triangle_edges[i] = eNew;
 				return 0;
-			} else if ( triangle_edges[3*tID+1] == eOld ) {
-				triangle_edges[3*tID+1] = eNew;
+			} else if ( triangle_edges[i+1] == eOld ) {
+				triangle_edges[i+1] = eNew;
 				return 1;
-			} else if ( triangle_edges[3*tID+2] == eOld ) {
-				triangle_edges[3*tID+2] = eNew;
+			} else if ( triangle_edges[i+2] == eOld ) {
+				triangle_edges[i+2] = eNew;
 				return 2;
 			} else
 				return -1;
@@ -589,7 +639,7 @@ namespace g3
 
         // edits
 
-        MeshResult ReverseTriOrientation(int tID) {
+        public MeshResult ReverseTriOrientation(int tID) {
             if (!IsTriangle(tID))
                 return MeshResult.Failed_NotATriangle;
             Vector3i t = GetTriangle(tID);
@@ -620,8 +670,9 @@ namespace g3
 				return MeshResult.Failed_NotAnEdge;
 
 			// look up primary edge & triangle
-			int a = edges[4 * eab], b = edges[4 * eab + 1];
-			int t0 = edges[4 * eab + 2];
+			int eab_i = 4*eab;
+			int a = edges[eab_i], b = edges[eab_i + 1];
+			int t0 = edges[eab_i + 2];
 			Vector3i T0tv = GetTriangle(t0);
 			int[] T0tv_array = T0tv.array;
 			int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, T0tv_array);
@@ -674,7 +725,7 @@ namespace g3
 			} else {		// interior triangle branch
 				
 				// look up other triangle
-				int t1 = edges[4 * eab + 3];
+				int t1 = edges[eab_i + 3];
 				Vector3i T1tv = GetTriangle(t1);
 				int[] T1tv_array = T1tv.array;
 				int d = IndexUtil.find_tri_other_vtx( a, b, T1tv_array );
@@ -763,8 +814,9 @@ namespace g3
 				return MeshResult.Failed_IsBoundaryEdge;
 
 			// find oriented edge [a,b], tris t0,t1, and other verts c in t0, d in t1
-			int a = edges[4 * eab], b = edges[4 * eab + 1];
-			int t0 = edges[4 * eab + 2], t1 = edges[4 * eab + 3];
+			int eab_i = 4*eab;
+			int a = edges[eab_i], b = edges[eab_i + 1];
+			int t0 = edges[eab_i + 2], t1 = edges[eab_i + 3];
 			int[] T0tv = GetTriangle(t0).array;
 			int[] T1tv = GetTriangle(t1).array;
 			int c = IndexUtil.orient_tri_edge_and_find_other_vtx( ref a, ref b, T0tv );
@@ -911,9 +963,10 @@ namespace g3
 			//  cd is an internal edge, and that each of its tris contain a or b
 			if (edges_a_count == 3 && bIsBoundaryEdge == false) {
 				int edc = find_edge( d, c );
-				if (edc != InvalidID && edges[4*edc+3] != InvalidID ) {
-					int edc_t0 = edges[4*edc+2];
-					int edc_t1 = edges[4*edc+3];
+				int edc_i = 4*edc;
+				if (edc != InvalidID && edges[edc_i+3] != InvalidID ) {
+					int edc_t0 = edges[edc_i+2];
+					int edc_t1 = edges[edc_i+3];
 
 				    if ( (tri_has_v(edc_t0,a) && tri_has_v(edc_t1, b)) 
 					    || (tri_has_v(edc_t0, b) && tri_has_v(edc_t1, a)) )
