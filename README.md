@@ -7,12 +7,12 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 # Core
 
-- *DVector*: indexed list with vector-style interface, but internally stored as separate blocks of memory
+- **DVector**: indexed list with vector-style interface, but internally stored as separate blocks of memory
     - appending is amortized O(1), never a full buffer copy like normal list
 
-- *RefCountVector*: track index reference counts, maintain list of free indices
+- **RefCountVector**: track index reference counts, maintain list of free indices
 
-- *VectorArray2/VectorArray3*: wrapper around regular array providing N-element access
+- **VectorArray2/VectorArray3**: wrapper around regular array providing N-element access
     - eg operator[] gets/sets Vector3d for VectorArray3d, internally is double[3*count]
 
 
@@ -22,11 +22,11 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - Vector2/3, AxisAlignedBox2/3, Matrix3, Quaternion, Segment2/3, Line3, Ray3
     - double & float versions of vector types
     - implicit float->double conversion operators between types, explicit double->float operators
-    - define *G3_USING_UNITY* for implicit/explicit conversion ops to/from Unity types
+    - define **G3_USING_UNITY** for implicit/explicit conversion ops to/from Unity types
 
-- *Colorf*: float rgba color, with many standard colors pre-defined
+- **Colorf**: float rgba color, with many standard colors pre-defined
 
-- *Frame3f*: position+orientation representation
+- **Frame3f**: position+orientation representation
     - accessors for transformed x/y/z axes 
     - frame transformations
     - free and constrained axis alignment
@@ -38,15 +38,16 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 # Queries
 
-- *DistLine3Ray3*, *DistRay3Segment3*, *DistRay3Ray3*
+- **DistLine3Ray3**, **DistRay3Segment3**, **DistRay3Ray3**
 - ray-sphere and ray-cylinder intersection
 
 
 # Meshes
 
-- *SimpleMesh*: standard indexed mesh class
+- **SimpleMesh**: standard indexed mesh class
     - dense index space, backed by DVector buffers
-- *DMesh3*: dynamic mesh class
+
+- **DMesh3**: dynamic mesh class
     - reference-counted sparse index space
     - has edge topology, neighbour queries, etc
     - data stored as DVector buffers of POD-types
@@ -56,11 +57,11 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 - various mesh generators
     - open & closed cylinders, disc, punctured disc, with start/end angles
-    - *VerticalGeneralizedCylinderGenerator*
-    - *TubeGenerator*: polygon swept along polyline
+    - **VerticalGeneralizedCylinderGenerator**
+    - **TubeGenerator**: polygon swept along polyline
     - trivial plane
-    - *Curve3Axis3RevolveGenerator*: 3D polyline revolved around 3D axis
-    - *Curve3Curve3RevolveGenerator*: 3D polyline revolved around 3D polyline (!)
+    - **Curve3Axis3RevolveGenerator**: 3D polyline revolved around 3D axis
+    - **Curve3Curve3RevolveGenerator**: 3D polyline revolved around 3D polyline (!)
     
 - OBJ reader/writer 
     - reader supports OBJ materials and texture maps (paths, you sort out loading images yourself)
@@ -68,9 +69,9 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 # Curves
 
-- *Polygon2d* 
-- *DCurve3*: 3D polyline
-- *CurveUtil*: queries like Ray/curve intersection based on curve thickness, nearest index, etc
+- **Polygon2d** 
+- **DCurve3**: 3D polyline
+- **CurveUtil**: queries like Ray/curve intersection based on curve thickness, nearest index, etc
 
 
 # Misc
