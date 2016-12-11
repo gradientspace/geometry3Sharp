@@ -444,6 +444,12 @@ namespace g3
         }
 
 
+		public bool vertex_is_boundary(int vid) {
+			foreach ( int e in vertex_edges[vid] )
+				if ( edge_is_boundary(e) )
+					return true;
+			return false;
+		}
 
 
         // internal
@@ -807,6 +813,7 @@ namespace g3
 
 		void debug_fail(string s) {
 		#if DEBUG
+			System.Console.WriteLine("DMesh3.CollapseEdge: check failed: " + s);
 			Debug.Assert(false);
 			//throw new Exception("DMesh3.CollapseEdge: check failed: " + s);
 		#endif
@@ -904,51 +911,37 @@ namespace g3
 			//   this case? Conceivably could be porting bug but looking at the
 			//   C++ code I cannot see how we could possibly have caught this case...
 			//
-			// could we do this w/o having to look up all the edges here? Seems
-			// like just testing if c or d have valence 2 would be sufficient, but
-			// it doesn't work..
+			// cannot collapse an edge where both vertices are boundary vertices
+			// because that would create a bowtie
 			//
-			// if edge bd or bc is a boundary edge, we cannot collapse because
-			// then we would have created a degenerate edge & stray vertex!
-			int ebc = find_edge(b,c);
-			int eac = find_edge(a,c);
-			if ( edge_is_boundary(ebc) && edge_is_boundary(eac) )
+			// NOTE: potentially scanning all edges here...couldn't we
+			//  pick up eac/bc/ad/bd as we go? somehow?
+			if ( vertex_is_boundary(a) && vertex_is_boundary(b) && d != InvalidID )
 				return MeshResult.Failed_InvalidNeighbourhood;
-			int ebd = InvalidID, ead = InvalidID;
-			if ( d != InvalidID ) {
-				ebd = find_edge( b, d );
-				ead = find_edge( a, d);
-				if ( edge_is_boundary(ebd) && edge_is_boundary(ead) )
-					return MeshResult.Failed_InvalidNeighbourhood;
-			}
-			
+
+
 
 			// 1) remove edge ab from vtx b
 			// 2) find edges ad and ac, and tris tad, tac across those edges  (will use later)
 			// 3) for other edges, replace a with b, and add that edge to b
 			// 4) replace a with b in all triangles connected to a
-			//int ead = InvalidID, eac = InvalidID;
+			int ead = InvalidID, eac = InvalidID;
 			int tad = InvalidID, tac = InvalidID;
 			foreach (int eid in edges_a) {
-				//Edge & e = m_vEdges[eid];
 				int o = edge_other_v(eid, a);
 				if (o == b) {
 					if (edges_b.Remove(eid) != true )
 						debug_fail("remove case o == b");
 				} else if (o == c) {
-					//eac = eid;
+					eac = eid;
 					if ( vertex_edges[c].Remove(eid) != true )
 						debug_fail("remove case o == c");
 					tac = edge_other_t(eid, t0);
 				} else if (o == d) {
-					//ead = eid;
+					ead = eid;
 					if ( vertex_edges[d].Remove(eid) != true )
 						debug_fail("remove case o == c, step 1");
 					tad = edge_other_t(eid, t1);
-
-					// WTF tad can be InvalidID here, because it might not exist...
-					//if ( tad == InvalidID )
-						//debug_fail("remove case o == c, step 2");
 				} else {
 					if ( replace_edge_vertex(eid, a, b) == -1 )
 						debug_fail("remove case else");
@@ -968,7 +961,6 @@ namespace g3
 					}
 				}
 			}
-
 
 			if (bIsBoundary == false) {
 
@@ -996,8 +988,8 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 and t1 in edges ebd and ebc that we kept
-				//int ebd = find_edge( b, d );
-				//int ebc = find_edge( b, c );
+				int ebd = find_edge( b, d );
+				int ebc = find_edge( b, c );
 
 				if( replace_edge_triangle(ebd, t1, tad ) == -1 )
 					debug_fail("isboundary=false branch, ebd replace triangle");
@@ -1038,7 +1030,7 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 in edge ebc that we kept
-				//int ebc = find_edge( b, c );
+				int ebc = find_edge( b, c );
 				if ( replace_edge_triangle(ebc, t0, tac ) == -1 )
 					debug_fail("isboundary=false branch, ebc replace triangle");
 
@@ -1060,6 +1052,33 @@ namespace g3
 
 
 
+
+
+
+		public void debug_print_vertex(int v) {
+			System.Console.WriteLine("Vertex " + v.ToString());
+			List<int> tris = new List<int>();
+			GetVtxTriangles(v, tris, false);
+			System.Console.WriteLine(string.Format("  Tris {0}  Edges {1}  refcount {2}", tris.Count, GetVtxEdges(v).Count, vertices_refcount.refCount(v) ));
+			foreach ( int t in tris ) {
+				Vector3i tv = GetTriangle(t), te = GetTriEdges(t);
+				System.Console.WriteLine(string.Format("  t{6} {0} {1} {2}   te {3} {4} {5}", tv[0],tv[1],tv[2], te[0],te[1],te[2],t));
+			}
+			foreach ( int e in GetVtxEdges(v) ) {
+				Vector2i ev = GetEdgeV(e), et = GetEdgeT(e);
+				System.Console.WriteLine(string.Format("  e{4} {0} {1} / {2} {3}", ev[0],ev[1], et[0],et[1], e));
+			}
+		}
+
+
+		public void debug_print_mesh() {
+			for ( int k = 0; k < vertices_refcount.max_index; ++k ) {
+				if ( vertices_refcount.isValid(k) == false )
+					System.Console.WriteLine(string.Format("v{0} : invalid",k));
+				else 
+					debug_print_vertex(k);
+			}
+		}
 
 
         // debug
@@ -1161,8 +1180,12 @@ namespace g3
                     DMESH_CHECK_OR_FAIL(e2 == edgeid);
                 }
 
-                List<int> vTris = new List<int>();
+				List<int> vTris = new List<int>(), vTris2 = new List<int>();
                 GetVtxTriangles(vID, vTris, false);
+				GetVtxTriangles(vID, vTris2, true);
+				DMESH_CHECK_OR_FAIL(vTris.Count == vTris2.Count);
+				//System.Console.WriteLine(string.Format("{0} {1} {2}", vID, vTris.Count, GetVtxEdges(vID).Count));
+				DMESH_CHECK_OR_FAIL(vTris.Count == GetVtxEdges(vID).Count || vTris.Count == GetVtxEdges(vID).Count-1);
                 DMESH_CHECK_OR_FAIL(vertices_refcount.refCount(vID) == vTris.Count + 1);
                 DMESH_CHECK_OR_FAIL(triToVtxRefs[vID] == vTris.Count);
                 foreach( int tID in vTris) {
