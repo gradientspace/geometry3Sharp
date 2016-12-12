@@ -101,6 +101,8 @@
     <Compile Include="queries\DistRay3Segment3.cs" />
     <Compile Include="curve\PolyLine2f.cs" />
     <Compile Include="core\BufferUtil.cs" />
+    <Compile Include="mesh\Remesher.cs" />
+    <Compile Include="mesh\MeshUtil.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
