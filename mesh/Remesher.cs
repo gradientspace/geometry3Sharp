@@ -15,6 +15,7 @@ namespace g3 {
 		public bool EnableFlips = true;
 		public bool EnableCollapses = true;
 		public bool EnableSplits = true;
+		public bool EnableSmoothing = true;
 
 		public Remesher(DMesh3 m) {
 			mesh = m;
@@ -33,7 +34,8 @@ namespace g3 {
 				// do what with result??
 			}
 
-			FullSmoothPass();
+			if ( EnableSmoothing && SmoothSpeedT > 0)
+				FullSmoothPass_InPlace();
 
 		}
 
@@ -157,10 +159,10 @@ namespace g3 {
 
 
 
-		void FullSmoothPass() {
-			
-			foreach ( int vid in mesh.VertexIndices() ) {
-				MeshUtil.UniformSmooth(mesh, vid, SmoothSpeedT);
+		void FullSmoothPass_InPlace() {
+			foreach ( int vID in mesh.VertexIndices() ) {
+				Vector3d vSmoothed = MeshUtil.UniformSmooth(mesh, vID, SmoothSpeedT);
+				mesh.SetVertex( vID, vSmoothed);
 			}
 
 		}

@@ -219,6 +219,15 @@ namespace g3
                 vertex_edges[vID].AsReadOnly() : null;
         }
 
+		public IEnumerable<int> VtxVerticesItr(int vID) {
+			if ( vertices_refcount.isValid(vID) ) {
+				List<int> edges = vertex_edges[vID];
+				int N = edges.Count;
+				for ( int i = 0; i < N; ++i )
+					yield return edge_other_v(edges[i], vID);
+			}
+		}
+
 		public NewVertexInfo GetVertexAll(int i) {
 			NewVertexInfo vi = new NewVertexInfo();
 			vi.v = GetVertex(i);
@@ -689,6 +698,20 @@ namespace g3
             set_triangle_edges(tID, te[0], te[2], te[1]);
             return MeshResult.Ok;
         }
+
+		public void ReverseOrientation(bool bFlipNormals = true) {
+			foreach ( int tid in TriangleIndices() ) {
+				ReverseTriOrientation(tid);
+			}
+			if ( bFlipNormals ) {
+				foreach ( int vid in VertexIndices() ) {
+					int i = 3*vid;
+					normals[i] = -normals[i];
+					normals[i+1] = -normals[i+1];
+					normals[i+2] = -normals[i+2];
+				}
+			}
+		}
 
 
 		public struct EdgeSplitInfo {
