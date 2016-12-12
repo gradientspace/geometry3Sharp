@@ -171,9 +171,23 @@ namespace g3
                 new Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]) : InvalidVertex;
         }
 
+		public void SetVertex(int vID, Vector3d vNewPos) {
+			if ( vertices_refcount.isValid(vID) ) {
+				int i = 3*vID;
+				vertices[i] = vNewPos.x; vertices[i+1] = vNewPos.y; vertices[i+2] = vNewPos.z;
+			}
+		}
+
 		public Vector3f GetVertexNormal(int vID) { 
 			return vertices_refcount.isValid(vID) ?
                 new Vector3f(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3f.AxisY;
+		}
+
+		public void SetVertexNormal(int vID, Vector3f vNewNormal) {
+			if ( HasVertexNormals && vertices_refcount.isValid(vID) ) {
+				int i = 3*vID;
+				normals[i] = vNewNormal.x; normals[i+1] = vNewNormal.y; normals[i+2] = vNewNormal.z;
+			}
 		}
 
 		public Vector3f GetVertexColor(int vID) { 
@@ -181,9 +195,23 @@ namespace g3
                 new Vector3f(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]) : Vector3f.One;
 		}
 
+		public void SetVertexColor(int vID, Vector3f vNewColor) {
+			if ( HasVertexColors && vertices_refcount.isValid(vID) ) {
+				int i = 3*vID;
+				colors[i] = vNewColor.x; colors[i+1] = vNewColor.y; colors[i+2] = vNewColor.z;
+			}
+		}
+
 		public Vector2f GetVertexUV(int vID) { 
 			return vertices_refcount.isValid(vID) ?
                 new Vector2f(uv[2 * vID], uv[2 * vID + 1]) : Vector2f.Zero;
+		}
+
+		public void SetVertexUV(int vID, Vector2f vNewUV) {
+			if ( HasVertexUVs && vertices_refcount.isValid(vID) ) {
+				int i = 2*vID;
+				uv[i] = vNewUV.x; uv[i+1] = vNewUV.y;
+			}
 		}
 
         public ReadOnlyCollection<int> GetVtxEdges(int vID) {
@@ -238,6 +266,15 @@ namespace g3
             return edges_refcount.isValid(eID) ?
                 new Vector2i(edges[4 * eID + 2], edges[4 * eID + 3]) : InvalidEdge;
         }
+
+		public bool GetEdge(int eID, ref int a, ref int b, ref int t0, ref int t1) {
+			if ( edges_refcount.isValid(eID) == false )
+				return false;
+			int i = eID*4;
+			a = edges[i]; b = edges[i+1]; t0 = edges[i+2]; t1 = edges[i+3];
+			return true;
+		}
+			
 
 
 
@@ -421,6 +458,10 @@ namespace g3
             }
             return MeshResult.Ok;
         }
+
+		public int GetVtxEdgeValence(int vID) {
+			return vertex_edges[vID].Count;
+		}
 
 
         public bool tri_has_v(int tID, int vID) {
