@@ -219,15 +219,6 @@ namespace g3
                 vertex_edges[vID].AsReadOnly() : null;
         }
 
-		public IEnumerable<int> VtxVerticesItr(int vID) {
-			if ( vertices_refcount.isValid(vID) ) {
-				List<int> edges = vertex_edges[vID];
-				int N = edges.Count;
-				for ( int i = 0; i < N; ++i )
-					yield return edge_other_v(edges[i], vID);
-			}
-		}
-
 		public NewVertexInfo GetVertexAll(int i) {
 			NewVertexInfo vi = new NewVertexInfo();
 			vi.v = GetVertex(i);
@@ -411,19 +402,31 @@ namespace g3
         int FindEdge(int vA, int vB) {
             return find_edge(vA, vB);
         }
+
+		// [RMS] this does more work than necessary, see 
         Vector2i GetEdgeOpposingV(int eID)
         {
 			int i = 4*eID;
             int a = edges[i], b = edges[i + 1];
             int t0 = edges[i + 2], t1 = edges[i + 3];
-            int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, GetTriangle(t0).array);
+			int c = IndexUtil.find_tri_other_vtx(a, b, triangles, t0);
             if (t1 != InvalidID) {
-                int d = IndexUtil.find_tri_other_vtx(a, b, GetTriangle(t1).array);
+				int d = IndexUtil.find_tri_other_vtx(a, b, triangles, t1);
                 return new Vector2i(c, d);
             } else
                 return new Vector2i(c, InvalidID);
         }
 
+
+
+		public IEnumerable<int> VtxVerticesItr(int vID) {
+			if ( vertices_refcount.isValid(vID) ) {
+				List<int> edges = vertex_edges[vID];
+				int N = edges.Count;
+				for ( int i = 0; i < N; ++i )
+					yield return edge_other_v(edges[i], vID);
+			}
+		}
 
 
         Vector3i GetTriTriangles(int tID) {
@@ -468,8 +471,40 @@ namespace g3
             return MeshResult.Ok;
         }
 
+
+		public IEnumerable<int> VtxTrianglesItr(int vID) {
+			if ( IsVertex(vID) ) {
+				List<int> vedges = vertex_edges[vID];
+				foreach (int eid in vedges) {
+					int vOther = edge_other_v(eid, vID);
+					int i = 4*eid;
+					int et0 = edges[i + 2];
+					if (tri_has_sequential_v(et0, vID, vOther))
+						yield return et0;
+					int et1 = edges[i + 3];
+					if (et1 != InvalidID && tri_has_sequential_v(et1, vID, vOther))
+						yield return et1;
+				}
+			}
+		}
+
+
 		public int GetVtxEdgeValence(int vID) {
 			return vertex_edges[vID].Count;
+		}
+
+		// from edge and vert, returns other vert, two opposing verts, and two triangles
+		public void GetVtxNbrhood(int eID, int vID, ref int vOther, ref int oppV1, ref int oppV2, ref int t1, ref int t2)
+		{
+			int i = 4*eID;
+			vOther = (edges[i] == vID) ? edges[i+1] : edges[i];
+			t1 = edges[i + 2];
+			oppV1 = IndexUtil.find_tri_other_vtx(vID, vOther, triangles, t1);
+			t2 = edges[i + 3];
+			if ( t2 != InvalidID )
+				oppV2 = IndexUtil.find_tri_other_vtx(vID, vOther, triangles, t2);
+			else
+				t2 = InvalidID;
 		}
 
 

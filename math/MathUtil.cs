@@ -182,5 +182,34 @@ namespace g3
         }
 
 
+
+		public static double Area(Vector3d v1, Vector3d v2, Vector3d v3) {
+			return 0.5 * (v2 - v1).Cross(v3 - v1).Length;
+		}
+
+		//! fast cotangent between two normalized vectors
+		//! returns zero if result would be unstable (eg infinity)
+		// formula from http://www.geometry.caltech.edu/pubs/DMSB_III.pdf
+		public static double VectorCot( Vector3d v1, Vector3d v2 )
+		{
+			double fDot = v1.Dot(v2);
+			double lensqr1 = v1.LengthSquared;
+			double lensqr2 = v2.LengthSquared;
+			double d = MathUtil.Clamp(lensqr1 * lensqr2 - fDot*fDot, 0.0f, Double.MaxValue);
+			if ( d < MathUtil.ZeroTolerance )
+				return 0;
+			else
+				return fDot / Math.Sqrt( d );
+		}
+
+
+		public static bool IsObtuse(Vector3d v1, Vector3d v2, Vector3d v3) {
+			double a2 = v1.DistanceSquared(v2);
+			double b2 = v1.DistanceSquared(v3);
+			double c2 = v2.DistanceSquared(v3);
+			return (a2+b2 < c2) || (b2+c2 < a2) || (c2+a2 < b2);
+		}
+
+
     }
 }

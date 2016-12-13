@@ -119,6 +119,10 @@ namespace g3
             return v1.AngleR(v2);
         }
 
+		public double DistanceSquared(Vector3d v2) {
+			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
+			return dx*dx + dy*dy + dz*dz;
+		}
 
         public void Set(Vector3d o)
         {

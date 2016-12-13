@@ -20,6 +20,13 @@ namespace g3
             if (tri_verts[2] == a) return 2;
             return DMesh3.InvalidID;
         }
+		public static int find_tri_index(int a, Vector3i tri_verts)
+		{
+			if (tri_verts[0] == a) return 0;
+			if (tri_verts[1] == a) return 1;
+			if (tri_verts[2] == a) return 2;
+			return DMesh3.InvalidID;
+		}
 
         // return index of a in tri_verts, or InvalidID if not found
         public static int find_edge_index_in_tri(int a, int b, int[] tri_verts )
@@ -53,6 +60,15 @@ namespace g3
 			for (int j = 0; j < 3; ++j) {
 				if (same_pair_unordered(a, b, tri_verts[j], tri_verts[(j + 1) % 3]))
 					return tri_verts[(j + 2) % 3];
+			}
+			return DMesh3.InvalidID;
+		}
+		public static int find_tri_other_vtx(int a, int b, DVector<int> tri_array, int ti)
+		{
+			int i = 3*ti;
+			for (int j = 0; j < 3; ++j) {
+				if (same_pair_unordered(a, b, tri_array[i+j], tri_array[i + ((j + 1) % 3)]))
+					return tri_array[i + ((j + 2) % 3)];
 			}
 			return DMesh3.InvalidID;
 		}
