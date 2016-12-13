@@ -103,6 +103,7 @@
     <Compile Include="core\BufferUtil.cs" />
     <Compile Include="mesh\Remesher.cs" />
     <Compile Include="mesh\MeshUtil.cs" />
+    <Compile Include="mesh\MeshWeights.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

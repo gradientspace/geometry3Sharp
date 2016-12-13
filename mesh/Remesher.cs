@@ -7,15 +7,22 @@ namespace g3 {
 
 		DMesh3 mesh;
 
-		public double MinEdgeLength = 0.001f;
-		public double MaxEdgeLength = 0.1f;
-
-		public double SmoothSpeedT = 0.1f;
 
 		public bool EnableFlips = true;
 		public bool EnableCollapses = true;
 		public bool EnableSplits = true;
 		public bool EnableSmoothing = true;
+
+
+		public double MinEdgeLength = 0.001f;
+		public double MaxEdgeLength = 0.1f;
+
+		public double SmoothSpeedT = 0.1f;
+		public enum SmoothTypes {
+			Uniform, Cotan, MeanValue
+		};
+		public SmoothTypes SmoothType = SmoothTypes.Uniform;
+
 
 		public Remesher(DMesh3 m) {
 			mesh = m;
@@ -160,11 +167,24 @@ namespace g3 {
 
 
 		void FullSmoothPass_InPlace() {
-			foreach ( int vID in mesh.VertexIndices() ) {
-				Vector3d vSmoothed = MeshUtil.UniformSmooth(mesh, vID, SmoothSpeedT);
-				mesh.SetVertex( vID, vSmoothed);
-			}
+			if ( SmoothType == SmoothTypes.Uniform ) {
+				foreach ( int vID in mesh.VertexIndices() ) {
+					Vector3d vSmoothed = MeshUtil.UniformSmooth(mesh, vID, SmoothSpeedT);
+					mesh.SetVertex( vID, vSmoothed);
+				}
 
+			} else if ( SmoothType == SmoothTypes.MeanValue ) {
+				foreach ( int vID in mesh.VertexIndices() ) {
+					Vector3d vSmoothed = MeshUtil.MeanValueSmooth(mesh, vID, SmoothSpeedT);
+					mesh.SetVertex( vID, vSmoothed);
+				}
+			} else if ( SmoothType == SmoothTypes.Cotan ) {
+				foreach ( int vID in mesh.VertexIndices() ) {
+					Vector3d vSmoothed = MeshUtil.CotanSmooth(mesh, vID, SmoothSpeedT);
+					mesh.SetVertex( vID, vSmoothed);
+				}				
+			} else 
+				throw new NotImplementedException("Remesher.FullSmooth: type not supported!");
 		}
 
 
