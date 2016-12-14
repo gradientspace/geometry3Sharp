@@ -106,7 +106,7 @@ namespace g3
 		}
 
 
-
+		// http://128.148.32.110/courses/cs224/papers/mean_value.pdf
 		public static Vector3d MeanValueCentroid(DMesh3 mesh, int v_i)
 		{
 			Vector3d vSum = Vector3d.Zero;
@@ -127,13 +127,11 @@ namespace g3
 				if ( len_vVj < MathUtil.ZeroTolerance ) 
 					continue;
 				Vector3d vVdelta = (mesh.GetVertex(opp_v1) - Vi).Normalized;
-				double delta_ij = Vector3d.AngleR(vVj, vVdelta);
-				double w_ij = Math.Tan(delta_ij * 0.5);
+				double w_ij = VectorTanHalfAngle(vVj, vVdelta);
 
 				if ( opp_v2 != DMesh3.InvalidID ) {
 					Vector3d vVgamma = (mesh.GetVertex(opp_v2) - Vi).Normalized;
-					double gamma_ij = Vector3d.AngleR(vVj, vVgamma);
-					w_ij += Math.Tan(gamma_ij * 0.5);
+					w_ij += VectorTanHalfAngle(vVj, vVgamma);
 				}
 
 				w_ij /= len_vVj;
@@ -142,6 +140,14 @@ namespace g3
 				wSum += w_ij;
 			}
 			return vSum / wSum;
+		}
+		// tan(theta/2) = +/- sqrt( (1-cos(theta)) / (1+cos(theta)) )
+		// (in context above we never want negative value!)
+		public static double VectorTanHalfAngle(Vector3d a, Vector3d b) {
+			double cosAngle = a.Dot(b);
+			double sqr = (1-cosAngle) / (1 + cosAngle);
+			sqr = MathUtil.Clamp(sqr, 0, Double.MaxValue);
+			return Math.Sqrt(sqr);
 		}
 
 
