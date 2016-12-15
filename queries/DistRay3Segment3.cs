@@ -5,6 +5,9 @@ using System.Text;
 
 namespace g3
 {
+    // ported from WildMagic 5 
+    // https://www.geometrictools.com/Downloads/Downloads.html
+
     class DistRay3Segment3
     {
         Ray3d ray;
@@ -29,9 +32,9 @@ namespace g3
         public double SegmentParameter;
 
 
-        public DistRay3Segment3(Ray3d ray, Segment3d segment)
+        public DistRay3Segment3(Ray3d rayIn, Segment3d segmentIn)
         {
-            this.ray = ray; this.segment = segment;
+            this.ray = rayIn; this.segment = segmentIn;
         }
 
 

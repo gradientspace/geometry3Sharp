@@ -5,6 +5,9 @@ using System.Text;
 
 namespace g3
 {
+    // ported from WildMagic 5 
+    // https://www.geometrictools.com/Downloads/Downloads.html
+
     public class DistRay3Ray3
     {
         Ray3d ray1;
@@ -55,6 +58,9 @@ namespace g3
 
         public double GetSquared()
         {
+            if (DistanceSquared >= 0)
+                return DistanceSquared;
+
             Vector3d diff = ray1.Origin - ray2.Origin;
             double a01 = -ray1.Direction.Dot(ray2.Direction);
             double b0 = diff.Dot(ray1.Direction);
@@ -149,6 +155,8 @@ namespace g3
             if (sqrDist < 0) {
                 sqrDist = 0;
             }
+            DistanceSquared = sqrDist;
+
             return sqrDist;
         }
 

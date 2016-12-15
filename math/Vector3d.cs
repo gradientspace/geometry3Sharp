@@ -250,5 +250,68 @@ namespace g3
 #endif
 
 
+
+
+        // complicated functions go down here...
+
+
+        public static void Orthonormalize(ref Vector3d u, ref Vector3d v, ref Vector3d w)
+        {
+            // If the input vectors are v0, v1, and v2, then the Gram-Schmidt
+            // orthonormalization produces vectors u0, u1, and u2 as follows,
+            //
+            //   u0 = v0/|v0|
+            //   u1 = (v1-(u0*v1)u0)/|v1-(u0*v1)u0|
+            //   u2 = (v2-(u0*v2)u0-(u1*v2)u1)/|v2-(u0*v2)u0-(u1*v2)u1|
+            //
+            // where |A| indicates length of vector A and A*B indicates dot
+            // product of vectors A and B.
+
+            // compute u0
+            u.Normalize();
+
+            // compute u1
+            double dot0 = u.Dot(v);
+            v -= dot0 * u;
+            v.Normalize();
+
+            // compute u2
+            double dot1 = v.Dot(w);
+            dot0 = u.Dot(w);
+            w -= dot0 * u + dot1 * v;
+            w.Normalize();
+        }
+
+
+        // Input W must be a unit-length vector.  The output vectors {U,V} are
+        // unit length and mutually perpendicular, and {U,V,W} is an orthonormal basis.
+        // ported from WildMagic5
+        public static void GenerateComplementBasis(ref Vector3d u, ref Vector3d v, Vector3d w)
+        {
+            double invLength;
+
+            if (Math.Abs(w.x) >= Math.Abs(w.y)) {
+                // W.x or W.z is the largest magnitude component, swap them
+                invLength = MathUtil.InvSqrt(w.x * w.x + w.z * w.z);
+                u.x = -w.z * invLength;
+                u.y = 0;
+                u.z = +w.x * invLength;
+                v.x = w.y * u.z;
+                v.y = w.z * u.x - w.x * u.z;
+                v.z = -w.y * u.x;
+            } else {
+                // W.y or W.z is the largest magnitude component, swap them
+                invLength = MathUtil.InvSqrt(w.y * w.y + w.z * w.z);
+                u.x = 0;
+                u.y = +w.z * invLength;
+                u.z = -w.y * invLength;
+                v.x = w.y * u.z - w.z * u.y;
+                v.y = -w.x * u.z;
+                v.z = w.x * u.y;
+            }
+        }
+
+
+
     }
 }

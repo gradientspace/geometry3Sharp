@@ -67,6 +67,13 @@ namespace g3
         }
 
 
+        // there are fast approximations to this...
+        public static double InvSqrt(double f)
+        {
+            return f / Math.Sqrt(f);
+        }
+
+
         public static float PlaneAngleD(Vector3f a, Vector3f b, int nPlaneNormalIdx = 1)
         {
             a[nPlaneNormalIdx] = b[nPlaneNormalIdx] = 0.0f;

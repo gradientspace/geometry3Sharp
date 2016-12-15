@@ -5,11 +5,8 @@ using System.Text;
 
 namespace g3
 {
-    public class Distance
+    public static class Distance
     {
-        private Distance()
-        {
-        }
 
         public static Vector3f ClosestPointOnLine(Vector3f p0, Vector3f dir, Vector3f pt)
         {

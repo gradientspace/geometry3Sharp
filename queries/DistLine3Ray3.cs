@@ -5,6 +5,9 @@ using System.Text;
 
 namespace g3
 {
+    // ported from WildMagic 5 
+    // https://www.geometrictools.com/Downloads/Downloads.html
+
     public class DistLine3Ray3
     {
         Line3d line;
@@ -29,9 +32,9 @@ namespace g3
         public double RayParameter;
 
 
-        public DistLine3Ray3(Ray3d ray, Line3d Line)
+        public DistLine3Ray3(Ray3d rayIn, Line3d LineIn)
         {
-            this.ray = ray; this.line = Line;
+            this.ray = rayIn; this.line = LineIn;
         }
 
         static public double MinDistance(Ray3d r, Line3d s)
@@ -58,6 +61,9 @@ namespace g3
 
         public double GetSquared ()
         {
+            if (DistanceSquared >= 0)
+                return DistanceSquared;
+
             Vector3d kDiff = line.Origin - ray.Origin;
             double a01 = -line.Direction.Dot(ray.Direction);
             double b0 = kDiff.Dot(line.Direction);
@@ -98,6 +104,8 @@ namespace g3
             if (sqrDist < (double)0) {
                 sqrDist = (double)0;
             }
+            DistanceSquared = sqrDist;
+
             return sqrDist;
         }
 
