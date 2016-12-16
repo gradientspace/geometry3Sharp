@@ -30,7 +30,7 @@ namespace g3 {
 				if ( ! mesh.IsEdge(eid) )
 					continue;
 
-				ProcessResult result = ProcessEdge(eid);
+				/*ProcessResult result = */ProcessEdge(eid);
 				// do what with result??
 			}
 

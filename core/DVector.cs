@@ -185,6 +185,23 @@ namespace g3
         }
 
 
+        public byte[] GetBytes()
+        {
+            Type type = typeof(T);
+            int n = System.Runtime.InteropServices.Marshal.SizeOf(type);
+            byte[] buffer = new byte[this.Length * n];
+            int i = 0;
+            int N = Blocks.Count;
+            for ( int k = 0; k < N-1; ++k ) {
+                Buffer.BlockCopy(Blocks[k], 0, buffer, i, nBlockSize * n);
+                i += nBlockSize * n;
+            }
+            Buffer.BlockCopy(Blocks[N-1], 0, buffer, i, iCurBlockUsed * n);
+            return buffer;
+        }
+
+
+
         /*
          * [RMS] C# resolves generics at compile-type, so we cannot call an overloaded
          *   function based on the generic type. Hence, we have these static helpers for
