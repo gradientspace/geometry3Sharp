@@ -173,6 +173,17 @@ namespace g3
 
 
 
+        // allow conversion to/from Vector3f
+        public static implicit operator Vector3f(Colorf c)
+        {
+            return new Vector3f(c.r, c.g, c.b);
+        }
+        public static implicit operator Colorf(Vector3f c)
+        {
+            return new Colorf(c.x, c.y, c.z, 1);
+        }
+
+
 
 #if G3_USING_UNITY
         public static implicit operator Colorf(UnityEngine.Color c)

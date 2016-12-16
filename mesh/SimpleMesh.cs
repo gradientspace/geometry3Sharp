@@ -68,6 +68,23 @@ namespace g3
             FaceGroups = (bWantFaceGroups) ? new DVector<int>() : null;
         }
 
+        public void Initialize(VectorArray3d v, VectorArray3i t, 
+            VectorArray3f n = null, VectorArray3f c = null, VectorArray2f uv = null, int[] g = null)
+        {
+            Vertices = new DVector<double>(v);
+            Triangles = new DVector<int>(t);
+            Normals = Colors = UVs = null;
+            FaceGroups = null;
+            if ( n != null ) 
+                Normals = new DVector<float>(n);
+            if (c != null)
+                Colors = new DVector<float>(c);
+            if (uv != null)
+                UVs = new DVector<float>(uv);
+            if (g != null)
+                FaceGroups = new DVector<int>(g);
+        }
+
 
 
         /*
@@ -283,6 +300,44 @@ namespace g3
         }
 
 
+        public IEnumerable<Vector3d> VerticesItr() {
+            int N = VertexCount;
+            for ( int i = 0; i < N; ++i )
+                yield return new Vector3d(Vertices[3 * i], Vertices[3 * i + 1], Vertices[3 * i + 2]);
+        }
+
+        public IEnumerable<Vector3f> NormalsItr() {
+            int N = VertexCount;
+            for (int i = 0; i < N; ++i)
+                yield return new Vector3f(Normals[3 * i], Normals[3 * i + 1], Normals[3 * i + 2]);
+        }
+
+        public IEnumerable<Vector3f> ColorsItr() {
+            int N = VertexCount;
+            for (int i = 0; i < N; ++i)
+                yield return new Vector3f(Colors[3 * i], Colors[3 * i + 1], Colors[3 * i + 2]);
+        }
+
+        public IEnumerable<Vector2f> UVsItr() {
+            int N = VertexCount;
+            for (int i = 0; i < N; ++i)
+                yield return new Vector2f(UVs[2 * i], UVs[2 * i + 1]);
+        }
+
+        public IEnumerable<Vector3i> TrianglesItr()
+        {
+            int N = TriangleCount;
+            for (int i = 0; i < N; ++i)
+                yield return new Vector3i(Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2]);
+        }
+
+        public IEnumerable<int> TriangleGroupsItr()
+        {
+            int N = TriangleCount;
+            for (int i = 0; i < N; ++i)
+                yield return FaceGroups[i];
+        }
+
         public System.Collections.IEnumerable VertexIndices() {
             int N = VertexCount;
             for (int i = 0; i < N; ++i)
@@ -295,10 +350,10 @@ namespace g3
         }
 
 
-    /*
-     * Array-based access (allocates arrays automatically)
-     */
-    public double[] GetVertexArray()
+        /*
+         * Array-based access (allocates arrays automatically)
+         */
+        public double[] GetVertexArray()
         {
             return this.Vertices.GetBuffer();
         }

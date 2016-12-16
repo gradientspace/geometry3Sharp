@@ -20,6 +20,18 @@ namespace g3
             Blocks.Add(new T[nBlockSize]);
         }
 
+        public DVector(IEnumerable<T> init)
+        {
+            nBlockSize = 2048;
+            iCurBlock = 0;
+            iCurBlockUsed = 0;
+            Blocks = new List<T[]>();
+            Blocks.Add(new T[nBlockSize]);
+            // AAAHHH this could be so more efficient...
+            foreach (T v in init)
+                Add(v);
+        }
+
         public int Length
         {
             get { return (Blocks.Count - 1) * nBlockSize + iCurBlockUsed;  }

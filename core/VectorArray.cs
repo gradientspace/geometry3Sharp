@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace g3
     // This class is just a wrapper around a static array that provides convenient 3-element set/get access
     // Useful for things like treating a float array as a list of vectors
     //
-    public class VectorArray3<T>
+    public class VectorArray3<T> : IEnumerable<T>
     {
         public T[] array;
 
@@ -26,6 +27,12 @@ namespace g3
             get { return array.Length/3; }
         }
 
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (int i = 0; i < array.Length; ++i)
+                yield return array[i];
+        }
+
         public void Resize(int Count)
         {
             array = new T[3 * Count];
@@ -37,7 +44,14 @@ namespace g3
             array[3 * i+1] = b;
             array[3 * i+2] = c;
         }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return array.GetEnumerator();
+        }
     }
+
+
     public class VectorArray3d : VectorArray3<double>
     {
         const double invalid_value = -99999999.0;
@@ -63,7 +77,15 @@ namespace g3
                 Set(i, value[0], value[1], value[2]);
             }
         }
+
+        public IEnumerable<Vector3d> AsVector3d()
+        {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
+        }
     };
+
+
     public class VectorArray3f : VectorArray3<float>
     {
         public VectorArray3f(int nCount) : base(nCount) { }
@@ -72,7 +94,15 @@ namespace g3
             get { return new Vector3f(array[3 * i], array[3 * i + 1], array[3 * i + 2]); }
             set { Set(i, value[0], value[1], value[2]); }
         }
+
+        public IEnumerable<Vector3f> AsVector3f()
+        {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
+        }
     };
+
+
     public class VectorArray3i : VectorArray3<int>
     {
         public VectorArray3i(int nCount) : base(nCount) { }
@@ -92,13 +122,19 @@ namespace g3
                 array[3 * i + 2] = c;
             }
         }
+
+        public IEnumerable<Vector3i> AsVector3i()
+        {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
+        }
     };
 
 
     //
     // Same as VectorArray3, but for 2D vectors/etc
     //
-    public class VectorArray2<T>
+    public class VectorArray2<T> : IEnumerable<T>
     {
         public T[] array;
 
@@ -117,6 +153,12 @@ namespace g3
             get { return array.Length / 2; }
         }
 
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (int i = 0; i < array.Length; ++i)
+                yield return array[i];
+        }
+
         public void Resize(int Count)
         {
             array = new T[2 * Count];
@@ -126,6 +168,11 @@ namespace g3
         {
             array[2 * i] = a;
             array[2 * i + 1] = b;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return array.GetEnumerator();
         }
     }
     public class VectorArray2d : VectorArray2<double>
