@@ -102,6 +102,11 @@ namespace g3
         }
 
 
+
+		public static Vector2d operator -(Vector2d v) {
+			return new Vector2d(-v.x, -v.y);
+		}
+
         public static Vector2d operator+( Vector2d a, Vector2d o ) {
             return new Vector2d(a.x + o.x, a.y + o.y); 
         }

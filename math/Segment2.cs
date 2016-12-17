@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public struct Segment2d
+	public struct Segment2d : IParametricCurve2d
     {
         // Center-direction-extent representation.
         public Vector2d Center;
@@ -35,6 +35,15 @@ namespace g3
             set { update_from_endpoints(P0, value); }
         }
 
+		// parameter is signed distance from center in direction
+		public Vector2d PointAt(double d) {
+			return Center + d * Direction;
+		}
+
+		// t ranges from [0,1] over [P0,P1]
+		public Vector2d PointBetween(double t) {
+			return Center + (2 * t - 1) * Extent * Direction;
+		}
 
         void update_from_endpoints(Vector2d p0, Vector2d p1)
         {
@@ -42,6 +51,26 @@ namespace g3
             Direction = p1 - p0;
             Extent = 0.5 * Direction.Normalize();
         }
+
+
+		// IParametricCurve2d interface
+
+		public bool IsClosed { get { return false; } }
+
+		public double ParamLength { get { return 1.0f; } }
+
+		// t in range[0,1] spans arc
+		public Vector2d SampleT(double t) {
+			return Center + (2 * t - 1) * Extent * Direction;
+		}
+
+		public bool HasArcLength { get { return true; } }
+		public double ArcLength { get { return 2*Extent; } }
+
+		public Vector2d SampleArcLength(double a) {
+			return P0 + a * Direction;
+		}
+
     }
 
 

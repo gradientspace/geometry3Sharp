@@ -103,6 +103,12 @@
     <Compile Include="core\BufferUtil.cs" />
     <Compile Include="mesh\Remesher.cs" />
     <Compile Include="mesh\MeshUtil.cs" />
+    <Compile Include="curve\Arc2.cs" />
+    <Compile Include="curve\PolyLine2d.cs" />
+    <Compile Include="curve\PlanarComplex.cs" />
+    <Compile Include="curve\CurveSampler2.cs" />
+    <Compile Include="math\AxisAlignedBox2d.cs" />
+    <Compile Include="curve\CurveSequence2.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

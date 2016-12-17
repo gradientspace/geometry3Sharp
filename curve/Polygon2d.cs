@@ -45,13 +45,27 @@ namespace g3
 
         public Vector2d GetTangent(int i)
         {
-            if (i == 0)
-                return (vertices[1] - vertices[0]).Normalized;
-            else if (i == vertices.Count - 1)
-                return (vertices[vertices.Count - 1] - vertices[vertices.Count - 2]).Normalized;
-            else
-                return (vertices[i + 1] - vertices[i - 1]).Normalized;
+			Vector2d next = vertices[(i+1)%vertices.Count];
+			Vector2d prev = vertices[i==0 ? vertices.Count-1 : i-1];
+			return (next-prev).Normalized;
         }
+
+
+		public AxisAlignedBox2d GetBounds() {
+			if ( vertices.Count == 0 )
+				return AxisAlignedBox2d.Empty;
+			AxisAlignedBox2d box = new AxisAlignedBox2d(vertices[0]);
+			for ( int i = 1; i < vertices.Count; ++i )
+				box.Contain(vertices[i]);
+			return box;
+		}
+
+
+		public IEnumerable<Segment2d> SegmentItr() {
+			for ( int i = 0; i < vertices.Count; ++i )
+				yield return new Segment2d( vertices[i], vertices[ (i+1) % vertices.Count ] );
+		}
+
 
 
 
