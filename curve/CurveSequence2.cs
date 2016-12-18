@@ -32,6 +32,10 @@ namespace g3
 			curves.Add(c);
 		}
 
+		public void Prepend(IParametricCurve2d c) {
+			curves.Insert(0, c);
+		}
+
 
 		public double ParamLength {
 			get { 
@@ -85,7 +89,11 @@ namespace g3
 			throw new ArgumentException("ParametricCurveSequence2.SampleArcLength: argument out of range");
 		}
 
-
+		public void Reverse() {
+			foreach ( var c in curves )
+				c.Reverse();
+			curves.Reverse();
+		}
 
 	}
 }

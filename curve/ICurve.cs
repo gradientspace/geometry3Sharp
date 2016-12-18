@@ -29,5 +29,7 @@ namespace g3
 		bool HasArcLength {get;}
 		double ArcLength {get;}
 		Vector2d SampleArcLength(double a);
+
+		void Reverse();
 	}
 }

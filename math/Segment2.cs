@@ -71,6 +71,10 @@ namespace g3
 			return P0 + a * Direction;
 		}
 
+		public void Reverse() {
+			update_from_endpoints(P1,P0);
+		}
+
     }
 
 

@@ -11,12 +11,12 @@ namespace g3 {
 		public double Radius;
 		public double AngleStartDeg;
 		public double AngleEndDeg;
-		public bool Reverse;		// use ccw orientation instead of cw
+		public bool IsReversed;		// use ccw orientation instead of cw
 		
 
 		public Arc2d(Vector2d center, double radius, double startDeg, double endDeg)
 		{
-			Reverse = false;
+			IsReversed = false;
 			Center = center;
 			Radius = radius;
 			AngleStartDeg = startDeg;
@@ -40,7 +40,7 @@ namespace g3 {
 
 		// t in range[0,1] spans arc
 		public Vector2d SampleT(double t) {
-			double theta = (Reverse) ?
+			double theta = (IsReversed) ?
 				(1-t)*AngleEndDeg + (t)*AngleStartDeg : 
 				(1-t)*AngleStartDeg + (t)*AngleEndDeg;
 			theta = theta * MathUtil.Deg2Rad;
@@ -60,7 +60,7 @@ namespace g3 {
 
 		public Vector2d SampleArcLength(double a) {
 			double t = a / ArcLength;
-			double theta = (Reverse) ?
+			double theta = (IsReversed) ?
 				(1-t)*AngleEndDeg + (t)*AngleStartDeg : 
 				(1-t)*AngleStartDeg + (t)*AngleEndDeg;
 			theta = theta * MathUtil.Deg2Rad;
@@ -68,7 +68,9 @@ namespace g3 {
 			return new Vector2d(Center.x + Radius*c, Center.y + Radius*s);
 		}
 
-
+		public void Reverse() {
+			IsReversed = ! IsReversed;
+		}
 
 	}
 }
