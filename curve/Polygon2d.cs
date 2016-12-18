@@ -59,7 +59,7 @@ namespace g3
         public void AppendVertex(Vector2d v)
         {
             vertices.Add(v);
-			Timestamp++;
+			Timestamp++; 
         }
 
 
