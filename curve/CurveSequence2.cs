@@ -35,24 +35,54 @@ namespace g3
 
 		public double ParamLength {
 			get { 
-				throw new NotImplementedException();
+				double sum = 0;
+				foreach ( var c in Curves )
+					sum += c.ParamLength;
+				return sum;
 			}
 		}
 
 		public Vector2d SampleT(double t) {
-			throw new NotImplementedException();
+			double sum = 0;
+			for ( int i = 0; i < Curves.Count; ++i ) {
+				double l = curves[i].ParamLength;
+				if (t <= sum+l) {
+					double ct = (t - sum);
+					return curves[i].SampleT(ct);
+				}
+				sum += l;
+			}
+			throw new ArgumentException("ParametricCurveSequence2.SampleT: argument out of range");
 		}
 
-		public bool HasArcLength { get { throw new NotImplementedException(); } }
+		public bool HasArcLength { get { 
+				foreach ( var c in Curves )
+					if ( c.HasArcLength == false )
+						return false;
+				return true;
+			} 
+		}
 
 		public double ArcLength {
 			get {
-				throw new NotImplementedException();
+				double sum = 0;
+				foreach ( var c in Curves )
+					sum += c.ArcLength;
+				return sum;
 			}
 		}
 
 		public Vector2d SampleArcLength(double a) {
-			throw new NotImplementedException();
+			double sum = 0;
+			for ( int i = 0; i < Curves.Count; ++i ) {
+				double l = curves[i].ArcLength;
+				if (a <= sum+l) {
+					double ca = (a - sum);
+					return curves[i].SampleArcLength(ca);
+				}
+				sum += l;
+			}
+			throw new ArgumentException("ParametricCurveSequence2.SampleArcLength: argument out of range");
 		}
 
 

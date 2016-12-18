@@ -8,25 +8,44 @@ namespace g3
 {
     public class Polygon2d
     {
-        List<Vector2d> vertices;
+        protected List<Vector2d> vertices;
+		public int Timestamp;
 
         public Polygon2d() {
             vertices = new List<Vector2d>();
+			Timestamp = 0;
         }
 
         public Polygon2d(Polygon2d copy)
         {
             vertices = new List<Vector2d>(copy.vertices);
+			Timestamp = 0;
         }
 
         public Polygon2d(Vector2d[] v)
         {
             vertices = new List<Vector2d>(v);
+			Timestamp = 0;
         }
         public Polygon2d(VectorArray2d v)
         {
             vertices = new List<Vector2d>(v.AsVector2d());
+			Timestamp = 0;
         }
+
+		public Vector2d this[int key]
+		{
+			get { return vertices[key]; }
+			set { vertices[key] = value; Timestamp++; }
+		}
+
+		public Vector2d Start {
+			get { return vertices[0]; }
+		}
+		public Vector2d End {
+			get { return vertices.Last(); }
+		}
+
 
         public ReadOnlyCollection<Vector2d> Vertices {
             get { return vertices.AsReadOnly(); }
@@ -40,6 +59,7 @@ namespace g3
         public void AppendVertex(Vector2d v)
         {
             vertices.Add(v);
+			Timestamp++;
         }
 
 

@@ -1,30 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace g3
 {
 	public class PolyLine2d
 	{
-		List<Vector2d> vertices;
+		protected List<Vector2d> vertices;
+		public int Timestamp;
 
 		public PolyLine2d() {
 			vertices = new List<Vector2d>();
+			Timestamp = 0;
 		}
 
 		public PolyLine2d(PolyLine2d copy)
 		{
 			vertices = new List<Vector2d>(copy.vertices);
+			Timestamp = 0;
 		}
 
 		public PolyLine2d(Vector2d[] v)
 		{
 			vertices = new List<Vector2d>(v);
+			Timestamp = 0;
 		}
 		public PolyLine2d(VectorArray2d v)
 		{
 			vertices = new List<Vector2d>(v.AsVector2d());
+			Timestamp = 0;
 		}
+
+
+		public Vector2d this[int key]
+		{
+			get { return vertices[key]; }
+			set { vertices[key] = value; Timestamp++; }
+		}
+
+		public Vector2d Start {
+			get { return vertices[0]; }
+		}
+		public Vector2d End {
+			get { return vertices[vertices.Count-1]; }
+		}
+
 
 		public ReadOnlyCollection<Vector2d> Vertices {
 			get { return vertices.AsReadOnly(); }
@@ -38,6 +59,7 @@ namespace g3
 		public void AppendVertex(Vector2d v)
 		{
 			vertices.Add(v);
+			Timestamp++; 
 		}
 
 
