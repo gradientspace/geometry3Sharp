@@ -62,6 +62,12 @@ namespace g3
 			Timestamp++; 
         }
 
+		public void Reverse()
+		{
+			vertices.Reverse();
+			Timestamp++;
+		}
+
 
         public Vector2d GetTangent(int i)
         {
@@ -84,6 +90,54 @@ namespace g3
 		public IEnumerable<Segment2d> SegmentItr() {
 			for ( int i = 0; i < vertices.Count; ++i )
 				yield return new Segment2d( vertices[i], vertices[ (i+1) % vertices.Count ] );
+		}
+
+
+
+
+
+		public bool IsClockwise() {
+			return SignedArea < 0;
+		}
+		public double SignedArea {
+			get {
+				double fArea = 0;
+				int N = vertices.Count;
+				for (int i = 0; i < N; ++i) {
+					Vector2d v1 = vertices[i];
+					Vector2d v2 = vertices[(i+1) % N];
+					fArea += v1.x * v2.y - v1.y * v2.x;
+				}
+				return fArea;	
+			}
+		}
+
+
+		public bool IsInside( Vector2d vTest )
+		{
+			int nWindingNumber = 0;   // winding number counter
+
+			int N = vertices.Count;
+			for (int i = 0; i < N; ++i) {
+
+				int iNext = (i+1) % N;
+
+				if (vertices[i].y <= vTest.y) {         
+					// start y <= P.y
+					if (vertices[iNext].y > vTest.y) {                         // an upward crossing
+						if (MathUtil.IsLeft( vertices[i], vertices[iNext], vTest) > 0)  // P left of edge
+							++nWindingNumber;                                      // have a valid up intersect
+					}
+				} else {                       
+					// start y > P.y (no test needed)
+					if (vertices[iNext].y <= vTest.y) {                        // a downward crossing
+						if (MathUtil.IsLeft( vertices[i], vertices[iNext], vTest) < 0)  // P right of edge
+							--nWindingNumber;                                      // have a valid down intersect
+					}
+				}
+			}
+
+			return nWindingNumber != 0;
 		}
 
 

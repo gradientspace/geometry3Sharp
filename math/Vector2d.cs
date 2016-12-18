@@ -79,6 +79,16 @@ namespace g3
         }
 
 
+		public Vector2d Perp {
+			get { return new Vector2d(y, -x); }
+		}
+		public Vector2d UnitPerp {
+			get { return new Vector2d(y, -x).Normalized; }
+		}
+		public double DotPerp(Vector2d v2) {
+			return x*v2.y - y*v2.x;
+		}
+
 
         public double SquaredDist(Vector2d o) {
             return ((x - o.x) * (x - o.x) + (y - o.y) * (y - o.y));

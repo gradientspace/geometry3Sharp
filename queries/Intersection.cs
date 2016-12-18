@@ -14,7 +14,7 @@ namespace g3
 
     public enum IntersectionType
     {
-        Point, Line
+        Empty, Point, Segment, Line
     }
 
 
