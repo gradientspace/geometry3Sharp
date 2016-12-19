@@ -9,7 +9,8 @@ namespace g3
     {
         NotComputed,
         Intersects,
-        NoIntersection
+        NoIntersection,
+		InvalidQuery
     }
 
     public enum IntersectionType

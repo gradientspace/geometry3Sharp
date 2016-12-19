@@ -56,7 +56,15 @@ namespace g3
         public bool Find()
         {
             if (Result != IntersectionResult.NotComputed)
-                return (Result != g3.IntersectionResult.NoIntersection);
+				return (Result == IntersectionResult.Intersects);
+
+			// [RMS] if either line direction is not a normalized vector, 
+			//   results are garbage, so fail query
+			if ( line1.Direction.IsNormalized == false || line2.Direction.IsNormalized == false )  {
+				Type = IntersectionType.Empty;
+				Result = IntersectionResult.InvalidQuery;
+				return false;
+			}
 
 			Vector2d s = Vector2d.Zero;
 			Type = Classify(line1.Origin, line1.Direction,

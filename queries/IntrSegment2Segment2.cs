@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace g3
 {
@@ -74,8 +75,12 @@ namespace g3
 
 		public Vector2d Point0;
 		public Vector2d Point1;		// only set if Quantity == 2, ie segment overlap
-		public double Segment1Parameter;
-		public double Segment2Parameter;
+
+
+		public IntrSegment2Segment2(Segment2d seg1, Segment2d seg2)
+		{
+			segment1 = seg1; segment2 = seg2;
+		}
 
 		public IntrSegment2Segment2 Compute()
         {
@@ -87,7 +92,15 @@ namespace g3
         public bool Find()
         {
             if (Result != IntersectionResult.NotComputed)
-                return (Result != g3.IntersectionResult.NoIntersection);
+				return (Result == IntersectionResult.Intersects);
+
+			// [RMS] if either segment direction is not a normalized vector, 
+			//   results are garbage, so fail query
+			if ( segment1.Direction.IsNormalized == false || segment2.Direction.IsNormalized == false )  {
+				Type = IntersectionType.Empty;
+				Result = IntersectionResult.InvalidQuery;
+				return false;
+			}
 
 
 			Vector2d s = Vector2d.Zero;
@@ -140,7 +153,30 @@ namespace g3
 
 			Result = (Type != IntersectionType.Empty) ?
 				IntersectionResult.Intersects : IntersectionResult.NoIntersection;
+
+			// [RMS] for debugging...
+			//sanity_check();
+
 			return (Result == IntersectionResult.Intersects);
         }
+
+
+
+		void sanity_check() {
+			if ( Quantity == 0 ) {
+				Util.gDevAssert(Type == IntersectionType.Empty);
+				Util.gDevAssert(Result == IntersectionResult.NoIntersection);
+			} else if (Quantity == 1) {
+				Util.gDevAssert(Type == IntersectionType.Point);
+				Util.gDevAssert( segment1.DistanceSquared(Point0) < MathUtil.ZeroTolerance );
+				Util.gDevAssert( segment2.DistanceSquared(Point0) < MathUtil.ZeroTolerance);
+			} else if ( Quantity == 2 ) {
+				Util.gDevAssert(Type == IntersectionType.Segment);
+				Util.gDevAssert( segment1.DistanceSquared(Point0) < MathUtil.ZeroTolerance );
+				Util.gDevAssert( segment1.DistanceSquared(Point1) < MathUtil.ZeroTolerance );
+				Util.gDevAssert( segment2.DistanceSquared(Point0) < MathUtil.ZeroTolerance);
+				Util.gDevAssert( segment2.DistanceSquared(Point1) < MathUtil.ZeroTolerance);
+			}
+		}
     }
 }
