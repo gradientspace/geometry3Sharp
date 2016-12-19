@@ -96,8 +96,8 @@ namespace g3
 
 
 
-		public bool IsClockwise() {
-			return SignedArea < 0;
+		public bool IsClockwise {
+			get { return SignedArea < 0; }
 		}
 		public double SignedArea {
 			get {
@@ -113,7 +113,7 @@ namespace g3
 		}
 
 
-		public bool IsInside( Vector2d vTest )
+		public bool Contains( Vector2d vTest )
 		{
 			int nWindingNumber = 0;   // winding number counter
 
@@ -141,6 +141,51 @@ namespace g3
 		}
 
 
+
+		public bool Contains(Polygon2d o) {
+
+			// [TODO] fast bbox check?
+
+			int N = o.VertexCount;
+			for ( int i = 0; i < N; ++i ) {
+				if ( Contains(o[i]) == false )
+					return false;
+			}
+
+			if ( Intersects(o) )
+				return false;
+
+			return true;
+		}
+
+
+		public bool Intersects(Polygon2d o) {
+			foreach ( Segment2d seg in SegmentItr() ) {
+				foreach ( Segment2d oseg in o.SegmentItr() ) {
+					IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, oseg);
+					if ( intr.Find() )
+						return true;
+				}
+			}
+			return false;
+		}
+
+
+		public List<Vector2d> FindIntersections(Polygon2d o) {
+			List<Vector2d> v = new List<Vector2d>();
+			foreach ( Segment2d seg in SegmentItr() ) {
+				foreach ( Segment2d oseg in o.SegmentItr() ) {
+					IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, oseg);
+					if ( intr.Find() ) {
+						v.Add( intr.Point0 );
+						if ( intr.Quantity == 2 )
+							v.Add( intr.Point1 );
+						break;
+					}
+				}
+			}
+			return v;
+		}
 
 
         static public Polygon2d MakeCircle(float fRadius, int nSteps)
