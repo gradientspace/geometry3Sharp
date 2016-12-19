@@ -67,6 +67,10 @@ namespace g3
             }
         }
 
+		public bool IsNormalized {
+			get { return Math.Abs( (x * x + y * y) - 1) < MathUtil.ZeroTolerance; }
+		}
+
 
         public double Dot(Vector2d v2)
         {

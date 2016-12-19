@@ -170,6 +170,10 @@ namespace g3
         public bool Contains(Vector2d v) {
             return (Min.x < v.x) && (Min.y < v.y) && (Max.x > v.x) && (Max.y > v.y);
         }
+		public bool Contains(AxisAlignedBox2d box2) {
+			return Contains(box2.Min) && Contains(box2.Max);
+		}
+
         public bool Intersects(AxisAlignedBox2d box) {
             return !((box.Max.x < Min.x) || (box.Min.x > Max.x) || (box.Max.y < Min.y) || (box.Min.y > Max.y));
         }

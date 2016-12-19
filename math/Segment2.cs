@@ -52,6 +52,17 @@ namespace g3
             Extent = 0.5 * Direction.Normalize();
         }
 
+		public double DistanceSquared(Vector2d p)
+		{
+			double t = (p - Center).Dot(Direction);
+			if ( t >= Extent )
+				return P1.SquaredDist(p);
+			else if ( t <= Extent )
+				return P0.SquaredDist(p);
+			Vector2d proj = Center + t * Direction;
+			return (proj - p).LengthSquared;
+		}
+
 
 		// IParametricCurve2d interface
 

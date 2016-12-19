@@ -68,6 +68,9 @@ namespace g3
             }
         }
 
+		public bool IsNormalized {
+			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerance; }
+		}
 
         public double Dot(Vector3d v2)
         {
