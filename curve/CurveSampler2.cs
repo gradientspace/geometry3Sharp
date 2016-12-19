@@ -41,6 +41,7 @@ namespace g3 {
 		public static VectorArray2d SampleArcLen(ParametricCurveSequence2 curves, double fSpacing)
 		{
 			int N = curves.Count;
+			bool bClosed = curves.IsClosed;
 
 			VectorArray2d[] vecs = new VectorArray2d[N];
 			int i = 0;
@@ -51,7 +52,7 @@ namespace g3 {
 				i++;
 			}
 
-			int nDuplicates = N-1;		// handle closed here...
+			int nDuplicates = (bClosed) ? N : N-1;		// handle closed here...
 			nTotal -= nDuplicates;
 
 			VectorArray2d final = new VectorArray2d(nTotal);
@@ -63,7 +64,7 @@ namespace g3 {
 
 				// skip final vertex unless we are on last curve (because it is
 				// the same as first vertex of next curve)
-				int nStop = (vi < N-1) ? vv.Count-1 : vv.Count;
+				int nStop = (bClosed || vi < N-1) ? vv.Count-1 : vv.Count;
 				for ( int j = 0; j < nStop; ++j )
 					final[k++] = vv[j];
 			}
