@@ -22,7 +22,7 @@ namespace g3
 	{
 		// these determine pointwise sampling rates
 
-		public double DistanceAccuracy = 0.1;
+		public double DistanceAccuracy = 0.5;
 		public double AngleAccuracyDeg = 5.0;
 
 		int id_generator = 1;
@@ -233,6 +233,81 @@ namespace g3
 			UpdateSampling(cTo);
 		}
 
+
+
+
+
+		public List<GeneralPolygon2d> FindSolidRegions() 
+		{
+			List<SmoothLoopElement> valid = new List<SmoothLoopElement>(LoopsItr());
+			int N = valid.Count;
+
+			int maxid = 0;
+			foreach ( var v in valid )
+				maxid = Math.Max(maxid, v.ID+1);
+			AxisAlignedBox2d[] bounds = new AxisAlignedBox2d[maxid];
+			foreach ( var v in valid )
+				bounds[v.ID] = v.Bounds();
+
+			// sort by containment to speed up testing (does it??)
+			valid.Sort((x, y) => {
+				return bounds[x.ID].Contains( bounds[y.ID] ) ? -1 : 1; 
+			});
+
+			bool[] bIsContained = new bool[N];
+			Dictionary<int, List<int>> ContainSets = new Dictionary<int, List<int>>();
+
+			for ( int i = 0; i < N; ++i ) {
+				SmoothLoopElement loopi = valid[i];
+
+				for ( int j = 0; j < N; ++j ) {
+					if ( i == j )
+						continue;
+					SmoothLoopElement loopj = valid[j];
+
+					// cannot be contained if bounds are not contained
+					if ( bounds[loopi.ID].Contains( bounds[loopj.ID] ) == false )
+						continue;
+
+					// any other early-outs??
+
+					if ( loopi.polygon.Contains( loopj.polygon ) ) {
+						if ( ContainSets.ContainsKey(i) == false )
+							ContainSets.Add(i, new List<int>() );
+						ContainSets[i].Add(j);
+						bIsContained[j] = true;
+					}
+	
+				}
+			}
+
+			List<GeneralPolygon2d> regions = new List<GeneralPolygon2d>();
+
+			foreach ( var i in ContainSets.Keys ) {
+				SmoothLoopElement outer = valid[i];
+				if ( bIsContained[i] )
+					throw new Exception("PlanarComplex.FindSolidRegions: multiply-nested regions not supported!");
+
+				Polygon2d outer_poly = new Polygon2d(outer.polygon);
+				if ( outer_poly.IsClockwise == false )
+					outer_poly.Reverse();
+
+				GeneralPolygon2d g = new GeneralPolygon2d();
+				g.Outer = outer_poly;
+
+				foreach ( int hi in ContainSets[i] ) {
+					SmoothLoopElement he = valid[hi];
+					Polygon2d hole_poly = new Polygon2d(he.polygon);
+					if ( hole_poly.IsClockwise )
+						hole_poly.Reverse();
+					g.AddHole(hole_poly);
+				}
+
+				regions.Add(g);
+			}
+
+			return regions;
+		}
 
 
 
