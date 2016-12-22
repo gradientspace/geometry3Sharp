@@ -22,7 +22,7 @@ namespace g3
 	{
 		// these determine pointwise sampling rates
 
-		public double DistanceAccuracy = 0.5;
+		public double DistanceAccuracy = 0.1;
 		public double AngleAccuracyDeg = 5.0;
 
 		int id_generator = 1;
@@ -237,11 +237,13 @@ namespace g3
 
 
 
-		public List<GeneralPolygon2d> FindSolidRegions() 
+		public List<GeneralPolygon2d> FindSolidRegions(double fSimplifyDeviationTol = 0.05f) 
 		{
 			List<SmoothLoopElement> valid = new List<SmoothLoopElement>(LoopsItr());
 			int N = valid.Count;
 
+
+			// precompute bounding boxes
 			int maxid = 0;
 			foreach ( var v in valid )
 				maxid = Math.Max(maxid, v.ID+1);
@@ -249,7 +251,18 @@ namespace g3
 			foreach ( var v in valid )
 				bounds[v.ID] = v.Bounds();
 
-			// sort by containment to speed up testing (does it??)
+			// copy polygons, simplify if desired
+			double fClusterTol = 0.0;		// don't do simple clustering, can lose corners
+			double fDeviationTol = fSimplifyDeviationTol;
+			Polygon2d[] polygons = new Polygon2d[maxid];
+			foreach ( var v in valid ) {
+				Polygon2d p = new Polygon2d(v.polygon);
+				if ( fClusterTol > 0 || fDeviationTol > 0 )
+					p.Simplify(fClusterTol, fDeviationTol);
+				polygons[v.ID] = p;
+			}
+
+			// sort by bbox containment to speed up testing (does it??)
 			valid.Sort((x, y) => {
 				return bounds[x.ID].Contains( bounds[y.ID] ) ? -1 : 1; 
 			});
@@ -259,11 +272,13 @@ namespace g3
 
 			for ( int i = 0; i < N; ++i ) {
 				SmoothLoopElement loopi = valid[i];
+				Polygon2d polyi = polygons[loopi.ID];
 
 				for ( int j = 0; j < N; ++j ) {
 					if ( i == j )
 						continue;
 					SmoothLoopElement loopj = valid[j];
+					Polygon2d polyj = polygons[loopj.ID];
 
 					// cannot be contained if bounds are not contained
 					if ( bounds[loopi.ID].Contains( bounds[loopj.ID] ) == false )
@@ -271,7 +286,7 @@ namespace g3
 
 					// any other early-outs??
 
-					if ( loopi.polygon.Contains( loopj.polygon ) ) {
+					if ( polyi.Contains( polyj ) ) {
 						if ( ContainSets.ContainsKey(i) == false )
 							ContainSets.Add(i, new List<int>() );
 						ContainSets[i].Add(j);
@@ -282,15 +297,15 @@ namespace g3
 			}
 
 			List<GeneralPolygon2d> regions = new List<GeneralPolygon2d>();
-            List<SmoothLoopElement> containers = new List<SmoothLoopElement>();
+			List<SmoothLoopElement> used = new List<SmoothLoopElement>();
 
             foreach ( var i in ContainSets.Keys ) {
                 SmoothLoopElement outer = valid[i];
-                containers.Add(outer);
+                used.Add(outer);
                 if ( bIsContained[i] )
 					throw new Exception("PlanarComplex.FindSolidRegions: multiply-nested regions not supported!");
 
-				Polygon2d outer_poly = new Polygon2d(outer.polygon);
+				Polygon2d outer_poly = polygons[outer.ID];
 				if ( outer_poly.IsClockwise == false )
 					outer_poly.Reverse();
 
@@ -299,7 +314,8 @@ namespace g3
 
 				foreach ( int hi in ContainSets[i] ) {
 					SmoothLoopElement he = valid[hi];
-					Polygon2d hole_poly = new Polygon2d(he.polygon);
+					used.Add(he);
+					Polygon2d hole_poly = polygons[he.ID];
 					if ( hole_poly.IsClockwise )
 						hole_poly.Reverse();
 					g.AddHole(hole_poly);
@@ -310,10 +326,10 @@ namespace g3
 
             for (int i = 0; i < N; ++i) {
                 SmoothLoopElement loopi = valid[i];
-                if (containers.Contains(loopi))
+                if (used.Contains(loopi))
                     continue;
 
-                Polygon2d outer_poly = new Polygon2d(loopi.polygon);
+				Polygon2d outer_poly = polygons[loopi.ID];
                 if (outer_poly.IsClockwise == false)
                     outer_poly.Reverse();
 

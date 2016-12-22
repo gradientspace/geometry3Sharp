@@ -57,7 +57,7 @@ namespace g3
 			double t = (p - Center).Dot(Direction);
 			if ( t >= Extent )
 				return P1.SquaredDist(p);
-			else if ( t <= Extent )
+			else if ( t <= -Extent )
 				return P0.SquaredDist(p);
 			Vector2d proj = Center + t * Direction;
 			return (proj - p).LengthSquared;
