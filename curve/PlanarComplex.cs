@@ -282,10 +282,12 @@ namespace g3
 			}
 
 			List<GeneralPolygon2d> regions = new List<GeneralPolygon2d>();
+            List<SmoothLoopElement> containers = new List<SmoothLoopElement>();
 
-			foreach ( var i in ContainSets.Keys ) {
-				SmoothLoopElement outer = valid[i];
-				if ( bIsContained[i] )
+            foreach ( var i in ContainSets.Keys ) {
+                SmoothLoopElement outer = valid[i];
+                containers.Add(outer);
+                if ( bIsContained[i] )
 					throw new Exception("PlanarComplex.FindSolidRegions: multiply-nested regions not supported!");
 
 				Polygon2d outer_poly = new Polygon2d(outer.polygon);
@@ -306,7 +308,22 @@ namespace g3
 				regions.Add(g);
 			}
 
-			return regions;
+            for (int i = 0; i < N; ++i) {
+                SmoothLoopElement loopi = valid[i];
+                if (containers.Contains(loopi))
+                    continue;
+
+                Polygon2d outer_poly = new Polygon2d(loopi.polygon);
+                if (outer_poly.IsClockwise == false)
+                    outer_poly.Reverse();
+
+                GeneralPolygon2d g = new GeneralPolygon2d();
+                g.Outer = outer_poly;
+
+                regions.Add(g);
+            }
+
+            return regions;
 		}
 
 
