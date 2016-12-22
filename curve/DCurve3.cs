@@ -20,6 +20,16 @@ namespace g3
             Timestamp = 0;
         }
 
+        public DCurve3(List<Vector3d> vertices, bool bClosed, bool bTakeOwnership = false)
+        {
+            if (bTakeOwnership)
+                this.vertices = vertices;
+            else
+                vertices = new List<Vector3d>(vertices);
+            Closed = bClosed;
+            Timestamp = 0;
+        }
+
         public DCurve3(DCurve3 copy)
         {
             vertices = new List<Vector3d>(copy.vertices);
@@ -56,6 +66,14 @@ namespace g3
         {
             vertices = new List<Vector3d>(v);
             Timestamp++;
+        }
+
+        public void SetVertices(List<Vector3d> vertices, bool bTakeOwnership)
+        {
+            if (bTakeOwnership)
+                this.vertices = vertices;
+            else
+                this.vertices = new List<Vector3d>(vertices);
         }
 
         public Vector3d this[int key]
@@ -103,6 +121,14 @@ namespace g3
                 return (vertices.Last() - vertices[vertices.Count - 2]).Normalized;
             else
                 return (vertices[i + 1] - vertices[i - 1]).Normalized;
+        }
+
+        public Vector3d Centroid(int i)
+        {
+            if (i == 0 || i == vertices.Count - 1)
+                return vertices[i];
+            else
+                return 0.5 * (vertices[i + 1] + vertices[i - 1]);
         }
 
     }
