@@ -33,6 +33,12 @@ namespace g3
             return (proj - p).LengthSquared;
         }
 
+        public Vector3d ClosestPoint(Vector3d p)
+        {
+            double t = (p - Origin).Dot(Direction);
+            return Origin + t * Direction;
+        }
+
         // conversion operators
         public static implicit operator Line3d(Line3f v)
         {
@@ -74,6 +80,12 @@ namespace g3
             float t = (p - Origin).Dot(Direction);
             Vector3f proj = Origin + t * Direction;
             return (proj - p).LengthSquared;
+        }
+
+        public Vector3f ClosestPoint(Vector3f p)
+        {
+            float t = (p - Origin).Dot(Direction);
+            return Origin + t * Direction;
         }
     }
 }
