@@ -46,12 +46,16 @@
     <Compile Include="core\FileSystemUtils.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\VectorArray.cs" />
+    <Compile Include="curve\BaseCurve2.cs" />
+    <Compile Include="curve\BSplineBasis.cs" />
+    <Compile Include="curve\NURBSCurve2.cs" />
     <Compile Include="implicit\ImplicitField.cs" />
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="io\MaterialTypes.cs" />
     <Compile Include="math\Frame3f.cs" />
     <Compile Include="math\IndexUtil.cs" />
+    <Compile Include="math\Integrate1d.cs" />
     <Compile Include="math\MathUtil.cs" />
     <Compile Include="math\Matrix3f.cs" />
     <Compile Include="math\Quaternionf.cs" />
