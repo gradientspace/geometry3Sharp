@@ -8,6 +8,11 @@ namespace g3
     public class Util
     {
 
+		static public void gBreakToDebugger() {
+			if ( System.Diagnostics.Debugger.IsAttached)
+				System.Diagnostics.Debugger.Break();
+		}
+
         static public void gDevAssert(bool bValue) {
             if (bValue == false)
                 throw new Exception("gDevAssert");

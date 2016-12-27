@@ -30,11 +30,15 @@ namespace g3
         // If open is 'false', the spline is periodic and the knots are
         //   t[i] = (i-d)/(n+1-d),   0 <= i <= n+d+1
         // If loop is 'true', extra control points are added to generate a closed
-        // curve.  For an open spline, the control point array is doublelocated and
+        // curve.  For an open spline, the control point array is reallocated and
         // one extra control point is added, set to the first control point
         // C[n+1] = C[0].  For a periodic spline, the control point array is
-        // doublelocated and the first d points are replicated.  In either case the
+        // reallocated and the first d points are replicated.  In either case the
         // knot array is calculated accordingly.
+		//
+		// [RMS] "open" and "loop" are super-confusing here. Perhaps NURBSCurve2 should
+		//   be refactored into several subclasses w/ different constructors, so that
+		//   the naming makes sense?
 
         public NURBSCurve2(int numCtrlPoints, Vector2d[] ctrlPoint, double[] ctrlWeight, int degree, bool loop, bool open)
             : base(0,1)
@@ -51,9 +55,30 @@ namespace g3
             mBasis = new BSplineBasis(mNumCtrlPoints + mReplicate, degree, open);
         }
 
-        // Open, nonuniform spline.  The knot array must have n-d elements.  The
-        // elements must be nondecreasing.  Each element must be in [0,1].
-        public NURBSCurve2(int numCtrlPoints, Vector2d[] ctrlPoint, double[] ctrlWeight, int degree, bool loop, double[] knot)
+        // Open, nonuniform spline, that takes external knot vector. 
+		//
+		// if bIsInteriorKnot, the knot array must have n-d-1 elements, the standard start/end 
+		//   sequences of #degree 0/1 knots will be automatically added by internal BSplineBasis.
+		//
+		// if !bIsInteriorKnot, the knot array must have n+d+1 elements and is used directly.
+		//
+		// eg for 7 control points degree-3 curve the full knot vector would be [0 0 0 0 a b c 1 1 1 1],
+		//   and the interior knot vector would be [a b c]. 
+		//
+		// The knot elements must be nondecreasing.  Each element must be in [0,1]. Note that
+		//   knot vectors can be arbitrary normalized by dividing by the largest knot, if 
+		//   you have a knot vector with values > 1
+		// 
+		// loop=true duplicates the first control point to force loop closure, however this
+		//   was broken in the WildMagic code because it didn't add a knot. I am not
+		//   quite sure what to do here - a new non-1 knot value needs to be inserted for
+		//   the previous last control point, somehow. Or perhaps the knot vector needs
+		//   to be extended, ie the final degree-duplicate knots need value > 1?
+		//
+		// Currently to create a closed NURBS curve, the caller must handle this duplication
+		//   themselves. 
+        public NURBSCurve2(int numCtrlPoints, Vector2d[] ctrlPoint, double[] ctrlWeight, int degree, bool loop, 
+		                   double[] knot, bool bIsInteriorKnot = true )
             : base(0,1)
         {
             if (numCtrlPoints < 2)
@@ -61,12 +86,19 @@ namespace g3
             if (degree < 1 || degree > numCtrlPoints - 1)
                 throw new Exception("NURBSCurve2(): invalid degree " + degree);
 
+			// [RMS] loop mode doesn't work yet
+			if ( loop == true )
+				throw new Exception("NURBSCUrve2(): loop mode is broken?");
+
             mLoop = loop;
             mNumCtrlPoints = numCtrlPoints;
             mReplicate = (loop ? 1 : 0);
             CreateControl(ctrlPoint, ctrlWeight);
-            mBasis = new BSplineBasis(mNumCtrlPoints + mReplicate, degree, knot);
+			mBasis = new BSplineBasis(mNumCtrlPoints + mReplicate, degree, knot, bIsInteriorKnot);
         }
+
+
+
 
         //virtual ~NURBSCurve2();
 
@@ -76,15 +108,23 @@ namespace g3
         public int GetDegree() {
             return mBasis.GetDegree();
         }
-        public bool IsOpen() {
-            return mBasis.IsOpen();
-        }
+
+		// [RMS] this is only applicable to Uniform curves, confusing to have in API
+		//   for class that also supports non-uniform curves. And "non-open" curve
+		//   can still be closed depending on CVs!
+        //public bool IsOpen() {
+        //    return mBasis.IsOpen();
+        //}
+
         public bool IsUniform() {
             return mBasis.IsUniform();
         }
-        public bool IsLoop() {
-            return mLoop;
-        }
+
+		// [RMS] loop mode is broken for non-uniform curves. And "non-open" curve
+		//   can still be closed depending on CVs!
+        //public bool IsLoop() {
+        //    return mLoop;
+        //}
 
         // Control points and weights may be changed at any time.  The input index
         // should be valid (0 <= i <= n).  If it is invalid, the return value of
@@ -147,7 +187,7 @@ namespace g3
                 X += tmp * mCtrlPoint[i];
                 w += tmp;
             }
-            double invW = ((double)1) / w;
+            double invW = 1.0 / w;
             return invW * X;
         }
 
@@ -166,7 +206,7 @@ namespace g3
                 X += tmp * mCtrlPoint[i];
                 w += tmp;
             }
-            double invW = ((double)1) / w;
+            double invW = 1.0 / w;
             Vector2d P = invW * X;
 
             // Compute first derivative.
@@ -204,7 +244,7 @@ namespace g3
         {
             public Vector2d p, d1, d2, d3;
             public bool bPosition, bDer1, bDer2, bDer3;
-            public void init() { bPosition = bDer1 = bDer2 = bDer2 = false; }
+            public void init() { bPosition = bDer1 = bDer2 = bDer3 = false; }
             public void init(bool pos, bool der1, bool der2, bool der3) {
                 bPosition = pos; bDer1 = der1; bDer2 = der2; bDer3 = der3;
             }
@@ -237,7 +277,7 @@ namespace g3
                 X += tmp * mCtrlPoint[i];
                 w += tmp;
             }
-            double invW = ((double)1) / w;
+            double invW = 1.0 / w;
             Vector2d P = invW * X;
             result.p = P;
             result.bPosition = true;
@@ -327,8 +367,14 @@ namespace g3
         /*
          * IParametricCurve2d implementation
          */
+
+		// [RMS] original NURBSCurve2 WildMagic5 code does not explicitly support "closed" NURBS curves.
+		//   However you can create a closed NURBS curve yourself by setting appropriate control points.
+		//   So, this value is independent of IsOpen/IsLoop above
+		bool is_closed = false;
 		public bool IsClosed {
-            get { return !IsOpen(); }
+			get { return is_closed; }
+			set { is_closed = value; }
         }
 
 		// can call SampleT in range [0,ParamLength]

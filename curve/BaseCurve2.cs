@@ -44,7 +44,8 @@ namespace g3
 
         // Differential geometric quantities.
         public double GetSpeed (double t) {
-            return GetFirstDerivative(t).Length;
+			Vector2d d1 = GetFirstDerivative(t);
+			return d1.Length;
         }
 
 

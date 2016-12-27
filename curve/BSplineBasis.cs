@@ -33,7 +33,7 @@ namespace g3
             mUniform = true;
 
             int i, numKnots = Initialize(numCtrlPoints, degree, open);
-            double factor = 1 / (mNumCtrlPoints - mDegree);
+            double factor = 1.0 / (mNumCtrlPoints - mDegree);
             if (mOpen) {
                 for (i = 0; i <= mDegree; ++i) 
                     mKnot[i] = 0;
@@ -48,25 +48,38 @@ namespace g3
         }
         
 
-        // Open nonuniform.  The interiorKnot array must have n-d nondecreasing
-        // elements in the interval [0,1].  The values are
-        //   knot[i] = interiorKnot[j]
-        // with 0 <= j <= n-d-1 and i = j+d+1, so d+1 <= i <= n.  The caller is
-        // responsible for interiorKnot if it was dynamically allocated.  An
-        // internal copy is made, so to dynamically change knots you must use
-        // the SetKnot(j,*) function.
-        public BSplineBasis(int numCtrlPoints, int degree, double[] interiorKnot)
+        // Open nonuniform.  
+		// if bIsInteriorKnots, the knots array must have n-d-1 nondecreasing
+        //   elements in the interval [0,1].  The values are
+        //     knot[i] = interiorKnot[j]
+        //   with 0 <= j < n-d-1 and i = j+d+1, so d+1 <= i < n.  
+		//
+		// if bIsInteriorKnots = false, the knot vector is copied directly, and must have
+		//   n+d+1 elements
+		//
+        // An internal copy of knots[] is made, so to dynamically change knots you 
+		// must use the SetKnot(j,*) function.
+		public BSplineBasis(int numCtrlPoints, int degree, double[] knots, bool bIsInteriorKnots)
         {
             //code from c++ Create(int numCtrlPoints, int degree, double* interiorKnot);
             mUniform = false;
-
             int i, numKnots = Initialize(numCtrlPoints, degree, true);
-            for (i = 0; i <= mDegree; ++i)
-                mKnot[i] = 0;
-            for (int j = 0; i < mNumCtrlPoints; ++i, ++j)
-                mKnot[i] = interiorKnot[j];
-            for (/**/; i < numKnots; ++i)
-                mKnot[i] = 1;
+
+			if ( bIsInteriorKnots ) {
+				if ( knots.Length != mNumCtrlPoints-mDegree-1 )
+					throw new Exception("BSplineBasis nonuniform constructor: invalid interior knot vector");
+				for (i = 0; i <= mDegree; ++i)
+					mKnot[i] = 0;
+				for (int j = 0; i < mNumCtrlPoints; ++i, ++j)
+					mKnot[i] = knots[j];
+				for (/**/; i < numKnots; ++i)
+					mKnot[i] = 1;
+			} else { 
+				if ( mKnot.Length != knots.Length )
+					throw new Exception("BSplineBasis nonuniform constructor: invalid knot vector");
+				Array.Copy(knots, mKnot, knots.Length);
+			}
+
         }
 
         //virtual ~BSplineBasis();
@@ -167,8 +180,14 @@ namespace g3
             double invD0, invD1;
             int j;
             for (j = 1; j <= mDegree; j++) {
-                invD0 = ((double)1) / (mKnot[i + j] - mKnot[i]);
-                invD1 = ((double)1) / (mKnot[i + 1] - mKnot[i - j + 1]);
+                invD0 = 1.0 / (mKnot[i + j] - mKnot[i]);
+                invD1 = 1.0 / (mKnot[i + 1] - mKnot[i - j + 1]);
+
+				// [RMS] convention is 0/0 = 0. invD0/D1 will be Infinity in these
+				// cases, so we set explicitly to 0
+				if ( mKnot[i+j] == mKnot[i] ) invD0 = 0;
+				if ( mKnot[i+1] == mKnot[i - j + 1] ) invD1 = 0;
+
 
                 mBD0[j,i] = n0 * mBD0[j - 1,i] * invD0;
                 mBD0[j,i - j] = n1 * mBD0[j - 1,i - j + 1] * invD1;
@@ -196,10 +215,15 @@ namespace g3
                 for (int k = i - j + 1; k < i; ++k) {
                     n0 = t - mKnot[k];
                     n1 = mKnot[k + j + 1] - t;
-                    invD0 = ((double)1) / (mKnot[k + j] - mKnot[k]);
-                    invD1 = ((double)1) / (mKnot[k + j + 1] - mKnot[k + 1]);
+                    invD0 = 1.0 / (mKnot[k + j] - mKnot[k]);
+                    invD1 = 1.0 / (mKnot[k + j + 1] - mKnot[k + 1]);
 
-                    mBD0[j,k] = n0 * mBD0[j - 1,k] * invD0 + n1 * mBD0[j - 1,k + 1] * invD1;
+					// [RMS] convention is 0/0 = 0. invD0/D1 will be Infinity in these
+					// cases, so we set explicitly to 0
+					if ( mKnot[k+j] == mKnot[k] ) invD0 = 0;
+					if ( mKnot[k+j+1] == mKnot[k+1] ) invD1 = 0;
+
+					mBD0[j,k] = n0 * mBD0[j - 1,k] * invD0 + n1 * mBD0[j - 1,k + 1] * invD1;
 
                     if (order >= 1) {
                         mBD1[j,k] = (n0 * mBD1[j - 1,k] + mBD0[j - 1,k]) * invD0 +
