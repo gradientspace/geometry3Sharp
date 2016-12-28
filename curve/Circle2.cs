@@ -29,7 +29,7 @@ namespace g3
 		}
 
 
-        // angle in range [-2pi,2pi]
+		// angle in range [0,360] (but works for any value, obviously)
         public Vector2d SampleDeg(double degrees)
         {
             double theta = degrees * MathUtil.Deg2Rad;
@@ -37,7 +37,7 @@ namespace g3
 			return new Vector2d(Center.x + Radius*c, Center.y + Radius*s);
         }
 
-        // angle in range [-2pi,2pi]
+		// angle in range [0,2pi] (but works for any value, obviously)
         public Vector2d SampleRad(double radians)
         {
             double c = Math.Cos(radians), s = Math.Sin(radians);
@@ -49,10 +49,9 @@ namespace g3
 			get { return 1.0f; }
 		}
 
-		// t in range[0,1] spans arc
+		// t in range[0,1] spans circle [0,2pi]
 		public Vector2d SampleT(double t) {
-            double theta = (IsReversed) ? t : -t;
-			theta = theta * MathUtil.Deg2Rad;
+			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
 			double c = Math.Cos(theta), s = Math.Sin(theta);
 			return new Vector2d(Center.x + Radius*c, Center.y + Radius*s);
 		}
@@ -67,8 +66,7 @@ namespace g3
 
 		public Vector2d SampleArcLength(double a) {
 			double t = a / ArcLength;
-            double theta = (IsReversed) ? t : -t;
-			theta = theta * MathUtil.Deg2Rad;
+			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
 			double c = Math.Cos(theta), s = Math.Sin(theta);
 			return new Vector2d(Center.x + Radius*c, Center.y + Radius*s);
 		}

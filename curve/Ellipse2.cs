@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace g3
 {
     // ported from WildMagic5 Ellipse2
-    public class Ellipse2 : IParametricCurve2d
+    public class Ellipse2d : IParametricCurve2d
     {
         // An ellipse has center K, axis directions U[0] and U[1] (both
         // unit-length vectors), and extents e[0] and e[1] (both positive
@@ -35,16 +35,16 @@ namespace g3
         public bool IsReversed;		// use ccw orientation instead of cw
 
 
-        Ellipse2(Vector2d center, Vector2d axis0, Vector2d axis1, Vector2d extent) {
+        public Ellipse2d(Vector2d center, Vector2d axis0, Vector2d axis1, Vector2d extent) {
             Center = center;
             Axis0 = axis0;
             Axis1 = axis1;
-            Extent[0] = extent[0];
-            Extent[1] = extent[1];
+            Extent.x = extent.x;
+            Extent.y = extent.y;
             IsReversed = false;
         }
 
-        Ellipse2(Vector2d center, Vector2d axis0, Vector2d axis1, double extent0, double extent1) {
+		public Ellipse2d(Vector2d center, Vector2d axis0, Vector2d axis1, double extent0, double extent1) {
             Center = center;
             Axis0 = axis0;
             Axis1 = axis1;
@@ -52,6 +52,15 @@ namespace g3
             Extent.y = extent1;
 			IsReversed = false;
         }
+
+		public Ellipse2d(Vector2d center, double rotationAngleDeg, double extent0, double extent1) {
+			Center = center;
+			Matrix2d m = new Matrix2d(rotationAngleDeg * MathUtil.Deg2Rad);
+			Axis0 = m * Vector2d.AxisX;
+			Axis1 = m * Vector2d.AxisY;
+			Extent = new Vector2d(extent0, extent1);
+			IsReversed = false;
+		}
 
         // Compute M = sum_{i=0}^1 U[i]*U[i]^T/e[i]^2.
         public Matrix2d GetM() {
@@ -240,8 +249,7 @@ namespace g3
 
 		// t in range[0,1] spans arc
 		public Vector2d SampleT(double t) {
-            double theta = (IsReversed) ? t : -t;
-			theta = theta * MathUtil.Deg2Rad;
+			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
 			double c = Math.Cos(theta), s = Math.Sin(theta);
             return Center + (Extent.x * c * Axis0) + (Extent.y * s * Axis1);
 		}
@@ -263,8 +271,20 @@ namespace g3
 
 
         public double Area {
-            get { return Math.PI * Extent[0] * Extent[1]; }
+            get { return Math.PI * Extent.x * Extent.y; }
         }
+		public double ApproxArcLen {
+			get {
+				// [RMS] from http://mathforum.org/dr.math/faq/formulas/faq.ellipse.html, 
+				//   apparently due to Ramanujan
+				double a = Math.Max(Extent.x, Extent.y);
+				double b = Math.Min(Extent.x, Extent.y);
+				double x = (a-b) / (a+b);
+				double tx2 = 3*x*x;
+				double denom = 10.0 + Math.Sqrt(4-tx2);
+				return Math.PI * (a+b) * (1 + tx2 / denom );
+			}
+		}
 
 
     }

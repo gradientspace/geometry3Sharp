@@ -65,7 +65,7 @@ namespace g3
         public void SetToRotationRad(double angleRad) {
             m11 = m00 = Math.Cos(angleRad);
             m10 = Math.Sin(angleRad);
-            m01 = -m01;
+            m01 = -m10;
         }
         public void SetToRotationDeg(double angleDeg) {
             SetToRotationRad(MathUtil.Deg2Rad * angleDeg);

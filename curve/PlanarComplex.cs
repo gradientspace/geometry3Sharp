@@ -24,6 +24,7 @@ namespace g3
 
 		public double DistanceAccuracy = 0.1;
 		public double AngleAccuracyDeg = 5.0;
+		public double SpacingT = 0.01;		// for curves where we don't know arc length
 
 		int id_generator = 1;
 
@@ -90,11 +91,11 @@ namespace g3
 
 		void UpdateSampling(SmoothCurveElement c) {
 			c.polyLine = new PolyLine2d( 
-                CurveSampler2.AutoSample(c.source, DistanceAccuracy) );
+                CurveSampler2.AutoSample(c.source, DistanceAccuracy, SpacingT) );
 		}
 		void UpdateSampling(SmoothLoopElement l) {
 			l.polygon = new Polygon2d(
-				CurveSampler2.AutoSample(l.source, DistanceAccuracy) );
+				CurveSampler2.AutoSample(l.source, DistanceAccuracy, SpacingT) );
 		}
 
 

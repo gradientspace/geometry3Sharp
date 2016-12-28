@@ -130,6 +130,7 @@
     <Compile Include="queries\Intersector1.cs" />
     <Compile Include="math\Interval1d.cs" />
     <Compile Include="curve\GeneralPolygon2d.cs" />
+    <Compile Include="curve\EllipseArc2.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

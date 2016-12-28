@@ -5,15 +5,34 @@ namespace g3 {
 	
 	public static class CurveSampler2 
 	{
-		public static VectorArray2d AutoSample(IParametricCurve2d curve, double fSpacing)
+		public static VectorArray2d AutoSample(IParametricCurve2d curve, double fSpacingLength, double fSpacingT)
 		{
 			if ( curve is ParametricCurveSequence2 )
-				return SampleArcLen(curve as ParametricCurveSequence2, fSpacing);
+				return AutoSample(curve as ParametricCurveSequence2, fSpacingLength, fSpacingT);
 
-			return SampleArcLen(curve, fSpacing);
-
+			if ( curve.HasArcLength )
+				return SampleArcLen(curve, fSpacingLength);
+			else
+				return SampleT(curve, fSpacingT);
 		}
 
+
+
+		public static VectorArray2d SampleT(IParametricCurve2d curve, double fSpacing)
+		{
+			double fLenT = 1.0f;		// assumption for now is that all curves span [0,1] t-range
+
+			int nSteps = Math.Max( (int)(fLenT / fSpacing)+1, 2 );
+
+			VectorArray2d vec = new VectorArray2d(nSteps);
+
+			for ( int i = 0; i < nSteps; ++i ) {
+				double t = (double)i / (double)(nSteps-1);
+				vec[i] = curve.SampleT(t * fLenT);
+			}
+
+			return vec;
+		}
 
 
 		public static VectorArray2d SampleArcLen(IParametricCurve2d curve, double fSpacing) 
@@ -36,9 +55,8 @@ namespace g3 {
 
 
 		// [TODO]
-		//   - handle closed curves!
 		//   - faster vectorarray accumulation
-		public static VectorArray2d SampleArcLen(ParametricCurveSequence2 curves, double fSpacing)
+		public static VectorArray2d AutoSample(ParametricCurveSequence2 curves, double fSpacingLength, double fSpacingT)
 		{
 			int N = curves.Count;
 			bool bClosed = curves.IsClosed;
@@ -47,7 +65,7 @@ namespace g3 {
 			int i = 0;
 			int nTotal = 0;
 			foreach ( IParametricCurve2d c in curves.Curves ) {
-				vecs[i] = SampleArcLen(c, fSpacing);
+				vecs[i] = AutoSample(c, fSpacingLength, fSpacingT);
 				nTotal += vecs[i].Count;
 				i++;
 			}
