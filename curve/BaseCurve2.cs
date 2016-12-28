@@ -56,11 +56,11 @@ namespace g3
         virtual public double GetLength (double t0, double t1)
         {
             if (t0 < mTMin || t0 > mTMax)
-                throw new Exception("BaseCurve2.GetLenght: min t out of bounds: " + t0);
+                throw new Exception("BaseCurve2.GetLength: min t out of bounds: " + t0);
             if (t1 < mTMin || t1 > mTMax)
-                throw new Exception("BaseCurve2.GetLenght: max t out of bounds: " + t1);
+                throw new Exception("BaseCurve2.GetLength: max t out of bounds: " + t1);
             if (t0 > t1)
-                throw new Exception("BaseCurve2.GetLenght: inverted t-range\n " + t0.ToString() + " " + t1.ToString());
+                throw new Exception("BaseCurve2.GetLength: inverted t-range\n " + t0.ToString() + " " + t1.ToString());
             return Integrate1d.RombergIntegral(8, t0, t1, GetSpeedWithData, this);
         }
 

@@ -129,6 +129,10 @@ namespace g3
         public static Vector2f operator *(float f, Vector2f a) {
             return new Vector2f(a.x * f, a.y * f);
         }
+        public static Vector2f operator /(Vector2f v, float f)
+        {
+            return new Vector2f(v.x / f, v.y / f);
+        }
 
 
         public override string ToString() {
