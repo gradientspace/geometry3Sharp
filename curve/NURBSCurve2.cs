@@ -163,10 +163,10 @@ namespace g3
         // and the input index is valid (0 <= i <= n-d-1).  If these conditions
         // are not satisfied, GetKnot returns double.MaxValue.
         public void SetKnot(int i, double value) {
-            mBasis.SetKnot(i, value);
+            mBasis.SetInteriorKnot(i, value);
         }
         public double GetKnot(int i) {
-                return mBasis.GetKnot(i);
+                return mBasis.GetInteriorKnot(i);
         }
 
         // The spline is defined for 0 <= t <= 1.  If a t-value is outside [0,1],
@@ -401,6 +401,20 @@ namespace g3
             throw new NotSupportedException("NURBSCurve2.Reverse: how to reverse?!?");
         }
 
+
+
+		public List<double> GetParamIntervals() {
+			List<double> l = new List<double>();
+			l.Add(0);
+			for ( int i = 0; i < mBasis.KnotCount; ++i ) {
+				double k = mBasis.GetKnot(i);
+				if ( k != l.Last() ) 
+					l.Add(k);
+			}
+			if ( l.Last() != 1.0 )
+				l.Add(1.0);
+			return l;
+		}
 
     }
 }

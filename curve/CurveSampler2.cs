@@ -10,10 +10,14 @@ namespace g3 {
 			if ( curve is ParametricCurveSequence2 )
 				return AutoSample(curve as ParametricCurveSequence2, fSpacingLength, fSpacingT);
 
-			if ( curve.HasArcLength )
-				return SampleArcLen(curve, fSpacingLength);
-			else
+			if ( curve.HasArcLength ) {
+				if ( curve is NURBSCurve2 )
+					return SampleNURBSHybrid(curve as NURBSCurve2, fSpacingLength);
+				else
+					return SampleArcLen(curve, fSpacingLength);
+			} else {
 				return SampleT(curve, fSpacingT);
+			}
 		}
 
 
@@ -54,8 +58,59 @@ namespace g3 {
 		}
 
 
-		// [TODO]
-		//   - faster vectorarray accumulation
+		// special case nurbs sampler. Computes a separate sampling of each unique knot interval
+		// of the curve parameter space. Reasoning:
+		//   1) computing Arc Length of an entire nurbs curve is quite slow if the curve has
+		//      repeated knots. these become discontinuities which mean the numerical integrator
+		//      has to do a lot of work. Instead we integrate between the discontinuities.
+		//   2) by sampling per-knot-interval, we ensure we always place a sample at each knot
+		//      value. If we don't do this, we can "miss" the sharp corners at duplicate knots.
+		//   3) within each interval, we compute arc length and # of steps, but then sample
+		//      by subdividing the T-interval. This is not precise arc-length sampling but
+		//      is closer than uniform-T along the curve. And it means we don't have to
+		//      do an arc-length evaluation for each point, which is very expensive!!
+		public static VectorArray2d SampleNURBSHybrid(NURBSCurve2 curve, double fSpacing)
+		{
+			List<double> intervals = curve.GetParamIntervals();
+			int N = intervals.Count-1;
+
+			VectorArray2d[] spans = new VectorArray2d[N];
+			int nTotal = 0;
+
+			for ( int i = 0; i < N; ++i ) {
+				double t0 = intervals[i];
+				double t1 = intervals[i+1];
+				double fLen = curve.GetLength(t0,t1);
+
+				int nSteps = Math.Max( (int)(fLen / fSpacing)+1, 2 );
+				double div = 1.0 / nSteps;
+				if ( curve.IsClosed == false && i == N-1 ) {
+					nSteps++;
+					div = 1.0 / nSteps-1;
+				} 
+
+				VectorArray2d vec = new VectorArray2d(nSteps);
+				for ( int j = 0; j < nSteps; ++j ) {
+					double a = (double)j * div;
+					double t = (1-a)*t0 + (a)*t1;
+					vec[j] = curve.SampleT(t);
+				}
+				spans[i] = vec;
+				nTotal += nSteps;
+			}
+
+			VectorArray2d final = new VectorArray2d(nTotal);
+			int iStart = 0;
+			for ( int i = 0; i < N; ++i ) {
+				final.Set(iStart, spans[i].Count, spans[i] );
+				iStart += spans[i].Count;
+			}
+
+			return final;
+		}
+
+
+
 		public static VectorArray2d AutoSample(ParametricCurveSequence2 curves, double fSpacingLength, double fSpacingT)
 		{
 			int N = curves.Count;
@@ -75,16 +130,14 @@ namespace g3 {
 
 			VectorArray2d final = new VectorArray2d(nTotal);
 
-			// TODO this could be faster!
 			int k = 0;
 			for ( int vi = 0; vi < N; ++vi ) {
 				VectorArray2d vv = vecs[vi];
-
 				// skip final vertex unless we are on last curve (because it is
 				// the same as first vertex of next curve)
 				int nStop = (bClosed || vi < N-1) ? vv.Count-1 : vv.Count;
-				for ( int j = 0; j < nStop; ++j )
-					final[k++] = vv[j];
+				final.Set(k, nStop, vv);
+				k += nStop;
 			}
 
 			return final;

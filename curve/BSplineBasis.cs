@@ -97,12 +97,19 @@ namespace g3
             return mUniform;
         }
 
-        // For a nonuniform spline, the knot[i] are modified by SetKnot(j,value)
+
+		public int KnotCount {
+			get { return mNumCtrlPoints+mDegree+1; }
+		}
+		public int InteriorKnotCount {
+			get { return mNumCtrlPoints-mDegree-1; }
+		}
+
+		// For a nonuniform spline, the knot[i] are modified by SetInteriorKnot(j,value)
         // for j = i+d+1.  That is, you specify j with 0 <= j <= n-d-1, i = j+d+1,
-        // and knot[i] = value.  SetKnot(j,value) does nothing for indices outside
-        // the j-range or for uniform splines.  GetKnot(j) returns knot[i]
-        // regardless of whether the spline is uniform or nonuniform.
-        public void SetKnot(int j, double value)
+		// and knot[i] = value.  SetInteriorKnot(j,value) does nothing for indices outside
+        // the j-range or for uniform splines.  
+        public void SetInteriorKnot(int j, double value)
         {
             if (!mUniform) {
                 // Access only allowed to elements d+1 <= i <= n.
@@ -115,7 +122,7 @@ namespace g3
                 throw new Exception("BSplineBasis.SetKnot: knots cannot be set for uniform splines");
         }
 
-        public double GetKnot(int j)
+        public double GetInteriorKnot(int j)
         {
             // Access only allowed to elements d+1 <= i <= n.
             int i = j + mDegree + 1;
@@ -126,6 +133,16 @@ namespace g3
             throw new Exception("BSplineBasis.GetKnot: index out of range: " + j);
             //return double.MaxValue;
         }
+
+		// [RMS] direct access to all knots. Not sure why this was not allowed in
+		//   original code - are there assumptions that some knots are 0/1 ???
+		public void SetKnot(int j, double value) {
+			mKnot[j] = value;
+		}
+		public double GetKnot(int j) 
+		{
+			return mKnot[j];
+		}
 
         // Access basis functions and their derivatives.
         public double GetD0(int i) {

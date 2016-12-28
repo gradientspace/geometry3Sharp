@@ -45,6 +45,10 @@ namespace g3
             array[3 * i+2] = c;
         }
 
+		public void Set(int iStart, int iCount, VectorArray3<T> source) {
+			Array.Copy(source.array, 0, array, 3*iStart, 3*iCount);
+		}
+
         IEnumerator IEnumerable.GetEnumerator()
         {
             return array.GetEnumerator();
@@ -169,6 +173,10 @@ namespace g3
             array[2 * i] = a;
             array[2 * i + 1] = b;
         }
+
+		public void Set(int iStart, int iCount, VectorArray2<T> source) {
+			Array.Copy(source.array, 0, array, 2*iStart, 2*iCount);
+		}
 
         IEnumerator IEnumerable.GetEnumerator()
         {
