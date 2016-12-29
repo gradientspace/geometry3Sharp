@@ -19,8 +19,8 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 # Math
 
 - reasonly complete set of vector-math objects, implemented as structs
-    - Vector2/3, AxisAlignedBox2/3, Matrix3, Quaternion, Segment2/3, Line3, Ray3
-    - double & float versions of vector types
+    - Vector2/3, AxisAlignedBox2/3, Matrix2/3, Quaternion, Segment2/3, Line2/3, Ray3, Triangle3
+    - double & float versions of vector types (and int types for vectors)
     - implicit float->double conversion operators between types, explicit double->float operators
     - transparent Unity interop (see below)
 
@@ -33,12 +33,17 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - projection to/from frame for points, directions, other frames, 
     - minimum-rotation frame-to-frame alignment
     - ray-plane intersection
-    - Frames are awesome and you should use them instead of matrices!!
+    - **Frames are awesome** and you should use them instead of matrices!!
 
+- **Integrate1d**: Romberg integration, Gaussian quadrature with legendre polynomials, trapezoid rule
+- **Interval1d**: 1D interval class/intersection/etc
 
 # Queries
 
-- **DistLine3Ray3**, **DistRay3Segment3**, **DistRay3Ray3**
+- 3D Line-type Distances: **DistLine3Ray3**, **DistLine3Segment3**,  **DistRay3Segment3**, **DistRay3Ray3**
+- 3D Triangle distances: **DistPoint3Triangle3**, **DistLine3Triangle3**, **DistSegment3Triangle3**, **DistTriangle3Triangle3**
+- 2D Intersections: **IntrLine2Line2**, **IntrSegment2Segment2**
+- 3D Intersections: **IntrRay3Triangle3**
 - ray-sphere and ray-cylinder intersection
 
 
@@ -54,6 +59,8 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - positions are doubles, normals/colors/uv floats  (and optional)
     - add/remove vertices
     - manifold-preserving Split/Flip/Collapse operators
+    
+- **Remesher**: basic edge split/flip/collapse remeshing
 
 - various mesh generators
     - open & closed cylinders, disc, punctured disc, with start/end angles
@@ -67,12 +74,24 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - reader supports OBJ materials and texture maps (paths, you sort out loading images yourself)
 
 
-# Curves
+# 2D Curves
 
-- **Polygon2d** 
+- **Circle2d**, **Arc2d**, **Ellipse2d**, **EllipseArc2d**, **PolyLine2d** 
+- **Polygon2d**: closed polyline with signed area, point-in-polygon test, polygon/polygon intersection, polygon-in-polygon, simplification
+- **NURBSCurve2**: open nonuniform, closed and periodic uniform NURBS splines, derivatives up to 3rd order, curvature, total arc length and arc-length sampling. Uses **BSplineBasis** internally, which works in any dimension
+- All curves implement common **IParametricCurve2d** interface, as does **Segment2d**.
+- **ParametricCurveSequence2**: open or closed sequential set of connected parametric curves
+- **CurveSampler2**: parameter-space or arc-length sampling of IParametricCurve2d. AutoSample function transparently handles multi-segment sequential curves. Reasonably good knot-interval sampling of NURBS curves, does the right things with sharp knots.
+- **PlanarComplex2**: assembly of open and closed IParametricCurve2d curves, as well as point-samplings. Chaining of curves into sequences. Extraction of clean closed loops with interior holes, determined by polygon containment. 
+- **GeneralPolygon2d**: outer polygon with interior polygonal holes, with configurable outer/inner clockwise-ness
+
+
+# 3D Curves
+
 - **DCurve3**: 3D polyline
 - **CurveUtil**: queries like Ray/curve intersection based on curve thickness, nearest index, etc
-
+- **InPlaceIterativeCurveSmooth**, **SculptMoveDeformation**, **ArcLengthSoftTranslation**: simple DCurve3 deformers
+- **CurveResampler**: edge split/collapses resampling of a 3D polyline 
 
 # Misc
 
@@ -105,7 +124,7 @@ g3vecd = gameObject.transform.position;
 gameObject.transform.position = (Vector3)g3vecd;
 ~~~~
 
-This will work for **Vector2**, **Vector3**, **Quaterion**, **Ray**, and **Color**.
+This will work for **Vector2**, **Vector3**, **Quaterion**, **Ray**, **Color**, and **Bounds** (w/ AxisAlignedBox3f)
 Note that these conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
 will need to explicitly cast one to the other.
 
