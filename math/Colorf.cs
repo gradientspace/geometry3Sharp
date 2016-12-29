@@ -109,6 +109,25 @@ namespace g3
         }
 
 
+        public static bool operator ==(Colorf a, Colorf b)
+        {
+            return (a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a);
+        }
+        public static bool operator !=(Colorf a, Colorf b)
+        {
+            return (a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Colorf)obj;
+        }
+        public override int GetHashCode()
+        {
+            return (r+g+b+a).GetHashCode();
+        }
+
+
+
         public override string ToString()
         {
             return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", r, g, b, a);
