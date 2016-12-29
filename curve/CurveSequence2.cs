@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace g3 
 {
@@ -17,7 +18,7 @@ namespace g3
 			get { return curves.Count; }
 		}
 
-		public IReadOnlyList<IParametricCurve2d> Curves {
+		public ReadOnlyCollection<IParametricCurve2d> Curves {
 			get { return curves.AsReadOnly(); }
 		}
 

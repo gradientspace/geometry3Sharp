@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace g3 
 {
@@ -49,7 +50,7 @@ namespace g3
 			get { return Holes.Count > 0; }
 		}
 
-		public IReadOnlyList<Polygon2d> Holes {
+		public ReadOnlyCollection<Polygon2d> Holes {
 			get { return holes.AsReadOnly(); }
 		}
 
