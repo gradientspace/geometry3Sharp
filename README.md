@@ -1,6 +1,10 @@
 # geometry3Sharp
 
-Open-Source (Apache 2.0) C# library for geometry things. Only uses .NET 3.5, so it works with Unity C# runtime. No dependencies.
+Open-Source (Boost-license) C# library for geometric computing. 
+
+geometry3Sharp only uses C# language features available in .NET 3.5, so it works with the Mono C# runtime used in Unity 5.x. Currently there is a small amount of unsafe code, however this code is only used in the OBJ reader and a few fast-buffer-copy routines, which can be deleted if you need a safe version (eg for Unity web player).
+
+Some portions of the code are ported from the WildMagic5 C++ library, developed by David Eberly at [Geometric Tools](https://www.geometrictools.com/). WildMagic5 is distributed under the Boost license as well, available [here](https://www.geometrictools.com/Downloads/Downloads.html). Any errors in code marked as ported from WildMagic5 are most certainly ours!
 
 Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradientspace](http://www.gradientspace.com)
 
