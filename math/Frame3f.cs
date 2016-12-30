@@ -115,6 +115,17 @@ namespace g3
             return this.Rotated(new Quaternionf(GetAxis(nAxis), fAngle));
         }
 
+        public void RotateAround(Vector3f point, Quaternionf q)
+        {
+            Vector3f dv = q * (origin - point);
+            rotation = q * rotation;
+            origin = point + dv;
+        }
+        public Frame3f RotatedAround(Vector3f point, Quaternionf q)
+        {
+            Vector3f dv = q * (this.origin - point);
+            return new Frame3f(point + dv, q * this.rotation);
+        }
 
         public void AlignAxis(int nAxis, Vector3f vTo)
         {
