@@ -5,6 +5,7 @@ using System.Text;
 
 namespace g3
 {
+	// ported from WildMagic5 
 	public class IntrLine3Box3
 	{
 		Line3d line;

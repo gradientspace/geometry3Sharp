@@ -5,6 +5,7 @@ using System.Text;
 
 namespace g3
 {
+	// ported from WildMagic5 
 	public class IntrRay3Box3
 	{
 		Ray3d ray;

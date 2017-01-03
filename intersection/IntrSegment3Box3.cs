@@ -5,6 +5,7 @@ using System.Text;
 
 namespace g3
 {
+	// ported from WildMagic5 
 	public class IntrSegment3Box3
 	{
 		Segment3d segment;
