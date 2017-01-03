@@ -131,9 +131,19 @@
     <Compile Include="math\Interval1d.cs" />
     <Compile Include="curve\GeneralPolygon2d.cs" />
     <Compile Include="curve\EllipseArc2.cs" />
+    <Compile Include="math\Triangle2.cs" />
+    <Compile Include="intersection\IntrLine2Triangle2.cs" />
+    <Compile Include="intersection\IntrSegment2Triangle2.cs" />
+    <Compile Include="intersection\IntrTriangle2Triangle2.cs" />
+    <Compile Include="math\Box3.cs" />
+    <Compile Include="math\Box2.cs" />
+    <Compile Include="intersection\IntrLine3Box3.cs" />
+    <Compile Include="intersection\IntrSegment3Box3.cs" />
+    <Compile Include="intersection\IntrRay3Box3.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
+    <Folder Include="intersection\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE" />

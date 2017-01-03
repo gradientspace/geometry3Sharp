@@ -21,8 +21,9 @@ namespace g3
             set { triangle = value; Result = IntersectionResult.NotComputed; }
         }
 
-        public IntersectionResult Result;
-        public IntersectionType Type;
+		public int Quantity = 0;
+		public IntersectionResult Result = IntersectionResult.NotComputed;
+		public IntersectionType Type = IntersectionType.Empty;
 
         public bool IsSimpleIntersection {
             get { return Result == IntersectionResult.Intersects && Type == IntersectionType.Point; }
@@ -31,6 +32,12 @@ namespace g3
 
         public double RayParameter;
         public Vector3d TriangleBaryCoords;
+
+
+		public IntrRay3Triangle3(Ray3d r, Triangle3d t)
+		{
+			ray = r; triangle = t;
+		}
 
 
         public IntrRay3Triangle3 Compute()
@@ -85,6 +92,7 @@ namespace g3
                             double mTriBary2 = DdE1xQ * inv;
                             TriangleBaryCoords = new Vector3d(1 - mTriBary1 - mTriBary2, mTriBary1, mTriBary2);
                             Type = IntersectionType.Point;
+							Quantity = 1;
                             Result = IntersectionResult.Intersects;
                             return true;
                         }
