@@ -113,6 +113,18 @@ namespace g3
 		}
 
 
+        public double Perimeter
+        {
+            get {
+                double fPerim = 0;
+				int N = vertices.Count;
+				for (int i = 0; i < N; ++i) 
+                    fPerim += vertices[i].Dist( vertices[(i+1) % N] );
+                return fPerim;
+            }
+        }
+
+
 		public bool Contains( Vector2d vTest )
 		{
 			int nWindingNumber = 0;   // winding number counter

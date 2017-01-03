@@ -56,5 +56,26 @@ namespace g3
 
 
 
+        public double Area
+        {
+            get {
+                double sign = (bOuterIsCW) ? -1.0 : 1.0;
+                double dArea = sign * Outer.SignedArea;
+                foreach (var h in Holes)
+                    dArea += sign * h.SignedArea;
+                return dArea;
+            }
+        }
+
+
+        public double Perimeter
+        {
+            get {
+                double dPerim = outer.Perimeter;
+                foreach (var h in Holes)
+                    dPerim += h.Perimeter;
+                return dPerim;
+            }
+        }
 	}
 }

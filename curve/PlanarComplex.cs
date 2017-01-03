@@ -238,7 +238,7 @@ namespace g3
 
 
 
-		public List<GeneralPolygon2d> FindSolidRegions(double fSimplifyDeviationTol = 0.05f) 
+		public List<GeneralPolygon2d> FindSolidRegions(double fSimplifyDeviationTol = 0.1f) 
 		{
 			List<SmoothLoopElement> valid = new List<SmoothLoopElement>(LoopsItr());
 			int N = valid.Count;
@@ -319,7 +319,12 @@ namespace g3
 					Polygon2d hole_poly = polygons[he.ID];
 					if ( hole_poly.IsClockwise )
 						hole_poly.Reverse();
-					g.AddHole(hole_poly);
+
+                    try {
+                        g.AddHole(hole_poly);
+                    } catch {
+                        // don't add this hole. we should have caught this earlier!
+                    }
 				}
 
 				regions.Add(g);

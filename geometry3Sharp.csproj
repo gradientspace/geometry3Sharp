@@ -45,6 +45,7 @@
     <Compile Include="core\DVector.cs" />
     <Compile Include="core\FileSystemUtils.cs" />
     <Compile Include="core\RefCountVector.cs" />
+    <Compile Include="core\Units.cs" />
     <Compile Include="core\VectorArray.cs" />
     <Compile Include="curve\BaseCurve2.cs" />
     <Compile Include="curve\BSplineBasis.cs" />
@@ -143,7 +144,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
-    <Folder Include="intersection\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE" />
