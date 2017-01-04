@@ -77,6 +77,7 @@
     <Compile Include="io\OBJWriter.cs" />
     <Compile Include="io\StandardMeshReader.cs" />
     <Compile Include="io\StandardMeshWriter.cs" />
+    <Compile Include="mesh\MeshConstraints.cs" />
     <Compile Include="mesh\MeshGenerators.cs" />
     <Compile Include="mesh\PlaneGenerators.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -111,6 +112,7 @@
     <Compile Include="core\BufferUtil.cs" />
     <Compile Include="mesh\Remesher.cs" />
     <Compile Include="mesh\MeshUtil.cs" />
+    <Compile Include="mesh\MeshWeights.cs" />
     <Compile Include="curve\Arc2.cs" />
     <Compile Include="curve\PolyLine2d.cs" />
     <Compile Include="curve\PlanarComplex.cs" />

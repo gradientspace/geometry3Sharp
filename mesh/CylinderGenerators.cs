@@ -71,7 +71,7 @@ namespace g3
         public float EndAngleDeg = 360.0f;
         public int Slices = 16;
 
-        // // set to true if you are going to texture this cylinder or want sharp edges
+        // set to true if you are going to texture this cylinder or want sharp edges
         public bool NoSharedVertices = false;
 
         override public void Generate()
@@ -88,6 +88,7 @@ namespace g3
             int nCapTris = 2 * Slices;
             int nFaceTris = (bClosed == false) ? 4 : 0;
             triangles = new VectorArray3i(nCylTris + nCapTris + nFaceTris);
+            groups = new int[triangles.Count];
 
             float fTotalRange = (EndAngleDeg - StartAngleDeg) * MathUtil.Deg2Radf;
             float fStartRad = StartAngleDeg * MathUtil.Deg2Radf;
@@ -110,11 +111,15 @@ namespace g3
             // generate cylinder panels
             int ti = 0;
             for (int k = 0; k < nRingSize - 1; ++k) {
+                groups[ti] = 1;
                 triangles.Set(ti++, k, k + 1, nRingSize + k + 1, Clockwise);
+                groups[ti] = 1;
                 triangles.Set(ti++, k, nRingSize + k + 1, nRingSize + k, Clockwise);
             }
             if (bClosed && NoSharedVertices == false) {      // close disc if we went all the way
+                groups[ti] = 1;
                 triangles.Set(ti++, nRingSize - 1, 0, nRingSize, Clockwise);
+                groups[ti] = 1;
                 triangles.Set(ti++, nRingSize - 1, nRingSize, 2 * nRingSize - 1, Clockwise);
             }
 
@@ -137,7 +142,7 @@ namespace g3
                     uv[nStartB + k] = new Vector2f(0.5f * (1.0f + cosa), 0.5f * (1 + sina));
                     normals[nStartB + k] = -Vector3f.AxisY;
                 }
-                append_disc(Slices, nBottomC, nStartB, bClosed, Clockwise, ref ti);
+                append_disc(Slices, nBottomC, nStartB, bClosed, Clockwise, ref ti, 2);
 
                 int nStartT = 2 * nRingSize + 2 + Slices;
                 for (int k = 0; k < Slices; ++k) {
@@ -147,7 +152,7 @@ namespace g3
                     uv[nStartT + k] = new Vector2f(0.5f * (1.0f + cosa), 0.5f * (1 + sina));
                     normals[nStartT + k] = Vector3f.AxisY;
                 }
-                append_disc(Slices, nTopC, nStartT, bClosed, !Clockwise, ref ti);
+                append_disc(Slices, nTopC, nStartT, bClosed, !Clockwise, ref ti, 3);
 
                 // ugh this is very ugly but hard to see the pattern...
                 if (bClosed == false) {
@@ -168,16 +173,16 @@ namespace g3
                     uv[nStartF + 2] = uv[nStartF + 7] = new Vector2f(1, 1);
                     uv[nStartF + 3] = uv[nStartF + 6] = new Vector2f(1, 0);
 
-                    append_rectangle(nStartF + 0, nStartF + 1, nStartF + 2, nStartF + 3, !Clockwise, ref ti);
-                    append_rectangle(nStartF + 4, nStartF + 5, nStartF + 6, nStartF + 7, !Clockwise, ref ti);
+                    append_rectangle(nStartF + 0, nStartF + 1, nStartF + 2, nStartF + 3, !Clockwise, ref ti, 4);
+                    append_rectangle(nStartF + 4, nStartF + 5, nStartF + 6, nStartF + 7, !Clockwise, ref ti, 5);
                 }
 
             } else {
-                append_disc(Slices, nBottomC, 0, bClosed, Clockwise, ref ti);
-                append_disc(Slices, nTopC, nRingSize, bClosed, !Clockwise, ref ti);
+                append_disc(Slices, nBottomC, 0, bClosed, Clockwise, ref ti, 2);
+                append_disc(Slices, nTopC, nRingSize, bClosed, !Clockwise, ref ti, 3);
                 if (bClosed == false) {
-                    append_rectangle(nBottomC, 0, nRingSize, nTopC, Clockwise, ref ti);
-                    append_rectangle(nRingSize - 1, nBottomC, nTopC, 2 * nRingSize - 1, Clockwise, ref ti);
+                    append_rectangle(nBottomC, 0, nRingSize, nTopC, Clockwise, ref ti, 4);
+                    append_rectangle(nRingSize - 1, nBottomC, nTopC, 2 * nRingSize - 1, Clockwise, ref ti, 5);
                 }
             }
 

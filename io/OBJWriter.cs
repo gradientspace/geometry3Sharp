@@ -44,24 +44,66 @@ namespace g3
                     }
                 }
 
-                foreach (int ti in mesh.TriangleIndices() ) { 
+                if (options.bWriteGroups && mesh.HasTriangleGroups)
+                    write_triangles_bygroup(writer, mesh, mapV, bNormals);
+                else
+                    write_triangles_flat(writer, mesh, mapV, bNormals);
+
+            }
+
+
+            return new IOWriteResult(WriteResult.Ok, "");
+        }
+
+
+
+
+        void write_triangles_bygroup(TextWriter writer, IMesh mesh, int[] mapV, bool bNormals)
+        {
+            // This makes N passes over mesh indices, but doesn't use much extra memory.
+            // would there be a faster way? could construct integer-pointer-list during initial
+            // scan, this would need O(N) memory but then write is effectively O(N) instead of O(N*k)
+
+            SortedSet<int> vGroups = new SortedSet<int>();
+            foreach (int ti in mesh.TriangleIndices())
+                vGroups.Add(mesh.GetTriangleGroup(ti));
+
+            foreach ( int g in vGroups ) {
+                writer.WriteLine(string.Format("g mmGroup{0}", g));
+
+                foreach (int ti in mesh.TriangleIndices() ) {
+                    if (mesh.GetTriangleGroup(ti) != g)
+                        continue;
+
                     Vector3i t = mesh.GetTriangle(ti);
-					t[0] = mapV[t[0]];
-					t[1] = mapV[t[1]];
-					t[2] = mapV[t[2]];
+				    t[0] = mapV[t[0]];
+				    t[1] = mapV[t[1]];
+				    t[2] = mapV[t[2]];
                     
                     if ( bNormals ) {
                         writer.WriteLine("f {0}//{0} {1}//{1} {2}//{2}", t[0], t[1], t[2]);
                     } else {
                         writer.WriteLine("f {0} {1} {2}", t[0], t[1], t[2]);
                     }
-
                 }
-
             }
+        }
 
 
-            return new IOWriteResult(WriteResult.Ok, "");
+        void write_triangles_flat(TextWriter writer, IMesh mesh, int[] mapV, bool bNormals)
+        {
+            foreach (int ti in mesh.TriangleIndices() ) { 
+                Vector3i t = mesh.GetTriangle(ti);
+				t[0] = mapV[t[0]];
+				t[1] = mapV[t[1]];
+				t[2] = mapV[t[2]];
+                    
+                if ( bNormals ) {
+                    writer.WriteLine("f {0}//{0} {1}//{1} {2}//{2}", t[0], t[1], t[2]);
+                } else {
+                    writer.WriteLine("f {0} {1} {2}", t[0], t[1], t[2]);
+                }
+            }
         }
 
 

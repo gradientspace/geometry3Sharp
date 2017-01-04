@@ -1,28 +1,35 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace g3 {
 	
 	public static class MeshUtil {
 
 
-		public static Vector3d OneRingCentroid(DMesh3 mesh, int vID) 
-		{
-			Vector3d vSum = Vector3d.Zero;
-			int nCount = 0;
-			foreach ( int nbr in mesh.VtxVerticesItr(vID) ) {
-				vSum += mesh.GetVertex(nbr);
-				nCount++;
-			}
-			double m = 1.0 / nCount;
-			vSum.x *= m; vSum.y *= m; vSum.z *= m;
-			return vSum;
-		}
+
+
 
 		// t in range [0,1]
 		public static Vector3d UniformSmooth(DMesh3 mesh, int vID, double t) 
 		{
 			Vector3d v = mesh.GetVertex(vID);
-			Vector3d c = OneRingCentroid(mesh, vID);
+			Vector3d c = MeshWeights.OneRingCentroid(mesh, vID);
+			return (1-t)*v + (t)*c;
+		}
+
+		// t in range [0,1]
+		public static Vector3d MeanValueSmooth(DMesh3 mesh, int vID, double t) 
+		{
+			Vector3d v = mesh.GetVertex(vID);
+			Vector3d c = MeshWeights.MeanValueCentroid(mesh, vID);
+			return (1-t)*v + (t)*c;
+		}
+
+		// t in range [0,1]
+		public static Vector3d CotanSmooth(DMesh3 mesh, int vID, double t) 
+		{
+			Vector3d v = mesh.GetVertex(vID);
+			Vector3d c = MeshWeights.CotanCentroid(mesh, vID);
 			return (1-t)*v + (t)*c;
 		}
 
@@ -37,6 +44,20 @@ namespace g3 {
 				// TODO: normals
 			}
 		}
+
+
+
+
+        public static double OpeningAngleD(DMesh3 mesh, int eid)
+        {
+            Vector2i et = mesh.GetEdgeT(eid);
+            if (et[1] == DMesh3.InvalidID)
+                return double.MaxValue;     // boundary edge!!
+
+            Vector3d n0 = mesh.GetTriNormal(et[0]);
+            Vector3d n1 = mesh.GetTriNormal(et[1]);
+            return Vector3d.AngleD(n0, n1);
+        }
 
 
 	}

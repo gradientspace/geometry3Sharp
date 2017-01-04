@@ -11,9 +11,11 @@ namespace g3
         public VectorArray2f uv;
         public VectorArray3f normals;
         public VectorArray3i triangles;
+        public int[] groups;
 
         public bool WantUVs = true;
         public bool WantNormals = true;
+        public bool WantGroups = true;
         public bool Clockwise = false;
 
 
@@ -43,8 +45,13 @@ namespace g3
                 Util.gDevAssert(vID == i);
             }
             int nT = triangles.Count;
-            for (int i = 0; i < nT; ++i)
-                m.AppendTriangle(triangles[i]);
+            if (WantGroups && groups != null && groups.Length == nT) {
+                for (int i = 0; i < nT; ++i)
+                    m.AppendTriangle(triangles[i], groups[i]);
+            } else {
+                for (int i = 0; i < nT; ++i)
+                    m.AppendTriangle(triangles[i]);
+            }
         }
 
 
@@ -72,19 +79,29 @@ namespace g3
         }
 
 
-        protected void append_disc(int Slices, int nCenterV, int nRingStart, bool bClosed, bool bCycle, ref int tri_counter)
+        protected void append_disc(int Slices, int nCenterV, int nRingStart, bool bClosed, bool bCycle, ref int tri_counter, int groupid = -1)
         {
             int nLast = nRingStart + Slices;
-            for (int k = nRingStart; k < nLast-1; ++k)
+            for (int k = nRingStart; k < nLast - 1; ++k) {
+                if (groupid >= 0)
+                    groups[tri_counter] = groupid;
                 triangles.Set(tri_counter++, k, nCenterV, k + 1, bCycle);
-            if (bClosed)      // close disc if we went all the way
-                triangles.Set(tri_counter++, nLast-1, nCenterV, nRingStart, bCycle);
+            }
+            if (bClosed) {     // close disc if we went all the way
+                if (groupid >= 0)
+                    groups[tri_counter] = groupid;
+                triangles.Set(tri_counter++, nLast - 1, nCenterV, nRingStart, bCycle);
+            }
         }
 
         // assumes order would be [v0,v1,v2,v3], ccw
-        protected void append_rectangle(int v0, int v1, int v2, int v3, bool bCycle, ref int tri_counter)
+        protected void append_rectangle(int v0, int v1, int v2, int v3, bool bCycle, ref int tri_counter, int groupid = -1)
         {
+            if ( groupid >= 0 )
+                groups[tri_counter] = groupid;
             triangles.Set(tri_counter++, v0, v1, v2, bCycle);
+            if ( groupid >= 0 )
+                groups[tri_counter] = groupid;
             triangles.Set(tri_counter++, v0, v2, v3, bCycle);
         }
 

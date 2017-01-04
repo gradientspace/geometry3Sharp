@@ -17,11 +17,24 @@ namespace g3
             if (bValue == false)
                 throw new Exception("gDevAssert");
         }
+	
+	
+        // useful in some cases
+        public static bool IsRunningOnMono ()
+        {
+            return Type.GetType ("Mono.Runtime") != null;
+        }
+
 
         static public bool IsBitSet(byte b, int pos)
         {
             return (b & (1 << pos)) != 0;
         }
+        static public bool IsBitSet(int n, int pos)
+        {
+            return (n & (1 << pos)) != 0;
+        }
+
 
 
         static public float[] BufferCopy(float[] from, float[] to)

@@ -194,7 +194,22 @@ namespace g3
 			return 0.5 * (v2 - v1).Cross(v3 - v1).Length;
 		}
 
-		//! fast cotangent between two normalized vectors
+
+
+        public static Vector3d Normal(Vector3d v1, Vector3d v2, Vector3d v3) {
+            Vector3d edge1 = v2 - v1;
+            Vector3d edge2 = v3 - v2;
+            edge1.Normalize();
+            edge2.Normalize();
+            Vector3d vCross = edge1.Cross(edge2);
+            vCross.Normalize();
+            return vCross;
+        }
+
+
+
+		//! fast cotangent between two normalized vectors 
+		//! cot = cos/sin, both of which can be computed from vector identities
 		//! returns zero if result would be unstable (eg infinity)
 		// formula from http://www.geometry.caltech.edu/pubs/DMSB_III.pdf
 		public static double VectorCot( Vector3d v1, Vector3d v2 )
@@ -207,6 +222,17 @@ namespace g3
 				return 0;
 			else
 				return fDot / Math.Sqrt( d );
+		}
+
+		public static double VectorTan( Vector3d v1, Vector3d v2 )
+		{
+			double fDot = v1.Dot(v2);
+			double lensqr1 = v1.LengthSquared;
+			double lensqr2 = v2.LengthSquared;
+			double d = MathUtil.Clamp(lensqr1 * lensqr2 - fDot*fDot, 0.0f, Double.MaxValue);
+			if ( d == 0 )
+				return 0;
+			return Math.Sqrt(d) / fDot;
 		}
 
 

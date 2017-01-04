@@ -258,6 +258,23 @@ namespace g3
 		}
 
 
+        public void GetTriVertices(int tID, ref Vector3d v0, ref Vector3d v1, ref Vector3d v2) {
+            int a = triangles[3 * tID];
+            v0.x = vertices[3 * a]; v0.y = vertices[3 * a + 1]; v0.z = vertices[3 * a + 2];
+            int b = triangles[3 * tID + 1];
+            v1.x = vertices[3 * b]; v1.y = vertices[3 * b + 1]; v1.z = vertices[3 * b + 2];
+            int c = triangles[3 * tID + 2];
+            v2.x = vertices[3 * c]; v2.y = vertices[3 * c + 1]; v2.z = vertices[3 * c + 2];
+        }
+
+        public Vector3d GetTriNormal(int tID)
+        {
+            Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
+            GetTriVertices(tID, ref v0, ref v1, ref v2);
+            return MathUtil.Normal(v0, v1, v2);
+        }
+
+
         public Vector2i GetEdgeV(int eID) {
             return edges_refcount.isValid(eID) ?
                 new Vector2i(edges[4 * eID], edges[4 * eID + 1]) : InvalidEdge;
@@ -752,6 +769,7 @@ namespace g3
 		public struct EdgeSplitInfo {
 			public bool bIsBoundary;
 			public int vNew;
+            public int eNew;        // new edge [vNew,vB]
 		}
 		public MeshResult SplitEdge(int vA, int vB, out EdgeSplitInfo split)
 		{
@@ -817,6 +835,7 @@ namespace g3
 
 				split.bIsBoundary = true;
 				split.vNew = f;
+                split.eNew = efb;
 
 				updateTimeStamp();
 				return MeshResult.Ok;
@@ -878,6 +897,7 @@ namespace g3
 
 				split.bIsBoundary = false;
 				split.vNew = f;
+                split.eNew = efb;
 
 				updateTimeStamp();
 				return MeshResult.Ok;
