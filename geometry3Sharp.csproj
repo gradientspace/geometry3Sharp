@@ -57,6 +57,7 @@
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="io\MaterialTypes.cs" />
     <Compile Include="math\Frame3f.cs" />
+    <Compile Include="math\IndexTypes.cs" />
     <Compile Include="math\IndexUtil.cs" />
     <Compile Include="math\Integrate1d.cs" />
     <Compile Include="math\MathUtil.cs" />

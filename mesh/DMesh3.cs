@@ -71,8 +71,8 @@ namespace g3
 
 
         public static readonly Vector3d InvalidVertex = new Vector3d(Double.MaxValue, 0, 0);
-        public static readonly Vector3i InvalidTriangle = new Vector3i(InvalidID, InvalidID, InvalidID);
-        public static readonly Vector2i InvalidEdge = new Vector2i(InvalidID, InvalidID);
+        public static readonly Index3i InvalidTriangle = new Index3i(InvalidID, InvalidID, InvalidID);
+        public static readonly Index2i InvalidEdge = new Index2i(InvalidID, InvalidID);
 
 
         RefCountVector vertices_refcount;
@@ -242,14 +242,14 @@ namespace g3
 
 
 
-        public Vector3i GetTriangle(int tID) {
+        public Index3i GetTriangle(int tID) {
             return triangles_refcount.isValid(tID) ?
-                new Vector3i(triangles[3 * tID], triangles[3 * tID + 1], triangles[3 * tID + 2]) : InvalidTriangle;
+                new Index3i(triangles[3 * tID], triangles[3 * tID + 1], triangles[3 * tID + 2]) : InvalidTriangle;
         }
 
-        public Vector3i GetTriEdges(int tID) {
+        public Index3i GetTriEdges(int tID) {
             return triangles_refcount.isValid(tID) ?
-                new Vector3i(triangle_edges[3 * tID], triangle_edges[3 * tID + 1], triangle_edges[3 * tID + 2]) : InvalidTriangle;
+                new Index3i(triangle_edges[3 * tID], triangle_edges[3 * tID + 1], triangle_edges[3 * tID + 2]) : InvalidTriangle;
         }
 
 		public int GetTriangleGroup(int tID) { 
@@ -275,13 +275,13 @@ namespace g3
         }
 
 
-        public Vector2i GetEdgeV(int eID) {
+        public Index2i GetEdgeV(int eID) {
             return edges_refcount.isValid(eID) ?
-                new Vector2i(edges[4 * eID], edges[4 * eID + 1]) : InvalidEdge;
+                new Index2i(edges[4 * eID], edges[4 * eID + 1]) : InvalidEdge;
         }
-        public Vector2i GetEdgeT(int eID) {
+        public Index2i GetEdgeT(int eID) {
             return edges_refcount.isValid(eID) ?
-                new Vector2i(edges[4 * eID + 2], edges[4 * eID + 3]) : InvalidEdge;
+                new Index2i(edges[4 * eID + 2], edges[4 * eID + 3]) : InvalidEdge;
         }
 
 		public bool GetEdge(int eID, ref int a, ref int b, ref int t0, ref int t1) {
@@ -339,9 +339,9 @@ namespace g3
 
 
         public int AppendTriangle(int v0, int v1, int v2, int gid = -1) {
-            return AppendTriangle(new Vector3i(v0, v1, v2), gid);
+            return AppendTriangle(new Index3i(v0, v1, v2), gid);
         }
-        public int AppendTriangle(Vector3i tv, int gid = -1) {
+        public int AppendTriangle(Index3i tv, int gid = -1) {
             if (IsVertex(tv[0]) == false || IsVertex(tv[1]) == false || IsVertex(tv[2]) == false) {
                 Util.gDevAssert(false);
                 return InvalidID;
@@ -421,7 +421,7 @@ namespace g3
         }
 
 		// [RMS] this does more work than necessary, see 
-        Vector2i GetEdgeOpposingV(int eID)
+        Index2i GetEdgeOpposingV(int eID)
         {
 			int i = 4*eID;
             int a = edges[i], b = edges[i + 1];
@@ -429,9 +429,9 @@ namespace g3
 			int c = IndexUtil.find_tri_other_vtx(a, b, triangles, t0);
             if (t1 != InvalidID) {
 				int d = IndexUtil.find_tri_other_vtx(a, b, triangles, t1);
-                return new Vector2i(c, d);
+                return new Index2i(c, d);
             } else
-                return new Vector2i(c, InvalidID);
+                return new Index2i(c, InvalidID);
         }
 
 
@@ -446,11 +446,11 @@ namespace g3
 		}
 
 
-        Vector3i GetTriTriangles(int tID) {
+        Index3i GetTriTriangles(int tID) {
             if (!IsTriangle(tID))
                 return InvalidTriangle;
 			int i = 3*tID;
-            return new Vector3i(
+            return new Index3i(
                 edge_other_t(triangle_edges[i], tID),
                 edge_other_t(triangle_edges[i + 1], tID),
                 edge_other_t(triangle_edges[i + 2], tID));
@@ -744,9 +744,9 @@ namespace g3
         public MeshResult ReverseTriOrientation(int tID) {
             if (!IsTriangle(tID))
                 return MeshResult.Failed_NotATriangle;
-            Vector3i t = GetTriangle(tID);
+            Index3i t = GetTriangle(tID);
             set_triangle(tID, t[1], t[0], t[2]);
-            Vector3i te = GetTriEdges(tID);
+            Index3i te = GetTriEdges(tID);
             set_triangle_edges(tID, te[0], te[2], te[1]);
             return MeshResult.Ok;
         }
@@ -790,7 +790,7 @@ namespace g3
 			int eab_i = 4*eab;
 			int a = edges[eab_i], b = edges[eab_i + 1];
 			int t0 = edges[eab_i + 2];
-			Vector3i T0tv = GetTriangle(t0);
+			Index3i T0tv = GetTriangle(t0);
 			int[] T0tv_array = T0tv.array;
 			int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, T0tv_array);
 
@@ -803,7 +803,7 @@ namespace g3
 			if ( edge_is_boundary(eab) ) {
 
 				// look up edge bc, which needs to be modified
-				Vector3i T0te = GetTriEdges(t0);
+				Index3i T0te = GetTriEdges(t0);
 				int ebc = T0te[ IndexUtil.find_edge_index_in_tri(b, c, T0tv_array) ];
 
 				// rewrite existing triangle
@@ -844,15 +844,15 @@ namespace g3
 				
 				// look up other triangle
 				int t1 = edges[eab_i + 3];
-				Vector3i T1tv = GetTriangle(t1);
+				Index3i T1tv = GetTriangle(t1);
 				int[] T1tv_array = T1tv.array;
 				int d = IndexUtil.find_tri_other_vtx( a, b, T1tv_array );
 
 				// look up edges that we are going to need to update
 				// [TODO OPT] could use ordering to reduce # of compares here
-				Vector3i T0te = GetTriEdges(t0);
+				Index3i T0te = GetTriEdges(t0);
 				int ebc = T0te[IndexUtil.find_edge_index_in_tri( b, c, T0tv_array )];
-				Vector3i T1te = GetTriEdges(t1);
+				Index3i T1te = GetTriEdges(t1);
 				int edb = T1te[IndexUtil.find_edge_index_in_tri( d, b, T1tv_array )];
 
 				// rewrite existing triangles
@@ -1011,12 +1011,12 @@ namespace g3
 
 
 		void check_tri(int t) {
-			Vector3i tv = GetTriangle(t);
+			Index3i tv = GetTriangle(t);
 			if ( tv[0] == tv[1] || tv[0] == tv[2] || tv[1] == tv[2] )
 				Debug.Assert(false);
 		}
 		void check_edge(int e) {
-			Vector2i tv = GetEdgeT(e);
+			Index2i tv = GetEdgeT(e);
 			if ( tv[0] == -1 )
 				Debug.Assert(false);
 		}
@@ -1043,7 +1043,7 @@ namespace g3
 				return MeshResult.Failed_NotAnEdge;
 
 			int t0 = edges[4*eab+2];
-			Vector3i T0tv = GetTriangle(t0);
+			Index3i T0tv = GetTriangle(t0);
 			int c = IndexUtil.find_tri_other_vtx(a, b, T0tv);
 
 			// look up opposing triangle/vtx if we are not in boundary case
@@ -1051,7 +1051,7 @@ namespace g3
 			int d = InvalidID;
 			int t1 = edges[4*eab+3];
 			if (t1 != InvalidID) {
-				Vector3i T1tv = GetTriangle(t1);
+				Index3i T1tv = GetTriangle(t1);
 				d = IndexUtil.find_tri_other_vtx( a, b, T1tv );
 				if (c == d)
 					return MeshResult.Failed_FoundDuplicateTriangle;
@@ -1251,11 +1251,11 @@ namespace g3
 			GetVtxTriangles(v, tris, false);
 			System.Console.WriteLine(string.Format("  Tris {0}  Edges {1}  refcount {2}", tris.Count, GetVtxEdges(v).Count, vertices_refcount.refCount(v) ));
 			foreach ( int t in tris ) {
-				Vector3i tv = GetTriangle(t), te = GetTriEdges(t);
+				Index3i tv = GetTriangle(t), te = GetTriEdges(t);
 				System.Console.WriteLine(string.Format("  t{6} {0} {1} {2}   te {3} {4} {5}", tv[0],tv[1],tv[2], te[0],te[1],te[2],t));
 			}
 			foreach ( int e in GetVtxEdges(v) ) {
-				Vector2i ev = GetEdgeV(e), et = GetEdgeT(e);
+				Index2i ev = GetEdgeV(e), et = GetEdgeT(e);
 				System.Console.WriteLine(string.Format("  e{4} {0} {1} / {2} {3}", ev[0],ev[1], et[0],et[1], e));
 			}
 		}
@@ -1296,14 +1296,14 @@ namespace g3
                 DMESH_CHECK_OR_FAIL(triangles_refcount.refCount(tID) == 1);
 
                 // vertices must exist
-                Vector3i tv = GetTriangle(tID);
+                Index3i tv = GetTriangle(tID);
                 for (int j = 0; j < 3; ++j) {
                     DMESH_CHECK_OR_FAIL(IsVertex(tv[j]));
                     triToVtxRefs[tv[j]] += 1;
                 }
 
                 // edges must exist and reference this tri
-                Vector3i e = new Vector3i();
+                Index3i e = new Index3i();
                 for (int j = 0; j < 3; ++j) {
                     int a = tv[j], b = tv[(j + 1) % 3];
                     e[j] = FindEdge(a, b);
@@ -1313,7 +1313,7 @@ namespace g3
                 DMESH_CHECK_OR_FAIL(e[0] != e[1] && e[0] != e[2] && e[1] != e[2]);
 
                 // tri nbrs must exist and reference this tri, or same edge must be boundary edge
-                Vector3i te = GetTriEdges(tID);
+                Index3i te = GetTriEdges(tID);
                 for (int j = 0; j < 3; ++j) {
                     int eid = te[j];
                     DMESH_CHECK_OR_FAIL(IsEdge(eid));
@@ -1327,11 +1327,11 @@ namespace g3
 
                     // edge must have same two verts as tri for same index
                     int a = tv[j], b = tv[(j + 1) % 3];
-                    Vector2i ev = GetEdgeV(te[j]);
+                    Index2i ev = GetEdgeV(te[j]);
                     DMESH_CHECK_OR_FAIL(IndexUtil.same_pair_unordered(a, b, ev[0], ev[1]));
 
                     // also check that nbr edge has opposite orientation
-                    Vector3i othertv = GetTriangle(tOther);
+                    Index3i othertv = GetTriangle(tOther);
                     int found = IndexUtil.find_tri_ordered_edge(b, a, othertv.array);
                     DMESH_CHECK_OR_FAIL(found != InvalidID);
                 }
@@ -1342,8 +1342,8 @@ namespace g3
             foreach (int eID in EdgeIndices() ) { 
                 DMESH_CHECK_OR_FAIL(IsEdge(eID));
                 DMESH_CHECK_OR_FAIL(edges_refcount.refCount(eID) == 1);
-                Vector2i ev = GetEdgeV(eID);
-                Vector2i et = GetEdgeT(eID);
+                Index2i ev = GetEdgeV(eID);
+                Index2i et = GetEdgeT(eID);
                 DMESH_CHECK_OR_FAIL(IsVertex(ev[0]));
                 DMESH_CHECK_OR_FAIL(IsVertex(ev[1]));
                 DMESH_CHECK_OR_FAIL(ev[0] < ev[1]);
@@ -1385,7 +1385,7 @@ namespace g3
 				// check that edges around vert only references tris above, and reference all of them!
 				List<int> vRemoveTris = new List<int>(vTris);
 				foreach ( int edgeid in l ) {
-					Vector2i edget = GetEdgeT(edgeid);
+					Index2i edget = GetEdgeT(edgeid);
 					DMESH_CHECK_OR_FAIL( vTris.Contains(edget[0]) );
 					if ( edget[1] != InvalidID )
 						DMESH_CHECK_OR_FAIL( vTris.Contains(edget[1]) );

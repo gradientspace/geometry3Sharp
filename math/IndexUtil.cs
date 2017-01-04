@@ -20,7 +20,7 @@ namespace g3
             if (tri_verts[2] == a) return 2;
             return DMesh3.InvalidID;
         }
-		public static int find_tri_index(int a, Vector3i tri_verts)
+		public static int find_tri_index(int a, Index3i tri_verts)
 		{
 			if (tri_verts[0] == a) return 0;
 			if (tri_verts[1] == a) return 1;
@@ -55,7 +55,7 @@ namespace g3
             }
             return DMesh3.InvalidID;
         }
-		public static int find_tri_other_vtx(int a, int b, Vector3i tri_verts)
+		public static int find_tri_other_vtx(int a, int b, Index3i tri_verts)
 		{
 			for (int j = 0; j < 3; ++j) {
 				if (same_pair_unordered(a, b, tri_verts[j], tri_verts[(j + 1) % 3]))

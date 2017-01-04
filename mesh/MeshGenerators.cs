@@ -10,7 +10,7 @@ namespace g3
         public VectorArray3d vertices;
         public VectorArray2f uv;
         public VectorArray3f normals;
-        public VectorArray3i triangles;
+        public IndexArray3i triangles;
         public int[] groups;
 
         public bool WantUVs = true;

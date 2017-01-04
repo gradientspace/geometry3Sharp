@@ -38,7 +38,7 @@ namespace g3
 
             int nSpanTris = (Vertices.Count - 1) * (2 * Slices);
             int nCapTris = (Capped) ? 2 * Slices : 0;
-            triangles = new VectorArray3i(nSpanTris + nCapTris);
+            triangles = new IndexArray3i(nSpanTris + nCapTris);
 
             Frame3f fCur = new Frame3f(Frame);
             Vector3d dv = CurveUtils.GetTangent(Vertices, 0); ;

@@ -75,7 +75,7 @@ namespace g3
                     if (mesh.GetTriangleGroup(ti) != g)
                         continue;
 
-                    Vector3i t = mesh.GetTriangle(ti);
+                    Index3i t = mesh.GetTriangle(ti);
 				    t[0] = mapV[t[0]];
 				    t[1] = mapV[t[1]];
 				    t[2] = mapV[t[2]];
@@ -93,7 +93,7 @@ namespace g3
         void write_triangles_flat(TextWriter writer, IMesh mesh, int[] mapV, bool bNormals)
         {
             foreach (int ti in mesh.TriangleIndices() ) { 
-                Vector3i t = mesh.GetTriangle(ti);
+                Index3i t = mesh.GetTriangle(ti);
 				t[0] = mapV[t[0]];
 				t[1] = mapV[t[1]];
 				t[2] = mapV[t[2]];

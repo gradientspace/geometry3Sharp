@@ -26,7 +26,7 @@ namespace g3
 
         bool HasTriangleGroups { get; }
 
-        Vector3i GetTriangle(int i);
+        Index3i GetTriangle(int i);
         int GetTriangleGroup(int i);
 
 

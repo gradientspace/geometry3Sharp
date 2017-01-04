@@ -72,7 +72,7 @@ namespace g3
 			Vector3d Vi = mesh.GetVertex(v_i);
 
 			foreach ( int tid in mesh.VtxTrianglesItr(v_i) ) {
-				Vector3i t = mesh.GetTriangle(tid);
+				Index3i t = mesh.GetTriangle(tid);
 				int ti = (t[0] == v_i) ? 0 : ( (t[1] == v_i) ? 1 : 2 );
 				Vector3d Vj = mesh.GetVertex( t[ (ti+1)%3 ] );
 				Vector3d Vk = mesh.GetVertex( t[ (ti+2)%3 ] );

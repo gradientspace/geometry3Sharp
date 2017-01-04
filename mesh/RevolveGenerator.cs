@@ -32,7 +32,7 @@ namespace g3
 
             int nSpanTris = (nRings - 1) * (2 * Slices);
             int nCapTris = (Capped) ? 2 * Slices : 0;
-            triangles = new VectorArray3i(nSpanTris + nCapTris);
+            triangles = new IndexArray3i(nSpanTris + nCapTris);
 
             float fDelta = (float)((Math.PI * 2.0) / Slices);
 
@@ -190,7 +190,7 @@ namespace g3
 
             int nSpanTris = (nRings - 1) * (2 * Slices);
             int nCapTris = (Capped) ? 2 * Slices : 0;
-            triangles = new VectorArray3i(nSpanTris + nCapTris);
+            triangles = new IndexArray3i(nSpanTris + nCapTris);
 
             float fDelta = (float)((Math.PI * 2.0) / Slices);
 

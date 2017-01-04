@@ -26,7 +26,7 @@ namespace g3
             vertices = new VectorArray3d(2 * nRingSize);
             uv = new VectorArray2f(vertices.Count);
             normals = new VectorArray3f(vertices.Count);
-            triangles = new VectorArray3i(2 * Slices);
+            triangles = new IndexArray3i(2 * Slices);
 
             float fTotalRange = (EndAngleDeg - StartAngleDeg) * MathUtil.Deg2Radf;
             float fStartRad = StartAngleDeg * MathUtil.Deg2Radf;
@@ -87,7 +87,7 @@ namespace g3
             int nCylTris = 2 * Slices;
             int nCapTris = 2 * Slices;
             int nFaceTris = (bClosed == false) ? 4 : 0;
-            triangles = new VectorArray3i(nCylTris + nCapTris + nFaceTris);
+            triangles = new IndexArray3i(nCylTris + nCapTris + nFaceTris);
             groups = new int[triangles.Count];
 
             float fTotalRange = (EndAngleDeg - StartAngleDeg) * MathUtil.Deg2Radf;
@@ -225,7 +225,7 @@ namespace g3
             int nConeTris = (NoSharedVertices) ? 2 * Slices : Slices;
             int nCapTris = Slices;
             int nFaceTris = (bClosed == false) ? 2 : 0;
-            triangles = new VectorArray3i(nConeTris + nCapTris + nFaceTris );
+            triangles = new IndexArray3i(nConeTris + nCapTris + nFaceTris );
 
             float fTotalRange = (EndAngleDeg - StartAngleDeg) * MathUtil.Deg2Radf;
             float fStartRad = StartAngleDeg * MathUtil.Deg2Radf;
@@ -337,7 +337,7 @@ namespace g3
 
             int nSpanTris = (Sections.Length - 1) * (2 * Slices);
             int nCapTris = (Capped) ? 2 * Slices : 0;
-            triangles = new VectorArray3i(nSpanTris + nCapTris);
+            triangles = new IndexArray3i(nSpanTris + nCapTris);
 
             float fDelta = (float)((Math.PI * 2.0) / Slices);
 

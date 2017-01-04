@@ -80,9 +80,9 @@ namespace g3 {
 			bool bIsBoundaryEdge = (t1 == DMesh3.InvalidID);
 
 			// look up 'other' verts c (from t0) and d (from t1, if it exists)
-			Vector3i T0tv = mesh.GetTriangle(t0);
+			Index3i T0tv = mesh.GetTriangle(t0);
 			int c = IndexUtil.find_tri_other_vtx(a, b, T0tv);
-			Vector3i T1tv = (bIsBoundaryEdge) ? DMesh3.InvalidTriangle : mesh.GetTriangle(t1);
+			Index3i T1tv = (bIsBoundaryEdge) ? DMesh3.InvalidTriangle : mesh.GetTriangle(t1);
 			int d = (bIsBoundaryEdge) ? DMesh3.InvalidID : IndexUtil.find_tri_other_vtx( a, b, T1tv );
 
 			Vector3d vA = mesh.GetVertex(a);

@@ -50,7 +50,7 @@ namespace g3 {
 
         public static double OpeningAngleD(DMesh3 mesh, int eid)
         {
-            Vector2i et = mesh.GetEdgeT(eid);
+            Index2i et = mesh.GetEdgeT(eid);
             if (et[1] == DMesh3.InvalidID)
                 return double.MaxValue;     // boundary edge!!
 

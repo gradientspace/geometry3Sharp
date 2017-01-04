@@ -24,7 +24,7 @@ namespace g3
             vertices = new VectorArray3d(4);
             uv = new VectorArray2f(4);
             normals = new VectorArray3f(4);
-            triangles = new VectorArray3i(2);
+            triangles = new IndexArray3i(2);
 
             vertices[0] = new Vector3d(-Width / 2.0f, 0, -Height / 2.0f);
             vertices[1] = new Vector3d(Width / 2.0f, 0, -Height / 2.0f);

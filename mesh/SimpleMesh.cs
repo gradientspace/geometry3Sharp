@@ -46,7 +46,7 @@ namespace g3
 				mapV[vid] = new_vid;
 			}
 			foreach ( int tid in copy.TriangleIndices() ){
-				Vector3i t = copy.GetTriangle(tid);
+				Index3i t = copy.GetTriangle(tid);
 				t[0] = mapV[t[0]];
 				t[1] = mapV[t[1]];
 				t[2] = mapV[t[2]];
@@ -168,7 +168,7 @@ namespace g3
             }
         }
 
-        public void AppendTriangles(VectorArray3i t, int[] groups = null)
+        public void AppendTriangles(IndexArray3i t, int[] groups = null)
         {
             Triangles.Add(t.array);
             if (HasTriangleGroups) {
@@ -293,9 +293,9 @@ namespace g3
             get { return FaceGroups != null && FaceGroups.Length == Triangles.Length / 3; }
         }
 
-        public Vector3i GetTriangle(int i)
+        public Index3i GetTriangle(int i)
         {
-            return new Vector3i(Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2]);
+            return new Index3i(Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2]);
         }
 
         public int GetTriangleGroup(int i)
@@ -328,11 +328,11 @@ namespace g3
                 yield return new Vector2f(UVs[2 * i], UVs[2 * i + 1]);
         }
 
-        public IEnumerable<Vector3i> TrianglesItr()
+        public IEnumerable<Index3i> TrianglesItr()
         {
             int N = TriangleCount;
             for (int i = 0; i < N; ++i)
-                yield return new Vector3i(Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2]);
+                yield return new Index3i(Triangles[3 * i], Triangles[3 * i + 1], Triangles[3 * i + 2]);
         }
 
         public IEnumerable<int> TriangleGroupsItr()

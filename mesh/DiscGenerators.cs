@@ -18,7 +18,7 @@ namespace g3
             vertices = new VectorArray3d(Slices + 1);
             uv = new VectorArray2f(Slices + 1);
             normals = new VectorArray3f(Slices + 1);
-            triangles = new VectorArray3i(Slices);
+            triangles = new IndexArray3i(Slices);
 
             int vi = 0;
             vertices[vi] = Vector3d.Zero;
@@ -67,7 +67,7 @@ namespace g3
             vertices = new VectorArray3d(2*Slices);
             uv = new VectorArray2f(2*Slices);
             normals = new VectorArray3f(2*Slices);
-            triangles = new VectorArray3i(2*Slices);
+            triangles = new IndexArray3i(2*Slices);
 
             bool bFullDisc = ((EndAngleDeg - StartAngleDeg) > 359.99f);
             float fTotalRange = (EndAngleDeg - StartAngleDeg) * MathUtil.Deg2Radf;
