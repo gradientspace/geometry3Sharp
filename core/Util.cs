@@ -8,15 +8,29 @@ namespace g3
     public class Util
     {
 
+        // useful in some cases
+        public static bool IsRunningOnMono ()
+        {
+            return Type.GetType ("Mono.Runtime") != null;
+        }
+
+
+
         static public void gDevAssert(bool bValue) {
             if (bValue == false)
                 throw new Exception("gDevAssert");
         }
 
+
         static public bool IsBitSet(byte b, int pos)
         {
             return (b & (1 << pos)) != 0;
         }
+        static public bool IsBitSet(int n, int pos)
+        {
+            return (n & (1 << pos)) != 0;
+        }
+
 
 
         static public float[] BufferCopy(float[] from, float[] to)

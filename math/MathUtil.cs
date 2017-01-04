@@ -187,6 +187,20 @@ namespace g3
 			return 0.5 * (v2 - v1).Cross(v3 - v1).Length;
 		}
 
+
+
+        public static Vector3d Normal(Vector3d v1, Vector3d v2, Vector3d v3) {
+            Vector3d edge1 = v2 - v1;
+            Vector3d edge2 = v3 - v2;
+            edge1.Normalize();
+            edge2.Normalize();
+            Vector3d vCross = edge1.Cross(edge2);
+            vCross.Normalize();
+            return vCross;
+        }
+
+
+
 		//! fast cotangent between two normalized vectors 
 		//! cot = cos/sin, both of which can be computed from vector identities
 		//! returns zero if result would be unstable (eg infinity)

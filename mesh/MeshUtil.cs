@@ -46,5 +46,19 @@ namespace g3 {
 		}
 
 
+
+
+        public static double OpeningAngleD(DMesh3 mesh, int eid)
+        {
+            Vector2i et = mesh.GetEdgeT(eid);
+            if (et[1] == DMesh3.InvalidID)
+                return double.MaxValue;     // boundary edge!!
+
+            Vector3d n0 = mesh.GetTriNormal(et[0]);
+            Vector3d n1 = mesh.GetTriNormal(et[1]);
+            return Vector3d.AngleD(n0, n1);
+        }
+
+
 	}
 }
