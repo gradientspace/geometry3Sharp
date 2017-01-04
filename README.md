@@ -23,8 +23,8 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 # Math
 
 - reasonly complete set of vector-math objects, implemented as structs
-    - Vector2/3, AxisAlignedBox2/3, Matrix2/3, Quaternion, Segment2/3, Line2/3, Ray3, Triangle3
-    - double & float versions of vector types (and int types for vectors)
+    - Vector2/3, Matrix2/3, Quaternion, Segment2/3, Line2/3, Ray3, Triangle2/3, AxisAlignedBox2/3, (oriented) Box2/3
+    - double & float versions of vector/line/ray/segment/box types (and int types for vectors)
     - implicit float->double conversion operators between types, explicit double->float operators
     - transparent Unity interop (see below)
 
@@ -44,11 +44,19 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 # Queries
 
-- 3D Line-type Distances: **DistLine3Ray3**, **DistLine3Segment3**,  **DistRay3Segment3**, **DistRay3Ray3**
-- 3D Triangle distances: **DistPoint3Triangle3**, **DistLine3Triangle3**, **DistSegment3Triangle3**, **DistTriangle3Triangle3**
-- 2D Intersections: **IntrLine2Line2**, **IntrSegment2Segment2**
-- 3D Intersections: **IntrRay3Triangle3**
-- ray-sphere and ray-cylinder intersection
+- 3D Distances: 
+    - point/area: **DistPoint3Triangle3**
+    - linear/linear: **DistLine3Ray3**, **DistLine3Segment3**,  **DistRay3Segment3**, **DistRay3Ray3**
+    - linear/area: **DistLine3Triangle3**, **DistSegment3Triangle3**
+    - area/area: **DistTriangle3Triangle3**
+- 2D Intersections: 
+    - linear/linear: **IntrLine2Line2**, **IntrSegment2Segment2**
+    - linear/area: **IntrLine2Triangle2**, **IntrSegment2Triangle2**
+    - area/area: **IntrTriangle2Triangle2**
+- 3D Intersections: 
+    - linear/area: **IntrRay3Triangle3**
+    - linear/volume: **IntrLine3Box3**, **IntrSegment3Box3**, **IntrRay3Box3**
+    - ray-sphere and ray-cylinder
 
 
 # Meshes
