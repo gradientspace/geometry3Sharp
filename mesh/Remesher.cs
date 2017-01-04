@@ -6,6 +6,7 @@ namespace g3 {
 	public class Remesher {
 
 		DMesh3 mesh;
+        MeshConstraints constraints = null;
 
 
 		public bool EnableFlips = true;
@@ -29,6 +30,13 @@ namespace g3 {
 		}
 
 
+        //! This object will be modified !!!
+        public void SetExternalConstraints(MeshConstraints cons)
+        {
+            constraints = cons;
+        }
+
+
 
 		public void BasicRemeshPass() {
 
@@ -43,9 +51,7 @@ namespace g3 {
 
 			if ( EnableSmoothing && SmoothSpeedT > 0)
 				FullSmoothPass_InPlace();
-
 		}
-
 
 
 
@@ -55,12 +61,18 @@ namespace g3 {
 			Ok_Flipped,
 			Ok_Split,
 			Ignored_EdgeIsFine,
+            Ignored_EdgeIsFullyConstrained,
 			Failed_OpNotSuccessful,
 			Failed_NotAnEdge
 		};
 
 		ProcessResult ProcessEdge(int edgeID) 
 		{
+            EdgeConstraint constraint =
+                (constraints == null) ? EdgeConstraint.Unconstrained : constraints.GetEdgeConstraint(edgeID);
+            if (constraint.NoModifications)
+                return ProcessResult.Ignored_EdgeIsFullyConstrained;
+
 			// look up verts and tris for this edge
 			int a = 0, b = 0, t0 = 0, t1 = 0;
 			if ( mesh.GetEdge(edgeID, ref a, ref b, ref t0, ref t1) == false )
@@ -77,13 +89,28 @@ namespace g3 {
 			Vector3d vB = mesh.GetVertex(b);
 			double edge_len_sqr = (vA-vB).LengthSquared;
 
+            bool aFixed = vertex_is_fixed(a);
+            bool bFixed = vertex_is_fixed(b);
+            bool bothFixed = (aFixed && bFixed);
+
 			// optimization: if edge cd exists, we cannot collapse or flip. look that up here?
 			//  funcs will do it internally...
 			//  (or maybe we can collapse if cd exists? edge-collapse doesn't check for it explicitly...)
 
 			// if edge length is too short, we want to collapse it
 			bool bTriedCollapse = false;
-			if ( EnableCollapses && edge_len_sqr < MinEdgeLength*MinEdgeLength ) {
+			if ( EnableCollapses && constraint.CanCollapse && bothFixed == false && edge_len_sqr < MinEdgeLength*MinEdgeLength ) {
+
+                int iKeep = b, iCollapse = a;
+                Vector3d vNewPos = (vA + vB) * 0.5;
+
+                // if either vtx is fixed, collapse to that position
+                if ( bFixed ) {
+                    vNewPos = vB;
+                } else if ( aFixed ) {
+                    iKeep = a; iCollapse = b;
+                    vNewPos = vA;
+                }
 
 				// TODO be smart about picking b (keep vtx). 
 				//    - swap if one is bdry vtx, for example?
@@ -92,11 +119,13 @@ namespace g3 {
 				// mesh sort that out, right?
 
 				DMesh3.EdgeCollapseInfo collapseInfo;
-				MeshResult result = mesh.CollapseEdge(b, a, out collapseInfo);
+				MeshResult result = mesh.CollapseEdge(iKeep, iCollapse, out collapseInfo);
 				if ( result == MeshResult.Ok ) {
-
-					Vector3d vNewPos = (vA + vB) * 0.5f;
 					mesh.SetVertex(b, vNewPos);
+                    if (constraints != null) {
+                        constraints.ClearEdgeConstraint(edgeID);
+                        constraints.ClearVertexConstraint(iCollapse);
+                    }
 
 					return ProcessResult.Ok_Collapsed;
 				} else 
@@ -106,7 +135,7 @@ namespace g3 {
 
 			// if this is not a boundary edge, maybe we want to flip
 			bool bTriedFlip = false;
-			if ( EnableFlips && bIsBoundaryEdge == false ) {
+			if ( EnableFlips && constraint.CanFlip && bIsBoundaryEdge == false ) {
 
 				// don't want to flip if it will invert triangle...tetrahedron sign??
 
@@ -146,11 +175,14 @@ namespace g3 {
 
 			// if edge length is too long, we want to split it
 			bool bTriedSplit = false;
-			if ( EnableSplits && edge_len_sqr > MaxEdgeLength*MaxEdgeLength ) {
+			if ( EnableSplits && constraint.CanSplit && edge_len_sqr > MaxEdgeLength*MaxEdgeLength ) {
 
 				DMesh3.EdgeSplitInfo splitInfo;
 				MeshResult result = mesh.SplitEdge(edgeID, out splitInfo);
 				if ( result == MeshResult.Ok ) {
+                    if (constraints != null)
+                        update_constraints_after_split(edgeID, a, b, splitInfo);
+
 					return ProcessResult.Ok_Split;
 				} else
 					bTriedSplit = true;
@@ -165,26 +197,50 @@ namespace g3 {
 
 
 
+        void update_constraints_after_split(int edgeID, int va, int vb, DMesh3.EdgeSplitInfo splitInfo)
+        {
+            if (constraints.HasEdgeConstraint(edgeID)) {
+                constraints.SetOrUpdateEdgeConstraint(splitInfo.eNew, constraints.GetEdgeConstraint(edgeID));
+
+                // [RMS] not clear this is the right thing to do. note that we
+                //   cannot do outside loop because then pair of fixed verts connected
+                //   by unconstrained edge will produce a new fixed vert, which is bad
+                //   (eg on minimal triangulation of capped cylinder)
+                if (vertex_is_fixed(va) && vertex_is_fixed(vb))
+                    constraints.SetOrUpdateVertexConstraint(splitInfo.vNew,
+                        new VertexConstraint(true));
+            }
+        }
+
+
+
+
+        bool vertex_is_fixed(int vid)
+        {
+            if (constraints != null && constraints.GetVertexConstraint(vid).Fixed)
+                return true;
+            return false;
+        }
+
+
+
 
 		void FullSmoothPass_InPlace() {
-			if ( SmoothType == SmoothTypes.Uniform ) {
-				foreach ( int vID in mesh.VertexIndices() ) {
-					Vector3d vSmoothed = MeshUtil.UniformSmooth(mesh, vID, SmoothSpeedT);
-					mesh.SetVertex( vID, vSmoothed);
-				}
+            Func<DMesh3, int, double, Vector3d> smoothFunc = MeshUtil.UniformSmooth;
+            if (SmoothType == SmoothTypes.MeanValue)
+                smoothFunc = MeshUtil.MeanValueSmooth;
+            else if (SmoothType == SmoothTypes.Cotan)
+                smoothFunc = MeshUtil.CotanSmooth;
 
-			} else if ( SmoothType == SmoothTypes.MeanValue ) {
-				foreach ( int vID in mesh.VertexIndices() ) {
-					Vector3d vSmoothed = MeshUtil.MeanValueSmooth(mesh, vID, SmoothSpeedT);
-					mesh.SetVertex( vID, vSmoothed);
-				}
-			} else if ( SmoothType == SmoothTypes.Cotan ) {
-				foreach ( int vID in mesh.VertexIndices() ) {
-					Vector3d vSmoothed = MeshUtil.CotanSmooth(mesh, vID, SmoothSpeedT);
-					mesh.SetVertex( vID, vSmoothed);
-				}				
-			} else 
-				throw new NotImplementedException("Remesher.FullSmooth: type not supported!");
+			foreach ( int vID in mesh.VertexIndices() ) {
+
+                if (vertex_is_fixed(vID))
+                    continue;
+
+				Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
+				mesh.SetVertex( vID, vSmoothed);
+			}
+
 		}
 
 
