@@ -73,7 +73,8 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - add/remove vertices
     - manifold-preserving Split/Flip/Collapse operators
     
-- **Remesher**: basic edge split/flip/collapse remeshing
+- **Remesher**: edge split/flip/collapse + vtx smooth remeshing
+    - use **MeshConstraints** to constraint individual edge split/flip/collapse, and to pin vertices
 
 - various mesh generators
     - open & closed cylinders, disc, punctured disc, with start/end angles
