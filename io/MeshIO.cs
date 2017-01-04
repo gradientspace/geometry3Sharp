@@ -67,6 +67,7 @@ namespace g3
 
         public bool bPerVertexNormals;
         public bool bPerVertexColors;
+        public bool bWriteGroups;
 
         public WriteOptions()
         {
@@ -74,6 +75,7 @@ namespace g3
 
             bPerVertexNormals = false;
             bPerVertexColors = false;
+            bWriteGroups = false;
         }
     }
 

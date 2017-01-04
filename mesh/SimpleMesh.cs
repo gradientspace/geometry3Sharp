@@ -151,11 +151,15 @@ namespace g3
             }
         }
 
-        public void AppendTriangles(VectorArray3i t)
+        public void AppendTriangles(VectorArray3i t, int[] groups = null)
         {
             Triangles.Add(t.array);
-            if (HasTriangleGroups)
-                FaceGroups.Add(0, t.Count);
+            if (HasTriangleGroups) {
+                if (groups != null)
+                    FaceGroups.Add(groups);
+                else
+                    FaceGroups.Add(0, t.Count);
+            }
         }
 
 
