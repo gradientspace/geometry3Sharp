@@ -19,10 +19,11 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 - **VectorArray2/VectorArray3**: wrapper around regular array providing N-element access
     - eg operator[] gets/sets Vector3d for VectorArray3d, internally is double[3*count]
 
+- **Units**: enums & conversions
 
 # Math
 
-- reasonly complete set of vector-math objects, implemented as structs
+- reasonably complete set of vector-math objects, implemented as structs
     - Vector2/3, Matrix2/3, Quaternion, Segment2/3, Line2/3, Ray3, Triangle2/3, AxisAlignedBox2/3, (oriented) Box2/3
     - double & float versions of vector/line/ray/segment/box types (and int types for vectors)
     - implicit float->double conversion operators between types, explicit double->float operators
