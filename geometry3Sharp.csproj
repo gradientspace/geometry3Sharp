@@ -88,6 +88,7 @@
     <Compile Include="math\Vector3i.cs" />
     <Compile Include="math\Vector3f.cs" />
     <Compile Include="queries\Distance.cs" />
+    <Compile Include="queries\MeshQueries.cs" />
     <Compile Include="queries\RayIntersection.cs" />
     <Compile Include="math\AxisAlignedBox2f.cs" />
     <Compile Include="math\AxisAlignedBox3d.cs" />
