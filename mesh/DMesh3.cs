@@ -95,7 +95,7 @@ namespace g3
         RefCountVector edges_refcount;
         DVector<int> edges;
 
-
+        int timestamp = 0;
 
         public DMesh3(bool bWantNormals = true, bool bWantColors = false, bool bWantUVs = false, bool bWantTriGroups = false)
         {
@@ -121,7 +121,11 @@ namespace g3
 
 
 		void updateTimeStamp() {
+            timestamp++;
 		}
+        public int Timestamp {
+            get { return timestamp; }
+        }
 
 
         // IMesh impl
@@ -175,6 +179,7 @@ namespace g3
 			if ( vertices_refcount.isValid(vID) ) {
 				int i = 3*vID;
 				vertices[i] = vNewPos.x; vertices[i+1] = vNewPos.y; vertices[i+2] = vNewPos.z;
+                updateTimeStamp();
 			}
 		}
 
@@ -187,6 +192,7 @@ namespace g3
 			if ( HasVertexNormals && vertices_refcount.isValid(vID) ) {
 				int i = 3*vID;
 				normals[i] = vNewNormal.x; normals[i+1] = vNewNormal.y; normals[i+2] = vNewNormal.z;
+                updateTimeStamp();
 			}
 		}
 
@@ -199,6 +205,7 @@ namespace g3
 			if ( HasVertexColors && vertices_refcount.isValid(vID) ) {
 				int i = 3*vID;
 				colors[i] = vNewColor.x; colors[i+1] = vNewColor.y; colors[i+2] = vNewColor.z;
+                updateTimeStamp();
 			}
 		}
 
@@ -211,6 +218,7 @@ namespace g3
 			if ( HasVertexUVs && vertices_refcount.isValid(vID) ) {
 				int i = 2*vID;
 				uv[i] = vNewUV.x; uv[i+1] = vNewUV.y;
+                updateTimeStamp();
 			}
 		}
 
@@ -377,6 +385,7 @@ namespace g3
 
             vertex_edges.insert(new List<int>(), vid);
 
+            updateTimeStamp();
             return vid;
         }
 
@@ -423,6 +432,7 @@ namespace g3
             add_tri_edge(tid, tv[1], tv[2], 1, e1);
             add_tri_edge(tid, tv[2], tv[0], 2, e2);
 
+            updateTimeStamp();
             return tid;
         }
         // helper fn for above, just makes code cleaner
@@ -787,16 +797,20 @@ namespace g3
         public MeshResult ReverseTriOrientation(int tID) {
             if (!IsTriangle(tID))
                 return MeshResult.Failed_NotATriangle;
+            internal_reverse_tri_orientation(tID);
+            updateTimeStamp();
+            return MeshResult.Ok;
+        }
+        void internal_reverse_tri_orientation(int tID) {
             Index3i t = GetTriangle(tID);
             set_triangle(tID, t[1], t[0], t[2]);
             Index3i te = GetTriEdges(tID);
             set_triangle_edges(tID, te[0], te[2], te[1]);
-            return MeshResult.Ok;
         }
 
 		public void ReverseOrientation(bool bFlipNormals = true) {
 			foreach ( int tid in TriangleIndices() ) {
-				ReverseTriOrientation(tid);
+				internal_reverse_tri_orientation(tid);
 			}
 			if ( bFlipNormals ) {
 				foreach ( int vid in VertexIndices() ) {
@@ -806,6 +820,7 @@ namespace g3
 					normals[i+2] = -normals[i+2];
 				}
 			}
+            updateTimeStamp();
 		}
 
 
@@ -1281,6 +1296,51 @@ namespace g3
 			updateTimeStamp();
 			return MeshResult.Ok;
 		}
+
+
+
+
+
+
+
+
+
+        // queries
+
+        // compute vertex bounding box
+        public AxisAlignedBox3d GetBounds()
+        {
+            double x = 0, y = 0, z = 0;
+            foreach ( int vi in vertices_refcount ) {
+                x = vertices[3*vi]; y = vertices[3*vi + 1]; z = vertices[3*vi + 2];
+                break;
+            }
+            double minx = x, maxx = x, miny = y, maxy = y, minz = z, maxz = z;
+            foreach ( int vi in vertices_refcount ) {
+                x = vertices[vi]; y = vertices[vi + 1]; z = vertices[vi + 2];
+                if (x < minx) minx = x; else if (x > maxx) maxx = x;
+                if (y < miny) miny = y; else if (y > maxy) maxy = y;
+                if (z < minz) minz = z; else if (z > maxz) maxz = z;
+            }
+            return new AxisAlignedBox3d(minx, miny, minz, maxx, maxy, maxz);
+        }
+
+        AxisAlignedBox3d cached_bounds;
+        int cached_bounds_timestamp = -1;
+
+        //! cached bounding box, lazily re-computed on access if mesh has changed
+        public AxisAlignedBox3d CachedBounds
+        {
+            get {
+                if (cached_bounds_timestamp != Timestamp) {
+                    cached_bounds = GetBounds();
+                    cached_bounds_timestamp = Timestamp;
+                }
+                return cached_bounds;
+            }
+        }
+
+
 
 
 

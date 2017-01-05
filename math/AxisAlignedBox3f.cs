@@ -183,6 +183,17 @@ namespace g3
         }
 
 
+        public double DistanceSquared(Vector3f v)
+        {
+            float dx = (v.x < Min.x) ? Min.x - v.x : (v.x > Max.x ? v.x - Max.x : 0);
+            float dy = (v.y < Min.y) ? Min.y - v.y : (v.y > Max.y ? v.y - Max.y : 0);
+            float dz = (v.z < Min.z) ? Min.z - v.z : (v.z > Max.z ? v.z - Max.z : 0);
+            return dx * dx + dy * dy + dz * dz;
+        }
+        public float Distance(Vector3f v)
+        {
+            return (float)Math.Sqrt(DistanceSquared(v));
+        }
 
 
 

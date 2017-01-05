@@ -116,11 +116,15 @@ namespace g3
         }
 
 
-        public float SqrDistance(Vector3f v2)
-        {
-            float a = (x - v2[0]), b = (y - v2[1]), c = (z - v2[2]);
-            return a * a + b * b + c * c;
+        public float SqrDistance(Vector3f v2) {
+			float dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
+			return dx*dx + dy*dy + dz*dz;
         }
+        public float Distance(Vector3f v2) {
+            float dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
+			return (float)Math.Sqrt(dx*dx + dy*dy + dz*dz);
+		}
+
 
 
         public void Set(Vector3f o)

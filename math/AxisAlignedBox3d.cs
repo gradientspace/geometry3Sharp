@@ -140,6 +140,19 @@ namespace g3
 
 
 
+        public double DistanceSquared(Vector3d v)
+        {
+            double dx = (v.x < Min.x) ? Min.x - v.x : (v.x > Max.x ? v.x - Max.x : 0);
+            double dy = (v.y < Min.y) ? Min.y - v.y : (v.y > Max.y ? v.y - Max.y : 0);
+            double dz = (v.z < Min.z) ? Min.z - v.z : (v.z > Max.z ? v.z - Max.z : 0);
+            return dx * dx + dy * dy + dz * dz;
+        }
+        public double Distance(Vector3d v)
+        {
+            return Math.Sqrt(DistanceSquared(v));
+        }
+
+
         // [TODO] we have handled corner cases, but not edge cases!
         //   those are 2D, so it would be like (dx > width && dy > height)
         //public double Distance(Vector3d v)
