@@ -7,7 +7,7 @@ namespace g3 {
 
 		DMesh3 mesh;
         MeshConstraints constraints = null;
-
+        IProjectionTarget target = null;
 
 		public bool EnableFlips = true;
 		public bool EnableCollapses = true;
@@ -37,6 +37,11 @@ namespace g3 {
         }
 
 
+        public void SetProjectionTarget(IProjectionTarget target)
+        {
+            this.target = target;
+        }
+
 
 		public void BasicRemeshPass() {
 
@@ -51,6 +56,9 @@ namespace g3 {
 
 			if ( EnableSmoothing && SmoothSpeedT > 0)
 				FullSmoothPass_InPlace();
+
+            if (target != null)
+                FullProjectionPass();
 		}
 
 
@@ -240,8 +248,20 @@ namespace g3 {
 				Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
 				mesh.SetVertex( vID, vSmoothed);
 			}
-
 		}
+
+
+
+        void FullProjectionPass()
+        {
+            foreach ( int vID in mesh.VertexIndices() ) {
+                if (vertex_is_fixed(vID))
+                    continue;
+                Vector3d curpos = mesh.GetVertex(vID);
+                Vector3d projected = target.Project(curpos);
+                mesh.SetVertex(vID, projected);
+            }
+        }
 
 
 

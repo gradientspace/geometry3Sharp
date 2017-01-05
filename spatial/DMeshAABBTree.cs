@@ -4,9 +4,10 @@ using System.Linq;
 
 namespace g3
 {
-    public class DMeshAABBTree3
+    public class DMeshAABBTree3 : ISpatial
     {
         DMesh3 mesh;
+        int mesh_timestamp;
 
         public DMeshAABBTree3(DMesh3 m)
         {
@@ -19,13 +20,17 @@ namespace g3
         public void Build()
         {
             build_by_one_rings();
+            mesh_timestamp = mesh.Timestamp;
         }
 
 
 
-
+        public bool SupportsNearestTriangle { get { return true; } }
         public int FindNearestTriangle(Vector3d p)
         {
+            if (mesh_timestamp != mesh.Timestamp)
+                throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+
             double fNearestSqr = double.MaxValue;
             int tNearID = -1;
             find_nearest_tri(root_index, p, ref fNearestSqr, ref tNearID);
@@ -97,6 +102,9 @@ namespace g3
         // walk over tree, calling functions in TreeTraversal object for internal nodes and triangles
         public void DoTraversal(TreeTraversal traversal)
         {
+            if (mesh_timestamp != mesh.Timestamp)
+                throw new Exception("DMeshAABBTree3.DoTraversal: mesh has been modified since tree construction");
+
             tree_traversal(root_index, traversal);
         }
 
