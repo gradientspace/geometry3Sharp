@@ -44,11 +44,12 @@ namespace g3
 
 
 
-
-
         // strategy here is:
         //  1) partition triangles by vertex one-rings into leaf boxes
-        //      1a) 
+        //      1a) first pass where we skip one-rings that have < 3 free tris
+        //      1b) second pass where we handle any missed tris
+        //  2) sequentially combine N leaf boxes into (N/2 + N%2) layer 2 boxes
+        //  3) repeat until layer K has only 1 box, which is root of tree
         public void BuildByOneRings()
         {
             box_to_index = new DVector<int>();
@@ -63,89 +64,42 @@ namespace g3
             byte[] used_triangles = new byte[mesh.MaxTriangleID];
             Array.Clear(used_triangles, 0, used_triangles.Length);
 
-            int[] temp_tris = new int[1024];
+            // temporary buffer
+            int nMaxEdgeCount = mesh.GetMaxVtxEdgeCount();
+            int[] temp_tris = new int[2*nMaxEdgeCount];
 
             // first pass: cluster by one-ring, but if # of free tris
             //  in a ring is small (< 3), push onto spill list to try again,
             //  because those tris might be picked up by a bigger cluster
             DVector<int> spill = new DVector<int>();
             foreach ( int vid in mesh.VertexIndices() ) {
-                // collect free triangles
-                int tti = 0;
-                foreach ( int tid in mesh.VtxTrianglesItr(vid) ) {
-                    if ( used_triangles[tid] == 0 ) 
-                        temp_tris[tti++] = tid;
-                }
-                if (tti == 0)
-                    continue;
-                // if we only had a couple free triangles, wait and see if
-                // they get picked up by another vert
-                if (tti < 3) {
+                int tCount = add_one_ring_box(vid, used_triangles, temp_tris,
+                    ref iBoxCur, ref iIndicesCur, spill, 3);
+                if (tCount < 3)
                     spill.Add(vid);
-                    continue;
-                }
-
-                // append new box
-                AxisAlignedBox3f box = AxisAlignedBox3f.Empty;
-                int iBox = iBoxCur++;
-                box_to_index.insert(iIndicesCur, iBox);
-
-                index_list.insert(tti, iIndicesCur++);
-                for (int i = 0; i < tti; ++i) {
-                    index_list.insert(temp_tris[i], iIndicesCur++);
-                    used_triangles[temp_tris[i]]++;     // incrementing for sanity check below, just need to set to 1
-                    box.Contain(mesh.GetTriBounds(temp_tris[i]));
-                }
-
-                box_centers.insert(box.Center, iBox);
-                box_extents.insert(box.Extents, iBox);
             }
 
-
-            // OK, check any spill vertices. most are probably gone now, but
-            // a few stray triangles might still exist
-            //  todo: nearly same code as above, can move to function??
+            // second pass: check any spill vertices. Most are probably gone 
+            // now, but a few stray triangles might still exist
             int N = spill.Length;
             for ( int si = 0; si < N; ++si ) {
                 int vid = spill[si];
-
-                 // collect free triangles
-                int tti = 0;
-                foreach ( int tid in mesh.VtxTrianglesItr(vid) ) {
-                    if ( used_triangles[tid] == 0 ) 
-                        temp_tris[tti++] = tid;
-                }
-                if (tti == 0)
-                    continue;
-                
-                // append new box
-                AxisAlignedBox3f box = AxisAlignedBox3f.Empty;
-                int iBox = iBoxCur++;
-                box_to_index.insert(iIndicesCur, iBox);
-
-                index_list.insert(tti, iIndicesCur++);
-                for (int i = 0; i < tti; ++i) {
-                    index_list.insert(temp_tris[i], iIndicesCur++);
-                    used_triangles[temp_tris[i]]++;     // incrementing for sanity check below, just need to set to 1
-                    box.Contain(mesh.GetTriBounds(temp_tris[i]));
-                }
-
-                box_centers.insert(box.Center, iBox);
-                box_extents.insert(box.Extents, iBox);
+                add_one_ring_box(vid, used_triangles, temp_tris,
+                    ref iBoxCur, ref iIndicesCur, null, 0);
             }
 
 
-            // SANITY CHECK - REMOVE!!
-            foreach ( int tid in mesh.TriangleIndices() ) {
-                int n = used_triangles[tid];
-                if (n != 1)
-                    Util.gBreakToDebugger();
-            }
+            // [RMS] test code to make sure each triangle is in exactly one list
+            //foreach ( int tid in mesh.TriangleIndices() ) {
+            //    int n = used_triangles[tid];
+            //    if (n != 1)
+            //        Util.gBreakToDebugger();
+            //}
 
             // keep track of where triangle lists end
             triangles_end = iIndicesCur;
 
-            // ok, now repeatedly cluster current layer of N boxes into N/2 (or N/2+1) boxes,
+            // ok, now repeatedly cluster current layer of N boxes into N/2 + N%2 boxes,
             // until we hit a 1-box layer, which is root of the tree
             int nPrevEnd = iBoxCur;
             int nLayerSize = cluster_boxes(0, iBoxCur, ref iBoxCur, ref iIndicesCur);
@@ -163,27 +117,29 @@ namespace g3
 
 
 
-
-        public int box_triangles(int vid, int[] used_triangles, int[] temp_tris, 
+        // Appends a box that contains free triangles in one-ring of vertex vid.
+        // If tri count is < spill threshold, push onto spill list instead.
+        // Returns # of free tris found.
+        public int add_one_ring_box(int vid, byte[] used_triangles, int[] temp_tris, 
             ref int iBoxCur, ref int iIndicesCur,
             DVector<int> spill, int nSpillThresh )
         {
             // collect free triangles
-            int tti = 0;
+            int num_free = 0;
             foreach ( int tid in mesh.VtxTrianglesItr(vid) ) {
                 if ( used_triangles[tid] == 0 ) 
-                    temp_tris[tti++] = tid;
+                    temp_tris[num_free++] = tid;
             }
 
             // none free, get out
-            if (tti == 0)
+            if (num_free == 0)
                 return 0;
 
             // if we only had a couple free triangles, wait and see if
             // they get picked up by another vert
-            if (tti < nSpillThresh) {
+            if (num_free < nSpillThresh) {
                 spill.Add(vid);
-                return tti;
+                return num_free;
             }
 
             // append new box
@@ -191,8 +147,8 @@ namespace g3
             int iBox = iBoxCur++;
             box_to_index.insert(iIndicesCur, iBox);
 
-            index_list.insert(tti, iIndicesCur++);
-            for (int i = 0; i < tti; ++i) {
+            index_list.insert(num_free, iIndicesCur++);
+            for (int i = 0; i < num_free; ++i) {
                 index_list.insert(temp_tris[i], iIndicesCur++);
                 used_triangles[temp_tris[i]]++;     // incrementing for sanity check below, just need to set to 1
                 box.Contain(mesh.GetTriBounds(temp_tris[i]));
@@ -200,7 +156,7 @@ namespace g3
 
             box_centers.insert(box.Center, iBox);
             box_extents.insert(box.Extents, iBox);
-            return tti;
+            return num_free;
         }
 
 

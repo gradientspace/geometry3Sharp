@@ -219,6 +219,19 @@ namespace g3
                 vertex_edges[vID].AsReadOnly() : null;
         }
 
+        public int GetVtxEdgeCount(int vID) {
+            return vertices_refcount.isValid(vID) ?
+                vertex_edges[vID].Count : -1;
+        }
+
+
+        public int GetMaxVtxEdgeCount() {
+            int max = 0;
+            foreach (int vid in vertices_refcount)
+                max = Math.Max(0, vertex_edges[vid].Count);
+            return max;
+        }
+
 		public NewVertexInfo GetVertexAll(int i) {
 			NewVertexInfo vi = new NewVertexInfo();
 			vi.v = GetVertex(i);
