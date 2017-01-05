@@ -20,6 +20,18 @@ namespace g3
             Blocks.Add(new T[nBlockSize]);
         }
 
+        public DVector(DVector<T> copy)
+        {
+            nBlockSize = copy.nBlockSize;
+            iCurBlock = copy.iCurBlock;
+            iCurBlockUsed = copy.iCurBlockUsed;
+            Blocks = new List<T[]>();
+            for ( int i = 0; i < copy.Blocks.Count; ++i ) {
+                Blocks.Add(new T[nBlockSize]);
+                Array.Copy(copy.Blocks[i], Blocks[i], copy.Blocks[i].Length);
+            }
+        }
+
         public DVector(IEnumerable<T> init)
         {
             nBlockSize = 2048;

@@ -120,6 +120,39 @@ namespace g3
         }
 
 
+        public DMesh3(DMesh3 copy)
+        {
+            vertices = new DVector<double>(copy.vertices);
+            if (copy.normals != null)
+                normals = new DVector<float>(copy.normals);
+            if (copy.colors != null)
+                colors = new DVector<float>(copy.colors);
+            if (copy.uv != null)
+                uv = new DVector<float>(copy.uv);
+
+            vertices_refcount = new RefCountVector(copy.vertices_refcount);
+            vertex_edges = new DVector<List<int>>(copy.vertex_edges);
+            int N = vertex_edges.Length;
+            for ( int i = 0; i < N; ++i ) {
+                if (vertices_refcount.isValid(i))
+                    vertex_edges[i] = new List<int>(copy.vertex_edges[i]);
+                else
+                    vertex_edges[i] = null;
+            }
+
+            triangles = new DVector<int>(copy.triangles);
+            triangle_edges = new DVector<int>(copy.triangle_edges);
+            triangles_refcount = new RefCountVector(copy.triangles_refcount);
+            if (copy.triangle_groups != null)
+                triangle_groups = new DVector<int>(copy.triangle_groups);
+
+            edges = new DVector<int>(copy.edges);
+            edges_refcount = new RefCountVector(copy.edges_refcount);
+        }
+
+
+
+
 		void updateTimeStamp() {
             timestamp++;
 		}

@@ -25,6 +25,12 @@ namespace g3
             used_count = 0;
         }
 
+        public RefCountVector(RefCountVector copy)
+        {
+            ref_counts = new DVector<short>(copy.ref_counts);
+            free_indices = new DVector<int>(copy.free_indices);
+            used_count = copy.used_count;
+        }
 
         public bool empty {
             get { return used_count == 0; }
