@@ -144,6 +144,7 @@
     <Compile Include="intersection\IntrLine3Box3.cs" />
     <Compile Include="intersection\IntrSegment3Box3.cs" />
     <Compile Include="intersection\IntrRay3Box3.cs" />
+    <Compile Include="spatial\DMeshAABBTree.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
