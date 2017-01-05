@@ -47,13 +47,17 @@ namespace g3
     public struct VertexConstraint
     {
         public bool Fixed;
+        public int FixedSetID;      // in Remesher, we can allow two Fixed vertices with 
+                                    // same FixedSetID to be collapsed together
         
-        public VertexConstraint(bool isFixed)
+        public VertexConstraint(bool isFixed, int setID = InvalidSetID)
         {
             Fixed = isFixed;
+            FixedSetID = setID;
         }
 
-       static public readonly VertexConstraint Unconstrained = new VertexConstraint() { Fixed = false };
+        public const int InvalidSetID = -1;
+        static public readonly VertexConstraint Unconstrained = new VertexConstraint() { Fixed = false };
      }
 
 

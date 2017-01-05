@@ -14,7 +14,6 @@ namespace g3 {
 		public bool EnableSplits = true;
 		public bool EnableSmoothing = true;
 
-
 		public double MinEdgeLength = 0.001f;
 		public double MaxEdgeLength = 0.1f;
 
@@ -23,6 +22,14 @@ namespace g3 {
 			Uniform, Cotan, MeanValue
 		};
 		public SmoothTypes SmoothType = SmoothTypes.Uniform;
+
+
+        // other options
+
+        // if true, then when two Fixed vertices have the same non-invalid SetID,
+        // we treat them as not fixed and allow collapse
+        public bool AllowCollapseFixedVertsWithSameSetID = true;
+
 
 
 		public Remesher(DMesh3 m) {
@@ -97,9 +104,14 @@ namespace g3 {
 			Vector3d vB = mesh.GetVertex(b);
 			double edge_len_sqr = (vA-vB).LengthSquared;
 
-            bool aFixed = vertex_is_fixed(a);
-            bool bFixed = vertex_is_fixed(b);
-            bool bothFixed = (aFixed && bFixed);
+            // check if we should collapse, and also find which vertex we should collapse to,
+            // in cases where we have constraints/etc
+            int collapse_to = -1;
+            bool bCanCollapse = EnableCollapses
+                                && constraint.CanCollapse
+                                && edge_len_sqr < MinEdgeLength*MinEdgeLength
+                                && can_collapse(a, b, out collapse_to);
+
 
 			// optimization: if edge cd exists, we cannot collapse or flip. look that up here?
 			//  funcs will do it internally...
@@ -107,15 +119,15 @@ namespace g3 {
 
 			// if edge length is too short, we want to collapse it
 			bool bTriedCollapse = false;
-			if ( EnableCollapses && constraint.CanCollapse && bothFixed == false && edge_len_sqr < MinEdgeLength*MinEdgeLength ) {
+			if ( bCanCollapse ) {
 
                 int iKeep = b, iCollapse = a;
                 Vector3d vNewPos = (vA + vB) * 0.5;
 
                 // if either vtx is fixed, collapse to that position
-                if ( bFixed ) {
+                if ( collapse_to == b ) {
                     vNewPos = vB;
-                } else if ( aFixed ) {
+                } else if ( collapse_to == a ) {
                     iKeep = a; iCollapse = b;
                     vNewPos = vA;
                 }
@@ -214,13 +226,46 @@ namespace g3 {
                 //   cannot do outside loop because then pair of fixed verts connected
                 //   by unconstrained edge will produce a new fixed vert, which is bad
                 //   (eg on minimal triangulation of capped cylinder)
-                if (vertex_is_fixed(va) && vertex_is_fixed(vb))
+                VertexConstraint ca = constraints.GetVertexConstraint(va);
+                VertexConstraint cb = constraints.GetVertexConstraint(vb);
+                if (ca.Fixed && cb.Fixed) {
+                    int nSetID = (ca.FixedSetID > 0 && ca.FixedSetID == cb.FixedSetID) ?
+                        ca.FixedSetID : VertexConstraint.InvalidSetID;
                     constraints.SetOrUpdateVertexConstraint(splitInfo.vNew,
-                        new VertexConstraint(true));
+                        new VertexConstraint(true, nSetID));
+                }
             }
         }
 
 
+        bool can_collapse(int a, int b, out int collapse_to)
+        {
+            collapse_to = -1;
+            if (constraints == null)
+                return true;
+            VertexConstraint ca = constraints.GetVertexConstraint(a);
+            VertexConstraint cb = constraints.GetVertexConstraint(b);
+            if (ca.Fixed == false && cb.Fixed == false)
+                return true;
+            if ( ca.Fixed == true && cb.Fixed == false ) {
+                collapse_to = a;
+                return true;
+            }
+            if ( cb.Fixed == true && ca.Fixed == false) {
+                collapse_to = b;
+                return true;
+            }
+            // if both fixed, and options allow, treat this edge as unconstrained (eg collapse to midpoint)
+            // [RMS] tried picking a or b here, but something weird happens, where
+            //   eg cylinder cap will entirely erode away. Somehow edge lengths stay below threshold??
+            if ( AllowCollapseFixedVertsWithSameSetID 
+                    && ca.FixedSetID >= 0 
+                    && ca.FixedSetID == cb.FixedSetID) {
+                return true;
+            }
+
+            return false;            
+        }
 
 
         bool vertex_is_fixed(int vid)
@@ -258,7 +303,7 @@ namespace g3 {
                 if (vertex_is_fixed(vID))
                     continue;
                 Vector3d curpos = mesh.GetVertex(vID);
-                Vector3d projected = target.Project(curpos);
+                Vector3d projected = target.Project(curpos, vID);
                 mesh.SetVertex(vID, projected);
             }
         }
