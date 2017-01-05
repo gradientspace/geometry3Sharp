@@ -274,6 +274,36 @@ namespace g3
             return MathUtil.Normal(v0, v1, v2);
         }
 
+        public Vector3d GetTriCentroid(int tID)
+        {
+            int a = triangles[3 * tID], b = triangles[3 * tID + 1], c = triangles[3 * tID + 2];
+            double f = (1.0 / 3.0);
+            return new Vector3d(
+                (vertices[3 * a] + vertices[3 * b] + vertices[3 * c]) * f,
+                (vertices[3 * a + 1] + vertices[3 * b + 1] + vertices[3 * c + 1]) * f,
+                (vertices[3 * a + 2] + vertices[3 * b + 2] + vertices[3 * c + 2]) * f );
+        }
+
+
+
+        public AxisAlignedBox3d GetTriBounds(int tID)
+        {
+            int vi = 3 * triangles[3 * tID];
+            double x = vertices[vi], y = vertices[vi + 1], z = vertices[vi + 2];
+            double minx = x, maxx = x, miny = y, maxy = y, minz = z, maxz = z;
+            for (int i = 1; i < 3; ++i) {
+                vi = 3 * triangles[3 * tID + i];
+                x = vertices[vi]; y = vertices[vi + 1]; z = vertices[vi + 2];
+                if (x < minx) minx = x; else if (x > maxx) maxx = x;
+                if (y < miny) miny = y; else if (y > maxy) maxy = y;
+                if (z < minz) minz = z; else if (z > maxz) maxz = z;
+            }
+            return new AxisAlignedBox3d(minx, miny, minz, maxx, maxy, maxz);
+        }
+
+
+
+
 
         public Index2i GetEdgeV(int eID) {
             return edges_refcount.isValid(eID) ?

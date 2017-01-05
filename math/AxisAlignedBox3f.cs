@@ -57,6 +57,10 @@ namespace g3
             Max = new Vector3f(vCenter.x + fHalfSize, vCenter.y + fHalfSize, vCenter.z + fHalfSize);
         }
 
+        public AxisAlignedBox3f(Vector3f vCenter) {
+            Min = Max = vCenter;
+        }
+
         public float Width
         {
             get { return Max.x - Min.x; }
@@ -133,6 +137,24 @@ namespace g3
             Contain(box.Min);
             Contain(box.Max);
         }
+
+
+        public void Contain(Vector3d v)
+        {
+            Min.x = Math.Min(Min.x, (float)v.x);
+            Min.y = Math.Min(Min.y, (float)v.y);
+            Min.z = Math.Min(Min.z, (float)v.z);
+            Max.x = Math.Max(Max.x, (float)v.x);
+            Max.y = Math.Max(Max.y, (float)v.y);
+            Max.z = Math.Max(Max.z, (float)v.z);
+        }
+
+        public void Contain(AxisAlignedBox3d box)
+        {
+            Contain(box.Min);
+            Contain(box.Max);
+        }
+
 
         public AxisAlignedBox3f Intersect(AxisAlignedBox3f box)
         {

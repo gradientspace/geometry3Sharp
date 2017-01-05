@@ -45,6 +45,10 @@ namespace g3
             Max = new Vector2f(vCenter.x + fHalfWidth, vCenter.y + fHalfWidth);
         }
 
+        public AxisAlignedBox2f(Vector2f vCenter) {
+            Min = Max = vCenter;
+        }
+
         public AxisAlignedBox2f(AxisAlignedBox2f o) {
             Min = new Vector2f(o.Min);
             Max = new Vector2f(o.Max);

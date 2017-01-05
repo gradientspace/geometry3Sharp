@@ -21,11 +21,6 @@ namespace g3
             Max = new Vector2d(xmax, ymax);
         }
 
-		public AxisAlignedBox2d(Vector2d p) {
-			Min = new Vector2d(p.x, p.y);
-			Max = new Vector2d(p.x, p.y);
-		}
-
         public AxisAlignedBox2d(double fSquareSize) {
             Min = new Vector2d(0, 0);
             Max = new Vector2d(fSquareSize, fSquareSize);
@@ -49,6 +44,11 @@ namespace g3
             Min = new Vector2d(vCenter.x - fHalfWidth, vCenter.y - fHalfWidth);
             Max = new Vector2d(vCenter.x + fHalfWidth, vCenter.y + fHalfWidth);
         }
+
+        public AxisAlignedBox2d(Vector2d vCenter) {
+            Min = Max = vCenter;
+        }
+
 
         public AxisAlignedBox2d(AxisAlignedBox2d o) {
             Min = new Vector2d(o.Min);

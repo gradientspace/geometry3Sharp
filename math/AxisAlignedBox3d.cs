@@ -46,6 +46,10 @@ namespace g3
             Max = new Vector3d(vCenter.x + fHalfSize, vCenter.y + fHalfSize, vCenter.z + fHalfSize);
         }
 
+        public AxisAlignedBox3d(Vector3d vCenter) {
+            Min = Max = vCenter;
+        }
+
         public double Width {
             get { return Max.x - Min.x; }
         }
