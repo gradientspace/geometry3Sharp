@@ -14,6 +14,133 @@ namespace g3
         }
 
 
+
+
+        public void Build()
+        {
+            build_by_one_rings();
+        }
+
+
+
+
+        public int FindNearestTriangle(Vector3d p)
+        {
+            double fNearestSqr = double.MaxValue;
+            int tNearID = -1;
+            find_nearest_tri(root_index, p, ref fNearestSqr, ref tNearID);
+            return tNearID;
+        }
+        void find_nearest_tri(int iBox, Vector3d p, ref double fNearestSqr, ref int tID)
+        {
+            int idx = box_to_index[iBox];
+            if ( idx < triangles_end ) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i) {
+                    int ti = index_list[idx + i];
+                    double fTriDistSqr = MeshQueries.TriDistanceSqr(mesh, ti, p);
+                    if ( fTriDistSqr < fNearestSqr ) {
+                        fNearestSqr = fTriDistSqr;
+                        tID = ti;
+                    }
+                }
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if ( iChild1 < 0 ) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    double fChild1DistSqr = box_distance_sqr(iChild1, p);
+                    if ( fChild1DistSqr <= fNearestSqr )
+                        find_nearest_tri(iChild1, p, ref fNearestSqr, ref tID);
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    double fChild1DistSqr = box_distance_sqr(iChild1, p);
+                    double fChild2DistSqr = box_distance_sqr(iChild2, p);
+                    if (fChild1DistSqr < fChild2DistSqr) {
+                        if (fChild1DistSqr < fNearestSqr) {
+                            find_nearest_tri(iChild1, p, ref fNearestSqr, ref tID);
+                            if (fChild2DistSqr < fNearestSqr)
+                                find_nearest_tri(iChild2, p, ref fNearestSqr, ref tID);
+                        }
+                    } else {
+                        if (fChild2DistSqr < fNearestSqr) {
+                            find_nearest_tri(iChild2, p, ref fNearestSqr, ref tID);
+                            if (fChild1DistSqr < fNearestSqr)
+                                find_nearest_tri(iChild1, p, ref fNearestSqr, ref tID);
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+
+
+
+        // DoTraversal function will walk through tree and call NextBoxF for each
+        //  internal box node, and NextTriangleF for each triangle. 
+        //  You can prune branches by returning false from NextBoxF
+        public class TreeTraversal
+        {
+            // return false to terminate this branch
+            public Func<AxisAlignedBox3f, bool> NextBoxF = (x) => { return true; };
+
+            public Action<int> NextTriangleF = (tID) => { };
+        }
+
+
+        // walk over tree, calling functions in TreeTraversal object for internal nodes and triangles
+        public void DoTraversal(TreeTraversal traversal)
+        {
+            tree_traversal(root_index, traversal);
+        }
+
+        // traversal implementation
+        private void tree_traversal(int iBox, TreeTraversal traversal)
+        {
+            int idx = box_to_index[iBox];
+
+            if ( idx < triangles_end ) {
+                // triange-list case, array is [N t1 t2 ... tN]
+                int n = index_list[idx];
+                for ( int i = 1; i <= n; ++i ) {
+                    int ti = index_list[idx + i];
+                    traversal.NextTriangleF(ti);
+                }
+            } else {
+                int i0 = index_list[idx];
+                if ( i0 < 0 ) {
+                    // negative index means we only have one 'child' box to descend into
+                    i0 = (-i0) - 1;
+                    if ( traversal.NextBoxF(get_box(i0)) )
+                        tree_traversal(i0, traversal);
+                } else {
+                    // positive index, two sequential child box indices to descend into
+                    i0 = i0 - 1;
+                    if ( traversal.NextBoxF(get_box(i0)) )
+                        tree_traversal(i0, traversal);
+                    int i1 = index_list[idx + 1] - 1;
+                    if ( traversal.NextBoxF(get_box(i1)) )
+                        tree_traversal(i0, traversal);
+                }
+            }
+        }
+
+
+
+
+        //
+        // Internals - data structures, construction, etc
+        //
+
+
+
+
         // storage for box nodes. 
         //   - box_to_index is a pointer into index_list
         //   - box_centers and box_extents are the centers/extents of the bounding boxes
@@ -50,7 +177,7 @@ namespace g3
         //      1b) second pass where we handle any missed tris
         //  2) sequentially combine N leaf boxes into (N/2 + N%2) layer 2 boxes
         //  3) repeat until layer K has only 1 box, which is root of tree
-        public void BuildByOneRings()
+        void build_by_one_rings()
         {
             box_to_index = new DVector<int>();
             box_centers = new DVector<Vector3f>();
@@ -120,7 +247,7 @@ namespace g3
         // Appends a box that contains free triangles in one-ring of vertex vid.
         // If tri count is < spill threshold, push onto spill list instead.
         // Returns # of free tris found.
-        public int add_one_ring_box(int vid, byte[] used_triangles, int[] temp_tris, 
+        int add_one_ring_box(int vid, byte[] used_triangles, int[] temp_tris, 
             ref int iBoxCur, ref int iIndicesCur,
             DVector<int> spill, int nSpillThresh )
         {
@@ -167,7 +294,7 @@ namespace g3
         // Except, of course, if N is odd, then we get N/2+1, where the +1
         // box has a single child box (ie just a copy).
         // [TODO] instead merge that extra box into on of parents? Reduces tree depth by 1
-        public int cluster_boxes(int iStart, int iCount, ref int iBoxCur, ref int iIndicesCur)
+        int cluster_boxes(int iStart, int iCount, ref int iBoxCur, ref int iIndicesCur)
         {
             int[] indices = new int[iCount];
             for (int i = 0; i < iCount; ++i)
@@ -200,7 +327,7 @@ namespace g3
                 index_list.insert(i1+1, iIndicesCur++);
 
                 box_centers.insert(center, iBox);
-                box_extents.insert(center, iBox);
+                box_extents.insert(extent, iBox);
             }
 
             // [todo] could we merge with last other box? need a way to tell
@@ -231,7 +358,7 @@ namespace g3
 
 
         // construct box that contains two boxes
-        public void get_combined_box(int b0, int b1, out Vector3f center, out Vector3f extent)
+        void get_combined_box(int b0, int b1, out Vector3f center, out Vector3f extent)
         {
             Vector3f c0 = box_centers[b0];
             Vector3f e0 = box_extents[b0];
@@ -250,7 +377,7 @@ namespace g3
         }
 
 
-        public AxisAlignedBox3f get_box(int iBox)
+        AxisAlignedBox3f get_box(int iBox)
         {
             Vector3f c = box_centers[iBox];
             Vector3f e = box_extents[iBox];
@@ -261,10 +388,21 @@ namespace g3
 
 
 
+        double box_distance_sqr(int iBox, Vector3d p)
+        {
+            Vector3d c = box_centers[iBox];
+            Vector3d e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(c - e, c + e);
+            return box.DistanceSquared(p);
+        }
+
+        
 
 
 
-        // make sure we can reach every tri in mesh through tree (also demo of how to traverse tree...)
+
+        // 1) make sure we can reach every tri in mesh through tree (also demo of how to traverse tree...)
+        // 2) make sure that triangles are contained in parent boxes
         public void TestCoverage()
         {
             int[] tri_counts = new int[mesh.MaxTriangleID];
@@ -278,14 +416,19 @@ namespace g3
                 if (tri_counts[ti] != 1)
                     Util.gBreakToDebugger();
         }
-        private void test_coverage(int[] tri_counts, int[] parent_indices, int iCur)
+
+        // accumulate triangle counts and track each box-parent index. 
+        // also checks that triangles are contained in boxes
+        private void test_coverage(int[] tri_counts, int[] parent_indices, int iBox)
         {
-            int idx = box_to_index[iCur];
+            int idx = box_to_index[iBox];
+
+            debug_check_child_tris_in_box(iBox);
 
             if ( idx < triangles_end ) {
                 // triange-list case, array is [N t1 t2 ... tN]
                 int n = index_list[idx];
-                AxisAlignedBox3f box = get_box(iCur);
+                AxisAlignedBox3f box = get_box(iBox);
                 for ( int i = 1; i <= n; ++i ) {
                     int ti = index_list[idx + i];
                     tri_counts[ti]++;
@@ -303,21 +446,53 @@ namespace g3
                 if ( i0 < 0 ) {
                     // negative index means we only have one 'child' box to descend into
                     i0 = (-i0) - 1;
-                    parent_indices[i0] = iCur;
+                    parent_indices[i0] = iBox;
                     test_coverage(tri_counts, parent_indices, i0);
                 } else {
                     // positive index, two sequential child box indices to descend into
                     i0 = i0 - 1;
-                    parent_indices[i0] = iCur;
+                    parent_indices[i0] = iBox;
                     test_coverage(tri_counts, parent_indices, i0);
                     int i1 = index_list[idx + 1];
                     i1 = i1 - 1;
-                    parent_indices[i1] = iCur;
+                    parent_indices[i1] = iBox;
                     test_coverage(tri_counts, parent_indices, i1);
                 }
             }
         }
+        // do full tree traversal below iBox and make sure that all triangles are further
+        // than box-distance-sqr
+        void debug_check_child_tri_distances(int iBox, Vector3d p)
+        {
+            double fBoxDistSqr = box_distance_sqr(iBox, p);
 
+            TreeTraversal t = new TreeTraversal() {
+                NextTriangleF = (tID) => {
+                    double fTriDistSqr = MeshQueries.TriDistanceSqr(mesh, tID, p);
+                    if (fTriDistSqr < fBoxDistSqr)
+                        if ( Math.Abs(fTriDistSqr - fBoxDistSqr) > MathUtil.ZeroTolerance*100 )
+                            Util.gBreakToDebugger();
+                }
+            };
+            tree_traversal(iBox, t);
+        }
+
+        // do full tree traversal below iBox to make sure that all child triangles are contained
+        void debug_check_child_tris_in_box(int iBox)
+        {
+            AxisAlignedBox3f box = get_box(iBox);
+            TreeTraversal t = new TreeTraversal() {
+                NextTriangleF = (tID) => {
+                    Index3i tv = mesh.GetTriangle(tID);
+                    for (int j = 0; j < 3; ++j) {
+                        Vector3f v = (Vector3f)mesh.GetVertex(tv[j]);
+                        if (box.Contains(v) == false)
+                            Util.gBreakToDebugger();
+                    }
+                }
+            };
+            tree_traversal(iBox, t);
+        }
 
 
 
