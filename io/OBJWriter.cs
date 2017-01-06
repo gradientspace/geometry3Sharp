@@ -64,11 +64,13 @@ namespace g3
             // would there be a faster way? could construct integer-pointer-list during initial
             // scan, this would need O(N) memory but then write is effectively O(N) instead of O(N*k)
 
-            SortedSet<int> vGroups = new SortedSet<int>();
+            HashSet<int> vGroups = new HashSet<int>();
             foreach (int ti in mesh.TriangleIndices())
                 vGroups.Add(mesh.GetTriangleGroup(ti));
 
-            foreach ( int g in vGroups ) {
+            List<int> sortedGroups = new List<int>(vGroups);
+            sortedGroups.Sort();
+            foreach ( int g in sortedGroups ) {
                 writer.WriteLine(string.Format("g mmGroup{0}", g));
 
                 foreach (int ti in mesh.TriangleIndices() ) {
