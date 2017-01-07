@@ -2,6 +2,7 @@
 
 namespace g3
 {
+    // somewhat ported from WildMagic5
     public class Circle3d
     {
         // The plane containing the circle is Dot(N,X-C) = 0, where X is any point
@@ -25,13 +26,13 @@ namespace g3
             PlaneY = axis1;
 			Radius = radius;
 		}
-		public Circle3d(Vector3d center, double radius, Frame3f f, int nNormalAxis = 1)
+		public Circle3d(Frame3f frame, double radius, int nNormalAxis = 1)
 		{
 			IsReversed = false;
-			Center = center;
-            Normal = f.GetAxis(nNormalAxis);
-            PlaneX = f.GetAxis((nNormalAxis + 1) % 3);
-            PlaneY = f.GetAxis((nNormalAxis + 2) % 3);
+			Center = frame.Origin;
+            Normal = frame.GetAxis(nNormalAxis);
+            PlaneX = frame.GetAxis((nNormalAxis + 1) % 3);
+            PlaneY = frame.GetAxis((nNormalAxis + 2) % 3);
 			Radius = radius;
 		}
 		public Circle3d(Vector3d center, double radius)

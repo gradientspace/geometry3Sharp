@@ -262,7 +262,10 @@ namespace g3
         // complicated functions go down here...
 
 
-        public static void Orthonormalize(ref Vector3d u, ref Vector3d v, ref Vector3d w)
+        // [RMS] this is from WildMagic5, but I added returning the minLength value
+        //   from GTEngine, because I use this in place of GTEngine's Orthonormalize in
+        //   ComputeOrthogonalComplement below
+        public static double Orthonormalize(ref Vector3d u, ref Vector3d v, ref Vector3d w)
         {
             // If the input vectors are v0, v1, and v2, then the Gram-Schmidt
             // orthonormalization produces vectors u0, u1, and u2 as follows,
@@ -275,18 +278,24 @@ namespace g3
             // product of vectors A and B.
 
             // compute u0
-            u.Normalize();
+            double minLength = u.Normalize();
 
             // compute u1
             double dot0 = u.Dot(v);
             v -= dot0 * u;
-            v.Normalize();
+            double l = v.Normalize();
+            if (l < minLength)
+                minLength = l;
 
             // compute u2
             double dot1 = v.Dot(w);
             dot0 = u.Dot(w);
             w -= dot0 * u + dot1 * v;
-            w.Normalize();
+            l = w.Normalize();
+            if (l < minLength)
+                minLength = l;
+
+            return minLength;
         }
 
 
@@ -318,7 +327,35 @@ namespace g3
             }
         }
 
+        // this function is from GTEngine
+        // Compute a right-handed orthonormal basis for the orthogonal complement
+        // of the input vectors.  The function returns the smallest length of the
+        // unnormalized vectors computed during the process.  If this value is nearly
+        // zero, it is possible that the inputs are linearly dependent (within
+        // numerical round-off errors).  On input, numInputs must be 1 or 2 and
+        // v0 through v(numInputs-1) must be initialized.  On output, the
+        // vectors v0 through v2 form an orthonormal set.
+        public static double ComputeOrthogonalComplement(int numInputs, Vector3d v0, ref Vector3d v1, ref Vector3d v2 /*, bool robust = false*/)
+        {
+            if (numInputs == 1) {
+                if (Math.Abs(v0[0]) > Math.Abs(v0[1])) {
+                    v1 = new Vector3d( -v0[2], 0.0, +v0[0] );
+                }
+                else
+                {
+                    v1 = new Vector3d(0.0, +v0[2], -v0[1]);
+                }
+                numInputs = 2;
+            }
 
+            if (numInputs == 2) {
+                v2 = Vector3d.Cross(v0, v1);
+                return Vector3d.Orthonormalize(ref v0, ref v1, ref v2);
+                //return Orthonormalize<3, Real>(3, v, robust);
+            }
+
+            return 0;
+        }
 
     }
 }

@@ -199,7 +199,7 @@ namespace g3
 
 
         public override string ToString() {
-            return string.Format("x[{0:F8},{1:F8}] y[{2:F8},{3:F8}] z[{2:F8},{3:F8}]", Min.x, Max.x, Min.y, Max.y, Min.z, Max.z);
+            return string.Format("x[{0:F8},{1:F8}] y[{2:F8},{3:F8}] z[{4:F8},{5:F8}]", Min.x, Max.x, Min.y, Max.y, Min.z, Max.z);
         }
 
 
