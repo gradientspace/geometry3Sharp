@@ -502,12 +502,18 @@ namespace g3
 
         // queries
 
-        int FindEdge(int vA, int vB) {
+        // linear search through edges of vA
+        public int FindEdge(int vA, int vB) {
             return find_edge(vA, vB);
         }
 
+        // faster than FindEdge
+        public int FindEdgeFromTri(int vA, int vB, int t) {
+            return find_edge_from_tri(vA, vB, t);
+        }
+
 		// [RMS] this does more work than necessary, see 
-        Index2i GetEdgeOpposingV(int eID)
+        public Index2i GetEdgeOpposingV(int eID)
         {
 			int i = 4*eID;
             int a = edges[i], b = edges[i + 1];
@@ -759,6 +765,18 @@ namespace g3
             List<int> e0 = vertex_edges[Math.Min(vA, vB)];
             int idx = e0.FindIndex((x) => edge_has_v(x, vO));
             return (idx == -1) ? InvalidID : e0[idx];
+        }
+
+        int find_edge_from_tri(int vA, int vB, int tID)
+        {
+            int i = 3 * tID;
+            if (IndexUtil.same_pair_unordered(vA, vB, triangles[i], triangles[i + 1]))
+                return triangle_edges[i];
+            if (IndexUtil.same_pair_unordered(vA, vB, triangles[i+1], triangles[i + 2]))
+                return triangle_edges[i+1];
+            if (IndexUtil.same_pair_unordered(vA, vB, triangles[i+2], triangles[i]))
+                return triangle_edges[i+2];
+            return InvalidID;
         }
 
 		void set_edge_vertices(int eID, int a, int b) {
@@ -1116,7 +1134,12 @@ namespace g3
 		public struct EdgeCollapseInfo {
 			public int vKept;
 			public int vRemoved;
-			public bool bIsBoundary;	
+			public bool bIsBoundary;
+
+            public int eCollapsed;              // edge we collapsed
+            public int tRemoved0, tRemoved1;    // tris we removed (second may be invalid)
+            public int eRemoved0, eRemoved1;    // edges we removed (second may be invalid)
+            public int eKept0, eKept1;          // edges we kept (second may be invalid)
 		}
 		public MeshResult CollapseEdge(int vKeep, int vRemove, out EdgeCollapseInfo collapse)
 		{
@@ -1243,6 +1266,7 @@ namespace g3
 				}
 			}
 
+            int ebc = InvalidID, ebd = InvalidID;
 			if (bIsBoundaryEdge == false) {
 
 				// remove all edges from vtx a, then remove vtx a
@@ -1269,8 +1293,8 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 and t1 in edges ebd and ebc that we kept
-				int ebd = find_edge( b, d );
-				int ebc = find_edge( b, c );
+				ebd = find_edge( b, d );
+				ebc = find_edge( b, c );
 
 				if( replace_edge_triangle(ebd, t1, tad ) == -1 )
 					debug_fail("isboundary=false branch, ebd replace triangle");
@@ -1290,7 +1314,7 @@ namespace g3
 
 			} else {
 
-				//  this is basically same code as above, just not referencing t0/d
+				//  this is basically same code as above, just not referencing t1/d
 
 				// remove all edges from vtx a, then remove vtx a
 				edges_a.Clear();
@@ -1311,7 +1335,7 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 in edge ebc that we kept
-				int ebc = find_edge( b, c );
+				ebc = find_edge( b, c );
 				if ( replace_edge_triangle(ebc, t0, tac ) == -1 )
 					debug_fail("isboundary=false branch, ebc replace triangle");
 
@@ -1325,6 +1349,10 @@ namespace g3
 			collapse.vKept = vKeep;
 			collapse.vRemoved = vRemove;
 			collapse.bIsBoundary = bIsBoundaryEdge;
+            collapse.eCollapsed = eab;
+            collapse.tRemoved0 = t0; collapse.tRemoved1 = t1;
+            collapse.eRemoved0 = eac; collapse.eRemoved1 = ead;
+            collapse.eKept0 = ebc; collapse.eKept1 = ebd;
 
 			updateTimeStamp();
 			return MeshResult.Ok;
@@ -1340,6 +1368,50 @@ namespace g3
 
         // queries
 
+
+        public bool IsGroupBoundaryEdge(int eID)
+        {
+            if ( IsEdge(eID) == false )
+                throw new Exception("DMesh3.IsGroupBoundaryEdge: " + eID + " is not a valid edge");
+            int et1 = edges[4 * eID + 3];
+            if (et1 == InvalidID)
+                return false;
+            int g1 = triangle_groups[et1];
+            int et0 = edges[4 * eID + 2];
+            int g0 = triangle_groups[et0];
+            return g1 != g0;
+        }
+
+
+        // returns true if vertex has more than two tri groups in its tri nbrhood
+        public bool IsGroupBoundaryVertex(int vID)
+        {
+            if (IsVertex(vID) == false)
+                throw new Exception("DMesh3.IsGroupBoundaryVertex: " + vID + " is not a valid vertex");
+            if (triangle_groups == null)
+                return false;
+			List<int> vedges = vertex_edges[vID];
+            int group_id = int.MinValue;
+            foreach (int eID in vedges) {
+                int et0 = edges[4 * eID + 2];
+                int g0 = triangle_groups[et0];
+                if (group_id != g0) {
+                    if (group_id == int.MinValue)
+                        group_id = g0;
+                    else
+                        return true;        // saw multiple group IDs
+                }
+                int et1 = edges[4 * eID + 3];
+                if (et1 != InvalidID) {
+                    int g1 = triangle_groups[et1];
+                    if (group_id != g1)
+                        return true;        // saw multiple group IDs
+                }
+            }
+            return false;
+        }
+
+
         // compute vertex bounding box
         public AxisAlignedBox3d GetBounds()
         {
@@ -1350,7 +1422,7 @@ namespace g3
             }
             double minx = x, maxx = x, miny = y, maxy = y, minz = z, maxz = z;
             foreach ( int vi in vertices_refcount ) {
-                x = vertices[vi]; y = vertices[vi + 1]; z = vertices[vi + 2];
+                x = vertices[3*vi]; y = vertices[3*vi + 1]; z = vertices[3*vi + 2];
                 if (x < minx) minx = x; else if (x > maxx) maxx = x;
                 if (y < miny) miny = y; else if (y > maxy) maxy = y;
                 if (z < minz) minz = z; else if (z > maxz) maxz = z;
@@ -1445,6 +1517,7 @@ namespace g3
                     e[j] = FindEdge(a, b);
                     DMESH_CHECK_OR_FAIL(e[j] != InvalidID);
                     DMESH_CHECK_OR_FAIL(edge_has_t(e[j], tID));
+                    DMESH_CHECK_OR_FAIL(e[j] == FindEdgeFromTri(a, b, tID));
                 }
                 DMESH_CHECK_OR_FAIL(e[0] != e[1] && e[0] != e[2] && e[1] != e[2]);
 
