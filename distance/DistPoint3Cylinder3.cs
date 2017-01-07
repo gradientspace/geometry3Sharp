@@ -5,9 +5,16 @@ using System.Text;
 
 namespace g3
 {
-    // ported from WildMagic 5
+    // ported from GTEngine
     // https://www.geometrictools.com/Downloads/Downloads.html
-
+    // However, code is modified to compute signed distance, instead of distance
+    // to cylinder solid (which is 0 inside cylinder). If you want solid distance,
+    // check IsInside, and if true, distance is 0 and point is input point.
+    // SolidDistance will return this distance for you, but you have to do
+    // the Point classification yourself.
+    //
+    // DistanceSquared is always positive!!
+    //
     public class DistPoint3Cylinder3
     {
         Vector3d point;
@@ -26,11 +33,13 @@ namespace g3
 
         public double DistanceSquared = -1.0;
 
+        // negative on inside
         public double SignedDistance = 0.0f;
+
         public bool IsInside { get { return SignedDistance < 0; } }
+        public double SolidDistance { get { return (SignedDistance < 0) ? 0 : SignedDistance; } };
 
         public Vector3d CylinderClosest;
-
 
         public DistPoint3Cylinder3(Vector3d PointIn, Cylinder3d CylinderIn )
         {

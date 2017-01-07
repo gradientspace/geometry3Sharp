@@ -45,8 +45,12 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 # Queries
 
+- 2D Distances:
+	- point/curve: **DistPoint2Circle2**
 - 3D Distances: 
     - point/area: **DistPoint3Triangle3**
+	- point/curve: **DistPoint3Circle3**
+	- point/volume: **DistPoint3Cylinder3** (signed)
     - linear/linear: **DistLine3Ray3**, **DistLine3Segment3**,  **DistRay3Segment3**, **DistRay3Ray3**
     - linear/area: **DistLine3Triangle3**, **DistSegment3Triangle3**
     - area/area: **DistTriangle3Triangle3**
@@ -73,8 +77,17 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - add/remove vertices
     - manifold-preserving Split/Flip/Collapse operators
     
+- **DMeshAABBTree**: mesh axis-aligned bounding box tree
+	- bottom-up construction using mesh topology to accelerate leaf node layer
+	- generic traversal interface
+	- Queries for NearestTriangle, (more to come)
+
 - **Remesher**: edge split/flip/collapse + vtx smooth remeshing
-    - use **MeshConstraints** to constraint individual edge split/flip/collapse, and to pin vertices
+	- entire mesh can be constrained to lie on an IProjectionTarget (eg for reprojection onto initial surface)
+    - use **MeshConstraints** to preserve features
+		- individual edge split/flip/collapse restrictions
+		- vertices can be pinned to fixed positions
+		- vertices can be constrained to an IProjectionTarget - eg 3D polylines, smooth curves, surfaces, etc
 
 - various mesh generators
     - open & closed cylinders, disc, punctured disc, with start/end angles
@@ -106,6 +119,11 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 - **CurveUtil**: queries like Ray/curve intersection based on curve thickness, nearest index, etc
 - **InPlaceIterativeCurveSmooth**, **SculptMoveDeformation**, **ArcLengthSoftTranslation**: simple DCurve3 deformers
 - **CurveResampler**: edge split/collapses resampling of a 3D polyline 
+- **Circle3d**
+
+# 3D Solids
+
+- **Cylinder3d**
 
 # Misc
 
