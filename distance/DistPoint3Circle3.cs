@@ -56,12 +56,12 @@ namespace g3
             Vector3d PmC = point - circle.Center;
             Vector3d QmC = PmC - circle.Normal.Dot(PmC) * circle.Normal;
             double lengthQmC = QmC.Length;
-            if (lengthQmC > 0) {
+            if (lengthQmC > MathUtil.Epsilon) {
                 CircleClosest = circle.Center + circle.Radius * QmC / lengthQmC;
                 AllCirclePointsEquidistant = false;
             } else {
                 // All circle points are equidistant from P.  Return one of them.
-                CircleClosest = circle.Center + circle.Radius * circle.AxisX;
+                CircleClosest = circle.Center + circle.Radius * circle.PlaneX;
                 AllCirclePointsEquidistant = true;
             }
 

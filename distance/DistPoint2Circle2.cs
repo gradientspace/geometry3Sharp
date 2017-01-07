@@ -55,7 +55,7 @@ namespace g3
             // Projection of P-C onto plane is Q-C = P-C - Dot(N,P-C)*N.
             Vector2d PmC = point - circle.Center;
             double lengthPmC = PmC.Length;
-            if (lengthPmC > 0) {
+            if (lengthPmC > MathUtil.Epsilon) {
                 CircleClosest = circle.Center + circle.Radius * PmC / lengthPmC;
                 AllCirclePointsEquidistant = false;
             } else {

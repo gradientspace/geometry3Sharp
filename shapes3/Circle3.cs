@@ -12,20 +12,37 @@ namespace g3
 
 		public Vector3d Center;
         public Vector3d Normal;
-        public Vector3d AxisX, AxisY;
+        public Vector3d PlaneX, PlaneY;
 		public double Radius;
 		public bool IsReversed;		// use ccw orientation instead of cw
 
-		public Circle3d(Vector3d center, Vector3d axis0, Vector3d axis1, Vector3d normal, double radius)
+		public Circle3d(Vector3d center, double radius, Vector3d axis0, Vector3d axis1, Vector3d normal)
 		{
 			IsReversed = false;
 			Center = center;
             Normal = normal;
-            AxisX = axis0;
-            AxisY = axis1;
+            PlaneX = axis0;
+            PlaneY = axis1;
 			Radius = radius;
 		}
-
+		public Circle3d(Vector3d center, double radius, Frame3f f, int nNormalAxis = 1)
+		{
+			IsReversed = false;
+			Center = center;
+            Normal = f.GetAxis(nNormalAxis);
+            PlaneX = f.GetAxis((nNormalAxis + 1) % 3);
+            PlaneY = f.GetAxis((nNormalAxis + 2) % 3);
+			Radius = radius;
+		}
+		public Circle3d(Vector3d center, double radius)
+		{
+			IsReversed = false;
+			Center = center;
+            Normal = Vector3d.AxisY;
+            PlaneX = Vector3d.AxisX;
+            PlaneY = Vector3d.AxisZ;
+			Radius = radius;
+		}
 
 		public bool IsClosed {
 			get { return true; }
@@ -41,14 +58,14 @@ namespace g3
         {
             double theta = degrees * MathUtil.Deg2Rad;
             double c = Math.Cos(theta), s = Math.Sin(theta);
-            return Center + c * Radius * AxisX + s * Radius * AxisY;
+            return Center + c * Radius * PlaneX + s * Radius * PlaneY;
         }
 
 		// angle in range [0,2pi] (but works for any value, obviously)
         public Vector3d SampleRad(double radians)
         {
             double c = Math.Cos(radians), s = Math.Sin(radians);
-            return Center + c * Radius * AxisX + s * Radius * AxisY;
+            return Center + c * Radius * PlaneX + s * Radius * PlaneY;
         }
 
 
@@ -61,7 +78,7 @@ namespace g3
 		public Vector3d SampleT(double t) {
 			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
 			double c = Math.Cos(theta), s = Math.Sin(theta);
-            return Center + c * Radius * AxisX + s * Radius * AxisY;
+            return Center + c * Radius * PlaneX + s * Radius * PlaneY;
 		}
 
 		public bool HasArcLength { get {return true;} }
@@ -76,7 +93,7 @@ namespace g3
 			double t = a / ArcLength;
 			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
 			double c = Math.Cos(theta), s = Math.Sin(theta);
-            return Center + c * Radius * AxisX + s * Radius * AxisY;
+            return Center + c * Radius * PlaneX + s * Radius * PlaneY;
 		}
 
 
