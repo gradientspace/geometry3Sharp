@@ -34,4 +34,16 @@ namespace g3
 
 
 
+    public class CylinderProjectionTarget : IProjectionTarget
+    {
+        public Cylinder3d Cylinder;
+
+        public Vector3d Project(Vector3d vPoint, int identifer = -1)
+        {
+            DistPoint3Cylinder3 d = new DistPoint3Cylinder3(vPoint, Cylinder);
+            d.GetSquared();
+            return d.CylinderClosest;
+        }
+    }
+
 }

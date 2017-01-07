@@ -53,6 +53,7 @@
     <Compile Include="curve\Ellipse2.cs" />
     <Compile Include="curve\NURBSCurve2.cs" />
     <Compile Include="distance\DistPoint2Circle2.cs" />
+    <Compile Include="distance\DistPoint3Cylinder3.cs" />
     <Compile Include="distance\DistPoint3Circle3.cs" />
     <Compile Include="implicit\ImplicitField.cs" />
     <Compile Include="implicit\ImplicitOperators.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="math\Vector3d.cs" />
     <Compile Include="math\Vector3i.cs" />
     <Compile Include="math\Vector3f.cs" />
+    <Compile Include="shapes3\Cylinder3.cs" />
     <Compile Include="spatial\BasicProjectionTargets.cs" />
     <Compile Include="queries\Distance.cs" />
     <Compile Include="queries\MeshQueries.cs" />
