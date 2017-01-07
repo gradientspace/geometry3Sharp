@@ -60,7 +60,9 @@ namespace g3
     {
         const double invalid_value = -99999999.0;
 
+#if DEBUG  
         bool __debug = false;
+#endif
         public VectorArray3d(int nCount, bool debug = false) : base(nCount)
         {
 #if DEBUG  
