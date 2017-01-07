@@ -31,6 +31,20 @@ namespace g3 {
         public bool AllowCollapseFixedVertsWithSameSetID = true;
 
 
+        // if Target is set, we can project onto it in different ways
+        enum TargetProjectionMode
+        {
+            NoProjection,           // disable projection
+            AfterRefinement,        // do all projection after the refine/smooth pass
+            Inline                  // project after each vertex update. Better results but more
+                                    // expensive because eg we might create a vertex with
+                                    // split, then project, then smooth, then project again.
+        }
+        TargetProjectionMode ProjectionMode = TargetProjectionMode.AfterRefinement;
+
+        // this just lets us write more concise tests below
+        bool EnableInlineProjection { get { return ProjectionMode == TargetProjectionMode.Inline; } } 
+
 
 		public Remesher(DMesh3 m) {
 			mesh = m;
@@ -61,11 +75,16 @@ namespace g3 {
 				// do what with result??
 			}
 
-			if ( EnableSmoothing && SmoothSpeedT > 0)
-				FullSmoothPass_InPlace();
+            if (EnableSmoothing && SmoothSpeedT > 0) {
+                FullSmoothPass_InPlace();
+                DoDebugChecks();
+            }
 
-            if (target != null)
+            if (target != null && ProjectionMode == TargetProjectionMode.AfterRefinement) {
                 FullProjectionPass();
+                DoDebugChecks();
+            }
+
 		}
 
 
@@ -110,8 +129,7 @@ namespace g3 {
             bool bCanCollapse = EnableCollapses
                                 && constraint.CanCollapse
                                 && edge_len_sqr < MinEdgeLength*MinEdgeLength
-                                && can_collapse(a, b, out collapse_to);
-
+                                && can_collapse_constraints(edgeID, a, b, c, d, t0, t1, out collapse_to);
 
 			// optimization: if edge cd exists, we cannot collapse or flip. look that up here?
 			//  funcs will do it internally...
@@ -130,22 +148,25 @@ namespace g3 {
                 } else if ( collapse_to == a ) {
                     iKeep = a; iCollapse = b;
                     vNewPos = vA;
-                }
+                } else
+                    vNewPos = get_projected_collapse_position(iKeep, vNewPos);
 
-				// TODO be smart about picking b (keep vtx). 
-				//    - swap if one is bdry vtx, for example?
-
-				// lots of cases where we cannot collapse, but we should just let
-				// mesh sort that out, right?
-
+                // TODO be smart about picking b (keep vtx). 
+                //    - swap if one is bdry vtx, for example?
+                // lots of cases where we cannot collapse, but we should just let
+                // mesh sort that out, right?
 				DMesh3.EdgeCollapseInfo collapseInfo;
 				MeshResult result = mesh.CollapseEdge(iKeep, iCollapse, out collapseInfo);
 				if ( result == MeshResult.Ok ) {
 					mesh.SetVertex(b, vNewPos);
                     if (constraints != null) {
                         constraints.ClearEdgeConstraint(edgeID);
+                        constraints.ClearEdgeConstraint(collapseInfo.eRemoved0);
+                        if ( collapseInfo.eRemoved1 != DMesh3.InvalidID )
+                            constraints.ClearEdgeConstraint(collapseInfo.eRemoved1);
                         constraints.ClearVertexConstraint(iCollapse);
                     }
+                    DoDebugChecks();
 
 					return ProcessResult.Ok_Collapsed;
 				} else 
@@ -183,7 +204,7 @@ namespace g3 {
 					DMesh3.EdgeFlipInfo flipInfo;
 					MeshResult result = mesh.FlipEdge(edgeID, out flipInfo);
 					if ( result == MeshResult.Ok ) {
-
+                        DoDebugChecks();
 						return ProcessResult.Ok_Flipped;
 					} else 
 						bTriedFlip = true;
@@ -200,9 +221,8 @@ namespace g3 {
 				DMesh3.EdgeSplitInfo splitInfo;
 				MeshResult result = mesh.SplitEdge(edgeID, out splitInfo);
 				if ( result == MeshResult.Ok ) {
-                    if (constraints != null)
-                        update_constraints_after_split(edgeID, a, b, splitInfo);
-
+                    update_after_split(edgeID, a, b, splitInfo);
+                    DoDebugChecks();
 					return ProcessResult.Ok_Split;
 				} else
 					bTriedSplit = true;
@@ -217,15 +237,28 @@ namespace g3 {
 
 
 
-        void update_constraints_after_split(int edgeID, int va, int vb, DMesh3.EdgeSplitInfo splitInfo)
+        // After we split an edge, we have created a new edge and a new vertex.
+        // The edge needs to inherit the constraint on the other pre-existing edge that we kept.
+        // In addition, if the edge vertices were both constrained, then we /might/
+        // want to also constrain this new vertex, possibly project to constraint target. 
+        void update_after_split(int edgeID, int va, int vb, DMesh3.EdgeSplitInfo splitInfo)
         {
-            if (constraints.HasEdgeConstraint(edgeID)) {
+            bool bPositionFixed = false;
+            if (constraints != null && constraints.HasEdgeConstraint(edgeID)) {
+                // inherit edge constraint
                 constraints.SetOrUpdateEdgeConstraint(splitInfo.eNew, constraints.GetEdgeConstraint(edgeID));
 
-                // [RMS] not clear this is the right thing to do. note that we
-                //   cannot do outside loop because then pair of fixed verts connected
-                //   by unconstrained edge will produce a new fixed vert, which is bad
-                //   (eg on minimal triangulation of capped cylinder)
+                // [RMS] update vertex constraints. Note that there is some ambiguity here.
+                //   Both verts being constrained doesn't inherently mean that the edge is on
+                //   a constraint, that's why these checks are only applied if edge is constrained.
+                //   But constrained edge doesn't necessarily mean we want to inherit vert constraints!!
+                //
+                //   although, pretty safe to assume that we would at least disable flips
+                //   if both vertices are constrained to same line/curve. So, maybe this makes sense...
+                //
+                //   (perhaps edge constraint should be explicitly tagged to resolve this ambiguity??)
+
+                // vert inherits Fixed if both orig edge verts Fixed, and both tagged with same SetID
                 VertexConstraint ca = constraints.GetVertexConstraint(va);
                 VertexConstraint cb = constraints.GetVertexConstraint(vb);
                 if (ca.Fixed && cb.Fixed) {
@@ -233,20 +266,77 @@ namespace g3 {
                         ca.FixedSetID : VertexConstraint.InvalidSetID;
                     constraints.SetOrUpdateVertexConstraint(splitInfo.vNew,
                         new VertexConstraint(true, nSetID));
+                    bPositionFixed = true;
                 }
+
+                // vert inherits Target if both source verts and edge have same Target
+                if ( ca.Target != null && ca.Target == cb.Target 
+                     && constraints.GetEdgeConstraint(edgeID).Target == ca.Target ) {
+                    constraints.SetOrUpdateVertexConstraint(splitInfo.vNew,
+                        new VertexConstraint(ca.Target));
+                    project_vertex(splitInfo.vNew, ca.Target);
+                    bPositionFixed = true;
+                }
+            }
+
+            if ( EnableInlineProjection && bPositionFixed == false && target != null ) {
+                project_vertex(splitInfo.vNew, target);
             }
         }
 
 
-        bool can_collapse(int a, int b, out int collapse_to)
+
+        // Figure out if we can collapse edge eid=[a,b] under current constraint set.
+        // First we resolve vertex constraints using can_collapse_vtx(). However this
+        // does not catch some topological cases at the edge-constraint level, which 
+        // which we will only be able to detect once we know if we are losing a or b.
+        // See comments on can_collapse_vtx() for what collapse_to is for.
+        bool can_collapse_constraints(int eid, int a, int b, int c, int d, int tc, int td, out int collapse_to)
+        {
+            collapse_to = -1;
+            if (constraints == null)
+                return false;
+            bool bVtx = can_collapse_vtx(eid, a, b, out collapse_to);
+            if (bVtx == false)
+                return false;
+
+            // when we lose a vtx in a collapse, we also lose two edges [iCollapse,c] and [iCollapse,d].
+            // If either of those edges is constrained, we would lose that constraint.
+            // This would be bad.
+            int iCollapse = (collapse_to == a) ? b : a;
+            if (c != DMesh3.InvalidID) {
+                int ec = mesh.FindEdgeFromTri(iCollapse, c, tc);
+                if (constraints.GetEdgeConstraint(ec).IsUnconstrained == false)
+                    return false;
+            }
+            if (d != DMesh3.InvalidID) {
+                int ed = mesh.FindEdgeFromTri(iCollapse, d, td);
+                if (constraints.GetEdgeConstraint(ed).IsUnconstrained == false)
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        // resolve vertex constraints for collapsing edge eid=[a,b]. Generally we would
+        // collapse a to b, and set the new position as 0.5*(v_a+v_b). However if a *or* b
+        // are constrained, then we want to keep that vertex and collapse to its position.
+        // This vertex (a or b) will be returned in collapse_to, which is -1 otherwise.
+        // If a *and* b are constrained, then things are complicated (and documented below).
+        bool can_collapse_vtx(int eid, int a, int b, out int collapse_to)
         {
             collapse_to = -1;
             if (constraints == null)
                 return true;
             VertexConstraint ca = constraints.GetVertexConstraint(a);
             VertexConstraint cb = constraints.GetVertexConstraint(b);
-            if (ca.Fixed == false && cb.Fixed == false)
+
+            // no constraint at all
+            if (ca.Fixed == false && cb.Fixed == false && ca.Target == null && cb.Target == null)
                 return true;
+
+            // handle a or b fixed
             if ( ca.Fixed == true && cb.Fixed == false ) {
                 collapse_to = a;
                 return true;
@@ -264,6 +354,24 @@ namespace g3 {
                 return true;
             }
 
+            // handle a or b w/ target
+            if ( ca.Target != null && cb.Target == null ) {
+                collapse_to = a;
+                return true;
+            }
+            if ( cb.Target != null && ca.Target == null ) {
+                collapse_to = b;
+                return true;
+            }
+            // if both vertices are on the same target, and the edge is on that target,
+            // then we can collapse to either and use the midpoint (which will be projected
+            // to the target). *However*, if the edge is not on the same target, then we 
+            // cannot collapse because we would be changing the constraint topology!
+            if ( cb.Target != null && ca.Target != null && ca.Target == cb.Target ) {
+                if ( constraints.GetEdgeConstraint(eid).Target == ca.Target )
+                    return true;
+            }
+
             return false;            
         }
 
@@ -273,6 +381,46 @@ namespace g3 {
             if (constraints != null && constraints.GetVertexConstraint(vid).Fixed)
                 return true;
             return false;
+        }
+        bool vertex_is_constrained(int vid)
+        {
+            if ( constraints != null ) {
+                VertexConstraint vc = constraints.GetVertexConstraint(vid);
+                if (vc.Fixed || vc.Target != null)
+                    return true;
+            }
+            return false;
+        }
+
+        VertexConstraint get_vertex_constraint(int vid)
+        {
+            if (constraints != null)
+                return constraints.GetVertexConstraint(vid);
+            return VertexConstraint.Unconstrained;
+        }
+
+        void project_vertex(int vID, IProjectionTarget targetIn)
+        {
+            Vector3d curpos = mesh.GetVertex(vID);
+            Vector3d projected = targetIn.Project(curpos, vID);
+            mesh.SetVertex(vID, projected);
+        }
+
+        // used by collapse-edge to get projected position for new vertex
+        Vector3d get_projected_collapse_position(int vid, Vector3d vNewPos)
+        {
+            if (constraints != null) {
+                VertexConstraint vc = constraints.GetVertexConstraint(vid);
+                if (vc.Target != null) 
+                    return vc.Target.Project(vNewPos, vid);
+                if (vc.Fixed)
+                    return vNewPos;
+            }
+            // no constraint applied, so if we have a target surface, project to that
+            if ( EnableInlineProjection && target != null ) {
+                return target.Project(vNewPos, vid);
+            }
+            return vNewPos;
         }
 
 
@@ -286,12 +434,20 @@ namespace g3 {
                 smoothFunc = MeshUtil.CotanSmooth;
 
 			foreach ( int vID in mesh.VertexIndices() ) {
-
-                if (vertex_is_fixed(vID))
+                VertexConstraint vc = get_vertex_constraint(vID);
+                if ( vc.Fixed )
                     continue;
 
 				Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
-				mesh.SetVertex( vID, vSmoothed);
+
+                // project onto either vtx constraint target, or surface target
+                if (vc.Target != null) {
+                    vSmoothed = vc.Target.Project(vSmoothed, vID);
+                } else if (EnableInlineProjection && target != null) {
+                    vSmoothed = target.Project(vSmoothed, vID);
+                }
+
+				mesh.SetVertex( vID, vSmoothed );
 			}
 		}
 
@@ -300,7 +456,7 @@ namespace g3 {
         void FullProjectionPass()
         {
             foreach ( int vID in mesh.VertexIndices() ) {
-                if (vertex_is_fixed(vID))
+                if (vertex_is_constrained(vID))
                     continue;
                 Vector3d curpos = mesh.GetVertex(vID);
                 Vector3d projected = target.Project(curpos, vID);
@@ -309,6 +465,48 @@ namespace g3 {
         }
 
 
+
+
+
+
+        public bool ENABLE_DEBUG_CHECKS = false;
+        void DoDebugChecks()
+        {
+            if (ENABLE_DEBUG_CHECKS == false)
+                return;
+
+            DebugCheckVertexConstraints();
+
+            // [RMS] keeping this for now, is useful in testing that we are preserving group boundaries
+            //foreach ( int eid in mesh.EdgeIndices() ) {
+            //    if (mesh.IsGroupBoundaryEdge(eid))
+            //        if (constraints.GetEdgeConstraint(eid).CanFlip) {
+            //            Util.gBreakToDebugger();
+            //            throw new Exception("fuck");
+            //        }
+            //}
+            //foreach ( int vid in mesh.VertexIndices() ) {
+            //    if (mesh.IsGroupBoundaryVertex(vid))
+            //        if (constraints.GetVertexConstraint(vid).Target == null)
+            //            Util.gBreakToDebugger();
+            //}
+        }
+
+        void DebugCheckVertexConstraints()
+        {
+            if (constraints == null)
+                return;
+
+            foreach ( KeyValuePair<int,VertexConstraint> vc in constraints.VertexConstraintsItr() ) {
+                int vid = vc.Key;
+                if (vc.Value.Target != null) {
+                    Vector3d curpos = mesh.GetVertex(vid);
+                    Vector3d projected = vc.Value.Target.Project(curpos, vid);
+                    if (curpos.DistanceSquared(projected) > 0.0001f)
+                        Util.gBreakToDebugger();
+                }
+            }
+        }
 
 	}
 }

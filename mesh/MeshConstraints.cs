@@ -19,11 +19,21 @@ namespace g3
     public struct EdgeConstraint
     {
         EdgeRefineFlags refineFlags;
+        public IProjectionTarget Target;        // edge is associated with this projection Target.
+                                                // Currently only used as information, we do not explicitly
+                                                // project edges onto targets (must also set VertexConstraint)
 
 
         public EdgeConstraint(EdgeRefineFlags rflags)
         {
             refineFlags = rflags;
+            Target = null;
+        }
+
+        public EdgeConstraint(EdgeRefineFlags rflags, IProjectionTarget target)
+        {
+            refineFlags = rflags;
+            Target = target;
         }
 
         public bool CanFlip {
@@ -39,6 +49,10 @@ namespace g3
             get { return (refineFlags & EdgeRefineFlags.FullyConstrained) == EdgeRefineFlags.FullyConstrained; }
         }
 
+        public bool IsUnconstrained {
+            get { return refineFlags == EdgeRefineFlags.NoConstraint && Target == null; }
+        }
+
         static public readonly EdgeConstraint Unconstrained = new EdgeConstraint() { refineFlags = 0 };
     }
 
@@ -49,15 +63,29 @@ namespace g3
         public bool Fixed;
         public int FixedSetID;      // in Remesher, we can allow two Fixed vertices with 
                                     // same FixedSetID to be collapsed together
+
+        public IProjectionTarget Target;    // vertex is constrained to lie on this projection Target.
+                                            // Fixed and Target are mutually exclusive
         
         public VertexConstraint(bool isFixed, int setID = InvalidSetID)
         {
             Fixed = isFixed;
             FixedSetID = setID;
+            Target = null;
         }
 
-        public const int InvalidSetID = -1;
-        static public readonly VertexConstraint Unconstrained = new VertexConstraint() { Fixed = false };
+        public VertexConstraint(IProjectionTarget target)
+        {
+            Fixed = false;
+            FixedSetID = InvalidSetID;
+            Target = target;
+        }
+
+        public const int InvalidSetID = -1;     // clients should interpret negative values as invalid
+                                                // (in case you wanted to use negative values for something else...)
+
+        static public readonly VertexConstraint Unconstrained = new VertexConstraint() 
+            { Fixed = false, FixedSetID = InvalidSetID, Target = null };
      }
 
 
@@ -116,6 +144,12 @@ namespace g3
         public void ClearVertexConstraint(int vid)
         {
             Vertices.Remove(vid);
+        }
+
+
+        public System.Collections.IEnumerable VertexConstraintsItr() {
+            foreach (KeyValuePair<int,VertexConstraint> v in Vertices)
+                yield return v;
         }
 
 

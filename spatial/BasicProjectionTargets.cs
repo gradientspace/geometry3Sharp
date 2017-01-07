@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace g3
 {
@@ -15,4 +17,21 @@ namespace g3
             return q.TriangleClosest;
         }
     }
+
+
+
+    public class CircleProjectionTarget : IProjectionTarget
+    {
+        public Circle3d Circle;
+
+        public Vector3d Project(Vector3d vPoint, int identifier = -1)
+        {
+            DistPoint3Circle3 d = new DistPoint3Circle3(vPoint, Circle);
+            d.GetSquared();
+            return d.CircleClosest;
+        }
+    }
+
+
+
 }
