@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace g3 {
 	
@@ -64,7 +65,35 @@ namespace g3 {
         }
 
 
+        public bool ENABLE_PROFILING = false;
+
+
+        // glboal mesh info that, if known, lets us avoid work in remesh
+        bool MeshIsClosed = false;
+
+
+        // we can vastly speed things up if we precompute some invariants. 
+        // You need to re-run this if you are changing the mesh externally
+        // between remesh passes, otherwise you will get weird results.
+        // But you will probably still come out ahead, computation-time-wise
+        public void Precompute()
+        {
+            // if we know mesh is closed, we can skip is-boundary checks, which makes
+            // the flip-valence tests much faster!
+            MeshIsClosed = true;
+            foreach (int eid in mesh.EdgeIndices()) {
+                if (mesh.edge_is_boundary(eid)) {
+                    MeshIsClosed = false;
+                    break;
+                }
+            }
+        }
+
+
+
+
 		public void BasicRemeshPass() {
+            begin_pass();
 
             // Iterate over all edges in the mesh at start of pass.
             // Some may be removed, so we skip those.
@@ -77,6 +106,7 @@ namespace g3 {
             // up successively collapsing each tiny edge, and eroding away the entire mesh!
             // By using modulo-index loop we jump around and hence this is unlikely to happen.
             //
+            begin_ops();
 			int nMaxEdgeID = mesh.MaxEdgeID;
             int nPrime = 31337;     // any prime will do...
             int eid = 0;
@@ -88,18 +118,26 @@ namespace g3 {
                 }
                 eid = (eid + nPrime) % nMaxEdgeID;
             } while (eid != 0);
+            end_ops();
 
+            begin_smooth();
             if (EnableSmoothing && SmoothSpeedT > 0) {
                 FullSmoothPass_InPlace();
                 DoDebugChecks();
             }
+            end_smooth();
 
+            begin_project();
             if (target != null && ProjectionMode == TargetProjectionMode.AfterRefinement) {
                 FullProjectionPass();
                 DoDebugChecks();
             }
+            end_project();
 
+            end_pass();
 		}
+
+
 
 
 
@@ -137,6 +175,8 @@ namespace g3 {
 			Vector3d vB = mesh.GetVertex(b);
 			double edge_len_sqr = (vA-vB).LengthSquared;
 
+            begin_collapse();
+
             // check if we should collapse, and also find which vertex we should collapse to,
             // in cases where we have constraints/etc
             int collapse_to = -1;
@@ -169,6 +209,7 @@ namespace g3 {
                 //    - swap if one is bdry vtx, for example?
                 // lots of cases where we cannot collapse, but we should just let
                 // mesh sort that out, right?
+                COUNT_COLLAPSES++;
 				DMesh3.EdgeCollapseInfo collapseInfo;
 				MeshResult result = mesh.CollapseEdge(iKeep, iCollapse, out collapseInfo);
 				if ( result == MeshResult.Ok ) {
@@ -188,6 +229,9 @@ namespace g3 {
 
 			}
 
+            end_collapse();
+            begin_flip();
+
 			// if this is not a boundary edge, maybe we want to flip
 			bool bTriedFlip = false;
 			if ( EnableFlips && constraint.CanFlip && bIsBoundaryEdge == false ) {
@@ -195,10 +239,10 @@ namespace g3 {
 				// don't want to flip if it will invert triangle...tetrahedron sign??
 
 				// can we do this more efficiently somehow?
-				bool a_is_boundary_vtx = bIsBoundaryEdge || mesh.vertex_is_boundary(a);
-				bool b_is_boundary_vtx = bIsBoundaryEdge || mesh.vertex_is_boundary(b);
-				bool c_is_boundary_vtx = mesh.vertex_is_boundary(c);
-				bool d_is_boundary_vtx = mesh.vertex_is_boundary(d);
+				bool a_is_boundary_vtx = (MeshIsClosed) ? false : (bIsBoundaryEdge || mesh.vertex_is_boundary(a));
+				bool b_is_boundary_vtx = (MeshIsClosed) ? false : (bIsBoundaryEdge || mesh.vertex_is_boundary(b));
+				bool c_is_boundary_vtx = (MeshIsClosed) ? false : mesh.vertex_is_boundary(c);
+				bool d_is_boundary_vtx = (MeshIsClosed) ? false :  mesh.vertex_is_boundary(d);
 				int valence_a = mesh.GetVtxEdgeValence(a), valence_b = mesh.GetVtxEdgeValence(b);
 				int valence_c = mesh.GetVtxEdgeValence(c), valence_d = mesh.GetVtxEdgeValence(d);
 				int valence_a_target = (a_is_boundary_vtx) ? valence_a : 6;
@@ -216,6 +260,7 @@ namespace g3 {
 				if ( flip_err < curr_err ) {
 					// try flip
 					DMesh3.EdgeFlipInfo flipInfo;
+                    COUNT_FLIPS++;
 					MeshResult result = mesh.FlipEdge(edgeID, out flipInfo);
 					if ( result == MeshResult.Ok ) {
                         DoDebugChecks();
@@ -227,12 +272,15 @@ namespace g3 {
 
 			}
 
+            end_flip();
+            begin_split();
 
 			// if edge length is too long, we want to split it
 			bool bTriedSplit = false;
 			if ( EnableSplits && constraint.CanSplit && edge_len_sqr > MaxEdgeLength*MaxEdgeLength ) {
 
 				DMesh3.EdgeSplitInfo splitInfo;
+                COUNT_SPLITS++;
 				MeshResult result = mesh.SplitEdge(edgeID, out splitInfo);
 				if ( result == MeshResult.Ok ) {
                     update_after_split(edgeID, a, b, splitInfo);
@@ -241,6 +289,8 @@ namespace g3 {
 				} else
 					bTriedSplit = true;
 			}
+
+            end_split();
 
 
 			if ( bTriedFlip || bTriedSplit || bTriedCollapse )
@@ -521,6 +571,81 @@ namespace g3 {
                 }
             }
         }
+
+
+
+
+        //
+        // profiling functions, turn on ENABLE_PROFILING to see output in console
+        // 
+        int COUNT_SPLITS, COUNT_COLLAPSES, COUNT_FLIPS;
+        Stopwatch AllOpsW, SmoothW, ProjectW, FlipW, SplitW, CollapseW;
+
+        void begin_pass() {
+            if ( ENABLE_PROFILING ) {
+                COUNT_SPLITS = COUNT_COLLAPSES = COUNT_FLIPS = 0;
+                AllOpsW = new Stopwatch();
+                SmoothW = new Stopwatch();
+                ProjectW = new Stopwatch();
+                FlipW = new Stopwatch();
+                SplitW = new Stopwatch();
+                CollapseW = new Stopwatch();
+            }
+        }
+
+        void end_pass() {
+            if ( ENABLE_PROFILING ) {
+                System.Console.WriteLine(string.Format(
+                    "RemeshPass: T {0} V {1} splits {2} flips {3} collapses {4}", mesh.TriangleCount, mesh.VertexCount, COUNT_SPLITS, COUNT_FLIPS, COUNT_COLLAPSES
+                    ));
+                System.Console.WriteLine(string.Format(
+                    "           Timing1:  ops {0} smooth {1} project {2}", AllOpsW.Elapsed.ToString("ss\\.ffff"), SmoothW.Elapsed.ToString("ss\\.ffff"), ProjectW.Elapsed.ToString("ss\\.ffff")
+                    ));
+                System.Console.WriteLine(string.Format(
+                    "           Timing2:  collapse {0} flip {1} split {2}", CollapseW.Elapsed.ToString("ss\\.ffff"), FlipW.Elapsed.ToString("ss\\.ffff"), SplitW.Elapsed.ToString("ss\\.ffff")
+                    ));
+            }
+        }
+
+        void begin_ops() {
+            if ( ENABLE_PROFILING ) AllOpsW.Start();
+        }
+        void end_ops() {
+            if ( ENABLE_PROFILING ) AllOpsW.Stop();
+        }
+        void begin_smooth() {
+            if ( ENABLE_PROFILING ) SmoothW.Start();
+        }
+        void end_smooth() {
+            if ( ENABLE_PROFILING ) SmoothW.Stop();
+        }
+        void begin_project() {
+            if ( ENABLE_PROFILING ) ProjectW.Start();
+        }
+        void end_project() {
+            if ( ENABLE_PROFILING ) ProjectW.Stop();
+        }
+
+        void begin_collapse() {
+            if ( ENABLE_PROFILING ) CollapseW.Start();
+        }
+        void end_collapse() {
+            if ( ENABLE_PROFILING ) CollapseW.Stop();
+        }
+        void begin_flip() {
+            if ( ENABLE_PROFILING ) FlipW.Start();
+        }
+        void end_flip() {
+            if ( ENABLE_PROFILING ) FlipW.Stop();
+        }
+        void begin_split() {
+            if ( ENABLE_PROFILING ) SplitW.Start();
+        }
+        void end_split() {
+            if ( ENABLE_PROFILING ) SplitW.Stop();
+        }
+
+
 
 	}
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace g3
 {
@@ -13,6 +14,7 @@ namespace g3
 				System.Diagnostics.Debugger.Break();
 		}
 
+        [Conditional("DEBUG")] 
         static public void gDevAssert(bool bValue) {
             if (bValue == false)
                 throw new Exception("gDevAssert");
