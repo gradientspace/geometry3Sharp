@@ -15,11 +15,20 @@ namespace g3
         }
 
 
+        public DMesh3 Mesh { get { return mesh; } }
 
 
-        public void Build()
+        public enum ClusterPolicy
         {
-            build_by_one_rings();
+            Default,
+            Fastest,
+            FastVolumeMetric,
+            MinimalVolume
+        }
+
+        public void Build(ClusterPolicy ePolicy = ClusterPolicy.Default)
+        {
+            build_by_one_rings(ePolicy);
             mesh_timestamp = mesh.Timestamp;
         }
 
@@ -141,6 +150,33 @@ namespace g3
 
 
 
+        public double TotalVolume()
+        {
+            double volSum = 0;
+            TreeTraversal t = new TreeTraversal() {
+                NextBoxF = (box) => {
+                    volSum += box.Volume;
+                    return true;
+                }
+            };
+            DoTraversal(t);
+            return volSum;
+        }
+        public double TotalExtentSum()
+        {
+            double extSum = 0;
+            TreeTraversal t = new TreeTraversal() {
+                NextBoxF = (box) => {
+                    extSum += box.Extents.LengthL1;
+                    return true;
+                }
+            };
+            DoTraversal(t);
+            return extSum;
+        }
+
+
+
 
         //
         // Internals - data structures, construction, etc
@@ -185,7 +221,7 @@ namespace g3
         //      1b) second pass where we handle any missed tris
         //  2) sequentially combine N leaf boxes into (N/2 + N%2) layer 2 boxes
         //  3) repeat until layer K has only 1 box, which is root of tree
-        void build_by_one_rings()
+        void build_by_one_rings(ClusterPolicy ePolicy)
         {
             box_to_index = new DVector<int>();
             box_centers = new DVector<Vector3f>();
@@ -234,15 +270,27 @@ namespace g3
             // keep track of where triangle lists end
             triangles_end = iIndicesCur;
 
+            // this defines ClusterPolicy.Default
+            //ClusterFunctionType clusterF = cluster_boxes;
+            //ClusterFunctionType clusterF = cluster_boxes_matrix;
+            ClusterFunctionType clusterF = cluster_boxes_nearsearch;
+
+            if (ePolicy == ClusterPolicy.Fastest)
+                clusterF = cluster_boxes;
+            else if (ePolicy == ClusterPolicy.MinimalVolume)
+                clusterF = cluster_boxes_matrix;
+            else if (ePolicy == ClusterPolicy.FastVolumeMetric)
+                clusterF = cluster_boxes_nearsearch;
+
             // ok, now repeatedly cluster current layer of N boxes into N/2 + N%2 boxes,
             // until we hit a 1-box layer, which is root of the tree
             int nPrevEnd = iBoxCur;
-            int nLayerSize = cluster_boxes(0, iBoxCur, ref iBoxCur, ref iIndicesCur);
+            int nLayerSize = clusterF(0, iBoxCur, ref iBoxCur, ref iIndicesCur);
             int iStart = nPrevEnd;
             int iCount = iBoxCur - nPrevEnd;
             while ( nLayerSize > 1 ) {
                 nPrevEnd = iBoxCur;
-                nLayerSize = cluster_boxes(iStart, iCount, ref iBoxCur, ref iIndicesCur);
+                nLayerSize = clusterF(iStart, iCount, ref iBoxCur, ref iIndicesCur);
                 iStart = nPrevEnd;
                 iCount = iBoxCur - nPrevEnd;
             }
@@ -295,8 +343,7 @@ namespace g3
         }
 
 
-
-
+        public delegate int ClusterFunctionType(int iStart, int iCount, ref int iBoxCur, ref int iIndicesCur);
 
         // Turn a span of N boxes into N/2 boxes, by pairing boxes
         // Except, of course, if N is odd, then we get N/2+1, where the +1
@@ -343,24 +390,214 @@ namespace g3
             if ( nLeft > 0 ) {
                 if (nLeft > 1)
                     Util.gBreakToDebugger();
-
                 int iLeft = indices[2*nPairs];
-
-                // duplicate box at this level... ?
-                int iBox = iBoxCur++;
-                box_to_index.insert(iIndicesCur, iBox);
-
-                // negative index means only one child
-                index_list.insert(-(iLeft+1), iIndicesCur++);
-                
-                box_centers.insert(box_centers[iLeft], iBox);
-                box_extents.insert(box_extents[iLeft], iBox);
+                duplicate_box(iLeft, ref iBoxCur, ref iIndicesCur);
             }
 
             return nPairs + nLeft;
         }
 
 
+
+
+
+
+        // Turn a span of N boxes into N/2 boxes, by pairing boxes
+        // Except, of course, if N is odd, then we get N/2+1, where the +1
+        // box has a single child box (ie just a copy).
+        // [TODO] instead merge that extra box into on of parents? Reduces tree depth by 1
+        int cluster_boxes_nearsearch(int iStart, int iCount, ref int iBoxCur, ref int iIndicesCur)
+        {
+            int[] indices = new int[iCount];
+            for (int i = 0; i < iCount; ++i)
+                indices[i] = iStart + i;
+
+            Func<int, int, double> boxMetric = combined_box_volume;
+            //Func<int, int, double> boxMetric = combined_box_length;
+
+            // sort indices by x axis
+            // cycling axes (ie at each depth) seems to produce much worse results...
+            int nDim = 0;
+            Array.Sort(indices, (a, b) => {
+                float axis_min_a = box_centers[a][nDim] - box_extents[a][nDim];
+                float axis_min_b = box_centers[b][nDim] - box_extents[b][nDim];
+                return (axis_min_a == axis_min_b) ? 0 :
+                            (axis_min_a < axis_min_b) ? -1 : 1;
+            });
+
+            int nPairs = iCount / 2;
+            int nLeft = iCount - 2 * nPairs;
+
+            // bounded greedy clustering. 
+            // Search ahead next N boxes in sorted-by-axis list, and find
+            // the one that creates minimal box metric when combined with us.
+            int N = 10;
+            int[] nextNi = new int[N];
+            double[] nextNc = new double[N];
+            int pj;
+            for ( int pi = 0; pi < iCount-1; pi++ ) {
+                int i0 = indices[pi];
+                if (i0 < 0)
+                    continue;
+                int nStop = Math.Min(N, iCount - pi - 1);
+                for ( int k = 0; k < nStop; ++k ) {
+                    pj = pi + k + 1;
+                    nextNi[k] = pj;
+                    int ik = indices[pj];
+                    if (ik < 0)
+                        nextNc[k] = double.MaxValue;
+                    else
+                        nextNc[k] =  boxMetric(i0, ik);
+                }
+                Array.Sort(nextNc, nextNi, 0, nStop);
+                if (nextNc[0] == double.MaxValue)
+                    continue;
+
+                pj = nextNi[0];
+                int i1 = indices[pj];
+                if (i1 < 0)
+                    Util.gBreakToDebugger();
+
+                Vector3f center, extent;
+                get_combined_box(i0, i1, out center, out extent);
+
+                // append new box
+                int iBox = iBoxCur++;
+                box_to_index.insert(iIndicesCur, iBox);
+
+                index_list.insert(i0+1, iIndicesCur++);
+                index_list.insert(i1+1, iIndicesCur++);
+
+                box_centers.insert(center, iBox);
+                box_extents.insert(extent, iBox);
+
+                indices[pi] = -(indices[pi]+1);
+                indices[pj] = -(indices[pj]+1);
+            }
+
+            // [todo] could we merge with last other box? need a way to tell
+            //   that there are 3 children though...could use negative index for that?
+            if (nLeft > 0) {
+                int iLeft = -1;
+                for (int i = 0; iLeft < 0 && i < indices.Length; ++i)
+                    if (indices[i] >= 0)
+                        iLeft = indices[i];
+                duplicate_box(iLeft, ref iBoxCur, ref iIndicesCur);
+            }
+
+            return nPairs + nLeft;
+        }
+
+
+
+
+
+
+
+
+        static double find_smallest_upper(double[,] m, ref int ii, ref int jj)
+        {
+            double v = double.MaxValue;
+            int rows = m.GetLength(0);
+            int cols = m.GetLength(1);
+            for (int i = 0; i < rows; ++i) {
+                for (int j = i+1; j < cols; ++j) {
+                    if ( m[i,j] < v ) {
+                        v = m[i, j];
+                        ii = i;
+                        jj = j;
+                    }
+                }
+            }
+            return v;
+        }
+
+
+        // greedy-optimal clustering of boxes. Compute all-pairs distance matrix, and 
+        // then incrementally pull out minimal pairs. This does a great job but it
+        // gets insanely slow because the all-pairs matrix takes too long...
+        //   (actually the real cost is probably find_smallest_upper_matrix, which maybe
+        //    we could avoid by sorting rows? not sure...)
+        int cluster_boxes_matrix(int iStart, int iCount, ref int iBoxCur, ref int iIndicesCur)
+        {
+            int[] indices = new int[iCount];
+            for (int i = 0; i < iCount; ++i)
+                indices[i] = iStart + i;
+
+            Func<int, int, double> boxMetric = combined_box_volume;
+
+            double[,] matrix = new double[iCount, iCount];
+            for (int i = 0; i < iCount; ++i) {
+                for (int j = 0; j <= i; ++j)
+                    matrix[i, j] = double.MaxValue;
+                for (int j = i + 1; j < iCount; ++j) {
+                    matrix[i, j] = boxMetric(indices[i], indices[j]);
+                }
+            }
+
+            int nPairs = iCount / 2;
+            int nLeft = iCount - 2 * nPairs;
+
+            for (int k = 0; k < nPairs; ++k ) {
+                int si = 0, sj = 0;
+                bool bFound = false;
+                while (!bFound) {
+                    double s = find_smallest_upper(matrix, ref si, ref sj);
+                    if (indices[si] >= 0 && indices[sj] >= 0)
+                        bFound = true;
+                    matrix[si, sj] = double.MaxValue;
+                }
+
+                int i0 = indices[si];
+                int i1 = indices[sj];
+
+                Vector3f center, extent;
+                get_combined_box(i0, i1, out center, out extent);
+
+                // append new box
+                int iBox = iBoxCur++;
+                box_to_index.insert(iIndicesCur, iBox);
+
+                index_list.insert(i0 + 1, iIndicesCur++);
+                index_list.insert(i1 + 1, iIndicesCur++);
+
+                box_centers.insert(center, iBox);
+                box_extents.insert(extent, iBox);
+
+                indices[si] = -(indices[si]+1);
+                indices[sj] = -(indices[sj]+1);
+            }
+
+            // [todo] could we merge with last other box? need a way to tell
+            //   that there are 3 children though...could use negative index for that?
+            if (nLeft > 0) {
+                int iLeft = -1;
+                for (int i = 0; iLeft < 0 && i < indices.Length; ++i)
+                    if (indices[i] >= 0)
+                        iLeft = indices[i];
+                duplicate_box(iLeft, ref iBoxCur, ref iIndicesCur);
+            }
+
+            return nPairs + nLeft;
+        }
+
+
+
+
+
+
+        void duplicate_box(int i, ref int iBoxCur, ref int iIndicesCur)
+        {
+            // duplicate box at this level... ?
+            int iBox = iBoxCur++;
+            box_to_index.insert(iIndicesCur, iBox);
+
+            // negative index means only one child
+            index_list.insert(-(i+1), iIndicesCur++);
+                
+            box_centers.insert(box_centers[i], iBox);
+            box_extents.insert(box_extents[i], iBox);
+        }
 
 
 
@@ -404,8 +641,35 @@ namespace g3
             return box.DistanceSquared(p);
         }
 
-        
 
+        double combined_box_volume(int b0, int b1)
+        {
+            Vector3f c0 = box_centers[b0];
+            Vector3f e0 = box_extents[b0];
+            Vector3f c1 = box_centers[b1];
+            Vector3f e1 = box_extents[b1];
+            float minx = Math.Min(c0.x - e0.x, c1.x - e1.x);
+            float maxx = Math.Max(c0.x + e0.x, c1.x + e1.x);
+            float miny = Math.Min(c0.y - e0.y, c1.y - e1.y);
+            float maxy = Math.Max(c0.y + e0.y, c1.y + e1.y);
+            float minz = Math.Min(c0.z - e0.z, c1.z - e1.z);
+            float maxz = Math.Max(c0.z + e0.z, c1.z + e1.z);
+            return (maxx - minx) * (maxy - miny) * (maxz - minz);
+        }
+        double combined_box_length(int b0, int b1)
+        {
+            Vector3f c0 = box_centers[b0];
+            Vector3f e0 = box_extents[b0];
+            Vector3f c1 = box_centers[b1];
+            Vector3f e1 = box_extents[b1];
+            float minx = Math.Min(c0.x - e0.x, c1.x - e1.x);
+            float maxx = Math.Max(c0.x + e0.x, c1.x + e1.x);
+            float miny = Math.Min(c0.y - e0.y, c1.y - e1.y);
+            float maxy = Math.Max(c0.y + e0.y, c1.y + e1.y);
+            float minz = Math.Min(c0.z - e0.z, c1.z - e1.z);
+            float maxz = Math.Max(c0.z + e0.z, c1.z + e1.z);
+            return (maxx - minx)*(maxx - minx) + (maxy - miny)*(maxy - miny) + (maxz - minz)*(maxz - minz);
+        }
 
 
 
