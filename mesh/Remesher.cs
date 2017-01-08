@@ -66,14 +66,28 @@ namespace g3 {
 
 		public void BasicRemeshPass() {
 
+            // Iterate over all edges in the mesh at start of pass.
+            // Some may be removed, so we skip those.
+            // However, some old eid's may also be re-used, so we will touch
+            // some new edges. Can't see how we could efficiently prevent this.
+            //
+            // We are using a modulo-index loop to break symmetry/pathological conditions. 
+            // For example in a highly tessellated minimal cylinder, if the top/bottom loops have
+            // sequential edge IDs, and all edges are < min edge length, then we can easily end
+            // up successively collapsing each tiny edge, and eroding away the entire mesh!
+            // By using modulo-index loop we jump around and hence this is unlikely to happen.
+            //
 			int nMaxEdgeID = mesh.MaxEdgeID;
-			for ( int eid = 0; eid < nMaxEdgeID; ++eid ) {
-				if ( ! mesh.IsEdge(eid) )
-					continue;
-
-				/*ProcessResult result = */ProcessEdge(eid);
-				// do what with result??
-			}
+            int nPrime = 31337;     // any prime will do...
+            int eid = 0;
+            do {
+                if (mesh.IsEdge(eid)) {
+                    /*ProcessResult result = */
+                    ProcessEdge(eid);
+                    // do what with result??
+                }
+                eid = (eid + nPrime) % nMaxEdgeID;
+            } while (eid != 0);
 
             if (EnableSmoothing && SmoothSpeedT > 0) {
                 FullSmoothPass_InPlace();
