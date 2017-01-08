@@ -59,5 +59,16 @@ namespace g3
         }
 
 
+
+
+        static public string ToSecMilli(TimeSpan t)
+        {
+#if G3_USING_UNITY
+            return string.Format("{0}", t.TotalSeconds);
+#else
+            return t.ToString("ss\\.ffff")
+#endif
+        }
+
     }
 }
