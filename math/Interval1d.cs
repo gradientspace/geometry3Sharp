@@ -39,6 +39,16 @@ namespace g3
             get { return b-a; }
         }
 
+        public double Center {
+            get { return (b + a) * 0.5; }
+        }
+
+		public void Contain(double d) {
+            if (d < a)
+                a = d;
+            if (d > b)
+                b = d;
+		}
 
 		public bool Contains(double d) {
 			return d >= a && d <= b;

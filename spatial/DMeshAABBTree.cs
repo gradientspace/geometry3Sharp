@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace g3
 {
@@ -18,17 +20,57 @@ namespace g3
         public DMesh3 Mesh { get { return mesh; } }
 
 
-        public enum ClusterPolicy
+        // Top-down build strategies will put at most this many triangles into a box.
+        // Larger value == shallower trees, but leaves cost more to test
+        public int TopDownLeafMaxTriCount = 4;
+
+        // bottom-up FastVolumeMetric cluster policy sorts available boxes along an axis
+        // and then proceeds from min to max, greedily grouping best-pairs. This value determines
+        // the range of the greedy search. Larger == slower but better bounding
+        // (at least in theory...)
+        public int BottomUpClusterLookahead = 10;
+
+
+        // how should we build the tree?
+        public enum BuildStrategy
         {
-            Default,
-            Fastest,
-            FastVolumeMetric,
-            MinimalVolume
+            Default,                // currently TopDownMidpoint
+
+            TopDownMidpoint,        // Recursively split triangle set by midpoint of axis interval.
+                                    //   This is the fastest and usually produces lower total-volume trees than bottom-up.
+                                    //   Resulting trees are unbalanced, though.
+            BottomUpFromOneRings,   // Construct leaf layer based on triangle one-rings, and then
+                                    //   cluster boxes to build tree upward. Various cluster policies (below).
+                                    //   About 2.5x slower than TopDownMidpoint. Trees are basically balanced, although
+                                    //   current approach to clustering odd-count layers is to duplicate the extra box.
+            TopDownMedian           // Like TopDownMidpoint except we sort the triangle lists at each step and split on the median.
+                                    //   2-4x slower than TopDownMidpoint, but trees are generally more efficient and balanced.
         }
 
-        public void Build(ClusterPolicy ePolicy = ClusterPolicy.Default)
+        public enum ClusterPolicy
         {
-            build_by_one_rings(ePolicy);
+            Default,               // currently FastVolumeMetric
+            Fastest,               // sort list and then just cluster sequential boxes. 
+                                   //   Tree efficiency suffers, but fast.
+            FastVolumeMetric,      // sort list and then check next N boxes for best cluster. Only slightly slower than
+                                   //   sequential clustering but trees are often quite a bit more efficient.
+            MinimalVolume          // compute full pair matrix at each step (N^2), and sequentially pick out best pairs.
+                                   //   this usually does quite a bit better job, but it is unusable for large tri counts.
+        }
+
+
+        // Build the tree. Policy only matters for bottom-up strategies
+        public void Build(BuildStrategy eStrategy = BuildStrategy.TopDownMidpoint, 
+                          ClusterPolicy ePolicy = ClusterPolicy.Default)
+        {
+            if (eStrategy == BuildStrategy.BottomUpFromOneRings)
+                build_by_one_rings(ePolicy);
+            else if (eStrategy == BuildStrategy.TopDownMedian)
+                build_top_down(true);
+            else if (eStrategy == BuildStrategy.TopDownMidpoint)
+                build_top_down(false);
+            else if (eStrategy == BuildStrategy.Default)
+                build_top_down(false);
             mesh_timestamp = mesh.Timestamp;
         }
 
@@ -209,6 +251,220 @@ namespace g3
 
         // box_to_index[root_index] is the root node of the tree
         int root_index = -1;
+
+
+
+
+
+
+
+
+        void build_top_down(bool bSorted)
+        {
+            int i = 0;
+            int[] triangles = new int[mesh.TriangleCount];
+            Vector3d[] centers = new Vector3d[mesh.TriangleCount];
+            foreach ( int ti in mesh.TriangleIndices()) {
+                triangles[i] = ti;
+                centers[i++] = mesh.GetTriCentroid(ti);
+            }
+
+            boxes_set tris = new boxes_set();
+            boxes_set nodes = new boxes_set();
+            AxisAlignedBox3f rootBox;
+            int rootnode = (bSorted) ?
+                split_tri_set_sorted(triangles, centers, 0, mesh.TriangleCount, 0, TopDownLeafMaxTriCount, tris, nodes, out rootBox)
+                : split_tri_set_midpoint(triangles, centers, 0, mesh.TriangleCount, 0, TopDownLeafMaxTriCount, tris, nodes, out rootBox);
+
+            box_to_index = tris.box_to_index;
+            box_centers = tris.box_centers;
+            box_extents = tris.box_extents;
+            index_list = tris.index_list;
+            triangles_end = tris.iIndicesCur;
+            int iIndexShift = triangles_end;
+            int iBoxShift = tris.iBoxCur;
+
+            // ok now append internal node boxes & index ptrs
+            for ( i = 0; i < nodes.iBoxCur; ++i ) {
+                box_centers.insert(nodes.box_centers[i], iBoxShift + i);
+                box_extents.insert(nodes.box_extents[i], iBoxShift + i);
+                // internal node indices are shifted
+                box_to_index.insert(iIndexShift + nodes.box_to_index[i], iBoxShift + i);
+            }
+
+            // now append index list
+            for ( i = 0; i < nodes.iIndicesCur; ++i ) {
+                int child_box = nodes.index_list[i];
+                if ( child_box < 0 ) {        // this is a triangles box
+                    child_box = (-child_box) - 1;
+                } else {
+                    child_box += iBoxShift;
+                }
+                child_box = child_box + 1;
+                index_list.insert(child_box, iIndexShift + i);
+            }
+
+            root_index = rootnode + iBoxShift;
+        }
+
+
+
+        class AxisComp : IComparer<Vector3d>
+        {
+            public int Axis = 0;
+            // Compares by Height, Length, and Width.
+            public int Compare(Vector3d a, Vector3d b) {
+                return a[Axis].CompareTo(b[Axis]);
+            }
+        }
+
+        // returns box id
+
+        class boxes_set
+        {
+            public DVector<int> box_to_index = new DVector<int>();
+            public DVector<Vector3f> box_centers = new DVector<Vector3f>();
+            public DVector<Vector3f> box_extents = new DVector<Vector3f>();
+            public DVector<int> index_list = new DVector<int>();
+            public int iBoxCur = 0;
+            public int iIndicesCur = 0;
+        }
+
+        int split_tri_set_sorted(int[] triangles, Vector3d[] centers, int iStart, int iCount, int depth, int minTriCount,
+            boxes_set tris, boxes_set nodes, out AxisAlignedBox3f box)
+        {
+            box = AxisAlignedBox3f.Empty;
+            int iBox = -1;
+
+            if ( iCount < minTriCount ) {
+                // append new triangles box
+                iBox = tris.iBoxCur++;
+                tris.box_to_index.insert(tris.iIndicesCur, iBox);
+
+                tris.index_list.insert(iCount, tris.iIndicesCur++);
+                for (int i = 0; i < iCount; ++i) {
+                    tris.index_list.insert(triangles[iStart+i], tris.iIndicesCur++);
+                    box.Contain(mesh.GetTriBounds(triangles[iStart + i]));
+                }
+
+                tris.box_centers.insert(box.Center, iBox);
+                tris.box_extents.insert(box.Extents, iBox);
+                
+                return -(iBox+1);
+            }
+
+            int axis = depth % 3;
+            AxisComp c = new AxisComp() { Axis = depth % 3 };
+            Array.Sort(centers, triangles, iStart, iCount, c);
+            int mid = iCount / 2;
+            int n0 = mid;
+            int n1 = iCount - mid;
+
+            // create child boxes
+            AxisAlignedBox3f box1;
+            int child0 = split_tri_set_sorted(triangles, centers, iStart, n0, depth + 1, minTriCount, tris, nodes, out box);
+            int child1 = split_tri_set_sorted(triangles, centers, iStart+mid, n1, depth + 1, minTriCount, tris, nodes, out box1);
+            box.Contain(box1);
+
+            // append new box
+            iBox = nodes.iBoxCur++;
+            nodes.box_to_index.insert(nodes.iIndicesCur, iBox);
+
+            nodes.index_list.insert(child0, nodes.iIndicesCur++);
+            nodes.index_list.insert(child1, nodes.iIndicesCur++);
+
+            nodes.box_centers.insert(box.Center, iBox);
+            nodes.box_extents.insert(box.Extents, iBox);
+
+            return iBox;
+        }
+
+
+
+
+
+
+
+
+        int split_tri_set_midpoint(int[] triangles, Vector3d[] centers, int iStart, int iCount, int depth, int minTriCount,
+            boxes_set tris, boxes_set nodes, out AxisAlignedBox3f box)
+        {
+            box = AxisAlignedBox3f.Empty;
+            int iBox = -1;
+
+            if ( iCount < minTriCount ) {
+                // append new triangles box
+                iBox = tris.iBoxCur++;
+                tris.box_to_index.insert(tris.iIndicesCur, iBox);
+
+                tris.index_list.insert(iCount, tris.iIndicesCur++);
+                for (int i = 0; i < iCount; ++i) {
+                    tris.index_list.insert(triangles[iStart+i], tris.iIndicesCur++);
+                    box.Contain(mesh.GetTriBounds(triangles[iStart + i]));
+                }
+
+                tris.box_centers.insert(box.Center, iBox);
+                tris.box_extents.insert(box.Extents, iBox);
+                
+                return -(iBox+1);
+            }
+
+            //compute interval along an axis and find midpoint
+            int axis = depth % 3;
+            Interval1d interval = Interval1d.Empty;
+            for ( int i = 0; i < iCount; ++i ) 
+                interval.Contain(centers[iStart + i][axis]);
+            double midpoint = interval.Center;
+
+            int n0, n1;
+            if (Math.Abs(interval.a - interval.b) > MathUtil.ZeroTolerance) {
+                // we have to re-sort the centers & triangles lists so that centers < midpoint
+                // are first, so that we can recurse on the two subsets. We walk in from each side,
+                // until we find two out-of-order locations, then we swap them.
+                int l = 0;
+                int r = iCount - 1;
+                while (l < r) {
+                    while (centers[iStart + l][axis] < midpoint)
+                        l++;
+                    while (centers[iStart + r][axis] > midpoint)
+                        r--;
+                    if (l >= r)
+                        break;      //done!
+                    //swap
+                    Vector3d tmpc = centers[iStart + l]; centers[iStart + l] = centers[iStart + r];  centers[iStart + r] = tmpc;
+                    int tmpt = triangles[iStart + l]; triangles[iStart + l] = triangles[iStart + r]; triangles[iStart + r] = tmpt;
+                }
+
+                n0 = l;
+                n1 = iCount - n0;
+                Debug.Assert(n0 >= 1 && n1 >= 1);
+            } else {
+                // interval is near-empty, so no point trying to do sorting, just split half and half
+                n0 = iCount / 2;
+                n1 = iCount - n0;
+            }
+
+            // create child boxes
+            AxisAlignedBox3f box1;
+            int child0 = split_tri_set_midpoint(triangles, centers, iStart, n0, depth + 1, minTriCount, tris, nodes, out box);
+            int child1 = split_tri_set_midpoint(triangles, centers, iStart+n0, n1, depth + 1, minTriCount, tris, nodes, out box1);
+            box.Contain(box1);
+
+            // append new box
+            iBox = nodes.iBoxCur++;
+            nodes.box_to_index.insert(nodes.iIndicesCur, iBox);
+
+            nodes.index_list.insert(child0, nodes.iIndicesCur++);
+            nodes.index_list.insert(child1, nodes.iIndicesCur++);
+
+            nodes.box_centers.insert(box.Center, iBox);
+            nodes.box_extents.insert(box.Extents, iBox);
+
+            return iBox;
+        }
+
+
+
 
 
 
@@ -431,7 +687,7 @@ namespace g3
             // bounded greedy clustering. 
             // Search ahead next N boxes in sorted-by-axis list, and find
             // the one that creates minimal box metric when combined with us.
-            int N = 10;
+            int N = BottomUpClusterLookahead;
             int[] nextNi = new int[N];
             double[] nextNc = new double[N];
             int pj;
