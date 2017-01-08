@@ -148,10 +148,15 @@ namespace g3
         public T this[int i]
         {
             get {
-                return Blocks[i / nBlockSize][i % nBlockSize];
+                // [RMS] this is definitely marginally faster =)
+                int bi = i / nBlockSize;
+                return Blocks[bi][i - bi * nBlockSize];
+                //return Blocks[i / nBlockSize][i % nBlockSize];
             }
             set {
-                Blocks[i / nBlockSize][i % nBlockSize] = value;
+                int bi = i / nBlockSize;
+                Blocks[bi][i - bi * nBlockSize] = value;
+                //Blocks[i / nBlockSize][i % nBlockSize] = value;
             }
         }
 
