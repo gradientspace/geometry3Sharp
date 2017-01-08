@@ -875,6 +875,74 @@ namespace g3
 		}
 
 
+
+        // Remove a tID from the mesh. Also removes any unreferenced edges after tri is removed.
+        // If bRemoveIsolatedVertices is false, then if you remove all tris from a vert, that vert is also removed.
+        // If bPreserveManifold, we check that you will not create a bowtie vertex (and return false).
+        //   If this check is not done, you have to make sure you don't create a bowtie, because other
+        //   code assumes we don't have bowties, and will not handle it properly
+        public bool RemoveTriangle(int tID, bool bRemoveIsolatedVertices = true, bool bPreserveManifold = true)
+        {
+            if ( ! triangles_refcount.isValid(tID) ) {
+                Debug.Assert(false);
+                return false;
+            }
+
+            Index3i tv = GetTriangle(tID);
+            Index3i te = GetTriEdges(tID);
+
+            // if any tri vtx is a boundary vtx connected to two interior edges, then
+            // we cannot remove this triangle because it would create a bowtie vertex!
+            // (that vtx already has 2 boundary edges, and we would add two more)
+            if (bPreserveManifold) {
+                for (int j = 0; j < 3; ++j) {
+                    if (vertex_is_boundary(tv[j])) {
+                        if (edge_is_boundary(te[j]) == false && edge_is_boundary(te[(j + 2) % 3]) == false)
+                            return false;
+                    }
+                }
+            }
+
+            // Remove triangle from its edges. if edge has no triangles left,
+            // then it is removed.
+            for (int j = 0; j < 3; ++j) {
+                int eid = te[j];
+                replace_edge_triangle(eid, tID, InvalidID);
+                if (edges[4 * eid + 2] == InvalidID) {
+                    int a = edges[4 * eid];
+                    List<int> edges_a = vertex_edges[a];
+                    edges_a.Remove(eid);
+
+                    int b = edges[4 * eid + 1];
+                    List<int> edges_b = vertex_edges[b];
+                    edges_b.Remove(eid);
+
+                    edges_refcount.decrement(eid);
+                }
+            }
+
+            // free this triangle
+			triangles_refcount.decrement( tID );
+			Debug.Assert( triangles_refcount.isValid( tID ) == false );
+
+            // Decrement vertex refcounts. If any hit 1 and we got remove-isolated flag,
+            // we need to remove that vertex
+            for (int j = 0; j < 3; ++j) {
+                int vid = tv[j];
+                vertices_refcount.decrement(vid);
+                if ( bRemoveIsolatedVertices && vertices_refcount.refCount(vid) == 1) {
+                    vertices_refcount.decrement(vid);
+                    Debug.Assert(vertices_refcount.isValid(vid) == false);
+                    vertex_edges[vid] = null;
+                }
+            }
+
+            return true;
+        }
+
+
+
+
 		public struct EdgeSplitInfo {
 			public bool bIsBoundary;
 			public int vNew;
@@ -1485,7 +1553,7 @@ namespace g3
 
         // This function checks that the mesh is well-formed, ie all internal data
         // structures are consistent
-        public bool CheckValidity() {
+        public bool CheckValidity(bool bAllowNonManifoldVertices = false) {
 
 			int[] triToVtxRefs = new int[this.MaxVertexID];
 
@@ -1584,7 +1652,10 @@ namespace g3
 				GetVtxTriangles(vID, vTris2, true);
 				DMESH_CHECK_OR_FAIL(vTris.Count == vTris2.Count);
 				//System.Console.WriteLine(string.Format("{0} {1} {2}", vID, vTris.Count, GetVtxEdges(vID).Count));
-				DMESH_CHECK_OR_FAIL(vTris.Count == GetVtxEdges(vID).Count || vTris.Count == GetVtxEdges(vID).Count-1);
+                if ( bAllowNonManifoldVertices )
+    				DMESH_CHECK_OR_FAIL(vTris.Count <= GetVtxEdges(vID).Count);
+                else
+    				DMESH_CHECK_OR_FAIL(vTris.Count == GetVtxEdges(vID).Count || vTris.Count == GetVtxEdges(vID).Count-1);
                 DMESH_CHECK_OR_FAIL(vertices_refcount.refCount(vID) == vTris.Count + 1);
                 DMESH_CHECK_OR_FAIL(triToVtxRefs[vID] == vTris.Count);
                 foreach( int tID in vTris) {
