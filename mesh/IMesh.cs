@@ -31,8 +31,8 @@ namespace g3
 
 
         // iterators allow us to work with gaps in index space
-        System.Collections.IEnumerable VertexIndices();
-        System.Collections.IEnumerable TriangleIndices();
+        System.Collections.Generic.IEnumerable<int> VertexIndices();
+        System.Collections.Generic.IEnumerable<int> TriangleIndices();
 
     }
 

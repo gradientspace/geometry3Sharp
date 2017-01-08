@@ -342,12 +342,12 @@ namespace g3
                 yield return FaceGroups[i];
         }
 
-        public System.Collections.IEnumerable VertexIndices() {
+        public IEnumerable<int> VertexIndices() {
             int N = VertexCount;
             for (int i = 0; i < N; ++i)
                 yield return i;
         }
-        public System.Collections.IEnumerable TriangleIndices() { 
+        public IEnumerable<int> TriangleIndices() { 
             int N = TriangleCount;
             for (int i = 0; i < N; ++i)
                 yield return i;

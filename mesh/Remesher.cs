@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+
 namespace g3 {
 	
 	public class Remesher {
@@ -517,15 +518,19 @@ namespace g3 {
 
 
 
+
+        // we can do projection in parallel if we have .net 
         void FullProjectionPass()
         {
-            foreach ( int vID in mesh.VertexIndices() ) {
+            Action<int> project = (vID) => {
                 if (vertex_is_constrained(vID))
-                    continue;
+                    return;
                 Vector3d curpos = mesh.GetVertex(vID);
                 Vector3d projected = target.Project(curpos, vID);
                 mesh.SetVertex(vID, projected);
-            }
+            };
+
+            gParallel.ForEach<int>(mesh.VertexIndices(), project);
         }
 
 
@@ -645,7 +650,12 @@ namespace g3 {
             if ( ENABLE_PROFILING ) SplitW.Stop();
         }
 
-
-
 	}
+
+
+
+
+
+
+
 }

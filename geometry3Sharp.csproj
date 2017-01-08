@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="core\DVector.cs" />
     <Compile Include="core\FileSystemUtils.cs" />
+    <Compile Include="core\gParallel.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\Units.cs" />
     <Compile Include="core\VectorArray.cs" />

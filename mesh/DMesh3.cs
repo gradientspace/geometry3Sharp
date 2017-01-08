@@ -484,21 +484,18 @@ namespace g3
 
         // iterators
 
-        public System.Collections.IEnumerable VertexIndices() {
+        public System.Collections.Generic.IEnumerable<int> VertexIndices() {
             foreach (int vid in vertices_refcount)
                 yield return vid;
         }
-        public System.Collections.IEnumerable TriangleIndices() {
+        public System.Collections.Generic.IEnumerable<int> TriangleIndices() {
             foreach (int tid in triangles_refcount)
                 yield return tid;
         }
-        public System.Collections.IEnumerable EdgeIndices() {
+        public System.Collections.Generic.IEnumerable<int> EdgeIndices() {
             foreach (int eid in edges_refcount)
                 yield return eid;
         }
-
-
-
 
         // queries
 
