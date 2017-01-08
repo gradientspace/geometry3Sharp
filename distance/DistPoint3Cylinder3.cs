@@ -147,7 +147,6 @@ namespace g3
             double result_distance = 0;     // signed!
             Vector3d result_closest = Vector3d.Zero;
 
-            double sqrRadius = cylinder.Radius * cylinder.Radius;
             double sqrDistance = P[0] * P[0] + P[1] * P[1];
 
             // The point is outside the cylinder or on the cylinder wall.

@@ -353,7 +353,6 @@ namespace g3
                 return -(iBox+1);
             }
 
-            int axis = depth % 3;
             AxisComp c = new AxisComp() { Axis = depth % 3 };
             Array.Sort(centers, triangles, iStart, iCount, c);
             int mid = iCount / 2;
@@ -798,7 +797,7 @@ namespace g3
                 int si = 0, sj = 0;
                 bool bFound = false;
                 while (!bFound) {
-                    double s = find_smallest_upper(matrix, ref si, ref sj);
+                    /*double s = */find_smallest_upper(matrix, ref si, ref sj);
                     if (indices[si] >= 0 && indices[sj] >= 0)
                         bFound = true;
                     matrix[si, sj] = double.MaxValue;
