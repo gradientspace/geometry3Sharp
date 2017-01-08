@@ -45,6 +45,11 @@ namespace g3
             get { return (float)Math.Sqrt(LengthSquared); }
         }
 
+        public float LengthL1
+        {
+            get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
+        }
+
         public float Normalize(float epsilon = MathUtil.Epsilonf)
         {
             float length = Length;

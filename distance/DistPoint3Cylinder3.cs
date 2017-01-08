@@ -37,7 +37,7 @@ namespace g3
         public double SignedDistance = 0.0f;
 
         public bool IsInside { get { return SignedDistance < 0; } }
-        public double SolidDistance { get { return (SignedDistance < 0) ? 0 : SignedDistance; } };
+        public double SolidDistance { get { return (SignedDistance < 0) ? 0 : SignedDistance; } }
 
         public Vector3d CylinderClosest;
 

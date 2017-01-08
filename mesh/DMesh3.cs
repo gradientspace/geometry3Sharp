@@ -269,7 +269,7 @@ namespace g3
         public int GetMaxVtxEdgeCount() {
             int max = 0;
             foreach (int vid in vertices_refcount)
-                max = Math.Max(0, vertex_edges[vid].Count);
+                max = Math.Max(max, vertex_edges[vid].Count);
             return max;
         }
 

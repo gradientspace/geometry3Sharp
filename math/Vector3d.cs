@@ -42,6 +42,12 @@ namespace g3
             get { return Math.Sqrt(LengthSquared); }
         }
 
+        public double LengthL1
+        {
+            get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
+        }
+
+
         public double Normalize(double epsilon = MathUtil.Epsilon)
         {
             double length = Length;
