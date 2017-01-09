@@ -45,7 +45,12 @@ namespace g3 {
         TargetProjectionMode ProjectionMode = TargetProjectionMode.AfterRefinement;
 
         // this just lets us write more concise tests below
-        bool EnableInlineProjection { get { return ProjectionMode == TargetProjectionMode.Inline; } } 
+        bool EnableInlineProjection { get { return ProjectionMode == TargetProjectionMode.Inline; } }
+
+
+        // Enable parallel smoothing. This will produce slightly different results
+        // across runs because we smooth in-place and hence there will be order side-effects.
+        public bool EnableParallelSmooth = true;
 
 
 		public Remesher(DMesh3 m) {
@@ -123,7 +128,7 @@ namespace g3 {
 
             begin_smooth();
             if (EnableSmoothing && SmoothSpeedT > 0) {
-                FullSmoothPass_InPlace();
+                FullSmoothPass_InPlace(EnableParallelSmooth);
                 DoDebugChecks();
             }
             end_smooth();
@@ -491,19 +496,22 @@ namespace g3 {
 
 
 
-		void FullSmoothPass_InPlace() {
+
+
+
+		void FullSmoothPass_InPlace(bool bParallel) {
             Func<DMesh3, int, double, Vector3d> smoothFunc = MeshUtil.UniformSmooth;
             if (SmoothType == SmoothTypes.MeanValue)
                 smoothFunc = MeshUtil.MeanValueSmooth;
             else if (SmoothType == SmoothTypes.Cotan)
                 smoothFunc = MeshUtil.CotanSmooth;
 
-			foreach ( int vID in mesh.VertexIndices() ) {
+            Action<int> smooth = (vID) => {
                 VertexConstraint vc = get_vertex_constraint(vID);
-                if ( vc.Fixed )
-                    continue;
+                if (vc.Fixed)
+                    return;
 
-				Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
+                Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
 
                 // project onto either vtx constraint target, or surface target
                 if (vc.Target != null) {
@@ -512,10 +520,16 @@ namespace g3 {
                     vSmoothed = target.Project(vSmoothed, vID);
                 }
 
-				mesh.SetVertex( vID, vSmoothed );
-			}
-		}
+                mesh.SetVertex(vID, vSmoothed);
+            };
 
+            if (bParallel) {
+                gParallel.ForEach<int>(mesh.VertexIndices(), smooth);
+            } else {
+                foreach ( int vID in mesh.VertexIndices() )
+                    smooth(vID);
+            }
+		}
 
 
 
