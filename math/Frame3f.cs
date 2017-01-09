@@ -217,6 +217,15 @@ namespace g3
         }
 
 
+
+        public static Frame3f Interpolate(Frame3f f1, Frame3f f2, float alpha)
+        {
+            return new Frame3f(
+                Vector3f.Lerp(f1.origin, f2.origin, alpha),
+                Quaternionf.Slerp(f1.rotation, f2.rotation, alpha) );
+        }
+
+
         public override string ToString() {
             return ToString("F4");
         }
