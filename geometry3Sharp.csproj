@@ -84,6 +84,7 @@
     <Compile Include="io\StandardMeshWriter.cs" />
     <Compile Include="mesh\MeshConstraints.cs" />
     <Compile Include="mesh\MeshGenerators.cs" />
+    <Compile Include="mesh\MeshMeasurements.cs" />
     <Compile Include="mesh\PlaneGenerators.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="mesh\SimpleMesh.cs" />

@@ -484,18 +484,41 @@ namespace g3
 
         // iterators
 
-        public System.Collections.Generic.IEnumerable<int> VertexIndices() {
+        public IEnumerable<int> VertexIndices() {
             foreach (int vid in vertices_refcount)
                 yield return vid;
         }
-        public System.Collections.Generic.IEnumerable<int> TriangleIndices() {
+        public IEnumerable<int> TriangleIndices() {
             foreach (int tid in triangles_refcount)
                 yield return tid;
         }
-        public System.Collections.Generic.IEnumerable<int> EdgeIndices() {
+        public IEnumerable<int> EdgeIndices() {
             foreach (int eid in edges_refcount)
                 yield return eid;
         }
+
+
+        public IEnumerable<Vector3d> Vertices() {
+            foreach (int vid in vertices_refcount) {
+                int i = 3 * vid;
+                yield return new Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
+            }
+        }
+        public IEnumerable<Index3i> Triangles() {
+            foreach (int tid in triangles_refcount) {
+                int i = 3 * tid;
+                yield return new Index3i(triangles[i], triangles[i + 1], triangles[i + 2]);
+            }
+        }
+
+        // return value is [v0,v1,t0,t1], where t1 will be InvalidID if this is a boundary edge
+        public IEnumerable<Index4i> Edges() {
+            foreach (int eid in edges_refcount) {
+                int i = 4 * eid;
+                yield return new Index4i(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]);
+            }
+        }
+
 
         // queries
 

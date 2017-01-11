@@ -19,6 +19,14 @@ namespace g3
                 m = new float[9] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         }
 
+        // assumes input is row-major...
+        public Matrix3f(float[,] mat) {
+            m = new float[9] { mat[0, 0], mat[0, 1], mat[0, 2], mat[1, 0], mat[1, 1], mat[1, 2], mat[2, 0], mat[2, 1], mat[2, 2] };
+        }
+        public Matrix3f(double[,] mat) {
+            m = new float[9] { (float)mat[0, 0], (float)mat[0, 1], (float)mat[0, 2], (float)mat[1, 0], (float)mat[1, 1], (float)mat[1, 2], (float)mat[2, 0], (float)mat[2, 1], (float)mat[2, 2] };
+        }
+
 
         public static readonly Matrix3f Identity = new Matrix3f(true);
         public static readonly Matrix3f Zero = new Matrix3f(false);
