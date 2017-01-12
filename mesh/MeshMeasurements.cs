@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace g3
 {
@@ -147,6 +146,39 @@ namespace g3
                 (vID) => { return mesh.GetVertex(vID); },
                 out mass, out center, out inertia3x3, false);
         }
+
+
+
+
+        public static Vector3d Centroid(IEnumerable<Vector3d> vertices)
+        {
+            Vector3d centroid = Vector3d.Zero;
+            int N = 0;
+            foreach (Vector3d v in vertices) {
+                centroid += v;
+                N++;
+            }
+            return centroid / (double)N;
+        }
+
+
+        public static Vector3d Centroid(DMesh3 mesh, bool bOnlyTriVertices = true)
+        {
+            if (bOnlyTriVertices) {
+                Vector3d centroid = Vector3d.Zero;
+                int N = 0;
+                foreach (int vid in mesh.VertexIndices()) {
+                    if (mesh.GetVtxEdgeCount(vid) > 0) {
+                        centroid += mesh.GetVertex(vid);
+                        N++;
+                    }
+                }
+                return centroid / (double)N;
+            } else
+                return Centroid(mesh.Vertices());
+        }
+
+
 
     }
 }
