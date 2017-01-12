@@ -103,5 +103,35 @@ namespace g3
 
 
 
+        public static string GetShortString(Linear unit)
+        {
+            switch (unit) {
+                case Linear.Nanometers:
+                    return "nm";
+                case Linear.Microns:
+                    return "um";
+                case Linear.Millimeters:
+                    return "mm";
+                case Linear.Centimeters:
+                    return "cm";
+                case Linear.Meters:
+                    return "m";
+                case Linear.Kilometers:
+                    return "km";
+
+                case Linear.Inches:
+                    return "in";
+                case Linear.Feet:
+                    return "ft";
+                case Linear.Yards:
+                    return "yd";
+                case Linear.Miles:
+                    return "mi";
+            }
+            throw new Exception("Units.GetShortString: unhandled unit type!");
+        }
+
+
+
     }
 }
