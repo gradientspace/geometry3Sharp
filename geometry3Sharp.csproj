@@ -53,6 +53,10 @@
     <Compile Include="curve\Circle2.cs" />
     <Compile Include="curve\Ellipse2.cs" />
     <Compile Include="curve\NURBSCurve2.cs" />
+    <Compile Include="distance\DistPoint2Box2.cs" />
+    <Compile Include="distance\DistSegment2Segment2.cs" />
+    <Compile Include="distance\DistLine2Segment2.cs" />
+    <Compile Include="distance\DistLine2Line2.cs" />
     <Compile Include="distance\DistPoint2Circle2.cs" />
     <Compile Include="distance\DistPoint3Cylinder3.cs" />
     <Compile Include="distance\DistPoint3Circle3.cs" />

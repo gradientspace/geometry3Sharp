@@ -47,6 +47,8 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 - 2D Distances:
 	- point/curve: **DistPoint2Circle2**
+	- point/area:  **DistPoint2Box2**
+	- linear/linear: **DistLine2Line2**, **DistLine2Segment2**, **DistSegment2Segment2**
 - 3D Distances: 
     - point/area: **DistPoint3Triangle3**
 	- point/curve: **DistPoint3Circle3**
