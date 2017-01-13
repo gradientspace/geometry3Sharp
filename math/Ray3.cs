@@ -34,8 +34,22 @@ namespace g3
         public double DistanceSquared(Vector3d p)
         {
             double t = (p - Origin).Dot(Direction);
-            Vector3d proj = Origin + t * Direction;
-            return (proj - p).LengthSquared;
+            if (t < 0) {
+                return Origin.DistanceSquared(p);
+            } else {
+                Vector3d proj = Origin + t * Direction;
+                return (proj - p).LengthSquared;
+            }
+        }
+
+        public Vector3d ClosestPoint(Vector3d p)
+        {
+            double t = (p - Origin).Dot(Direction);
+            if (t < 0) {
+                return Origin;
+            } else {
+                return Origin + t * Direction;
+            }
         }
 
 

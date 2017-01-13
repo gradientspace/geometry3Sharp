@@ -6,7 +6,7 @@ namespace g3
     public interface ISpatial
     {
         bool SupportsNearestTriangle { get; }
-        int FindNearestTriangle(Vector3d p);
+        int FindNearestTriangle(Vector3d p, double fMaxDist = double.MaxValue);
     }
 
 

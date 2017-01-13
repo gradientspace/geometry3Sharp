@@ -77,13 +77,13 @@ namespace g3
 
 
         public bool SupportsNearestTriangle { get { return true; } }
-        public int FindNearestTriangle(Vector3d p)
+        public int FindNearestTriangle(Vector3d p, double fMaxDist = double.MaxValue)
         {
             if (mesh_timestamp != mesh.Timestamp)
                 throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
 
-            double fNearestSqr = double.MaxValue;
-            int tNearID = -1;
+            double fNearestSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
+            int tNearID = DMesh3.InvalidID;
             find_nearest_tri(root_index, p, ref fNearestSqr, ref tNearID);
             return tNearID;
         }
