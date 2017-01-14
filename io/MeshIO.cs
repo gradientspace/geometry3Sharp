@@ -21,7 +21,11 @@ namespace g3
         GenericReaderWarning = 103,
 
         // write errors
-        WriterError = 200
+        WriterError = 200,
+
+
+        // other status
+        ComputingInWorkerThread = 1000
     }
 
     public class ReadOptions
