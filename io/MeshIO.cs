@@ -62,9 +62,9 @@ namespace g3
         public IOWriteResult( IOCode r, string s ) { code = r;  message = s; if (message == "") message = "(no message)"; }
     }
 
-    public class WriteOptions
+    public struct WriteOptions
     {
-        public bool bWriteBinary;        // currently unused
+        public bool bWriteBinary;        
 
         public bool bPerVertexNormals;
         public bool bPerVertexColors;
@@ -74,18 +74,16 @@ namespace g3
 
         public int RealPrecisionDigits;
 
-        public WriteOptions()
-        {
-            bWriteBinary = false;
+        public static readonly WriteOptions Defaults = new WriteOptions() {
+            bWriteBinary = false,
+            bPerVertexNormals = false,
+            bPerVertexColors = false,
+            bWriteGroups = false,
+            bCombineMeshes = false,
 
-            bPerVertexNormals = false;
-            bPerVertexColors = false;
-            bWriteGroups = false;
-            bCombineMeshes = false;
-
-            RealPrecisionDigits = 15;       // double
-            //RealPrecisionDigits = 7;        // float
-        }
+            RealPrecisionDigits = 15       // double
+            //RealPrecisionDigits = 7        // float
+        };
     }
 
 
