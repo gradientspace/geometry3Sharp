@@ -24,6 +24,13 @@ namespace g3
         public const float Epsilonf = 1.192092896e-07F;
 
 
+        public static bool EpsilonEqual(double a, double b, double epsilon) {
+            return Math.Abs(a - b) < epsilon;
+        }
+        public static bool EpsilonEqual(float a, float b, float epsilon) {
+            return (float)Math.Abs(a - b) < epsilon;
+        }
+
         // ugh C# generics so limiting...
         public static T Clamp<T>(T f, T low, T high) where T : IComparable
         {
