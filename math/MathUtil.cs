@@ -74,10 +74,51 @@ namespace g3
         }
 
 
+         // clamps theta to angle interval [min,max]. should work for any theta,
+        // regardless of cycles, however min & max values should be in range
+        // [-360,360] and min < max
+        public static double ClampAngleDeg(double theta, double min, double max)
+        {
+            // convert interval to center/extent - [c-e,c+e]
+            double c = (min+max)*0.5;
+            double e = max-c;
+
+            // get rid of extra rotations
+            theta = theta % 360;
+
+            // shift to origin, then convert theta to +- 180
+            theta -= c;
+            if ( theta < -180 )
+                theta += 360;
+            else if ( theta > 180 )
+                theta -= 360;
+
+            // clamp to extent
+            if ( theta < -e )
+                theta = -e;
+            else if ( theta > e )
+                theta = e;
+
+            // shift back
+            return theta + c;
+        }
+
+
+
         // there are fast approximations to this...
         public static double InvSqrt(double f)
         {
             return f / Math.Sqrt(f);
+        }
+
+
+        // normal Atan2 returns in range [-pi,pi], this shifts to [0,2pi]
+        public static double Atan2Positive(double y, double x)
+        {
+            double theta = Math.Atan2(y, x);
+            if (theta < 0)
+                theta = (2 * Math.PI) + theta;
+            return theta;
         }
 
 
