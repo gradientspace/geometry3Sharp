@@ -51,6 +51,33 @@ namespace g3
 
 
 
+        public double Distance(Vector2d point)
+        {
+            double d0 = (Arc1IsSegment) ?
+                Math.Sqrt(Segment1.DistanceSquared(point)) : Arc1.Distance(point);
+            double d1 = (Arc2IsSegment) ?
+                Math.Sqrt(Segment2.DistanceSquared(point)) : Arc2.Distance(point);
+            return Math.Min(d0, d1);
+        }
+        public Vector2d NearestPoint(Vector2d point)
+        {
+            Vector2d n1 = (Arc1IsSegment) ?
+                Segment1.NearestPoint(point) : Arc1.NearestPoint(point);
+            Vector2d n2 = (Arc2IsSegment) ?
+                Segment2.NearestPoint(point) : Arc2.NearestPoint(point);
+            return (n1.SquaredDist(point) < n2.SquaredDist(point)) ? n1 : n2;
+        }
+
+        public List<IParametricCurve2d> Curves {
+            get {
+                return new List<IParametricCurve2d>() {
+                    (Arc1IsSegment) ? (IParametricCurve2d)Segment1 : (IParametricCurve2d)Arc1,
+                    (Arc2IsSegment) ? (IParametricCurve2d)Segment2 : (IParametricCurve2d)Arc2
+                };
+            }
+        }
+
+
 
         struct Arc
         {
