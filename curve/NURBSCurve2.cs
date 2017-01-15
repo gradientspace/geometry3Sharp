@@ -384,6 +384,10 @@ namespace g3
             return GetPosition(t);
         }
 
+        public Vector2d TangentT(double t) {
+            return GetFirstDerivative(t).Normalized;
+        }
+
 		public bool HasArcLength {
             get { return true; }
         }

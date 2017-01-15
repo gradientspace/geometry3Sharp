@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace g3 
 {
-	public class ParametricCurveSequence2 : IParametricCurve2d
+	public class ParametricCurveSequence2 : IParametricCurve2d, IMultiCurve2d
 	{
 
 		List<IParametricCurve2d> curves;
@@ -59,6 +59,21 @@ namespace g3
 			}
 			throw new ArgumentException("ParametricCurveSequence2.SampleT: argument out of range");
 		}
+
+		public Vector2d TangentT(double t) {
+			double sum = 0;
+			for ( int i = 0; i < Curves.Count; ++i ) {
+				double l = curves[i].ParamLength;
+				if (t <= sum+l) {
+					double ct = (t - sum);
+					return curves[i].TangentT(ct);
+				}
+				sum += l;
+			}
+			throw new ArgumentException("ParametricCurveSequence2.SampleT: argument out of range");
+		}
+
+
 
 		public bool HasArcLength { get { 
 				foreach ( var c in Curves )

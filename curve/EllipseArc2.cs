@@ -80,6 +80,35 @@ namespace g3 {
 		}
 
 
+		// t in range[0,1] spans ellipse
+		public Vector2d TangentT(double t) {
+			double theta = (IsReversed) ?
+				(1-t)*AngleEndDeg + (t)*AngleStartDeg : 
+				(1-t)*AngleStartDeg + (t)*AngleEndDeg;
+			theta = theta * MathUtil.Deg2Rad;	
+			double cost = Math.Cos(theta);
+			double sint = Math.Sin(theta);
+
+			// [RMS] adapted this formula from dxf.net. 
+			double a = this.Extent.x, b = this.Extent.y;
+			double a1 = a * sint;
+			double b1 = b * cost;
+
+            double k = a1 * a1 + b1 * b1;
+            double d = Math.Sqrt(k);
+            double k1 = (-a * b * sint) * d;
+            double ddt = 0.5 * (1 / d) * ((2 * a * a * sint * cost) - (2 * b * b * cost * sint));
+            double k2 = ddt * (a * b * cost);
+
+            double dx = ( (-a * b * sint) * d  -  ddt * (a * b * cost) ) / k;
+            double dy = ( ( a * b * cost) * d  -  ddt * (a * b * sint) ) / k;
+
+            Vector2d tangent = dx * Axis0 + dy * Axis1;
+            tangent.Normalize();
+            return tangent;
+		}
+
+
 
 		// [TODO] could use RombergIntegral like BaseCurve2, but need
 		// first-derivative function

@@ -52,6 +52,15 @@ namespace g3
 			return new Vector2d(Center.x + Radius*c, Center.y + Radius*s);
 		}
 
+        public Vector2d TangentT(double t)
+        {
+			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
+            Vector2d tangent = new Vector2d(-Math.Sin(theta), Math.Cos(theta));
+            tangent.Normalize();
+            return tangent;
+        }
+
+
 		public bool HasArcLength { get {return true;} }
 
 		public double ArcLength {
@@ -82,6 +91,18 @@ namespace g3
 		}
         public double Area {
             get { return Math.PI * Radius * Radius; }
+        }
+
+
+        public double SignedDistance(Vector2d pt)
+        {
+            double d = Center.Dist(pt);
+            return d - Radius;
+        }
+        public double Distance(Vector2d pt)
+        {
+            double d = Center.Dist(pt);
+            return Math.Abs(d - Radius);
         }
 
     }

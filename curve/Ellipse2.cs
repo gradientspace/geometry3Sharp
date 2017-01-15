@@ -243,12 +243,23 @@ namespace g3
 			get { return 1.0f; }
 		}
 
-		// t in range[0,1] spans arc
+		// t in range[0,1] spans ellipse
 		public Vector2d SampleT(double t) {
 			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
 			double c = Math.Cos(theta), s = Math.Sin(theta);
             return Center + (Extent.x * c * Axis0) + (Extent.y * s * Axis1);
 		}
+
+		// t in range[0,1] spans ellipse
+		public Vector2d TangentT(double t) {
+			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
+			double c = Math.Cos(theta), s = Math.Sin(theta);
+            Vector2d tangent = -Extent.x * s * Axis0 + Extent.y * c * Axis1;
+            tangent.Normalize();
+            return tangent;
+		}
+
+
 
 
         // [TODO] could use RombergIntegral like BaseCurve2, but need

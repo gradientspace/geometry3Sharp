@@ -89,6 +89,12 @@ namespace g3
 		}
 
 
+        public void Remove(Element e)
+        {
+            vElements.Remove(e);
+        }
+
+
 		void UpdateSampling(SmoothCurveElement c) {
 			c.polyLine = new PolyLine2d( 
                 CurveSampler2.AutoSample(c.source, DistanceAccuracy, SpacingT) );
@@ -352,17 +358,52 @@ namespace g3
 
 
 
-		public void PrintStats() {
-			System.Console.WriteLine("PlanarComplex Stats");
+		public void PrintStats(string label = "") {
+			System.Console.WriteLine("PlanarComplex Stats {0}", label);
 			List<SmoothLoopElement> Loops = new List<SmoothLoopElement>(LoopsItr());
 			List<SmoothCurveElement> Curves = new List<SmoothCurveElement>(CurvesItr());
+
 
 			System.Console.WriteLine("  Closed Loops: " + Loops.Count.ToString());
 			System.Console.WriteLine("  Open Curves: " + Curves.Count.ToString());
 
 			List<ComplexEndpoint2d> vEndpoints = new List<ComplexEndpoint2d>(EndpointsItr());
 			System.Console.WriteLine("  Open Endpoints: " + vEndpoints.Count.ToString());
+
+            int nSegments = CountType( typeof(Segment2d) );
+            int nArcs = CountType(typeof(Arc2d));
+            int nCircles = CountType(typeof(Circle2d));
+            int nNURBS = CountType(typeof(NURBSCurve2));
+            int nEllipses = CountType(typeof(Ellipse2d));
+            int nEllipseArcs = CountType(typeof(EllipseArc2d));
+            int nSeqs = CountType(typeof(ParametricCurveSequence2));
+            System.Console.WriteLine("  Type Counts: ");
+            System.Console.WriteLine("    segments {0,4}  arcs     {1,4}  circles      {2,4}", nSegments, nArcs, nCircles);
+            System.Console.WriteLine("    nurbs    {0,4}  ellipses {1,4}  ellipse-arcs {2,4}", nNURBS, nEllipses, nEllipseArcs);
+            System.Console.WriteLine("    multi    {0,4}  ", nSeqs);
 		}
+        public int CountType(Type t)
+        {
+            int count = 0;
+            foreach (SmoothLoopElement loop in LoopsItr()) {
+                if (loop.source.GetType() == t)
+                    count++;
+                if (loop.source is IMultiCurve2d)
+                    count += CountType(loop.source as IMultiCurve2d, t);
+            }
+            return count;
+        }
+        public int CountType(IMultiCurve2d curve, Type t)
+        {
+            int count = 0;
+            foreach ( IParametricCurve2d c in curve.Curves ) {
+                if (c.GetType() == t)
+                    count++;
+                if (c is IMultiCurve2d)
+                    count += CountType(c as IMultiCurve2d, t);
+            }
+            return count;
+        }
 
 	}
 }

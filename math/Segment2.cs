@@ -63,6 +63,15 @@ namespace g3
 			return (proj - p).LengthSquared;
 		}
 
+        public Vector2d NearestPoint(Vector2d p)
+        {
+			double t = (p - Center).Dot(Direction);
+            if (t >= Extent)
+                return P1;
+            if (t <= -Extent)
+                return P0;
+			return Center + t * Direction;
+        }
 
 		// IParametricCurve2d interface
 
@@ -73,6 +82,10 @@ namespace g3
 		// t in range[0,1] spans arc
 		public Vector2d SampleT(double t) {
 			return Center + (2 * t - 1) * Extent * Direction;
+		}
+
+		public Vector2d TangentT(double t) {
+            return Direction;
 		}
 
 		public bool HasArcLength { get { return true; } }
