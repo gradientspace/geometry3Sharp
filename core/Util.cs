@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 
 namespace g3
@@ -61,6 +62,13 @@ namespace g3
 
 
 
+        public static string MakeVec3FormatString(int i0, int i1, int i2, int nPrecision)
+        {
+            return string.Format("{{{0}:F{3}}} {{{1}:F{3}}} {{{2}:F{3}}}", i0, i1, i2, nPrecision);
+        }
+
+
+
         static public string ToSecMilli(TimeSpan t)
         {
 #if G3_USING_UNITY
@@ -69,6 +77,31 @@ namespace g3
             return t.ToString("ss\\.ffff");
 #endif
         }
+
+
+
+
+        // conversion to/from bytes
+        public static byte[] StructureToByteArray(object obj)
+        {
+            int len = Marshal.SizeOf(obj);
+            byte[] arr = new byte[len];
+            IntPtr ptr = Marshal.AllocHGlobal(len);
+            Marshal.StructureToPtr(obj, ptr, true);
+            Marshal.Copy(ptr, arr, 0, len);
+            Marshal.FreeHGlobal(ptr);
+            return arr;
+        }
+
+        public static void ByteArrayToStructure(byte[] bytearray, ref object obj)
+        {
+            int len = Marshal.SizeOf(obj);
+            IntPtr i = Marshal.AllocHGlobal(len);
+            Marshal.Copy(bytearray, 0, i, len);
+            obj = Marshal.PtrToStructure(i, obj.GetType());
+            Marshal.FreeHGlobal(i);
+        }
+
 
     }
 

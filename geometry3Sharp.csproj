@@ -65,6 +65,7 @@
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="io\MaterialTypes.cs" />
+    <Compile Include="io\STLWriter.cs" />
     <Compile Include="math\Frame3f.cs" />
     <Compile Include="math\IndexTypes.cs" />
     <Compile Include="math\IndexUtil.cs" />

@@ -119,7 +119,7 @@ namespace g3
                 emit_warning("[OBJReader] starting parse");
 
             var parseResult = ParseInput(reader, options);
-            if (parseResult.result != ReadResult.Ok)
+            if (parseResult.code != IOCode.Ok)
                 return parseResult;
 
             if (nWarningLevel >= 1)
@@ -132,10 +132,10 @@ namespace g3
             if (nWarningLevel >= 1)
                 emit_warning("[OBJReader] build complete.");
 
-            if (buildResult.result != ReadResult.Ok)
+            if (buildResult.code != IOCode.Ok)
                 return buildResult;
 
-            return new IOReadResult(ReadResult.Ok, "");
+            return new IOReadResult(IOCode.Ok, "");
         }
 
 
@@ -211,9 +211,9 @@ namespace g3
         unsafe IOReadResult BuildMeshes_Simple(ReadOptions options, IMeshBuilder builder)
         {
             if (vPositions.Length == 0)
-                return new IOReadResult(ReadResult.GarbageDataError, "No vertices in file");
+                return new IOReadResult(IOCode.GarbageDataError, "No vertices in file");
             if (vTriangles.Length == 0)
-                return new IOReadResult(ReadResult.GarbageDataError, "No triangles in file");
+                return new IOReadResult(IOCode.GarbageDataError, "No triangles in file");
 
             // [TODO] support non-per-vertex normals/colors
             bool bHaveNormals = (vNormals.Length == vPositions.Length);
@@ -241,7 +241,7 @@ namespace g3
                 builder.AssignMaterial(matID, meshID);
             }
 
-            return new IOReadResult(ReadResult.Ok, "");
+            return new IOReadResult(IOCode.Ok, "");
         }
 
 
@@ -252,9 +252,9 @@ namespace g3
         unsafe IOReadResult BuildMeshes_ByMaterial(ReadOptions options, IMeshBuilder builder)
         {
             if (vPositions.Length == 0)
-                return new IOReadResult(ReadResult.GarbageDataError, "No vertices in file");
+                return new IOReadResult(IOCode.GarbageDataError, "No vertices in file");
             if (vTriangles.Length == 0)
-                return new IOReadResult(ReadResult.GarbageDataError, "No triangles in file");
+                return new IOReadResult(IOCode.GarbageDataError, "No triangles in file");
 
             bool bHaveNormals = (vNormals.Length > 0);
             bool bHaveColors = (vColors.Length > 0);
@@ -302,7 +302,7 @@ namespace g3
                     builder.AssignMaterial(matID, meshID);
             }
 
-            return new IOReadResult(ReadResult.Ok, "");
+            return new IOReadResult(IOCode.Ok, "");
         }
 
 
@@ -403,8 +403,8 @@ namespace g3
                         string sFile = FindMTLFile(tokens[1]);
                         if (sFile != null) {
                             IOReadResult result = ReadMaterials(sFile);
-                            if (result.result != ReadResult.Ok)
-                                emit_warning("error parsing " + sFile + " : " + result.info);
+                            if (result.code != IOCode.Ok)
+                                emit_warning("error parsing " + sFile + " : " + result.message);
                         } else
                             emit_warning("material file " + sFile + " could not be found in material search paths");
 
@@ -422,7 +422,7 @@ namespace g3
             m_bOBJHasPerVertexColors = bVerticesHaveColors;
             m_nUVComponents = nMaxUVLength;
 
-            return new IOReadResult(ReadResult.Ok, "");
+            return new IOReadResult(IOCode.Ok, "");
         }
 
 
@@ -556,9 +556,9 @@ namespace g3
             try {
                 reader = new StreamReader(sPath);
                 if (reader.EndOfStream)
-                    return new IOReadResult(ReadResult.FileAccessError, "");
+                    return new IOReadResult(IOCode.FileAccessError, "");
             } catch {
-                return new IOReadResult(ReadResult.FileAccessError, "");
+                return new IOReadResult(IOCode.FileAccessError, "");
             }
 
 
@@ -640,7 +640,7 @@ namespace g3
             if (nWarningLevel >= 1)
                 emit_warning("[OBJReader] ReadMaterials completed");
 
-            return new IOReadResult(ReadResult.Ok, "ok");
+            return new IOReadResult(IOCode.Ok, "ok");
 		}
 
 

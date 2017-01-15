@@ -7,15 +7,25 @@ using System.IO;
 namespace g3
 {
 
-    public enum ReadResult
+    public enum IOCode
     {
         Ok = 0,
+
         FileAccessError = 1,
         UnknownFormatError = 2,
-        FileParsingError = 3,
-        GarbageDataError = 4,
-        GenericReaderError = 5,
-        GenericReaderWarning = 6
+
+        // read errors
+        FileParsingError = 100,
+        GarbageDataError = 101,
+        GenericReaderError = 102,
+        GenericReaderWarning = 103,
+
+        // write errors
+        WriterError = 200,
+
+
+        // other status
+        ComputingInWorkerThread = 1000
     }
 
     public class ReadOptions
@@ -30,9 +40,9 @@ namespace g3
 
     public struct IOReadResult
     {
-        public ReadResult result { get; set; }
-        public string info { get; set; }
-        public IOReadResult(ReadResult r, string s) { result = r; info = s; if (info == "") info = "(no message)"; }
+        public IOCode code { get; set; }
+        public string message { get; set; }
+        public IOReadResult(IOCode r, string s) { code = r; message = s; if (message == "") message = "(no message)"; }
     }
 
 
@@ -45,45 +55,53 @@ namespace g3
 
 
 
-
-    public enum WriteResult
-    {
-        Ok = 0,
-        FileAccessError = 1,
-        UnknownFormatError = 2,
-        WriterError = 3
-    }
-
     public struct IOWriteResult
     {
-        public WriteResult result { get; set; }
-        public string info { get; set; }
-        public IOWriteResult( WriteResult r, string s ) { result = r;  info = s; if (info == "") info = "(no message)"; }
+        public IOCode code { get; set; }
+        public string message { get; set; }
+        public IOWriteResult( IOCode r, string s ) { code = r;  message = s; if (message == "") message = "(no message)"; }
     }
 
-    public class WriteOptions
+    public struct WriteOptions
     {
-        //bool bWriteBinary;        // currently unused
+        public bool bWriteBinary;        
 
         public bool bPerVertexNormals;
         public bool bPerVertexColors;
         public bool bWriteGroups;
 
-        public WriteOptions()
-        {
-            //bWriteBinary = false;
+        public bool bCombineMeshes;     // some STL readers do not handle multiple solids...
 
-            bPerVertexNormals = false;
-            bPerVertexColors = false;
-            bWriteGroups = false;
+        public int RealPrecisionDigits;
+
+        public static readonly WriteOptions Defaults = new WriteOptions() {
+            bWriteBinary = false,
+            bPerVertexNormals = false,
+            bPerVertexColors = false,
+            bWriteGroups = false,
+            bCombineMeshes = false,
+
+            RealPrecisionDigits = 15       // double
+            //RealPrecisionDigits = 7        // float
+        };
+    }
+
+
+    public struct WriteMesh
+    {
+        public IMesh Mesh;
+        public string Name;        // supported by some formats
+
+        public WriteMesh(IMesh mesh, string name = "") {
+            Mesh = mesh; Name = name;
         }
     }
 
     
     public interface IMeshWriter
     {
-        IOWriteResult Write(TextWriter writer, List<IMesh> vMeshes, WriteOptions options);
-        IOWriteResult Write(BinaryWriter writer, List<IMesh> vMeshes, WriteOptions options);
+        IOWriteResult Write(TextWriter writer, List<WriteMesh> vMeshes, WriteOptions options);
+        IOWriteResult Write(BinaryWriter writer, List<WriteMesh> vMeshes, WriteOptions options);
     }
 
 

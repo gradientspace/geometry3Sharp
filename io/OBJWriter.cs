@@ -8,7 +8,7 @@ namespace g3
 {
     public class OBJWriter : IMeshWriter
     {
-        public IOWriteResult Write(BinaryWriter writer, List<IMesh> vMeshes, WriteOptions options)
+        public IOWriteResult Write(BinaryWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
         {
             // [RMS] not supported
             throw new NotImplementedException();
@@ -16,13 +16,13 @@ namespace g3
 
 
 
-        public IOWriteResult Write(TextWriter writer, List<IMesh> vMeshes, WriteOptions options)
+        public IOWriteResult Write(TextWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
         {
             int nAccumCountV = 1;       // OBJ indices always start at 1
 
             for (int mi = 0; mi < vMeshes.Count; ++mi) {
 
-                IMesh mesh = vMeshes[mi];
+                IMesh mesh = vMeshes[mi].Mesh;
                 bool bVtxColors = options.bPerVertexColors && mesh.HasVertexColors;
                 bool bNormals = options.bPerVertexNormals && mesh.HasVertexNormals;
 
@@ -52,7 +52,7 @@ namespace g3
             }
 
 
-            return new IOWriteResult(WriteResult.Ok, "");
+            return new IOWriteResult(IOCode.Ok, "");
         }
 
 

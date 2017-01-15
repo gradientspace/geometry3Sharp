@@ -31,11 +31,11 @@ namespace g3
                 try {
                     return Read_OBJ(sFilename, options);
                 } catch (Exception e) {
-                    return new IOReadResult(ReadResult.GenericReaderError, "caught exception : " + e.Message);
+                    return new IOReadResult(IOCode.GenericReaderError, "caught exception : " + e.Message);
                 }
 
             } else
-                return new IOReadResult(ReadResult.UnknownFormatError, "cannot read file format " + sExtension);
+                return new IOReadResult(IOCode.UnknownFormatError, "cannot read file format " + sExtension);
 
         }
 
@@ -49,7 +49,7 @@ namespace g3
         {
             StreamReader stream = new StreamReader(sFilename);
             if (stream.BaseStream == null)
-                return new IOReadResult(ReadResult.FileAccessError, "Could not open file " + sFilename + " for writing");
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
 
             OBJReader reader = new OBJReader();
             if (options.ReadMaterials)
