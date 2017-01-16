@@ -45,20 +45,13 @@ namespace g3
 			return Center + (2 * t - 1) * Extent * Direction;
 		}
 
-        void update_from_endpoints(Vector2d p0, Vector2d p1)
-        {
-            Center = 0.5 * (p0 + p1);
-            Direction = p1 - p0;
-            Extent = 0.5 * Direction.Normalize();
-        }
-
 		public double DistanceSquared(Vector2d p)
 		{
 			double t = (p - Center).Dot(Direction);
 			if ( t >= Extent )
-				return P1.SquaredDist(p);
+				return P1.DistanceSquared(p);
 			else if ( t <= -Extent )
-				return P0.SquaredDist(p);
+				return P0.DistanceSquared(p);
 			Vector2d proj = Center + t * Direction;
 			return (proj - p).LengthSquared;
 		}
@@ -72,6 +65,19 @@ namespace g3
                 return P0;
 			return Center + t * Direction;
         }
+
+        public double Project(Vector2d p)
+        {
+            return (p - Center).Dot(Direction);
+        }
+
+        void update_from_endpoints(Vector2d p0, Vector2d p1)
+        {
+            Center = 0.5 * (p0 + p1);
+            Direction = p1 - p0;
+            Extent = 0.5 * Direction.Normalize();
+        }
+
 
 		// IParametricCurve2d interface
 
@@ -135,6 +141,44 @@ namespace g3
             get { return Center + Extent * Direction; }
             set { update_from_endpoints(P0, value); }
         }
+
+
+		// parameter is signed distance from center in direction
+		public Vector2f PointAt(float d) {
+			return Center + d * Direction;
+		}
+
+		// t ranges from [0,1] over [P0,P1]
+		public Vector2f PointBetween(float t) {
+			return Center + (2.0f * t - 1.0f) * Extent * Direction;
+		}
+
+		public float DistanceSquared(Vector2f p)
+		{
+			float t = (p - Center).Dot(Direction);
+			if ( t >= Extent )
+				return P1.DistanceSquared(p);
+			else if ( t <= -Extent )
+				return P0.DistanceSquared(p);
+			Vector2f proj = Center + t * Direction;
+			return (proj - p).LengthSquared;
+		}
+
+        public Vector2f NearestPoint(Vector2f p)
+        {
+			float t = (p - Center).Dot(Direction);
+            if (t >= Extent)
+                return P1;
+            if (t <= -Extent)
+                return P0;
+			return Center + t * Direction;
+        }
+
+        public float Project(Vector2f p)
+        {
+            return (p - Center).Dot(Direction);
+        }
+
 
 
         void update_from_endpoints(Vector2f p0, Vector2f p1)

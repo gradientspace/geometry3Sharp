@@ -101,7 +101,7 @@ namespace g3 {
                     theta = MathUtil.Clamp(theta, AngleStartDeg * MathUtil.Deg2Rad, AngleEndDeg * MathUtil.Deg2Rad);
                     double c = Math.Cos(theta), s = Math.Sin(theta);
                     Vector2d pos = new Vector2d(Center.x + Radius * c, Center.y + Radius * s);
-                    return pos.Dist(point);
+                    return pos.Distance(point);
                 } else {
                     return Math.Abs(lengthPmC - Radius);
                 }

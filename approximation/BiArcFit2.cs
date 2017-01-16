@@ -65,7 +65,7 @@ namespace g3
                 Segment1.NearestPoint(point) : Arc1.NearestPoint(point);
             Vector2d n2 = (Arc2IsSegment) ?
                 Segment2.NearestPoint(point) : Arc2.NearestPoint(point);
-            return (n1.SquaredDist(point) < n2.SquaredDist(point)) ? n1 : n2;
+            return (n1.DistanceSquared(point) < n2.DistanceSquared(point)) ? n1 : n2;
         }
 
         public List<IParametricCurve2d> Curves {
@@ -138,9 +138,9 @@ namespace g3
             // [RMS] code above does not preserve CW/CCW of arcs. 
             //  It would be better to fix that. But for now, just check if
             //  we preserved start and end points, and if not reverse curves.
-            if ( i == 0 && arc.SampleT(0.0).SquaredDist(Point1) > MathUtil.ZeroTolerance ) 
+            if ( i == 0 && arc.SampleT(0.0).DistanceSquared(Point1) > MathUtil.ZeroTolerance ) 
                 arc.Reverse();
-            if (i == 1 && arc.SampleT(1.0).SquaredDist(Point2) > MathUtil.ZeroTolerance)
+            if (i == 1 && arc.SampleT(1.0).DistanceSquared(Point2) > MathUtil.ZeroTolerance)
                 arc.Reverse();
 
             return arc;
@@ -193,7 +193,7 @@ namespace g3
             bool perpT1 = MathUtil.EpsilonEqual(vDotT1, 0.0, Epsilon );
             if (equalTangents && perpT1) {
                 // we have two semicircles
-                Vector2d joint = p1 + 0.5 * v;
+                //Vector2d joint = p1 + 0.5 * v;
 
                 // d1 = d2 = infinity here...
 

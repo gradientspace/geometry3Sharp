@@ -14,7 +14,7 @@ namespace g3
 	public class PlanarSolid2d 
 	{
 		IParametricCurve2d outer;
-		bool bOuterIsCW;
+		//bool bOuterIsCW;
 
 		List<IParametricCurve2d> holes = new List<IParametricCurve2d>();
 
@@ -30,7 +30,7 @@ namespace g3
         {
             Debug.Assert(loop.IsClosed);
             outer = loop;
-            bOuterIsCW = bIsClockwise;
+            //bOuterIsCW = bIsClockwise;
         }
 
 

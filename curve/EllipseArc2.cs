@@ -108,9 +108,9 @@ namespace g3 {
 
             double k = a1 * a1 + b1 * b1;
             double d = Math.Sqrt(k);
-            double k1 = (-a * b * sint) * d;
+            //double k1 = (-a * b * sint) * d;
             double ddt = 0.5 * (1 / d) * ((2 * a * a * sint * cost) - (2 * b * b * cost * sint));
-            double k2 = ddt * (a * b * cost);
+            //double k2 = ddt * (a * b * cost);
 
             double dx = ( (-a * b * sint) * d  -  ddt * (a * b * cost) ) / k;
             double dy = ( ( a * b * cost) * d  -  ddt * (a * b * sint) ) / k;

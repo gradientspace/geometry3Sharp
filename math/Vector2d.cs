@@ -94,12 +94,14 @@ namespace g3
 		}
 
 
-        public double SquaredDist(Vector2d o) {
-            return ((x - o.x) * (x - o.x) + (y - o.y) * (y - o.y));
-        }
-        public double Dist(Vector2d o) {
-            return (double)Math.Sqrt((x - o.x) * (x - o.x) + (y - o.y) * (y - o.y));
-        }
+		public double DistanceSquared(Vector2d v2) {
+			double dx = v2.x-x, dy = v2.y-y;
+			return dx*dx + dy*dy;
+		}
+        public double Distance(Vector2d v2) {
+            double dx = v2.x-x, dy = v2.y-y;
+			return Math.Sqrt(dx*dx + dy*dy);
+		}
 
 
         public void Set(Vector2d o) {

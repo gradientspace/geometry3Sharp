@@ -82,7 +82,7 @@ namespace g3
 
 
         public bool Contains (Vector2d p ) {
-            double d = Center.SquaredDist(p);
+            double d = Center.DistanceSquared(p);
             return d <= Radius * Radius;
         }
 
@@ -100,12 +100,12 @@ namespace g3
 
         public double SignedDistance(Vector2d pt)
         {
-            double d = Center.Dist(pt);
+            double d = Center.Distance(pt);
             return d - Radius;
         }
         public double Distance(Vector2d pt)
         {
-            double d = Center.Dist(pt);
+            double d = Center.Distance(pt);
             return Math.Abs(d - Radius);
         }
 
