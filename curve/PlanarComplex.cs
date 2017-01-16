@@ -258,7 +258,7 @@ namespace g3
 
         // Finds set of "solid" regions - eg boundary loops with interior holes.
         // Result has outer loops being clockwise, and holes counter-clockwise
-		public SolidRegionInfo FindSolidRegions(double fSimplifyDeviationTol = 0.1f) 
+		public SolidRegionInfo FindSolidRegions(double fSimplifyDeviationTol = 0.1, bool bWantCurveSolids = true) 
 		{
 			List<SmoothLoopElement> valid = new List<SmoothLoopElement>(LoopsItr());
 			int N = valid.Count;
@@ -330,30 +330,34 @@ namespace g3
 					throw new Exception("PlanarComplex.FindSolidRegions: multiply-nested regions not supported!");
 
 				Polygon2d outer_poly = polygons[outer_element.ID];
-                IParametricCurve2d outer_loop = outer_element.source.Clone();
+                IParametricCurve2d outer_loop = (bWantCurveSolids) ? outer_element.source.Clone() : null;
                 if (outer_poly.IsClockwise == false) {
                     outer_poly.Reverse();
-                    outer_loop.Reverse();
+                    if ( bWantCurveSolids )
+                        outer_loop.Reverse();
                 }
 
 				GeneralPolygon2d g = new GeneralPolygon2d();
 				g.Outer = outer_poly;
                 PlanarSolid2d s = new PlanarSolid2d();
-                s.SetOuter(outer_loop, true);
+                if (bWantCurveSolids) 
+                    s.SetOuter(outer_loop, true);
 
 				foreach ( int hi in ContainSets[i] ) {
 					SmoothLoopElement he = valid[hi];
 					used.Add(he);
 					Polygon2d hole_poly = polygons[he.ID];
-                    IParametricCurve2d hole_loop = he.source.Clone();
+                    IParametricCurve2d hole_loop = (bWantCurveSolids) ? he.source.Clone() : null;
                     if (hole_poly.IsClockwise) {
                         hole_poly.Reverse();
-                        hole_loop.Reverse();
+                        if ( bWantCurveSolids )
+                            hole_loop.Reverse();
                     }
 
                     try {
                         g.AddHole(hole_poly);
-                        s.AddHole(hole_loop);
+                        if ( hole_loop != null )
+                            s.AddHole(hole_loop);
                     } catch {
                         // don't add this hole - must intersect or something
                         // We should have caught this earlier!
@@ -361,7 +365,8 @@ namespace g3
 				}
 
 				polysolids.Add(g);
-                solids.Add(s);
+                if ( bWantCurveSolids )
+                    solids.Add(s);
 			}
 
             for (int i = 0; i < N; ++i) {
@@ -370,24 +375,27 @@ namespace g3
                     continue;
 
 				Polygon2d outer_poly = polygons[loopi.ID];
-                IParametricCurve2d outer_loop = loopi.source.Clone();
+                IParametricCurve2d outer_loop = (bWantCurveSolids) ? loopi.source.Clone() : null;
                 if (outer_poly.IsClockwise == false) {
                     outer_poly.Reverse();
-                    outer_loop.Reverse();
+                    if ( bWantCurveSolids )
+                        outer_loop.Reverse();
                 }
 
                 GeneralPolygon2d g = new GeneralPolygon2d();
                 g.Outer = outer_poly;
                 PlanarSolid2d s = new PlanarSolid2d();
-                s.SetOuter(outer_loop, true);
+                if ( bWantCurveSolids )
+                    s.SetOuter(outer_loop, true);
 
                 polysolids.Add(g);
-                solids.Add(s);
+                if ( bWantCurveSolids )
+                    solids.Add(s);
             }
 
             return new SolidRegionInfo() {
                 Polygons = polysolids,
-                Solids = solids
+                Solids = (bWantCurveSolids) ? solids : null
             };
 		}
 
