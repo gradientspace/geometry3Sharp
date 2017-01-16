@@ -47,6 +47,7 @@
     <Compile Include="core\gParallel.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\Units.cs" />
+    <Compile Include="core\DVectorArray.cs" />
     <Compile Include="core\VectorArray.cs" />
     <Compile Include="curve\BaseCurve2.cs" />
     <Compile Include="curve\BSplineBasis.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="io\MaterialTypes.cs" />
+    <Compile Include="io\STLReader.cs" />
     <Compile Include="io\STLWriter.cs" />
     <Compile Include="math\Frame3f.cs" />
     <Compile Include="math\IndexTypes.cs" />
