@@ -203,6 +203,14 @@ namespace g3
 				// check if we have closed a loop
 				double dDelta = ( joined.polyLine.Start - joined.polyLine.End ).Length;
 				if ( dDelta < MathUtil.ZeroTolerance ) {
+
+                    // should always be one of these since we constructed it in append()
+                    if ( joined.source is ParametricCurveSequence2 ) {
+                        (joined.source as ParametricCurveSequence2).IsClosed = true;
+                    } else {
+                        throw new Exception("PlanarComplex.JoinElements: we have closed a loop but it is not a parametric seq??");
+                    }
+
 					SmoothLoopElement loop = new SmoothLoopElement() {
 						ID = id_generator++, source = joined.source
 					};
