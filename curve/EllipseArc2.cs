@@ -22,7 +22,7 @@ namespace g3 {
 	//   on two concentric circles w/ radii of major/minor axes. Possibly that is what
 	//   the formula in SampleT is doing?
 	//
-	public struct EllipseArc2d : IParametricCurve2d
+	public class EllipseArc2d : IParametricCurve2d
 	{
 		public Vector2d Center;
 		public Vector2d Axis0, Axis1;

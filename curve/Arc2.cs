@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3 {
 
-	public struct Arc2d : IParametricCurve2d
+	public class Arc2d : IParametricCurve2d
 	{
 		public Vector2d Center;
 		public double Radius;
