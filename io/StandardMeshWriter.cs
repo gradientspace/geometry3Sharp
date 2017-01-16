@@ -57,7 +57,7 @@ namespace g3
         IOWriteResult Write_STL(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
             if (options.bWriteBinary) {
-                FileStream file_stream = File.Open(sFilename, FileMode.Truncate);
+                FileStream file_stream = File.Open(sFilename, FileMode.Create);
                 BinaryWriter w = new BinaryWriter(file_stream);
                 if (w.BaseStream == null)
                     return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
