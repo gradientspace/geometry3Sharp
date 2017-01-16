@@ -364,6 +364,8 @@ namespace g3
         protected BSplineBasis mBasis;
         protected int mReplicate;  // the number of replicated control points
 
+        protected bool is_closed = false;       // added by RMS, used in g3
+
 
 
 
@@ -374,7 +376,6 @@ namespace g3
 		// [RMS] original NURBSCurve2 WildMagic5 code does not explicitly support "closed" NURBS curves.
 		//   However you can create a closed NURBS curve yourself by setting appropriate control points.
 		//   So, this value is independent of IsOpen/IsLoop above
-		bool is_closed = false;
 		public bool IsClosed {
 			get { return is_closed; }
 			set { is_closed = value; }
@@ -416,6 +417,7 @@ namespace g3
             c2.mLoop = this.mLoop;
             c2.mBasis = this.mBasis.Clone();
             c2.mReplicate = this.mReplicate;
+            c2.is_closed = this.is_closed;
             return c2;
         }
 
