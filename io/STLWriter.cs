@@ -41,6 +41,8 @@ namespace g3
             for (int mi = 0; mi < vMeshes.Count; ++mi) {
                 IMesh mesh = vMeshes[mi].Mesh;
 
+                if (options.ProgressFunc != null)
+                    options.ProgressFunc(mi, vMeshes.Count - 1);
 
                 Func<int, stl_triangle> producerF = (ti) => {
                     stl_triangle tri = new stl_triangle();
@@ -87,6 +89,9 @@ namespace g3
             for (int mi = 0; mi < vMeshes.Count; ++mi) {
 
                 IMesh mesh = vMeshes[mi].Mesh;
+
+                if (options.ProgressFunc != null)
+                    options.ProgressFunc(mi, vMeshes.Count - 1);
 
                 string solid_name = string.Format("mesh_{0}", mi);
                 if (options.bCombineMeshes == false) {
