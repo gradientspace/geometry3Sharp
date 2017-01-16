@@ -221,6 +221,10 @@ namespace g3
 			IsReversed = ! IsReversed;
 		}
 
+        public IParametricCurve2d Clone() {
+            return new Ellipse2d(this.Center, this.Axis0, this.Axis1, this.Extent)
+                { IsReversed = this.IsReversed };
+        }
 
 
         // angle in range [-2pi,2pi]

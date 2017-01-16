@@ -97,6 +97,10 @@ namespace g3
         }
 
 
+        // used in Clone()
+        protected NURBSCurve2() : base(0,1)
+        {
+        }
 
 
         //virtual ~NURBSCurve2();
@@ -402,6 +406,17 @@ namespace g3
 
 		public void Reverse() {
             throw new NotSupportedException("NURBSCurve2.Reverse: how to reverse?!?");
+        }
+
+        public IParametricCurve2d Clone() {
+            NURBSCurve2 c2 = new NURBSCurve2();
+            c2.mNumCtrlPoints = this.mNumCtrlPoints;
+            c2.mCtrlPoint = (Vector2d[])this.mCtrlPoint.Clone();
+            c2.mCtrlWeight = (double[])this.mCtrlWeight.Clone();
+            c2.mLoop = this.mLoop;
+            c2.mBasis = this.mBasis.Clone();
+            c2.mReplicate = this.mReplicate;
+            return c2;
         }
 
 

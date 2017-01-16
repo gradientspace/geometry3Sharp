@@ -99,6 +99,9 @@ namespace g3
 			update_from_endpoints(P1,P0);
 		}
 
+        public IParametricCurve2d Clone() {
+            return new Segment2d(this.Center, this.Direction, this.Extent);
+        }
     }
 
 

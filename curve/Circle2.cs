@@ -24,6 +24,10 @@ namespace g3
 			IsReversed = ! IsReversed;
 		}
 
+        public IParametricCurve2d Clone() {
+            return new Circle2d(this.Center, this.Radius) 
+                { IsReversed = this.IsReversed };
+        }
 
 		// angle in range [0,360] (but works for any value, obviously)
         public Vector2d SampleDeg(double degrees)

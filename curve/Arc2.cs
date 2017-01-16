@@ -83,6 +83,10 @@ namespace g3 {
 			IsReversed = ! IsReversed;
 		}
 
+        public IParametricCurve2d Clone() {
+            return new Arc2d(this.Center, this.Radius, this.AngleStartDeg, this.AngleEndDeg) 
+                { IsReversed = this.IsReversed };
+        }
 
 
 

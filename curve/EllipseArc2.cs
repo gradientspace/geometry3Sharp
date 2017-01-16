@@ -45,6 +45,18 @@ namespace g3 {
 				AngleEndDeg += 360;
 		}
 
+		public EllipseArc2d(Vector2d center, Vector2d axis0, Vector2d axis1, Vector2d extent,
+		                 double startDeg, double endDeg) {
+			Center = center;
+            Axis0 = axis0;
+            Axis1 = axis1;
+            Extent = extent;
+			IsReversed = false;
+			AngleStartDeg = startDeg;
+			AngleEndDeg = endDeg;
+			if ( AngleEndDeg < AngleStartDeg )
+				AngleEndDeg += 360;
+		}
 
 
 		public bool IsClosed {
@@ -127,6 +139,11 @@ namespace g3 {
 		public void Reverse() {
 			IsReversed = ! IsReversed;
 		}
+
+        public IParametricCurve2d Clone() {
+            return new EllipseArc2d(this.Center, this.Axis0, this.Axis1, this.Extent, this.AngleStartDeg, this.AngleEndDeg)
+                { IsReversed = this.IsReversed };
+        }
 
 	}
 }

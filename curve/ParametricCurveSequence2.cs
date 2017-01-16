@@ -115,5 +115,15 @@ namespace g3
 			curves.Reverse();
 		}
 
+        public IParametricCurve2d Clone() {
+            ParametricCurveSequence2 s2 = new ParametricCurveSequence2();
+            s2.closed = this.closed;
+            s2.curves = new List<IParametricCurve2d>();
+            foreach (var c in this.curves)
+                s2.curves.Add(c.Clone());
+            return s2;
+        }
+
+
 	}
 }

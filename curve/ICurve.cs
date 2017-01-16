@@ -33,6 +33,8 @@ namespace g3
 		Vector2d SampleArcLength(double a);
 
 		void Reverse();
+
+        IParametricCurve2d Clone();
 	}
 
 
