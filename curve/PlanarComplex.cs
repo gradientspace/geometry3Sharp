@@ -250,13 +250,18 @@ namespace g3
 
 
 
+        public struct SolidRegionInfo
+        {
+            public List<GeneralPolygon2d> Polygons;
+            public List<PlanarSolid2d> Solids;
+        }
 
-
-		public List<GeneralPolygon2d> FindSolidRegions(double fSimplifyDeviationTol = 0.1f) 
+        // Finds set of "solid" regions - eg boundary loops with interior holes.
+        // Result has outer loops being clockwise, and holes counter-clockwise
+		public SolidRegionInfo FindSolidRegions(double fSimplifyDeviationTol = 0.1f) 
 		{
 			List<SmoothLoopElement> valid = new List<SmoothLoopElement>(LoopsItr());
 			int N = valid.Count;
-
 
 			// precompute bounding boxes
 			int maxid = 0;
@@ -282,9 +287,11 @@ namespace g3
 				return bounds[x.ID].Contains( bounds[y.ID] ) ? -1 : 1; 
 			});
 
+            // containment sets
 			bool[] bIsContained = new bool[N];
 			Dictionary<int, List<int>> ContainSets = new Dictionary<int, List<int>>();
 
+            // construct containment sets
 			for ( int i = 0; i < N; ++i ) {
 				SmoothLoopElement loopi = valid[i];
 				Polygon2d polyi = polygons[loopi.ID];
@@ -311,37 +318,50 @@ namespace g3
 				}
 			}
 
-			List<GeneralPolygon2d> regions = new List<GeneralPolygon2d>();
+			List<GeneralPolygon2d> polysolids = new List<GeneralPolygon2d>();
+            List<PlanarSolid2d> solids = new List<PlanarSolid2d>();
 			List<SmoothLoopElement> used = new List<SmoothLoopElement>();
 
+            // extract solids from containment relationships
             foreach ( var i in ContainSets.Keys ) {
-                SmoothLoopElement outer = valid[i];
-                used.Add(outer);
+                SmoothLoopElement outer_element = valid[i];
+                used.Add(outer_element);
                 if ( bIsContained[i] )
 					throw new Exception("PlanarComplex.FindSolidRegions: multiply-nested regions not supported!");
 
-				Polygon2d outer_poly = polygons[outer.ID];
-				if ( outer_poly.IsClockwise == false )
-					outer_poly.Reverse();
+				Polygon2d outer_poly = polygons[outer_element.ID];
+                IParametricCurve2d outer_loop = outer_element.source.Clone();
+                if (outer_poly.IsClockwise == false) {
+                    outer_poly.Reverse();
+                    outer_loop.Reverse();
+                }
 
 				GeneralPolygon2d g = new GeneralPolygon2d();
 				g.Outer = outer_poly;
+                PlanarSolid2d s = new PlanarSolid2d();
+                s.SetOuter(outer_loop, true);
 
 				foreach ( int hi in ContainSets[i] ) {
 					SmoothLoopElement he = valid[hi];
 					used.Add(he);
 					Polygon2d hole_poly = polygons[he.ID];
-					if ( hole_poly.IsClockwise )
-						hole_poly.Reverse();
+                    IParametricCurve2d hole_loop = he.source.Clone();
+                    if (hole_poly.IsClockwise) {
+                        hole_poly.Reverse();
+                        hole_loop.Reverse();
+                    }
 
                     try {
                         g.AddHole(hole_poly);
+                        s.AddHole(hole_loop);
                     } catch {
-                        // don't add this hole. we should have caught this earlier!
+                        // don't add this hole - must intersect or something
+                        // We should have caught this earlier!
                     }
 				}
 
-				regions.Add(g);
+				polysolids.Add(g);
+                solids.Add(s);
 			}
 
             for (int i = 0; i < N; ++i) {
@@ -350,16 +370,25 @@ namespace g3
                     continue;
 
 				Polygon2d outer_poly = polygons[loopi.ID];
-                if (outer_poly.IsClockwise == false)
+                IParametricCurve2d outer_loop = loopi.source.Clone();
+                if (outer_poly.IsClockwise == false) {
                     outer_poly.Reverse();
+                    outer_loop.Reverse();
+                }
 
                 GeneralPolygon2d g = new GeneralPolygon2d();
                 g.Outer = outer_poly;
+                PlanarSolid2d s = new PlanarSolid2d();
+                s.SetOuter(outer_loop, true);
 
-                regions.Add(g);
+                polysolids.Add(g);
+                solids.Add(s);
             }
 
-            return regions;
+            return new SolidRegionInfo() {
+                Polygons = polysolids,
+                Solids = solids
+            };
 		}
 
 
@@ -371,6 +400,8 @@ namespace g3
 			List<SmoothLoopElement> Loops = new List<SmoothLoopElement>(LoopsItr());
 			List<SmoothCurveElement> Curves = new List<SmoothCurveElement>(CurvesItr());
 
+            AxisAlignedBox2d bounds = Bounds();
+            System.Console.WriteLine("  Bounding Box: " + bounds);
 
 			System.Console.WriteLine("  Closed Loops: " + Loops.Count.ToString());
 			System.Console.WriteLine("  Open Curves: " + Curves.Count.ToString());

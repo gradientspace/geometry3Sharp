@@ -53,6 +53,7 @@
     <Compile Include="curve\BSplineBasis.cs" />
     <Compile Include="curve\Circle2.cs" />
     <Compile Include="curve\Ellipse2.cs" />
+    <Compile Include="curve\PlanarSolid2d.cs" />
     <Compile Include="curve\NURBSCurve2.cs" />
     <Compile Include="distance\DistPoint2Box2.cs" />
     <Compile Include="distance\DistSegment2Segment2.cs" />
@@ -133,7 +134,7 @@
     <Compile Include="curve\PlanarComplex.cs" />
     <Compile Include="curve\CurveSampler2.cs" />
     <Compile Include="math\AxisAlignedBox2d.cs" />
-    <Compile Include="curve\CurveSequence2.cs" />
+    <Compile Include="curve\ParametricCurveSequence2.cs" />
     <Compile Include="distance\DistLine3Segment3.cs" />
     <Compile Include="distance\DistLine3Triangle3.cs" />
     <Compile Include="distance\DistPoint3Triangle3.cs" />
