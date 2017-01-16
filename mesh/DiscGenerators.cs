@@ -41,9 +41,9 @@ namespace g3
 
             int ti = 0;
             for (int k = 1; k < Slices; ++k)
-                triangles.Set(ti++, k, 0, k + 1, !Clockwise);
+                triangles.Set(ti++, k, 0, k + 1, Clockwise);
             if (bFullDisc)      // close disc if we went all the way
-                triangles.Set(ti++, Slices, 0, 1, !Clockwise);
+                triangles.Set(ti++, Slices, 0, 1, Clockwise);
         }
     }
 
@@ -86,12 +86,12 @@ namespace g3
 
             int ti = 0;
             for (int k = 0; k < Slices-1; ++k) {
-                triangles.Set(ti++, k, k + 1, Slices + k + 1, !Clockwise);
-                triangles.Set(ti++, k, Slices + k + 1, Slices + k, !Clockwise);
+                triangles.Set(ti++, k, k + 1, Slices + k + 1, Clockwise);
+                triangles.Set(ti++, k, Slices + k + 1, Slices + k, Clockwise);
             }
             if (bFullDisc) {      // close disc if we went all the way
-                triangles.Set(ti++, Slices - 1, 0, Slices, !Clockwise);
-                triangles.Set(ti++, Slices - 1, Slices, 2 * Slices - 1, !Clockwise);
+                triangles.Set(ti++, Slices - 1, 0, Slices, Clockwise);
+                triangles.Set(ti++, Slices - 1, Slices, 2 * Slices - 1, Clockwise);
             }
         }
     }

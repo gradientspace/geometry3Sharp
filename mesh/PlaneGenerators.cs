@@ -60,11 +60,11 @@ namespace g3
             uv[3] = new Vector2f(uvleft, uvtop);
 
             if (Clockwise == true) {
-                triangles.Set(0, 0, 2, 1);
-                triangles.Set(1, 0, 3, 2);
-            } else {
                 triangles.Set(0, 0, 1, 2);
                 triangles.Set(1, 0, 2, 3);
+            } else {
+                triangles.Set(0, 0, 2, 1);
+                triangles.Set(1, 0, 3, 2);
             }
         }
     }
