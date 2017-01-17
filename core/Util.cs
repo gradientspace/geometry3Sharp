@@ -39,6 +39,19 @@ namespace g3
         }
 
 
+        // have not tested this extensively, but internet says it is reasonable...
+        static public bool IsTextString(byte[] array)
+        {
+            foreach ( byte b in array ) {
+                if (b > 127)
+                    return false;
+                if ( b < 32 && b != 9 && b != 10 && b != 13 )
+                    return false;
+            }
+            return true;
+        }
+
+
 
         static public float[] BufferCopy(float[] from, float[] to)
         {

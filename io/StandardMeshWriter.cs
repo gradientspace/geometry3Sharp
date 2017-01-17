@@ -32,8 +32,8 @@ namespace g3
 
             try {
                 return writeFunc(sFilename, vMeshes, options);
-            } catch (Exception) {
-                return new IOWriteResult(IOCode.WriterError, "Unknown error");
+            } catch (Exception e) {
+                return new IOWriteResult(IOCode.WriterError, "Unknown error : exception : " + e.Message);
             }
         }
 

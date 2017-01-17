@@ -46,7 +46,7 @@ namespace g3
             vector.insert(c, 3 * i+2);
         }
 
-        public void Append(int i, T a, T b, T c) {
+        public void Append(T a, T b, T c) {
             vector.push_back(a);
             vector.push_back(b);
             vector.push_back(c);
@@ -198,7 +198,7 @@ namespace g3
             vector.insert(b, 2 * i+1);
         }
 
-        public void Append(int i, T a, T b) {
+        public void Append(T a, T b) {
             vector.push_back(a);
             vector.push_back(b);
         }
