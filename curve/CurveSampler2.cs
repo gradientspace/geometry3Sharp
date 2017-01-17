@@ -86,7 +86,7 @@ namespace g3 {
 				double div = 1.0 / nSteps;
 				if ( curve.IsClosed == false && i == N-1 ) {
 					nSteps++;
-					div = 1.0 / nSteps-1;
+					div = 1.0 / (nSteps-1);
 				} 
 
 				VectorArray2d vec = new VectorArray2d(nSteps);

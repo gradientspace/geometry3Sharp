@@ -119,7 +119,7 @@ namespace g3
                 double fPerim = 0;
 				int N = vertices.Count;
 				for (int i = 0; i < N; ++i) 
-                    fPerim += vertices[i].Dist( vertices[(i+1) % N] );
+                    fPerim += vertices[i].Distance( vertices[(i+1) % N] );
                 return fPerim;
             }
         }

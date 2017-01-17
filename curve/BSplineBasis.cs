@@ -14,7 +14,7 @@ namespace g3
         // BSplineBasis enforces these conditions by not exposing SetKnot for the
         // relevant values of i.
         //
-        public BSplineBasis() {
+        protected BSplineBasis() {
             // [RMS] removed Create(), so default constructor is useless...
         }
 
@@ -78,7 +78,19 @@ namespace g3
 
         }
 
-        //virtual ~BSplineBasis();
+        
+        public BSplineBasis Clone()
+        {
+            BSplineBasis b2 = new BSplineBasis();
+            b2.mNumCtrlPoints = this.mNumCtrlPoints;
+            b2.mDegree = this.mDegree;
+            b2.mKnot = (double[])this.mKnot.Clone();
+            b2.mOpen = this.mOpen;
+            b2.mUniform = this.mUniform;
+            return b2;
+        }
+
+
 
         public int GetNumCtrlPoints() {
             return mNumCtrlPoints;

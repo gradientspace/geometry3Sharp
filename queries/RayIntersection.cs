@@ -79,7 +79,7 @@ namespace g3
 
             Vector3f AB = vCylAxis;
             Vector3f AO = (vOrigin - vCylOrigin);
-            if (AO.SqrDistance(AO.Dot(AB) * AB) > fRadius * fRadius)
+            if (AO.DistanceSquared(AO.Dot(AB) * AB) > fRadius * fRadius)
                 return false;
 
             Vector3f AOxAB = AO.Cross(AB);

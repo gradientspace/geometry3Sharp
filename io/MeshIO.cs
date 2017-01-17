@@ -74,12 +74,15 @@ namespace g3
 
         public int RealPrecisionDigits;
 
+        public Action<int, int> ProgressFunc;
+
         public static readonly WriteOptions Defaults = new WriteOptions() {
             bWriteBinary = false,
             bPerVertexNormals = false,
             bPerVertexColors = false,
             bWriteGroups = false,
             bCombineMeshes = false,
+            ProgressFunc = null,
 
             RealPrecisionDigits = 15       // double
             //RealPrecisionDigits = 7        // float

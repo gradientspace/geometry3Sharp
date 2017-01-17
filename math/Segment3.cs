@@ -48,6 +48,33 @@ namespace g3
         }
 
 
+		public double DistanceSquared(Vector3d p)
+		{
+			double t = (p - Center).Dot(Direction);
+			if ( t >= Extent )
+				return P1.DistanceSquared(p);
+			else if ( t <= -Extent )
+				return P0.DistanceSquared(p);
+			Vector3d proj = Center + t * Direction;
+			return (proj - p).LengthSquared;
+		}
+
+        public Vector3d NearestPoint(Vector3d p)
+        {
+			double t = (p - Center).Dot(Direction);
+            if (t >= Extent)
+                return P1;
+            if (t <= -Extent)
+                return P0;
+			return Center + t * Direction;
+        }
+
+        public double Project(Vector3d p)
+        {
+            return (p - Center).Dot(Direction);
+        }
+
+
         void update_from_endpoints(Vector3d p0, Vector3d p1) {
             Center = 0.5 * (p0 + p1);
             Direction = p1 - p0;
@@ -119,23 +146,33 @@ namespace g3
         }
 
 
+		public float DistanceSquared(Vector3f p)
+		{
+			float t = (p - Center).Dot(Direction);
+			if ( t >= Extent )
+				return P1.DistanceSquared(p);
+			else if ( t <= -Extent )
+				return P0.DistanceSquared(p);
+			Vector3f proj = Center + t * Direction;
+			return (proj - p).LengthSquared;
+		}
+
+        public Vector3f NearestPoint(Vector3f p)
+        {
+			float t = (p - Center).Dot(Direction);
+            if (t >= Extent)
+                return P1;
+            if (t <= -Extent)
+                return P0;
+			return Center + t * Direction;
+        }
+
+
         public float Project(Vector3f p)
         {
             return (p - Center).Dot(Direction);
         }
 
-        public float DistanceSquared(Vector3f p)
-        {
-            float t = (p - Center).Dot(Direction);
-            if (t <= -Extent) {
-                return (p - (Center - Extent * Direction)).LengthSquared;
-            } else if (t >= Extent) {
-                return (p - (Center + Extent * Direction)).LengthSquared;
-            } else {
-                Vector3f proj = Center + t * Direction;
-                return (proj - p).LengthSquared;
-            }
-        }
 
 
 

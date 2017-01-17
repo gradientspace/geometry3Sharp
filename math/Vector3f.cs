@@ -121,7 +121,7 @@ namespace g3
         }
 
 
-        public float SqrDistance(Vector3f v2) {
+        public float DistanceSquared(Vector3f v2) {
 			float dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return dx*dx + dy*dy + dz*dz;
         }

@@ -97,6 +97,10 @@ namespace g3
         }
 
 
+        // used in Clone()
+        protected NURBSCurve2() : base(0,1)
+        {
+        }
 
 
         //virtual ~NURBSCurve2();
@@ -360,6 +364,8 @@ namespace g3
         protected BSplineBasis mBasis;
         protected int mReplicate;  // the number of replicated control points
 
+        protected bool is_closed = false;       // added by RMS, used in g3
+
 
 
 
@@ -370,7 +376,6 @@ namespace g3
 		// [RMS] original NURBSCurve2 WildMagic5 code does not explicitly support "closed" NURBS curves.
 		//   However you can create a closed NURBS curve yourself by setting appropriate control points.
 		//   So, this value is independent of IsOpen/IsLoop above
-		bool is_closed = false;
 		public bool IsClosed {
 			get { return is_closed; }
 			set { is_closed = value; }
@@ -382,6 +387,10 @@ namespace g3
         }
 		public Vector2d SampleT(double t) {
             return GetPosition(t);
+        }
+
+        public Vector2d TangentT(double t) {
+            return GetFirstDerivative(t).Normalized;
         }
 
 		public bool HasArcLength {
@@ -398,6 +407,18 @@ namespace g3
 
 		public void Reverse() {
             throw new NotSupportedException("NURBSCurve2.Reverse: how to reverse?!?");
+        }
+
+        public IParametricCurve2d Clone() {
+            NURBSCurve2 c2 = new NURBSCurve2();
+            c2.mNumCtrlPoints = this.mNumCtrlPoints;
+            c2.mCtrlPoint = (Vector2d[])this.mCtrlPoint.Clone();
+            c2.mCtrlWeight = (double[])this.mCtrlWeight.Clone();
+            c2.mLoop = this.mLoop;
+            c2.mBasis = this.mBasis.Clone();
+            c2.mReplicate = this.mReplicate;
+            c2.is_closed = this.is_closed;
+            return c2;
         }
 
 

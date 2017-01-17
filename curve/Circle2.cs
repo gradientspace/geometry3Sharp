@@ -24,6 +24,10 @@ namespace g3
 			IsReversed = ! IsReversed;
 		}
 
+        public IParametricCurve2d Clone() {
+            return new Circle2d(this.Center, this.Radius) 
+                { IsReversed = this.IsReversed };
+        }
 
 		// angle in range [0,360] (but works for any value, obviously)
         public Vector2d SampleDeg(double degrees)
@@ -52,6 +56,15 @@ namespace g3
 			return new Vector2d(Center.x + Radius*c, Center.y + Radius*s);
 		}
 
+        public Vector2d TangentT(double t)
+        {
+			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
+            Vector2d tangent = new Vector2d(-Math.Sin(theta), Math.Cos(theta));
+            tangent.Normalize();
+            return tangent;
+        }
+
+
 		public bool HasArcLength { get {return true;} }
 
 		public double ArcLength {
@@ -69,7 +82,7 @@ namespace g3
 
 
         public bool Contains (Vector2d p ) {
-            double d = Center.SquaredDist(p);
+            double d = Center.DistanceSquared(p);
             return d <= Radius * Radius;
         }
 
@@ -82,6 +95,18 @@ namespace g3
 		}
         public double Area {
             get { return Math.PI * Radius * Radius; }
+        }
+
+
+        public double SignedDistance(Vector2d pt)
+        {
+            double d = Center.Distance(pt);
+            return d - Radius;
+        }
+        public double Distance(Vector2d pt)
+        {
+            double d = Center.Distance(pt);
+            return Math.Abs(d - Radius);
         }
 
     }

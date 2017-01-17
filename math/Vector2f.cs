@@ -83,12 +83,14 @@ namespace g3
 
 
 
-        public float SquaredDist(Vector2f o) {
-            return ((x - o.x) * (x - o.x) + (y - o.y) * (y - o.y));
-        }
-        public float Dist(Vector2f o) {
-            return (float)Math.Sqrt((x - o.x) * (x - o.x) + (y - o.y) * (y - o.y));
-        }
+		public float DistanceSquared(Vector2f v2) {
+			float dx = v2.x-x, dy = v2.y-y;
+			return dx*dx + dy*dy;
+		}
+        public float Distance(Vector2f v2) {
+            float dx = v2.x-x, dy = v2.y-y;
+			return (float)Math.Sqrt(dx*dx + dy*dy);
+		}
 
 
         public void Set(Vector2f o) {
