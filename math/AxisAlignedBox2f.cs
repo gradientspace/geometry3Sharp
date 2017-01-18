@@ -79,6 +79,20 @@ namespace g3
             get { return new Vector2f(0.5f * (Min.x + Max.x), 0.5f * (Min.y + Max.y)); }
         }
 
+        public Vector2f BottomLeft {
+            get { return Min; }
+        }
+        public Vector2f BottomRight {
+            get { return new Vector2f(Max.x, Min.y); }
+        }
+        public Vector2f TopLeft {
+            get { return new Vector2f(Min.x, Max.y); }
+        }
+        public Vector2f TopRight {
+            get { return Max; }
+        }
+
+
         //! 0 == bottom-left, 1 = bottom-right, 2 == top-right, 3 == top-left
         public Vector2f GetCorner(int i) {
             return new Vector2f((i % 3 == 0) ? Min.x : Max.x, (i < 2) ? Min.y : Max.y);
