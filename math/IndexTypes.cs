@@ -3,7 +3,7 @@
 namespace g3
 {
 
-    public struct Index3i
+    public struct Index3i : IComparable<Index3i>, IEquatable<Index3i>
     {
         public int a;
         public int b;
@@ -112,9 +112,30 @@ namespace g3
         }
         public override int GetHashCode()
         {
-            return (a+b+c).GetHashCode();
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int) 2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ a.GetHashCode();
+                hash = (hash * 16777619) ^ b.GetHashCode();
+                hash = (hash * 16777619) ^ c.GetHashCode();
+                return hash;
+            }
         }
-        
+        public int CompareTo(Index3i other)
+        {
+            if (a != other.a)
+                return a < other.a ? -1 : 1;
+            else if (b != other.b)
+                return b < other.b ? -1 : 1;
+            else if (c != other.c)
+                return c < other.c ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Index3i other)
+        {
+            return (a == other.a && b == other.b && c == other.c);
+        }        
 
 
         public override string ToString() {
@@ -134,7 +155,7 @@ namespace g3
 
 
 
-    public struct Index2i
+    public struct Index2i : IComparable<Index2i>, IEquatable<Index2i>
     {
         public int a;
         public int b;
@@ -242,9 +263,27 @@ namespace g3
         }
         public override int GetHashCode()
         {
-            return (a+b).GetHashCode();
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int) 2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ a.GetHashCode();
+                hash = (hash * 16777619) ^ b.GetHashCode();
+                return hash;
+            }
         }
-        
+        public int CompareTo(Index2i other)
+        {
+            if (a != other.a)
+                return a < other.a ? -1 : 1;
+            else if (b != other.b)
+                return b < other.b ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Index2i other)
+        {
+            return (a == other.a && b == other.b);
+        }        
 
 
         public override string ToString() {
@@ -371,8 +410,33 @@ namespace g3
         }
         public override int GetHashCode()
         {
-            return (a+b+c+d).GetHashCode();
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int) 2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ a.GetHashCode();
+                hash = (hash * 16777619) ^ b.GetHashCode();
+                hash = (hash * 16777619) ^ c.GetHashCode();
+                hash = (hash * 16777619) ^ d.GetHashCode();
+                return hash;
+            }
         }
+        public int CompareTo(Index4i other)
+        {
+            if (a != other.a)
+                return a < other.a ? -1 : 1;
+            else if (b != other.b)
+                return b < other.b ? -1 : 1;
+            else if (c != other.c)
+                return c < other.c ? -1 : 1;
+            else if (d != other.d)
+                return d < other.d ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Index4i other)
+        {
+            return (a == other.a && b == other.b && c == other.c&& d == other.d);
+        }  
         
 
 

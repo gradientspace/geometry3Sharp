@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public struct Vector2d
+    public struct Vector2d : IComparable<Vector2d>, IEquatable<Vector2d>
     {
         public double x;
         public double y;
@@ -147,6 +147,45 @@ namespace g3
         {
             return new Vector2d(v.x / f, v.y / f);
         }
+
+
+
+        public static bool operator ==(Vector2d a, Vector2d b)
+        {
+            return (a.x == b.x && a.y == b.y);
+        }
+        public static bool operator !=(Vector2d a, Vector2d b)
+        {
+            return (a.x != b.x || a.y != b.y);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Vector2d)obj;
+        }
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int) 2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ x.GetHashCode();
+                hash = (hash * 16777619) ^ y.GetHashCode();
+                return hash;
+            }
+        }
+        public int CompareTo(Vector2d other)
+        {
+            if (x != other.x)
+                return x < other.x ? -1 : 1;
+            else if (y != other.y)
+                return y < other.y ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Vector2d other)
+        {
+            return (x == other.x && y == other.y);
+        }
+
 
 
         public override string ToString() {

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace g3
 {
-    public struct Vector3i
+    public struct Vector3i : IComparable<Vector3i>, IEquatable<Vector3i>
     {
         public int x;
         public int y;
@@ -30,6 +30,48 @@ namespace g3
         }
 
         public void Add(int s) { x += s;  y += s;  z += s; }
+
+
+
+        public static bool operator ==(Vector3i a, Vector3i b)
+        {
+            return (a.x == b.x && a.y == b.y && a.z == b.z);
+        }
+        public static bool operator !=(Vector3i a, Vector3i b)
+        {
+            return (a.x != b.x || a.y != b.y || a.z != b.z);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Vector3i)obj;
+        }
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int) 2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ x.GetHashCode();
+                hash = (hash * 16777619) ^ y.GetHashCode();
+                hash = (hash * 16777619) ^ z.GetHashCode();
+                return hash;
+            }
+        }
+        public int CompareTo(Vector3i other)
+        {
+            if (x != other.x)
+                return x < other.x ? -1 : 1;
+            else if (y != other.y)
+                return y < other.y ? -1 : 1;
+            else if (z != other.z)
+                return z < other.z ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Vector3i other)
+        {
+            return (x == other.x && y == other.y && z == other.z);
+        }
+
 
 
         public override string ToString() {

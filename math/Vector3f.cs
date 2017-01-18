@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace g3
 {
-    public struct Vector3f
+    public struct Vector3f : IComparable<Vector3f>, IEquatable<Vector3f>
     {
         public float x;
         public float y;
@@ -213,7 +213,29 @@ namespace g3
         }
         public override int GetHashCode()
         {
-            return (x+y+z).GetHashCode();
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int) 2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ x.GetHashCode();
+                hash = (hash * 16777619) ^ y.GetHashCode();
+                hash = (hash * 16777619) ^ z.GetHashCode();
+                return hash;
+            }
+        }
+        public int CompareTo(Vector3f other)
+        {
+            if (x != other.x)
+                return x < other.x ? -1 : 1;
+            else if (y != other.y)
+                return y < other.y ? -1 : 1;
+            else if (z != other.z)
+                return z < other.z ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Vector3f other)
+        {
+            return (x == other.x && y == other.y && z == other.z);
         }
 
 
@@ -231,6 +253,9 @@ namespace g3
         public string ToString(string fmt) {
             return string.Format("{0} {1} {2}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt));
         }
+
+
+
 
 
 #if G3_USING_UNITY

@@ -57,7 +57,7 @@ namespace g3
 
         public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
         {
-            byte[] header = reader.ReadBytes(80);
+            /*byte[] header = */reader.ReadBytes(80);
             int totalTris = reader.ReadInt32();
 
             Objects = new List<STLSolid>();
@@ -190,7 +190,7 @@ namespace g3
 
         protected virtual void BuildMesh_NoMerge(STLSolid solid, IMeshBuilder builder)
         {
-            int meshID = builder.AppendNewMesh(false, false, false, false);
+            /*int meshID = */builder.AppendNewMesh(false, false, false, false);
 
             DVectorArray3f vertices = solid.Vertices;
             int nTris = vertices.Count / 3;
@@ -211,7 +211,7 @@ namespace g3
         // [TODO] is there any way we could use a HashSet<Vector3f> here, instead of Dictionary?
         protected virtual void BuildMesh_IdenticalWeld(STLSolid solid, IMeshBuilder builder)
         {
-            int meshID = builder.AppendNewMesh(false, false, false, false);
+            /*int meshID = */builder.AppendNewMesh(false, false, false, false);
 
             DVectorArray3f vertices = solid.Vertices;
             int N = vertices.Count;

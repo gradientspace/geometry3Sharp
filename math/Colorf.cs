@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace g3
 {
-    public struct Colorf
+    public struct Colorf : IComparable<Colorf>, IEquatable<Colorf>
     {
         public float r;
         public float g;
@@ -124,6 +124,22 @@ namespace g3
         public override int GetHashCode()
         {
             return (r+g+b+a).GetHashCode();
+        }
+        public int CompareTo(Colorf other)
+        {
+            if (r != other.r)
+                return r < other.r ? -1 : 1;
+            else if (g != other.g)
+                return g < other.g ? -1 : 1;
+            else if (b != other.b)
+                return b < other.b ? -1 : 1;
+            else if (a != other.a)
+                return a < other.a ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Colorf other)
+        {
+            return (r == other.r && g == other.g && b == other.b && a == other.a);
         }
 
 
