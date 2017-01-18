@@ -93,6 +93,20 @@ namespace g3
         }
 
 
+        public Vector2f CenterLeft {
+            get { return new Vector2f(Min.x, (Min.y + Max.y) * 0.5f); }
+        }
+        public Vector2f CenterRight {
+            get { return new Vector2f(Max.x, (Min.y + Max.y) * 0.5f); }
+        }
+        public Vector2f CenterTop {
+            get { return new Vector2f((Min.x+Max.x)*0.5f, Max.y); }
+        }
+        public Vector2f CenterBottom {
+            get { return new Vector2f((Min.x+Max.x)*0.5f, Min.y); }
+        }
+
+
         //! 0 == bottom-left, 1 = bottom-right, 2 == top-right, 3 == top-left
         public Vector2f GetCorner(int i) {
             return new Vector2f((i % 3 == 0) ? Min.x : Max.x, (i < 2) ? Min.y : Max.y);
