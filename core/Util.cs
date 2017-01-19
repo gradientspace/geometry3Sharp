@@ -51,6 +51,29 @@ namespace g3
             return true;
         }
 
+        
+        static public float ParseInt(string s, int nDefault) {
+            try {
+                return int.Parse(s);
+            } catch {
+                return nDefault;
+            }
+        }
+        static public float ParseFloat(string s, float fDefault) {
+            try {
+                return float.Parse(s);
+            } catch {
+                return fDefault;
+            }
+        }
+        static public double ParseDouble(string s, double fDefault) {
+            try {
+                return double.Parse(s);
+            } catch {
+                return fDefault;
+            }
+        }
+
 
 
         static public float[] BufferCopy(float[] from, float[] to)
@@ -74,7 +97,10 @@ namespace g3
 
 
 
-
+        public static string MakeFloatFormatString(int i, int nPrecision)
+        {
+            return string.Format("{{{0}:F{1}}}", i, nPrecision);
+        }
         public static string MakeVec3FormatString(int i0, int i1, int i2, int nPrecision)
         {
             return string.Format("{{{0}:F{3}}} {{{1}:F{3}}} {{{2}:F{3}}}", i0, i1, i2, nPrecision);

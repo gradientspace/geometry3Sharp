@@ -187,6 +187,16 @@ namespace g3
         }
 
 
+        public bool EpsilonEqual(Vector2d v2, double epsilon) {
+            return Math.Abs(x - v2.x) < epsilon && 
+                   Math.Abs(y - v2.y) < epsilon;
+        }
+        public bool PrecisionEqual(Vector2d v2, int nDigits)
+        {
+            return Math.Round(x, nDigits) == Math.Round(v2.x, nDigits) &&
+                   Math.Round(y, nDigits) == Math.Round(v2.y, nDigits);
+        }
+
 
         public override string ToString() {
             return string.Format("{0:F8} {1:F8}", x, y);
