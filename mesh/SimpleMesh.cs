@@ -354,6 +354,32 @@ namespace g3
         }
 
 
+        // setters
+
+        public void SetVertex(int i, Vector3d v) {
+            Vertices[3 * i] = v.x;
+            Vertices[3 * i + 1] = v.y;
+            Vertices[3 * i + 2] = v.z;
+        }
+
+        public void SetVertexNormal(int i, Vector3f n) {
+            Normals[3 * i] = n.x;
+            Normals[3 * i + 1] = n.y;
+            Normals[3 * i + 2] = n.z;
+        }
+
+        public void SetVertexColor(int i, Vector3f c) {
+            Colors[3 * i] = c.x;
+            Colors[3 * i + 1] = c.y;
+            Colors[3 * i + 2] = c.z;
+        }
+
+        public void SetVertexUV(int i, Vector2f uv) {
+            UVs[2 * i] = uv.x;
+            UVs[2 * i + 1] = uv.y;
+        }
+
+
         /*
          * Array-based access (allocates arrays automatically)
          */

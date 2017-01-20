@@ -8,6 +8,8 @@ namespace g3
         public Vector2d Max;
 
         public static readonly AxisAlignedBox2d Empty = new AxisAlignedBox2d(false);
+        public static readonly AxisAlignedBox2d Zero = new AxisAlignedBox2d(0);
+        public static readonly AxisAlignedBox2d UnitPositive = new AxisAlignedBox2d(1);
 		public static readonly AxisAlignedBox2d Infinite = new AxisAlignedBox2d(Double.MinValue, Double.MinValue, Double.MaxValue, Double.MaxValue);
 
 

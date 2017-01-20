@@ -12,6 +12,8 @@ namespace g3
         public Vector3f Max;
 
         public static readonly AxisAlignedBox3f Empty = new AxisAlignedBox3f(false);
+        public static readonly AxisAlignedBox3f Zero = new AxisAlignedBox3f(0);
+        public static readonly AxisAlignedBox3f UnitPositive = new AxisAlignedBox3f(1);
         public static readonly AxisAlignedBox3f Infinite =
             new AxisAlignedBox3f(float.MinValue, float.MinValue, float.MinValue, float.MaxValue, float.MaxValue, float.MaxValue);
 
