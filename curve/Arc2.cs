@@ -56,6 +56,8 @@ namespace g3 {
 				(1-t)*AngleStartDeg + (t)*AngleEndDeg;
 			theta = theta * MathUtil.Deg2Rad;
             Vector2d tangent = new Vector2d(-Math.Sin(theta), Math.Cos(theta));
+            if (IsReversed)
+                tangent = -tangent;
             tangent.Normalize();
             return tangent;
         }

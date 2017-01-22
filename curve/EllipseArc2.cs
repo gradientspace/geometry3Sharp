@@ -116,6 +116,8 @@ namespace g3 {
             double dy = ( ( a * b * cost) * d  -  ddt * (a * b * sint) ) / k;
 
             Vector2d tangent = dx * Axis0 + dy * Axis1;
+            if (IsReversed)
+                tangent = -tangent;
             tangent.Normalize();
             return tangent;
 		}

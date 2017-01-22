@@ -21,7 +21,6 @@ namespace g3
 	public class PlanarComplex 
 	{
 		// these determine pointwise sampling rates
-
 		public double DistanceAccuracy = 0.1;
 		public double AngleAccuracyDeg = 5.0;
 		public double SpacingT = 0.01;		// for curves where we don't know arc length

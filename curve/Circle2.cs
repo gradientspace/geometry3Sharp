@@ -60,6 +60,8 @@ namespace g3
         {
 			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
             Vector2d tangent = new Vector2d(-Math.Sin(theta), Math.Cos(theta));
+            if (IsReversed)
+                tangent = -tangent;
             tangent.Normalize();
             return tangent;
         }

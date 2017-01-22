@@ -259,6 +259,8 @@ namespace g3
 			double theta = (IsReversed) ? -t*MathUtil.TwoPI : t*MathUtil.TwoPI;
 			double c = Math.Cos(theta), s = Math.Sin(theta);
             Vector2d tangent = -Extent.x * s * Axis0 + Extent.y * c * Axis1;
+            if (IsReversed)
+                tangent = -tangent;
             tangent.Normalize();
             return tangent;
 		}
