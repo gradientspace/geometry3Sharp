@@ -77,5 +77,16 @@ namespace g3
                 return dPerim;
             }
         }
+
+
+        public AxisAlignedBox2d Bounds
+        {
+            get {
+                AxisAlignedBox2d box = outer.GetBounds();
+                foreach (var h in Holes)
+                    box.Contain(h.GetBounds());
+                return box;
+            }
+        }
 	}
 }
