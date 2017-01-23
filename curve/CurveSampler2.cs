@@ -45,6 +45,12 @@ namespace g3 {
 				throw new InvalidOperationException("CurveSampler2.SampleArcLen: curve does not support arc length sampling!");
 
 			double fLen = curve.ArcLength;
+            if ( fLen < MathUtil.ZeroTolerance ) {
+                VectorArray2d degen = new VectorArray2d(2);
+                degen[0] = curve.SampleArcLength(0);
+                degen[1] = curve.SampleArcLength(1);
+                return degen;
+            }
 			int nSteps = Math.Max( (int)(fLen / fSpacing)+1, 2 );
 
 			VectorArray2d vec = new VectorArray2d(nSteps);

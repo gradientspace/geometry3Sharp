@@ -72,6 +72,8 @@ namespace g3 {
 		}
 
 		public Vector2d SampleArcLength(double a) {
+            if (ArcLength < MathUtil.Epsilon)
+                return (a < 0.5) ? SampleT(0) : SampleT(1);
 			double t = a / ArcLength;
 			double theta = (IsReversed) ?
 				(1-t)*AngleEndDeg + (t)*AngleStartDeg : 
