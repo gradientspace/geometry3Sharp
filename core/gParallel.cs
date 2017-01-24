@@ -13,6 +13,11 @@ namespace g3
     public class gParallel
     {
 
+        public static void ForEach_Sequential<T>(IEnumerable<T> source, Action<T> body)
+        {
+            foreach (T v in source)
+                body(v);
+        }
         public static void ForEach<T>( IEnumerable<T> source, Action<T> body )
         {
 #if G3_USING_UNITY
