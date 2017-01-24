@@ -71,7 +71,7 @@ namespace g3
 
 
 
-
+        // [RMS TODO: lots of useless dot products below!! left over from obox conversion]
 		public bool Test ()
 		{
 			Vector3d WdU = Vector3d.Zero;

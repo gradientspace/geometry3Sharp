@@ -71,7 +71,7 @@ namespace g3
 
 
 
-
+        // [RMS TODO: lots of useless dot products below!! left over from obox conversion]
 		public bool Test ()
 		{
 			Vector3d AWdU = Vector3d.Zero;
@@ -116,28 +116,17 @@ namespace g3
                          ref Vector3d point0, ref Vector3d point1,
 		                 ref IntersectionType  intrType)
 		{
-			// Convert linear component to box coordinates.
-			Vector3d diff = origin - box.Center;
-			Vector3d BOrigin = new Vector3d(
-				diff.Dot(Vector3d.AxisX),
-				diff.Dot(Vector3d.AxisY),
-				diff.Dot(Vector3d.AxisZ)
-			);
-			Vector3d BDirection = new Vector3d(
-				direction.Dot(Vector3d.AxisX),
-				direction.Dot(Vector3d.AxisY),
-				direction.Dot(Vector3d.AxisZ)
-			);
+            Vector3d BOrigin = origin - box.Center;
             Vector3d extent = box.Extents;
 
 			double saveT0 = t0, saveT1 = t1;
 			bool notAllClipped =
-				Clip(+BDirection.x, -BOrigin.x-extent.x, ref t0, ref t1) &&
-				Clip(-BDirection.x, +BOrigin.x-extent.x, ref t0, ref t1) &&
-				Clip(+BDirection.y, -BOrigin.y-extent.y, ref t0, ref t1) &&
-				Clip(-BDirection.y, +BOrigin.y-extent.y, ref t0, ref t1) &&
-				Clip(+BDirection.z, -BOrigin.z-extent.z, ref t0, ref t1) &&
-				Clip(-BDirection.z, +BOrigin.z-extent.z, ref t0, ref t1);
+				Clip(+direction.x, -BOrigin.x-extent.x, ref t0, ref t1) &&
+				Clip(-direction.x, +BOrigin.x-extent.x, ref t0, ref t1) &&
+				Clip(+direction.y, -BOrigin.y-extent.y, ref t0, ref t1) &&
+				Clip(-direction.y, +BOrigin.y-extent.y, ref t0, ref t1) &&
+				Clip(+direction.z, -BOrigin.z-extent.z, ref t0, ref t1) &&
+				Clip(-direction.z, +BOrigin.z-extent.z, ref t0, ref t1);
 
 			if (notAllClipped && (solid || t0 != saveT0 || t1 != saveT1)) {
 				if (t1 > t0) {
