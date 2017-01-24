@@ -7,6 +7,12 @@ namespace g3
     {
         bool SupportsNearestTriangle { get; }
         int FindNearestTriangle(Vector3d p, double fMaxDist = double.MaxValue);
+
+        bool SupportsTriangleRayIntersection{ get; }
+        int FindNearestHitTriangle(Ray3d ray, double fMaxDist = double.MaxValue);
+
+        bool SupportsPointContainment { get; }
+        bool IsInside(Vector3d p);
     }
 
 

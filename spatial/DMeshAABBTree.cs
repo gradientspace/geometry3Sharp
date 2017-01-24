@@ -137,6 +137,78 @@ namespace g3
 
 
 
+        public bool SupportsTriangleRayIntersection { get { return true; } }
+        public int FindNearestHitTriangle(Ray3d ray, double fMaxDist)
+        {
+            if (mesh_timestamp != mesh.Timestamp)
+                throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+
+            double fNearestT = (fMaxDist < double.MaxValue) ? fMaxDist : double.MaxValue;
+            int tNearID = DMesh3.InvalidID;
+            find_hit_triangle(root_index, ref ray, ref fNearestT, ref tNearID);
+            return tNearID;
+        }
+        void find_hit_triangle(int iBox, ref Ray3d ray, ref double fNearestT, ref int tID)
+        {
+            int idx = box_to_index[iBox];
+            if ( idx < triangles_end ) {            // triange-list case, array is [N t1 t2 ... tN]
+                Triangle3d tri = new Triangle3d();
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i) {
+                    int ti = index_list[idx + i];
+
+                    // [TODO] optimize this
+                    mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
+                    IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
+                    if ( ray_tri_hit.Find() ) {
+                        if ( ray_tri_hit.RayParameter < fNearestT ) {
+                            fNearestT = ray_tri_hit.RayParameter;
+                            tID = ti;
+                        }
+                    }
+                }
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if ( iChild1 < 0 ) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    double fChild1T = box_ray_intersect_t(iChild1, ray);
+                    if ( fChild1T <= fNearestT )
+                        find_hit_triangle(iChild1, ref ray, ref fNearestT, ref tID);
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    double fChild1T = box_ray_intersect_t(iChild1, ray);
+                    double fChild2T = box_ray_intersect_t(iChild2, ray);
+                    if (fChild1T < fChild2T) {
+                        if (fChild1T < fNearestT) {
+                            find_hit_triangle(iChild1, ref ray, ref fNearestT, ref tID);
+                            if (fChild2T < fNearestT)
+                                find_hit_triangle(iChild2, ref ray, ref fNearestT, ref tID);
+                        }
+                    } else {
+                        if (fChild2T < fNearestT) {
+                            find_hit_triangle(iChild2, ref ray, ref fNearestT, ref tID);
+                            if (fChild1T < fNearestT)
+                                find_hit_triangle(iChild1, ref ray, ref fNearestT, ref tID);
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+        public bool SupportsPointContainment { get { return true; } }
+        public bool IsInside(Vector3d p)
+        {
+            return false;
+        }
+
+
+
 
         // DoTraversal function will walk through tree and call NextBoxF for each
         //  internal box node, and NextTriangleF for each triangle. 
@@ -886,6 +958,18 @@ namespace g3
             return new AxisAlignedBox3f(c - e, c + e);
         }
 
+
+        double box_ray_intersect_t(int iBox, Ray3d ray)
+        {
+            Vector3d c = box_centers[iBox];
+            Vector3d e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(c - e, c + e);
+            IntrRay3AxisAlignedBox3 intr = new IntrRay3AxisAlignedBox3(ray, box);
+            if (intr.Find()) {
+                return intr.RayParam0;
+            } else
+                return double.MaxValue;
+        }
 
 
         double box_distance_sqr(int iBox, Vector3d p)
