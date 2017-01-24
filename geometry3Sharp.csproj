@@ -66,6 +66,8 @@
     <Compile Include="implicit\ImplicitField.cs" />
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
+    <Compile Include="intersection\IntrLine3AxisAlignedBox3.cs" />
+    <Compile Include="intersection\IntrRay3AxisAlignedBox3.cs" />
     <Compile Include="io\MaterialTypes.cs" />
     <Compile Include="io\STLReader.cs" />
     <Compile Include="io\STLWriter.cs" />

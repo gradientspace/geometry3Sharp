@@ -24,10 +24,10 @@ namespace g3
         public const float Epsilonf = 1.192092896e-07F;
 
 
-        public static bool EpsilonEqual(double a, double b, double epsilon) {
+        public static bool EpsilonEqual(double a, double b, double epsilon = MathUtil.Epsilon) {
             return Math.Abs(a - b) < epsilon;
         }
-        public static bool EpsilonEqual(float a, float b, float epsilon) {
+        public static bool EpsilonEqual(float a, float b, float epsilon = MathUtil.Epsilonf) {
             return (float)Math.Abs(a - b) < epsilon;
         }
 

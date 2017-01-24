@@ -22,6 +22,18 @@ namespace g3
 
 
 
+        // convenience function to construct a IntrRay3Triangle3 object for a mesh triangle
+        public static IntrRay3Triangle3 TriangleIntersection(DMesh3 mesh, int ti, Ray3d ray)
+        {
+            if (!mesh.IsTriangle(ti))
+                return null;
+            Triangle3d tri = new Triangle3d();
+            mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
+            IntrRay3Triangle3 q = new IntrRay3Triangle3(ray, tri);
+            q.Find();
+            return q;
+        }
+
 
         // compute distance from point to triangle ti in mesh, with minimal extra objects/etc
         // TODO: take in current-max-distance so we can early-out?
@@ -195,7 +207,7 @@ namespace g3
         // brute force search for nearest triangle to point
         public static int FindNearestTriangle_LinearSearch(DMesh3 mesh, Vector3d p)
         {
-            int tNearest = -1;
+            int tNearest = DMesh3.InvalidID;
             double fNearestSqr = double.MaxValue;
             foreach ( int ti in mesh.TriangleIndices() ) {
                 double distSqr = TriDistanceSqr(mesh, ti, p);
@@ -205,6 +217,28 @@ namespace g3
                 }
             }
             return tNearest;
+        }
+
+
+        public static int FindHitTriangle_LinearSearch(DMesh3 mesh, Ray3d ray)
+        {
+            int tNearestID = DMesh3.InvalidID;
+            double fNearestT = double.MaxValue;
+            Triangle3d tri = new Triangle3d();
+            foreach ( int ti in mesh.TriangleIndices() ) {
+
+                // [TODO] optimize this
+                mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
+                IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
+                if ( ray_tri_hit.Find() ) {
+                    if ( ray_tri_hit.RayParameter < fNearestT ) {
+                        fNearestT = ray_tri_hit.RayParameter;
+                        tNearestID = ti;
+                    }
+                }
+            }
+
+            return tNearestID;
         }
 
 

@@ -138,7 +138,7 @@ namespace g3
 
 
         public bool SupportsTriangleRayIntersection { get { return true; } }
-        public int FindNearestHitTriangle(Ray3d ray, double fMaxDist)
+        public int FindNearestHitTriangle(Ray3d ray, double fMaxDist = double.MaxValue)
         {
             if (mesh_timestamp != mesh.Timestamp)
                 throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
@@ -169,12 +169,15 @@ namespace g3
                 }
 
             } else {                                // internal node, either 1 or 2 child boxes
+                double e = MathUtil.ZeroTolerancef;
+
                 int iChild1 = index_list[idx];
                 if ( iChild1 < 0 ) {                 // 1 child, descend if nearer than cur min-dist
                     iChild1 = (-iChild1) - 1;
                     double fChild1T = box_ray_intersect_t(iChild1, ray);
-                    if ( fChild1T <= fNearestT )
+                    if (fChild1T <= fNearestT + e) {
                         find_hit_triangle(iChild1, ref ray, ref fNearestT, ref tID);
+                    }
 
                 } else {                            // 2 children, descend closest first
                     iChild1 = iChild1 - 1;
@@ -183,16 +186,18 @@ namespace g3
                     double fChild1T = box_ray_intersect_t(iChild1, ray);
                     double fChild2T = box_ray_intersect_t(iChild2, ray);
                     if (fChild1T < fChild2T) {
-                        if (fChild1T < fNearestT) {
+                        if (fChild1T <= fNearestT + e) {
                             find_hit_triangle(iChild1, ref ray, ref fNearestT, ref tID);
-                            if (fChild2T < fNearestT)
+                            if (fChild2T <= fNearestT + e) {
                                 find_hit_triangle(iChild2, ref ray, ref fNearestT, ref tID);
+                            }
                         }
                     } else {
-                        if (fChild2T < fNearestT) {
+                        if (fChild2T <= fNearestT + e) {
                             find_hit_triangle(iChild2, ref ray, ref fNearestT, ref tID);
-                            if (fChild1T < fNearestT)
+                            if (fChild1T <= fNearestT + e) {
                                 find_hit_triangle(iChild1, ref ray, ref fNearestT, ref tID);
+                            }
                         }
                     }
 
