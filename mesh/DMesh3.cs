@@ -64,7 +64,7 @@ namespace g3
 	// The function CheckValidity() does extensive sanity checking on the mesh data structure.
 	// Use this to test your code, both for mesh construction and editing!!
 	// 
-    public class DMesh3 : IMesh
+    public class DMesh3 : IDeformableMesh
     {
         public const int InvalidID = -1;
         public const int NonManifoldID = -2;

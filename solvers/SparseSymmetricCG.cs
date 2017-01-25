@@ -11,6 +11,7 @@ namespace g3
         public Action<double[], double[]> MultiplyF;
         public Action<double[], double[]> PreconditionMultiplyF;
 
+        // B is not modified!
         public double[] B;
 
         // X will be used as initial guess if non-null and UseXAsInitialGuess is true
@@ -55,12 +56,14 @@ namespace g3
             BufferUtil.MultiplyAdd(R, -alpha, W);
             double rho1 = BufferUtil.Dot(R, R);
 
+            // [RMS] these were inside loop but they are constant!
+            double norm = BufferUtil.Dot(B, B);
+            double root1 = Math.Sqrt(norm);
+
             // The remaining iterations.
             int iter;
             for (iter = 1; iter < MaxIterations; ++iter) {
                 double root0 = Math.Sqrt(rho1);
-                double norm = BufferUtil.Dot(B, B);
-                double root1 = Math.Sqrt(norm);
                 if (root0 <= MathUtil.ZeroTolerance * root1) {
                     break;
                 }
@@ -138,12 +141,14 @@ namespace g3
             BufferUtil.MultiplyAdd(R, -alpha, W);
             double rho1 = BufferUtil.Dot(Z, R);
 
+            // [RMS] these were inside loop but they are constant!
+            double norm = BufferUtil.Dot(B, B);
+            double root1 = Math.Sqrt(norm);
+
             // The remaining iterations.
             int iter = 0;
             for (iter = 1; iter < MaxIterations; ++iter) {
                 double root0 = Math.Sqrt(rho1);
-                double norm = BufferUtil.Dot(B, B);
-                double root1 = Math.Sqrt(norm);
                 if (root0 <= MathUtil.ZeroTolerance * root1) {
                     break;
                 }

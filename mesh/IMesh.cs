@@ -37,6 +37,13 @@ namespace g3
     }
 
 
+    public interface IDeformableMesh : IMesh
+    {
+        void SetVertex(int vID, Vector3d vNewPos);
+    }
+
+
+
     /*
      * Abstracts construction of meshes, so that we can construct different types, etc
      */

@@ -67,6 +67,11 @@ namespace g3
             d = new double[N];
         }
 
+        public void Clear()
+        {
+            Array.Clear(d, 0, d.Length);
+        }
+
         public void Set(int r, int c, double value)
         {
             if (r == c)
