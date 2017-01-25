@@ -50,6 +50,11 @@ namespace g3
             need_solve_update = true;
         }
 
+        public void ClearConstraints()
+        {
+            SoftConstraints.Clear();
+            need_solve_update = true;
+        }
 
 
         public void Initialize()
@@ -185,9 +190,18 @@ namespace g3
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = Preconditioner.Multiply,
                 UseXAsInitialGuess = true };
 
-            bool bx = SolverX.Solve();
-            bool by = SolverY.Solve();
-            bool bz = SolverZ.Solve();
+            List<SparseSymmetricCG> solvers = new List<SparseSymmetricCG>() { SolverX, SolverY, SolverZ };
+            Action<SparseSymmetricCG> SolveF = (s) => { s.Solve(); };
+
+            gParallel.ForEach(solvers, SolveF);
+
+            //bool bx = SolverX.Solve();
+            //bool by = SolverY.Solve();
+            //bool bz = SolverZ.Solve();
+            //if ( bx == false || by == false || bz == false ) {
+            //    // do something sane?
+            //    throw new Exception("LaplacianMeshDeformer.Solve: solve failed!");
+            //}
 
             for ( int i = 0; i < N; ++i ) {
                 int vid = ToMeshV[i];
