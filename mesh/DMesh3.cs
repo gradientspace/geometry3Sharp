@@ -120,15 +120,64 @@ namespace g3
         }
 
 
-        public DMesh3(DMesh3 copy)
+        // normals/colors/uvs will only be copied if they exist
+        public DMesh3(DMesh3 copy, bool bCompact = false, bool bWantNormals = true, bool bWantColors = true, bool bWantUVs = true)
+        {
+            if (bCompact)
+                CompactCopy(copy, bWantNormals, bWantColors, bWantUVs);
+            else
+                Copy(copy, bWantNormals, bWantColors, bWantUVs);
+        }
+
+
+
+        public void CompactCopy(DMesh3 copy, bool bNormals = true, bool bColors = true, bool bUVs = true)
+        {
+            if ( copy.IsCompact ) {
+                Copy(copy, bNormals, bColors, bUVs);
+                return;
+            }
+
+            vertices = new DVector<double>();
+            vertex_edges = new DVector<List<int>>();
+            vertices_refcount = new RefCountVector();
+            triangles = new DVector<int>();
+            triangle_edges = new DVector<int>();
+            triangles_refcount = new RefCountVector();
+            edges = new DVector<int>();
+            edges_refcount = new RefCountVector();
+
+            normals = (bNormals && copy.normals != null) ? new DVector<float>() : null;
+            colors = (bColors && copy.colors != null) ? new DVector<float>() : null;
+            uv = (bUVs && copy.uv != null) ? new DVector<float>() : null;
+
+            // [TODO] if we knew some of these were dense we could copy directly...
+
+            NewVertexInfo vinfo = new NewVertexInfo();
+            int[] mapV = new int[copy.MaxVertexID];
+            foreach ( int vid in copy.vertices_refcount ) {
+                copy.GetVertex(vid, ref vinfo, bNormals, bColors, bUVs);
+                mapV[vid] = AppendVertex(vinfo);
+            }
+
+            // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
+
+            foreach ( int tid in copy.triangles_refcount ) {
+                Index3i t = copy.GetTriangle(tid);
+                t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
+                int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
+                AppendTriangle(t, g);
+            }
+        }
+
+
+        public void Copy(DMesh3 copy, bool bNormals = true, bool bColors = true, bool bUVs = true)
         {
             vertices = new DVector<double>(copy.vertices);
-            if (copy.normals != null)
-                normals = new DVector<float>(copy.normals);
-            if (copy.colors != null)
-                colors = new DVector<float>(copy.colors);
-            if (copy.uv != null)
-                uv = new DVector<float>(copy.uv);
+
+            normals = (bNormals && copy.normals != null) ? new DVector<float>(copy.normals) : null;
+            colors = (bColors && copy.colors != null) ? new DVector<float>(copy.colors) : null;
+            uv = (bUVs && copy.uv != null) ? new DVector<float>(copy.uv) : null;
 
             vertices_refcount = new RefCountVector(copy.vertices_refcount);
             vertex_edges = new DVector<List<int>>(copy.vertex_edges);
@@ -149,7 +198,6 @@ namespace g3
             edges = new DVector<int>(copy.edges);
             edges_refcount = new RefCountVector(copy.edges_refcount);
         }
-
 
 
 
@@ -254,6 +302,28 @@ namespace g3
                 updateTimeStamp();
 			}
 		}
+
+        public bool GetVertex(int vID, ref NewVertexInfo vinfo, bool bWantNormals, bool bWantColors, bool bWantUVs)
+        {
+            if (vertices_refcount.isValid(vID) == false)
+                return false;
+            vinfo.v.Set(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]);
+            vinfo.bHaveN = vinfo.bHaveUV = vinfo.bHaveC = false;
+            if (HasVertexColors && bWantNormals) {
+                vinfo.bHaveN = true;
+                vinfo.n.Set(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]);
+            }
+            if (HasVertexColors && bWantColors) {
+                vinfo.bHaveC = true;
+                vinfo.c.Set(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]);
+            }
+            if (HasVertexUVs && bWantUVs) {
+                vinfo.bHaveUV = true;
+                vinfo.uv.Set(uv[2 * vID], uv[2 * vID + 1]);
+            }
+            return true;
+        }
+
 
         public ReadOnlyCollection<int> GetVtxEdges(int vID) {
             return vertices_refcount.isValid(vID) ?
@@ -1537,6 +1607,15 @@ namespace g3
 
 
 
+        public bool IsCompact {
+            get { return vertices_refcount.is_dense && edges_refcount.is_dense && triangles_refcount.is_dense; }
+        }
+        public bool IsCompactV {
+            get { return vertices_refcount.is_dense; }
+        }
+
+
+
 
 
 
@@ -1648,6 +1727,12 @@ namespace g3
                 if (et[1] != InvalidID) {
                     DMESH_CHECK_OR_FAIL(IsTriangle(et[1]));
                 }
+            }
+
+            // verify compact check
+            bool is_compact = vertices_refcount.is_dense;
+            for ( int vid = 0; vid < vertices.Length; ++vid ) {
+                DMESH_CHECK_OR_FAIL(vertices_refcount.isValid(vid));
             }
 
             // vertex edges must exist and reference this vert
