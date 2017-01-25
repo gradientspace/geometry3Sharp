@@ -40,5 +40,29 @@ namespace g3
             v[3 * i + 1] = b;
             v[3 * i + 2] = c;
         }
+
+
+        static public double Dot(double[] a, double [] b)
+        {
+            double dot = 0;
+            for (int i = 0; i < a.Length; ++i)
+                dot += a[i] * b[i];
+            return dot;
+        }
+
+        static public void MultiplyAdd(double[] dest, double multiply, double[] add)
+        {
+            for (int i = 0; i < dest.Length; ++i)
+                dest[i] += multiply * add[i];
+        }
+
+        static public double DistanceSquared(double[] a, double[] b)
+        {
+            double sum = 0;
+            for (int i = 0; i < a.Length; ++i)
+                sum += (a[i] - b[i]) * (a[i] - b[i]);
+            return sum;
+        }
+
     }
 }

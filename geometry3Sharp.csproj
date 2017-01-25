@@ -96,6 +96,7 @@
     <Compile Include="mesh\MeshConstraints.cs" />
     <Compile Include="mesh\MeshGenerators.cs" />
     <Compile Include="mesh\MeshMeasurements.cs" />
+    <Compile Include="mesh\MeshTransforms.cs" />
     <Compile Include="mesh\PlaneGenerators.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="mesh\SimpleMesh.cs" />
@@ -104,6 +105,9 @@
     <Compile Include="math\Vector3i.cs" />
     <Compile Include="math\Vector3f.cs" />
     <Compile Include="shapes3\Cylinder3.cs" />
+    <Compile Include="solvers\DenseMatrix.cs" />
+    <Compile Include="solvers\SparseMatrix.cs" />
+    <Compile Include="solvers\SparseSymmetricCG.cs" />
     <Compile Include="spatial\BasicProjectionTargets.cs" />
     <Compile Include="distance\Distance.cs" />
     <Compile Include="queries\MeshQueries.cs" />
