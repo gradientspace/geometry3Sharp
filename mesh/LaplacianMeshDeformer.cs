@@ -164,7 +164,7 @@ namespace g3
 
 
         // Result must be as large as Mesh.MaxVertexID
-        public void Solve(Vector3d[] Result)
+        public bool Solve(Vector3d[] Result)
         {
             UpdateForSolve();
 
@@ -190,23 +190,21 @@ namespace g3
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = Preconditioner.Multiply,
                 UseXAsInitialGuess = true };
 
-            List<SparseSymmetricCG> solvers = new List<SparseSymmetricCG>() { SolverX, SolverY, SolverZ };
-            Action<SparseSymmetricCG> SolveF = (s) => { s.Solve(); };
+            SparseSymmetricCG[] solvers = new SparseSymmetricCG[3] { SolverX, SolverY, SolverZ };
+            bool[] ok = new bool[3];
+            int[] indices = new int[3] { 0, 1, 2 };
 
-            gParallel.ForEach(solvers, SolveF);
+            Action<int> SolveF = (i) => {  ok[i] = solvers[i].Solve(); };
+            gParallel.ForEach(indices, SolveF);
 
-            //bool bx = SolverX.Solve();
-            //bool by = SolverY.Solve();
-            //bool bz = SolverZ.Solve();
-            //if ( bx == false || by == false || bz == false ) {
-            //    // do something sane?
-            //    throw new Exception("LaplacianMeshDeformer.Solve: solve failed!");
-            //}
+            if (ok[0] == false || ok[1] == false || ok[2] == false)
+                return false;
 
             for ( int i = 0; i < N; ++i ) {
                 int vid = ToMeshV[i];
                 Result[vid] = new Vector3d(Sx[i], Sy[i], Sz[i]);
             }
+            return true;
         }
 
 
