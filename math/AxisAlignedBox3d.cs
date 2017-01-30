@@ -205,5 +205,16 @@ namespace g3
         }
 
 
+        public static implicit operator AxisAlignedBox3d(AxisAlignedBox3f v)
+        {
+            return new AxisAlignedBox3d(v.Min, v.Max);
+        }
+        public static explicit operator AxisAlignedBox3f(AxisAlignedBox3d v)
+        {
+            return new AxisAlignedBox3f((Vector3f)v.Min, (Vector3f)v.Max);
+        }
+
+
+
     }
 }
