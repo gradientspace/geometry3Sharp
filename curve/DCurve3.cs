@@ -76,6 +76,13 @@ namespace g3
                 this.vertices = new List<Vector3d>(vertices);
         }
 
+        public void ClearVertices()
+        {
+            vertices = new List<Vector3d>();
+            Closed = false;
+        }
+
+
         public Vector3d this[int key]
         {
             get { return vertices[key]; }
