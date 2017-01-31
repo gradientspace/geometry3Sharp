@@ -29,6 +29,13 @@ namespace g3 {
 			AxisX = x; AxisY = y; AxisZ = z;
 			Extent = extent;
 		}
+		public Box3d(Vector3d center, Vector3d extent) {
+			Center = center;
+			Extent = extent;
+			AxisX = Vector3d.AxisX;
+			AxisY = Vector3d.AxisY;
+			AxisZ = Vector3d.AxisZ;
+		}
 		public Box3d(AxisAlignedBox3d aaBox) {
 			Extent= 0.5*aaBox.Diagonal;
 			Center = aaBox.Min + Extent;
@@ -64,6 +71,28 @@ namespace g3 {
 			vertex[6] = Center + extAxis0 + extAxis1 + extAxis2;
 			vertex[7] = Center - extAxis0 + extAxis1 + extAxis2;			
 		}
+
+
+        // corners [ (-x,-y), (x,-y), (x,y), (-x,y) ], -z, then +z
+        //
+        //   7---6     +z       or        3---2     -z
+        //   |\  |\                       |\  |\
+        //   4-\-5 \                      0-\-1 \
+        //    \ 3---2                      \ 7---6   
+        //     \|   |                       \|   |
+        //      0---1  -z                    4---5  +z
+        //
+        // Note that in RHS system (which is our default), +z is "forward" so -z in this diagram 
+        // is actually the back of the box (!) This is odd but want to keep consistency w/ ComputeVertices(),
+        // and the implementation there needs to stay consistent w/ C++ Wildmagic5
+        public Vector3d Corner(int i)
+        {
+            Vector3d c = Center;
+            c += (  ((i&1) != 0) ^ ((i&2) != 0) ) ? (Extent.x * AxisX) : (-Extent.x * AxisX);
+            c += ( (i / 2) % 2 == 0 ) ? (-Extent.y * AxisY) : (Extent.y * AxisY);
+            c += (i < 4) ? (-Extent.z * AxisZ) : (Extent.z * AxisZ);
+            return c;
+        }
 
 
 		// g3 extensions
@@ -120,6 +149,17 @@ namespace g3 {
 			Center += v;
 		}
 
+
+
+        public static implicit operator Box3d(Box3f v)
+        {
+            return new Box3d(v.Center, v.AxisX, v.AxisY, v.AxisZ, v.Extent);
+        }
+        public static explicit operator Box3f(Box3d v)
+        {
+            return new Box3f((Vector3f)v.Center, (Vector3f)v.AxisX, (Vector3f)v.AxisY, (Vector3f)v.AxisZ, (Vector3f)v.Extent);
+        }
+
 	}
 
 
@@ -159,6 +199,13 @@ namespace g3 {
 			Center = center;
 			AxisX = x; AxisY = y; AxisZ = z;
 			Extent = extent;
+		}
+		public Box3f(Vector3f center, Vector3f extent) {
+			Center = center;
+			Extent = extent;
+			AxisX = Vector3f.AxisX;
+			AxisY = Vector3f.AxisY;
+			AxisZ = Vector3f.AxisZ;
 		}
 		public Box3f(AxisAlignedBox3f aaBox) {
 			Extent= 0.5f*aaBox.Diagonal;

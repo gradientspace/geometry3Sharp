@@ -26,6 +26,12 @@ namespace g3 {
 			AxisX = x; AxisY = y;
 			Extent = extent;
 		}
+		public Box2d(Vector2d center, Vector2d extent) {
+			Center = center;
+			Extent = extent;
+			AxisX = Vector2d.AxisX;
+			AxisY = Vector2d.AxisY;
+		}
 		public Box2d(AxisAlignedBox2d aaBox) {
 			Extent= 0.5*aaBox.Diagonal;
 			Center = aaBox.Min + Extent;
@@ -110,6 +116,17 @@ namespace g3 {
 			Center += v;
 		}
 
+
+        public static implicit operator Box2d(Box2f v)
+        {
+            return new Box2d(v.Center, v.AxisX, v.AxisY, v.Extent);
+        }
+        public static explicit operator Box2f(Box2d v)
+        {
+            return new Box2f((Vector2f)v.Center, (Vector2f)v.AxisX, (Vector2f)v.AxisY, (Vector2f)v.Extent);
+        }
+
+
 	}
 
 
@@ -146,6 +163,12 @@ namespace g3 {
 			Center = center;
 			AxisX = x; AxisY = y;
 			Extent = extent;
+		}
+		public Box2f(Vector2f center, Vector2f extent) {
+			Center = center;
+			Extent = extent;
+			AxisX = Vector2f.AxisX;
+			AxisY = Vector2f.AxisY;
 		}
 		public Box2f(AxisAlignedBox2f aaBox) {
 			Extent= 0.5f*aaBox.Diagonal;

@@ -83,10 +83,13 @@
     <Compile Include="math\Vector2f.cs" />
     <Compile Include="math\Vector2i.cs" />
     <Compile Include="mesh\ArrowGenerators.cs" />
+    <Compile Include="mesh\BoxGenerators.cs" />
     <Compile Include="mesh\CylinderGenerators.cs" />
     <Compile Include="mesh\DiscGenerators.cs" />
     <Compile Include="mesh\DMesh3.cs" />
     <Compile Include="mesh\DMesh3Util.cs" />
+    <Compile Include="mesh\DMesh3_debug.cs" />
+    <Compile Include="mesh\DMesh3_edge_operators.cs" />
     <Compile Include="mesh\IMesh.cs" />
     <Compile Include="io\MeshIO.cs" />
     <Compile Include="io\OBJReader.cs" />
