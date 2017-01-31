@@ -136,14 +136,16 @@ namespace g3
 
 
 
-
         public bool SupportsTriangleRayIntersection { get { return true; } }
         public int FindNearestHitTriangle(Ray3d ray, double fMaxDist = double.MaxValue)
         {
             if (mesh_timestamp != mesh.Timestamp)
                 throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
 
-            double fNearestT = (fMaxDist < double.MaxValue) ? fMaxDist : double.MaxValue;
+            // [RMS] note: using float.MaxValue here because we need to use <= to compare box hit
+            //   to fNearestT, and box hit returns double.MaxValue on no-hit. So, if we set
+            //   nearestT to double.MaxValue, then we will test all boxes (!)
+            double fNearestT = (fMaxDist < double.MaxValue) ? fMaxDist : float.MaxValue;
             int tNearID = DMesh3.InvalidID;
             find_hit_triangle(root_index, ref ray, ref fNearestT, ref tNearID);
             return tNearID;
@@ -500,7 +502,10 @@ namespace g3
                 int l = 0;
                 int r = iCount - 1;
                 while (l < r) {
-                    while (centers[iStart + l][axis] < midpoint)
+                    // [RMS] is <= right here? if v.axis == midpoint, then this loop
+                    //   can get stuck unless one of these has an equality test. But
+                    //   I did not think enough about if this is the right thing to do...
+                    while (centers[iStart + l][axis] <= midpoint)
                         l++;
                     while (centers[iStart + r][axis] > midpoint)
                         r--;
