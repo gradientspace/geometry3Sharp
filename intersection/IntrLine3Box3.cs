@@ -166,7 +166,7 @@ namespace g3
 
 			if (denom > (double)0)
 			{
-				if (numer > denom*t1)
+                if (numer - denom*t1 > MathUtil.ZeroTolerance)
 				{
 					return false;
 				}
@@ -178,7 +178,7 @@ namespace g3
 			}
 			else if (denom < (double)0)
 			{
-				if (numer > denom*t0)
+                if (numer - denom*t0 > MathUtil.ZeroTolerance)
 				{
 					return false;
 				}
