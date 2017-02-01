@@ -141,6 +141,8 @@ namespace g3
         {
             if (mesh_timestamp != mesh.Timestamp)
                 throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+            if (ray.Direction.IsNormalized == false)
+                throw new Exception("DMeshAABBTree3.FindNearestTriangle: ray direction is not normalized");
 
             // [RMS] note: using float.MaxValue here because we need to use <= to compare box hit
             //   to fNearestT, and box hit returns double.MaxValue on no-hit. So, if we set
@@ -977,8 +979,10 @@ namespace g3
             IntrRay3AxisAlignedBox3 intr = new IntrRay3AxisAlignedBox3(ray, box);
             if (intr.Find()) {
                 return intr.RayParam0;
-            } else
+            } else {
+                Debug.Assert(intr.Result != IntersectionResult.InvalidQuery);
                 return double.MaxValue;
+            }
         }
 
 
