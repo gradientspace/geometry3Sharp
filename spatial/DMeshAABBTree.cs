@@ -225,7 +225,8 @@ namespace g3
         public class TreeTraversal
         {
             // return false to terminate this branch
-            public Func<AxisAlignedBox3f, bool> NextBoxF = (x) => { return true; };
+            // arguments are box and depth in tree
+            public Func<AxisAlignedBox3f, int, bool> NextBoxF = (box,depth) => { return true; };
 
             public Action<int> NextTriangleF = (tID) => { };
         }
@@ -237,11 +238,11 @@ namespace g3
             if (mesh_timestamp != mesh.Timestamp)
                 throw new Exception("DMeshAABBTree3.DoTraversal: mesh has been modified since tree construction");
 
-            tree_traversal(root_index, traversal);
+            tree_traversal(root_index, 0, traversal);
         }
 
         // traversal implementation
-        private void tree_traversal(int iBox, TreeTraversal traversal)
+        private void tree_traversal(int iBox, int depth, TreeTraversal traversal)
         {
             int idx = box_to_index[iBox];
 
@@ -257,16 +258,16 @@ namespace g3
                 if ( i0 < 0 ) {
                     // negative index means we only have one 'child' box to descend into
                     i0 = (-i0) - 1;
-                    if ( traversal.NextBoxF(get_box(i0)) )
-                        tree_traversal(i0, traversal);
+                    if ( traversal.NextBoxF(get_box(i0), depth+1) )
+                        tree_traversal(i0, depth+1, traversal);
                 } else {
                     // positive index, two sequential child box indices to descend into
                     i0 = i0 - 1;
-                    if ( traversal.NextBoxF(get_box(i0)) )
-                        tree_traversal(i0, traversal);
+                    if ( traversal.NextBoxF(get_box(i0), depth+1) )
+                        tree_traversal(i0, depth+1, traversal);
                     int i1 = index_list[idx + 1] - 1;
-                    if ( traversal.NextBoxF(get_box(i1)) )
-                        tree_traversal(i0, traversal);
+                    if ( traversal.NextBoxF(get_box(i1), depth+1) )
+                        tree_traversal(i1, depth+1, traversal);
                 }
             }
         }
@@ -277,7 +278,7 @@ namespace g3
         {
             double volSum = 0;
             TreeTraversal t = new TreeTraversal() {
-                NextBoxF = (box) => {
+                NextBoxF = (box, depth) => {
                     volSum += box.Volume;
                     return true;
                 }
@@ -289,7 +290,7 @@ namespace g3
         {
             double extSum = 0;
             TreeTraversal t = new TreeTraversal() {
-                NextBoxF = (box) => {
+                NextBoxF = (box, depth) => {
                     extSum += box.Extents.LengthL1;
                     return true;
                 }
@@ -1099,7 +1100,7 @@ namespace g3
                             Util.gBreakToDebugger();
                 }
             };
-            tree_traversal(iBox, t);
+            tree_traversal(iBox, 0, t);
         }
 
         // do full tree traversal below iBox to make sure that all child triangles are contained
@@ -1116,7 +1117,7 @@ namespace g3
                     }
                 }
             };
-            tree_traversal(iBox, t);
+            tree_traversal(iBox, 0, t);
         }
 
 
