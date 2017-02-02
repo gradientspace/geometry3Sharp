@@ -574,6 +574,81 @@ namespace g3
 
 
 
+        public void EnableVertexNormals(Vector3f initial_normal)
+        {
+            if (HasVertexNormals)
+                return;
+            normals = new DVector<float>();
+            int NV = MaxVertexID;
+            normals.resize(3*NV);
+            for (int i = 0; i < NV; ++i) {
+                int vi = 3 * i;
+                normals[vi] = initial_normal.x;
+                normals[vi + 1] = initial_normal.y;
+                normals[vi + 2] = initial_normal.z;
+            }
+        }
+        public void DiscardVertexNormals() {
+            normals = null;
+        }
+
+        public void EnableVertexColors(Vector3f initial_color)
+        {
+            if (HasVertexColors)
+                return;
+            colors = new DVector<float>();
+            int NV = MaxVertexID;
+            colors.resize(3*NV);
+            for (int i = 0; i < NV; ++i) {
+                int vi = 3 * i;
+                colors[vi] = initial_color.x;
+                colors[vi + 1] = initial_color.y;
+                colors[vi + 2] = initial_color.z;
+            }
+        }
+        public void DiscardVertexColors() {
+            colors= null;
+        }
+
+        public void EnableVertexUVs(Vector2f initial_uv)
+        {
+            if (HasVertexUVs)
+                return;
+            uv = new DVector<float>();
+            int NV = MaxVertexID;
+            uv.resize(2*NV);
+            for (int i = 0; i < NV; ++i) {
+                int vi = 2 * i;
+                uv[vi] = initial_uv.x;
+                uv[vi + 1] = initial_uv.y;
+            }
+        }
+        public void DiscardVertexUVs() {
+            uv = null;
+        }
+
+        public void EnableTriangleGroups(int initial_group = 0)
+        {
+            if (HasTriangleGroups)
+                return;
+            triangle_groups = new DVector<int>();
+            int NT = MaxTriangleID;
+            triangle_groups.resize(NT);
+            for (int i = 0; i < NT; ++i)
+                triangle_groups[i] = initial_group;
+        }
+        public void DiscardTriangleGroups() {
+            triangle_groups = null;
+        }
+
+
+
+
+
+
+
+
+
         // iterators
 
         public IEnumerable<int> VertexIndices() {
@@ -981,6 +1056,36 @@ namespace g3
             }
         }
 
+
+
+
+        bool cached_is_closed = false;
+        int cached_is_closed_timstamp = -1;
+
+        public bool IsClosed() {
+            // [RMS] under possibly-mistaken belief that foreach() has some overhead...
+            if (MaxEdgeID / EdgeCount > 5) {
+                foreach (int eid in edges_refcount)
+                    if (edge_is_boundary(eid))
+                        return false;
+            } else {
+                int N = MaxEdgeID;
+                for (int i = 0; i < N; ++i)
+                    if (edges_refcount.isValid(i) && edge_is_boundary(i))
+                        return false;
+            }
+            return true;            
+        }
+
+        public bool CachedIsClosed {
+            get {
+                if (cached_is_closed_timstamp != Timestamp) {
+                    cached_is_closed = IsClosed();
+                    cached_is_closed_timstamp = Timestamp;
+                }
+                return cached_is_closed;
+            }
+        }
 
 
 

@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace g3
 {
 
-    public struct BoundaryLoop
+    public class EdgeLoop
     {
         public int[] Vertices;
         public int[] Edges;
@@ -15,7 +15,7 @@ namespace g3
     public class MeshBoundaryLoops
     {
         public DMesh3 Mesh;
-        public List<BoundaryLoop> Loops;
+        public List<EdgeLoop> Loops;
 
         public MeshBoundaryLoops(DMesh3 mesh)
         {
@@ -28,7 +28,7 @@ namespace g3
         // so boundary-loop can be followed
         public bool Compute()
         {
-            Loops = new List<BoundaryLoop>();
+            Loops = new List<EdgeLoop>();
 
             int NE = Mesh.MaxEdgeID;
             byte[] used_edge = new byte[NE];
@@ -67,11 +67,11 @@ namespace g3
 
                     Debug.Assert(e0 == eCur || e1 == eCur);
                     int eNext = (e0 == eCur) ? e1 : e0;
-                    Debug.Assert(used_edge[eNext] == 0);
 
                     if (eNext == eStart) {
                         bClosed = true;      // done loop
                     } else {
+                        Debug.Assert(used_edge[eNext] == 0);
                         loop_edges.Add(eNext);
                         eCur = eNext;
                         used_edge[eCur] = 1;
@@ -80,7 +80,7 @@ namespace g3
 
 
                 // convert loop
-                BoundaryLoop loop = new BoundaryLoop();
+                EdgeLoop loop = new EdgeLoop();
                 loop.Vertices = loop_verts.ToArray();
                 loop.Edges = loop_edges.ToArray();
                 Loops.Add(loop);

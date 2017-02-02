@@ -41,6 +41,22 @@ namespace g3
 
 
 
+
+        // [TODO] support non-isolated vertices
+        public bool RemoveVertex(int vID)
+        {
+            if (vertices_refcount.refCount(vID) != 1)
+                throw new NotImplementedException("DMesh3.RemoveVertex: vertex is still referenced");
+
+            vertices_refcount.decrement(vID);
+            Debug.Assert(vertices_refcount.isValid(vID) == false);
+            vertex_edges[vID] = null;
+            return true;
+        }
+
+
+
+
         // Remove a tID from the mesh. Also removes any unreferenced edges after tri is removed.
         // If bRemoveIsolatedVertices is false, then if you remove all tris from a vert, that vert is also removed.
         // If bPreserveManifold, we check that you will not create a bowtie vertex (and return false).
