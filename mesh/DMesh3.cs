@@ -450,6 +450,23 @@ namespace g3
 			a = edges[i]; b = edges[i+1]; t0 = edges[i+2]; t1 = edges[i+3];
 			return true;
 		}
+
+        // return same indices as GetEdgeV, but oriented based on attached triangle
+        public Index2i GetOrientedBoundaryEdgeV(int eID)
+        {
+            if ( edges_refcount.isValid(eID) ) {
+                int ei = 4 * eID;
+                if ( edges[ei+3] == InvalidID) {
+                    int a = edges[ei], b = edges[ei + 1];
+                    int ti = 3 * edges[ei + 2];
+                    Index3i tri = new Index3i(triangles[ti], triangles[ti + 1], triangles[ti + 2]);
+                    int ai = IndexUtil.find_edge_index_in_tri(a, b, ref tri);
+                    return new Index2i(tri[ai], tri[(ai + 1) % 3]);
+                }
+            }
+            Debug.Assert(false);        // should not happen!
+            return InvalidEdge;
+        }
 			
 
 
@@ -631,6 +648,66 @@ namespace g3
 					yield return edge_other_v(edges[i], vID);
 			}
 		}
+
+
+		public IEnumerable<int> VtxEdgesItr(int vID) {
+			if ( vertices_refcount.isValid(vID) ) {
+				List<int> edges = vertex_edges[vID];
+				int N = edges.Count;
+                for (int i = 0; i < N; ++i)
+                    yield return edges[i];
+			}
+		}
+
+
+        // Returns count of boundary edges at vertex, and 
+        // the first two boundary edges if found. 
+        // If return is > 2, call VtxAllBoundaryEdges
+        public int VtxBoundaryEdges(int vID, ref int e0, ref int e1)
+        {
+            if ( vertices_refcount.isValid(vID) ) {
+                int count = 0;
+				List<int> vtx_edges = vertex_edges[vID];
+				int N = vtx_edges.Count;
+                for (int i = 0; i < N; ++i) {
+                    int eid = vtx_edges[i];
+                    int ei = 4 * eid;
+                    if ( edges[ei+3] == InvalidID ) {
+                        if (count == 0)
+                            e0 = eid;
+                        else if (count == 1)
+                            e1 = eid;
+                        count++;
+                    }
+                }
+                return count;
+            }
+            Debug.Assert(false);
+            return -1;
+        }
+
+
+        // e needs to be large enough (ie call VtxBoundaryEdges, or as large as max one-ring)
+        // returns count, ie number of elements of e that were filled
+        public int VtxAllBoundaryEdges(int vID, int[] e)
+        {
+            if (vertices_refcount.isValid(vID)) {
+                int count = 0;
+				List<int> vtx_edges = vertex_edges[vID];
+				int N = vtx_edges.Count;
+                for (int i = 0; i < N; ++i) {
+                    int eid = vtx_edges[i];
+                    int ei = 4 * eid;
+                    if ( edges[ei+3] == InvalidID ) 
+                        e[count++] = eid;
+                }
+                return count;
+            }
+            Debug.Assert(false);
+            return -1;
+        }
+
+
 
 
         Index3i GetTriTriangles(int tID) {

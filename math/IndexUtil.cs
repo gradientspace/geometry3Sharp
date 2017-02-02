@@ -22,9 +22,9 @@ namespace g3
         }
 		public static int find_tri_index(int a, Index3i tri_verts)
 		{
-			if (tri_verts[0] == a) return 0;
-			if (tri_verts[1] == a) return 1;
-			if (tri_verts[2] == a) return 2;
+			if (tri_verts.a == a) return 0;
+			if (tri_verts.b == a) return 1;
+			if (tri_verts.c == a) return 2;
 			return DMesh3.InvalidID;
 		}
 
@@ -34,6 +34,13 @@ namespace g3
             if (same_pair_unordered(a, b, tri_verts[0], tri_verts[1])) return 0;
             if (same_pair_unordered(a, b, tri_verts[1], tri_verts[2])) return 1;
             if (same_pair_unordered(a, b, tri_verts[2], tri_verts[0])) return 2;
+            return DMesh3.InvalidID;
+        }
+        public static int find_edge_index_in_tri(int a, int b, ref Index3i tri_verts )
+        {
+            if (same_pair_unordered(a, b, tri_verts.a, tri_verts.b)) return 0;
+            if (same_pair_unordered(a, b, tri_verts.b, tri_verts.c)) return 1;
+            if (same_pair_unordered(a, b, tri_verts.c, tri_verts.a)) return 2;
             return DMesh3.InvalidID;
         }
 

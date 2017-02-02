@@ -60,5 +60,21 @@ namespace g3 {
         }
 
 
+
+
+
+        public static DCurve3 ExtractLoopV(IMesh mesh, IEnumerable<int> vertices) {
+            DCurve3 curve = new DCurve3();
+            foreach (int vid in vertices)
+                curve.AppendVertex(mesh.GetVertex(vid));
+            return curve;
+        }
+        public static DCurve3 ExtractLoopV(IMesh mesh, int[] vertices) {
+            DCurve3 curve = new DCurve3();
+            for (int i = 0; i < vertices.Length; ++i)
+                curve.AppendVertex(mesh.GetVertex(vertices[i]));
+            return curve;
+        }
+
 	}
 }
