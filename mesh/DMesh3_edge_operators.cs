@@ -28,7 +28,7 @@ namespace g3
 			foreach ( int tid in TriangleIndices() ) {
 				internal_reverse_tri_orientation(tid);
 			}
-			if ( bFlipNormals ) {
+			if ( bFlipNormals && HasVertexNormals ) {
 				foreach ( int vid in VertexIndices() ) {
 					int i = 3*vid;
 					normals[i] = -normals[i];

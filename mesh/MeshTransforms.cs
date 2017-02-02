@@ -29,5 +29,33 @@ namespace g3
             Scale(mesh, s, s, s);
         }
 
+
+
+
+        public static void FlipLeftRightCoordSystems(IDeformableMesh mesh)
+        {
+            int NV = mesh.MaxVertexID;
+            for ( int i = 0; i < NV; ++i ) {
+                if ( mesh.IsVertex(i) ) {
+                    Vector3d v = mesh.GetVertex(i);
+                    v.z = -v.z;
+                    mesh.SetVertex(i, v);
+
+                    if (mesh.HasVertexNormals) {
+                        Vector3f n = mesh.GetVertexNormal(i);
+                        n.z = -n.z;
+                        mesh.SetVertexNormal(i, n);
+                    }
+                }
+            }
+
+            if ( mesh is DMesh3 ) {
+                (mesh as DMesh3).ReverseOrientation(false);
+            } else {
+                throw new Exception("argh don't want this in IDeformableMesh...but then for SimpleMesh??");
+            }
+
+        }
+
     }
 }

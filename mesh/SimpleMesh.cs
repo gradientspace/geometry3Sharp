@@ -231,6 +231,14 @@ namespace g3
 			get { return TriangleCount; }
 		}
 
+
+        public bool IsVertex(int vID) {
+            return vID * 3 < Vertices.Length;
+        }
+        public bool IsTriangle(int tID) {
+            return tID * 3 < Triangles.Length;
+        }
+
         public bool HasVertexColors
         {
             get { return Colors != null && Colors.Length == Vertices.Length; }
