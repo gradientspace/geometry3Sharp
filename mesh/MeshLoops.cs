@@ -33,15 +33,21 @@ namespace g3
             Loops = new List<EdgeLoop>();
 
             int NE = Mesh.MaxEdgeID;
+
+            // Temporary memory used to indicate when we have "used" an edge.
             byte[] used_edge = new byte[NE];
             Array.Clear(used_edge, 0, used_edge.Length);
 
+            // current loop is stored here, cleared after each loop extracted
             List<int> loop_edges = new List<int>();     // [RMS] not sure we need this...
             List<int> loop_verts = new List<int>();
             List<int> bowties = new List<int>();
 
+            // Temp buffer for reading back all boundary edges of a vertex.
+            // probably always small but in pathological cases it could be large...
             int[] all_e = new int[16];
 
+            // process all edges of mesh
             for ( int eid = 0; eid < NE; ++eid ) {
                 if (used_edge[eid] > 0)
                     continue;
@@ -73,8 +79,9 @@ namespace g3
                         // found "bowtie" vertex...things just got complicated!
 
                         if (cure_b == loop_verts[0]) {
-                            // we can close loop right now - might as well!
-                            eNext = -2;
+                            // The "end" of the current edge is the same as the start vertex.
+                            // This means we can close the loop here. Might as well!
+                            eNext = -2;   // sentinel value used below
 
                         } else {
                             // try to find an unused outgoing edge that is oriented properly.
@@ -106,10 +113,14 @@ namespace g3
                     }
 
                     if (eNext == -2) {
+                        // found a bowtie vert that is the same as start-of-loop, so we
+                        // are just closing it off explicitly
                         bClosed = true;
                     } else if (eNext == eStart) {
-                        bClosed = true;      // done loop
+                        // found edge at start of loop, so loop is done.
+                        bClosed = true;      
                     } else {
+                        // push onto accumulated list
                         Debug.Assert(used_edge[eNext] == 0);
                         loop_edges.Add(eNext);
                         eCur = eNext;
@@ -117,19 +128,21 @@ namespace g3
                     }
                 }
 
+                // if we saw a bowtie vertex, we might need to break up this loop,
+                // so call extract_subloops
                 if (bowties.Count > 0) {
                     List<EdgeLoop> subloops = extract_subloops(loop_verts, loop_edges, bowties);
                     for (int i = 0; i < subloops.Count; ++i)
                         Loops.Add(subloops[i]);
                 } else {
-                    // convert loop
+                    // clean simple loop, convert to EdgeLoop instance
                     EdgeLoop loop = new EdgeLoop();
                     loop.Vertices = loop_verts.ToArray();
                     loop.Edges = loop_edges.ToArray();
                     Loops.Add(loop);
                 }
 
-                // reset
+                // reset these lists
                 loop_edges.Clear();
                 loop_verts.Clear();
                 bowties.Clear();
@@ -144,7 +157,15 @@ namespace g3
 
 
 
-
+        // This is called when loopV contains one or more "bowtie" vertices.
+        // These vertices *might* be duplicated in loopV (but not necessarily)
+        // If they are, we have to break loopV into subloops that don't contain duplicates.
+        //
+        // The list bowties contains all the possible duplicates 
+        // (all v in bowties occur in loopV at least once)
+        //
+        // Currently loopE is not used, and the returned EdgeLoop objects do not have their Edges
+        // arrays initialized. Perhaps to improve in future.
         List<EdgeLoop> extract_subloops(List<int> loopV, List<int> loopE, List<int> bowties )
         {
             List<EdgeLoop> subs = new List<EdgeLoop>();
@@ -164,20 +185,33 @@ namespace g3
                 return subs;
             }
 
-
+            // This loop extracts subloops until we have dealt with all the
+            // duplicate vertices in loopV
             while ( dupes.Count > 0 ) {
 
-                // find a simple loop
+                // Find shortest "simple" loop, ie a loop from a bowtie to itself that
+                // does not contain any other bowties. This is an independent loop.
+                // We're doing a lot of extra work here if we only have one element in dupes...
                 int bi = 0, bv = 0;
                 int start_i = -1, end_i = -1;
+                int bv_shortest = -1; int shortest = int.MaxValue;
                 for ( ; bi < dupes.Count; ++bi ) {
                     bv = dupes[bi];
-                    if (is_simple_bowtie_loop(loopV, dupes, bv, out start_i, out end_i))
-                        break; // found one!
+                    if (is_simple_bowtie_loop(loopV, dupes, bv, out start_i, out end_i)) {
+                        int len = count_span(loopV, start_i, end_i);
+                        if (len < shortest) {
+                            bv_shortest = bv;
+                            shortest = len;
+                        }
+                    }
                 }
-
-                if (start_i == -1) {
+                if (bv_shortest == -1) {
                     throw new Exception("extract_subloops: argh");
+                }
+                if (bv != bv_shortest) {
+                    bv = bv_shortest;
+                    // running again just to get start_i and end_i...
+                    is_simple_bowtie_loop(loopV, dupes, bv, out start_i, out end_i);
                 }
 
                 Debug.Assert(loopV[start_i] == bv && loopV[end_i] == bv );
@@ -187,12 +221,14 @@ namespace g3
                 loop.BowtieVertices = bowties.ToArray();
                 subs.Add(loop);
 
-                // check if we still have duplicates of this vert
+                // If there are no more duplicates of this bowtie, we can treat
+                // it like a regular vertex now
                 if (count_in_list(loopV, bv) < 2)
                     dupes.Remove(bv);
             }
 
-            // will normally still have one loop left...
+            // Should have one loop left that contains duplicates. 
+            // Extract this as a separate loop
             int nLeft = 0;
             for ( int i = 0; i < loopV.Count; ++i ) {
                 if (loopV[i] != -1)
@@ -212,6 +248,13 @@ namespace g3
 
             return subs;
         }
+
+
+
+        /*
+         * In all the functions below, the list loopV is assumed to possibly
+         * contain "removed" vertices indicated by -1. These are ignored.
+         */
 
     
         // Check if the loop from bowtieV to bowtieV inside loopV contains any other bowtie verts.
@@ -250,24 +293,25 @@ namespace g3
         }
 
 
-
-        int[] extract_span(List<int> l, int i0, int i1, bool bMarkInvalid)
+        // Read out the span from loop[i0] to loop [i1-1] into an array.
+        // If bMarkInvalid, then these values are set to -1 in loop
+        int[] extract_span(List<int> loop, int i0, int i1, bool bMarkInvalid)
         {
-            int num = count_span(l, i0, i1);
+            int num = count_span(loop, i0, i1);
             int[] a = new int[num];
             int ai = 0;
-            int N = l.Count;
+            int N = loop.Count;
             for (int i = i0; i != i1; i = (i + 1) % N) {
-                if (l[i] != -1) {
-                    a[ai++] = l[i];
+                if (loop[i] != -1) {
+                    a[ai++] = loop[i];
                     if (bMarkInvalid)
-                        l[i] = -1;
+                        loop[i] = -1;
                 }
             }
             return a;
         }
 
-
+        // count number of valid vertices in l between loop[i0] and loop[i1-1]
         int count_span(List<int> l, int i0, int i1)
         {
             int c = 0;
@@ -279,19 +323,20 @@ namespace g3
             return c;
         }
 
-
-        int find_index(List<int> l, int start, int item)
+        // find the index of item in loop, starting at start index
+        int find_index(List<int> loop, int start, int item)
         {
-            for (int i = start; i < l.Count; ++i)
-                if (l[i] == item)
+            for (int i = start; i < loop.Count; ++i)
+                if (loop[i] == item)
                     return i;
             return -1;
         }
         
-        int count_in_list(List<int> l, int item) {
+        // count number of times item appears in loop
+        int count_in_list(List<int> loop, int item) {
             int c = 0;
-            for (int i = 0; i < l.Count; ++i)
-                if (l[i] == item)
+            for (int i = 0; i < loop.Count; ++i)
+                if (loop[i] == item)
                     c++;
             return c;
         }            
