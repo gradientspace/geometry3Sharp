@@ -12,7 +12,7 @@ namespace g3
         NoFlip = 1,
         NoSplit = 2,
         NoCollapse = 4,
-        FullyConstrained = 7
+        FullyConstrained = NoFlip | NoSplit | NoCollapse
     }
 
 
@@ -54,6 +54,7 @@ namespace g3
         }
 
         static public readonly EdgeConstraint Unconstrained = new EdgeConstraint() { refineFlags = 0 };
+        static public readonly EdgeConstraint FullyConstrained = new EdgeConstraint() { refineFlags = EdgeRefineFlags.FullyConstrained };
     }
 
 
@@ -86,6 +87,8 @@ namespace g3
 
         static public readonly VertexConstraint Unconstrained = new VertexConstraint() 
             { Fixed = false, FixedSetID = InvalidSetID, Target = null };
+        static public readonly VertexConstraint Pinned = new VertexConstraint() 
+            { Fixed = true, FixedSetID = InvalidSetID, Target = null };
      }
 
 
