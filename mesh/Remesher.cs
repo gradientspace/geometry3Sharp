@@ -7,7 +7,7 @@ namespace g3 {
 	
 	public class Remesher {
 
-		DMesh3 mesh;
+		protected DMesh3 mesh;
         MeshConstraints constraints = null;
         IProjectionTarget target = null;
 
@@ -56,6 +56,9 @@ namespace g3 {
 		public Remesher(DMesh3 m) {
 			mesh = m;
 		}
+        protected Remesher()        // for subclasses that extend our behavior
+        {
+        }
 
 
         //! This object will be modified !!!
