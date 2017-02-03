@@ -94,6 +94,23 @@ namespace g3
 		}
 
 
+        public double AngleD(Vector2d v2) {
+            double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
+            return Math.Acos(fDot) * MathUtil.Rad2Deg;
+        }
+        public static double AngleD(Vector2d v1, Vector2d v2) {
+            return v1.AngleD(v2);
+        }
+        public double AngleR(Vector2d v2) {
+            double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
+            return Math.Acos(fDot);
+        }
+        public static double AngleR(Vector2d v1, Vector2d v2) {
+            return v1.AngleR(v2);
+        }
+
+
+
 		public double DistanceSquared(Vector2d v2) {
 			double dx = v2.x-x, dy = v2.y-y;
 			return dx*dx + dy*dy;

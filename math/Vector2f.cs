@@ -70,6 +70,10 @@ namespace g3
             }
         }
 
+		public bool IsNormalized {
+			get { return Math.Abs( (x * x + y * y) - 1) < MathUtil.ZeroTolerancef; }
+		}
+
 
         public float Dot(Vector2f v2)
         {
@@ -79,6 +83,33 @@ namespace g3
 
         public float Cross(Vector2f v2) {
             return y * v2.y - y * v2.x;
+        }
+
+
+		public Vector2f Perp {
+			get { return new Vector2f(y, -x); }
+		}
+		public Vector2f UnitPerp {
+			get { return new Vector2f(y, -x).Normalized; }
+		}
+		public float DotPerp(Vector2f v2) {
+			return x*v2.y - y*v2.x;
+		}
+
+
+        public float AngleD(Vector2f v2) {
+            float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
+            return (float)(Math.Acos(fDot) * MathUtil.Rad2Deg);
+        }
+        public static float AngleD(Vector2f v1, Vector2f v2) {
+            return v1.AngleD(v2);
+        }
+        public float AngleR(Vector2f v2) {
+            float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
+            return (float)(Math.Acos(fDot));
+        }
+        public static float AngleR(Vector2f v1, Vector2f v2) {
+            return v1.AngleR(v2);
         }
 
 

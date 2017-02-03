@@ -158,6 +158,22 @@ namespace g3
         }
 
 
+        public static float PlaneAngleSignedD(Vector2f vFrom, Vector2f vTo)
+        {
+            vFrom.Normalize();
+            vTo.Normalize();
+            float fSign = Math.Sign(vFrom.Cross(vTo));
+            float fAngle = fSign * Vector2f.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+        public static double PlaneAngleSignedD(Vector2d vFrom, Vector2d vTo)
+        {
+            vFrom.Normalize();
+            vTo.Normalize();
+            double fSign = Math.Sign(vFrom.Cross(vTo));
+            double fAngle = fSign * Vector2d.AngleD(vFrom, vTo);
+            return fAngle;
+        }
 
 
 

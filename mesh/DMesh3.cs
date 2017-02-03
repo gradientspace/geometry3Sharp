@@ -468,7 +468,21 @@ namespace g3
             return InvalidEdge;
         }
 			
-
+        // average of 1 or 2 face normals
+        public Vector3d GetEdgeNormal(int eID)
+        {
+            if (edges_refcount.isValid(eID)) {
+                int ei = 4 * eID;
+                Vector3d n = GetTriNormal(edges[ei + 2]);
+                if (edges[ei + 3] != InvalidID) {
+                    n += GetTriNormal(edges[ei + 3]);
+                    n.Normalize();
+                }
+                return n;
+            }
+            Debug.Assert(false);
+            return Vector3d.Zero;
+        }
 
 
         // mesh-building
