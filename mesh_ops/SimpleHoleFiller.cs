@@ -29,6 +29,17 @@ namespace g3
             if (Loop.Vertices.Length < 3)
                 return false;
 
+            // this just needs one triangle
+            if ( Loop.Vertices.Length == 3 ) {
+                Index3i tri = new Index3i(Loop.Vertices[0], Loop.Vertices[2], Loop.Vertices[1]);
+                if (Mesh.AppendTriangle(tri, group_id) != DMesh3.InvalidID)
+                    return true;
+                return false;
+            }
+
+            // [TODO] 4-case? could check nbr normals to figure out best internal edge...
+
+
             // compute centroid
             Vector3d c = Vector3d.Zero;
             for (int i = 0; i < Loop.Vertices.Length; ++i)

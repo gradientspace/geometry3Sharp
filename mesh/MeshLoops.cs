@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -35,8 +36,8 @@ namespace g3
             int NE = Mesh.MaxEdgeID;
 
             // Temporary memory used to indicate when we have "used" an edge.
-            byte[] used_edge = new byte[NE];
-            Array.Clear(used_edge, 0, used_edge.Length);
+            BitArray used_edge = new BitArray(NE);
+            used_edge.SetAll(false);
 
             // current loop is stored here, cleared after each loop extracted
             List<int> loop_edges = new List<int>();     // [RMS] not sure we need this...
@@ -49,14 +50,14 @@ namespace g3
 
             // process all edges of mesh
             for ( int eid = 0; eid < NE; ++eid ) {
-                if (used_edge[eid] > 0)
+                if ( used_edge[eid] == true )
                     continue;
                 if (Mesh.edge_is_boundary(eid) == false)
                     continue;
 
                 // ok this is start of a boundary chain
                 int eStart = eid;
-                used_edge[eStart] = 1;
+                used_edge[eStart] = true;
                 loop_edges.Add(eStart);
 
                 int eCur = eid;
@@ -92,7 +93,7 @@ namespace g3
                             Debug.Assert(num_be == bdry_nbrs);
                             for (int i = 0; i < num_be; ++i) {
                                 int bdry_eid = all_e[i];
-                                if (used_edge[bdry_eid] != 0)
+                                if ( used_edge[bdry_eid] == true )
                                     continue;       // this edge is already used
                                 Index2i bdry_ev = Mesh.GetOrientedBoundaryEdgeV(bdry_eid);
                                 if (bdry_ev.a != cure_b)
@@ -121,10 +122,10 @@ namespace g3
                         bClosed = true;      
                     } else {
                         // push onto accumulated list
-                        Debug.Assert(used_edge[eNext] == 0);
+                        Debug.Assert( used_edge[eNext] == false );
                         loop_edges.Add(eNext);
                         eCur = eNext;
-                        used_edge[eCur] = 1;
+                        used_edge[eCur] = true;
                     }
                 }
 
