@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics;
 
 
 namespace g3
@@ -90,6 +89,103 @@ namespace g3
                 }
                 return null;
         }
+
+
+
+
+
+
+
+        // [TODO] cannot back-out this operation right now
+        //
+        // Remove list of triangles. Values of triangles[] set to InvalidID are ignored.
+        public bool RemoveTriangles(int[] triangles, bool bRemoveIsolatedVerts)
+        {
+            bool bAllOK = true;
+            for (int i = 0; i < triangles.Length; ++i ) {
+                if (triangles[i] == DMesh3.InvalidID)
+                    continue;
+
+                bool bOK = Mesh.RemoveTriangle(triangles[i], bRemoveIsolatedVerts, false);
+                if (!bOK)
+                    bAllOK = false;
+            }
+            return bAllOK;
+        }
+
+
+
+
+
+        // Assumption here is that Submesh has been modified, but boundary loop has
+        // been preserved, and that old submesh has already been removed from this mesh.
+        // So, we just have to append new vertices and then rewrite triangles
+        // If new_tris or new_verts is non-null, we will return this info.
+        // new_tris should be set to TriangleCount (ie it is not necessarily a map)
+        // For new_verts, if we used an existing bdry vtx instead, we set the value to -(existing_index+1),
+        // otherwise the value is new_index (+1 is to handle 0)
+        public void ReinsertSubmesh(DSubmesh3 sub, ref int[] new_tris, out IndexMap SubToNewV)
+        {
+            if (sub.BaseBorderV == null)
+                throw new Exception("MeshEditor.ReinsertSubmesh: Submesh does not have required boundary info. Call ComputeBoundaryInfo()!");
+
+            DMesh3 submesh = sub.SubMesh;
+
+            IndexFlagSet done_v = new IndexFlagSet(submesh.MaxVertexID, submesh.TriangleCount/2);
+            SubToNewV = new IndexMap(submesh.MaxVertexID, submesh.VertexCount);
+
+            int nti = 0;
+            int NT = submesh.MaxTriangleID;
+            for (int ti = 0; ti < NT; ++ti ) {
+                if (submesh.IsTriangle(ti) == false)
+                    continue;
+
+                Index3i sub_t = submesh.GetTriangle(ti);
+                int gid = submesh.GetTriangleGroup(ti);
+
+                Index3i new_t = Index3i.Zero;
+                for ( int j = 0; j < 3; ++j ) {
+                    int sub_v = sub_t[j];
+                    int new_v = -1;
+                    if (done_v[sub_v] == false) {
+
+                        // first check if this is a boundary vtx on submesh and maps to a bdry vtx on base mesh
+                        if (submesh.vertex_is_boundary(sub_v)) {
+                            int base_v = (sub_v < sub.SubToBaseV.size) ? sub.SubToBaseV[sub_v] : -1;
+                            if ( base_v >= 0 && Mesh.IsVertex(base_v) && sub.BaseBorderV[base_v] == true ) { 
+                                // [RMS] this should always be true, but assert in tests to find out
+                                Debug.Assert(Mesh.vertex_is_boundary(base_v));
+                                if (Mesh.vertex_is_boundary(base_v)) {
+                                    new_v = base_v;
+                                }
+                            }
+                        }
+
+                        // if that didn't happen, append new vtx
+                        if ( new_v == -1 ) {
+                            new_v = Mesh.AppendVertex(submesh, sub_v);
+                        }
+
+                        SubToNewV[sub_v] = new_v;
+                        done_v[sub_v] = true;
+
+                    } else 
+                        new_v = SubToNewV[sub_v];
+
+                    new_t[j] = new_v;
+                }
+
+                int new_tid = Mesh.AppendTriangle(new_t, gid);
+                if (new_tris != null)
+                    new_tris[nti++] = new_tid;
+            }
+
+
+        }
+
+
+
+
 
 
 
