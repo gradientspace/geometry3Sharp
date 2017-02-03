@@ -119,7 +119,7 @@ namespace g3
 
             // verify compact check
             bool is_compact = vertices_refcount.is_dense;
-            for ( int vid = 0; vid < vertices.Length; ++vid ) {
+            for ( int vid = 0; vid < vertices.Length/3; ++vid ) {
                 DMESH_CHECK_OR_FAIL(vertices_refcount.isValid(vid));
             }
 

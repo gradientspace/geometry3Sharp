@@ -25,6 +25,18 @@ namespace g3
     };
 
 
+    [Flags]
+    public enum MeshComponents
+    {
+        None = 0,
+        VertexNormals = 1,
+        VertexColors = 2,
+        VertexUVs = 4,
+        FaceGroups = 8,
+        All = VertexNormals | VertexColors | VertexUVs | FaceGroups
+    }
+
+
 	//
 	// DMesh3 is a dynamic triangle mesh class. The mesh has has connectivity, 
 	//  is an indexed mesh, and allows for gaps in the index space.
@@ -118,7 +130,11 @@ namespace g3
             edges = new DVector<int>();
             edges_refcount = new RefCountVector();
         }
-
+        public DMesh3(MeshComponents flags) : 
+            this( (flags & MeshComponents.VertexNormals) != 0,  (flags & MeshComponents.VertexColors) != 0,
+                  (flags & MeshComponents.VertexUVs) != 0,      (flags & MeshComponents.FaceGroups) != 0 )
+        {
+        }
 
         // normals/colors/uvs will only be copied if they exist
         public DMesh3(DMesh3 copy, bool bCompact = false, bool bWantNormals = true, bool bWantColors = true, bool bWantUVs = true)
@@ -128,7 +144,11 @@ namespace g3
             else
                 Copy(copy, bWantNormals, bWantColors, bWantUVs);
         }
-
+        public DMesh3(DMesh3 copy, bool bCompact, MeshComponents flags) : 
+            this(copy, bCompact, (flags & MeshComponents.VertexNormals) != 0,  (flags & MeshComponents.VertexColors) != 0,
+                  (flags & MeshComponents.VertexUVs) != 0 )
+        {
+        }
 
 
         public void CompactCopy(DMesh3 copy, bool bNormals = true, bool bColors = true, bool bUVs = true)
@@ -150,6 +170,8 @@ namespace g3
             normals = (bNormals && copy.normals != null) ? new DVector<float>() : null;
             colors = (bColors && copy.colors != null) ? new DVector<float>() : null;
             uv = (bUVs && copy.uv != null) ? new DVector<float>() : null;
+
+            // WHAT ABOUT FACE GROUPS ARRAY??
 
             // [TODO] if we knew some of these were dense we could copy directly...
 
@@ -234,6 +256,17 @@ namespace g3
         public bool HasVertexNormals { get { return normals != null; } }
         public bool HasVertexUVs { get { return uv != null; } }
 		public bool HasTriangleGroups { get { return triangle_groups != null; } }
+
+        public MeshComponents Components {
+            get {
+                MeshComponents c = 0;
+                if (normals != null) c |= MeshComponents.VertexNormals;
+                if (colors != null) c |= MeshComponents.VertexColors;
+                if (uv != null) c |= MeshComponents.VertexUVs;
+                if (triangle_groups != null) c |= MeshComponents.FaceGroups;
+                return c;
+            }
+        }
 
         // info
 
@@ -377,8 +410,8 @@ namespace g3
         }
 
 		public int GetTriangleGroup(int tID) { 
-			return triangles_refcount.isValid(tID) ?
-                 triangle_groups[tID] : 0;
+			return (triangle_groups == null) ? -1 
+                : ( triangles_refcount.isValid(tID) ? triangle_groups[tID] : 0 );
 		}
 
 
@@ -520,6 +553,58 @@ namespace g3
 				int j = 2*vid;
 				uv.insert(u[1], j + 1);
 				uv.insert(u[0], j);
+			}
+
+            vertex_edges.insert(new List<int>(), vid);
+
+            updateTimeStamp();
+            return vid;
+        }
+
+        // direct copy from source mesh
+        public int AppendVertex(DMesh3 from, int fromVID)
+        {
+            int bi = 3 * fromVID;
+
+            int vid = vertices_refcount.allocate();
+			int i = 3*vid;
+            vertices.insert(from.vertices[bi+2], i + 2);
+            vertices.insert(from.vertices[bi+1], i + 1);
+            vertices.insert(from.vertices[bi], i);
+			if ( normals != null ) {
+                if (from.normals != null) {
+                    normals.insert(from.normals[bi + 2], i + 2);
+                    normals.insert(from.normals[bi + 1], i + 1);
+                    normals.insert(from.normals[bi], i);
+                } else {
+                    normals.insert(0, i + 2);
+                    normals.insert(1, i + 1);       // y-up
+                    normals.insert(0, i);
+                }
+			}
+
+			if ( colors != null ) {
+                if (from.normals != null) {
+                    colors.insert(from.colors[bi + 2], i + 2);
+                    colors.insert(from.colors[bi + 1], i + 1);
+                    colors.insert(from.colors[bi], i);
+                } else {
+                    colors.insert(1, i + 2);
+                    colors.insert(1, i + 1);       // white
+                    colors.insert(1, i);
+                }
+			}
+
+			if ( uv != null ) {
+				int j = 2*vid;
+                if (from.normals != null) {
+                    int bj = 2 * fromVID;
+                    colors.insert(from.uv[bj + 1], j + 1);
+                    colors.insert(from.uv[bj], j);
+                } else {
+                    uv.insert(0, j + 1);
+                    uv.insert(0, j);
+                }
 			}
 
             vertex_edges.insert(new List<int>(), vid);
