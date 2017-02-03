@@ -91,16 +91,10 @@ namespace g3
                                 all_e = new int[bdry_nbrs];
                             int num_be = Mesh.VtxAllBoundaryEdges(cure_b, all_e);
                             Debug.Assert(num_be == bdry_nbrs);
-                            for (int i = 0; i < num_be; ++i) {
-                                int bdry_eid = all_e[i];
-                                if ( used_edge[bdry_eid] == true )
-                                    continue;       // this edge is already used
-                                Index2i bdry_ev = Mesh.GetOrientedBoundaryEdgeV(bdry_eid);
-                                if (bdry_ev.a != cure_b)
-                                    continue;       // have to be able to chain to end of current edge
-                                eNext = bdry_eid;
-                                break;
-                            }
+
+                            // Try to pick the best "turn left" vertex.
+                            eNext = find_left_turn_edge(eCur, cure_b, all_e, num_be, used_edge);
+
                             if (eNext == -1)
                                 throw new Exception("MeshBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b);
                         }
@@ -153,6 +147,62 @@ namespace g3
         }
 
 
+
+
+        // [TODO] cache this in a dictionary? we will not need very many, but we will
+        //   need each multiple times!
+        Vector3d get_vtx_normal(int vid)
+        {
+            Vector3d n = Vector3d.Zero;
+            foreach (int ti in Mesh.VtxTrianglesItr(vid))
+                n += Mesh.GetTriNormal(ti);
+            n.Normalize();
+            return n;
+        }
+
+
+
+        // ok, bdry_edges[0...bdry_edges_count] contains the boundary edges coming out of bowtie_v.
+        // We want to pick the best one to continue the loop that came in to bowtie_v on incoming_e.
+        // If the loops are all sane, then we will get the smallest loops by "turning left" at bowtie_v.
+        // So, we compute the tangent plane at bowtie_v, and then the signed angle for each
+        // viable edge in this plane. 
+        //
+        // [TODO] handle degenerate edges. what do we do then? Currently will only chose
+        //  degenerate edge if there are no other options (I think...)
+        int find_left_turn_edge(int incoming_e, int bowtie_v, int[] bdry_edges, int bdry_edges_count, BitArray used_edges  )
+        {
+            // compute normal and edge [a,bowtie]
+            Vector3d n = get_vtx_normal(bowtie_v);
+            int other_v = Mesh.edge_other_v(incoming_e, bowtie_v);
+            Vector3d ab = Mesh.GetVertex(bowtie_v) - Mesh.GetVertex(other_v);
+ 
+            // our winner
+            int best_e = -1;
+            double best_angle = double.MaxValue;
+
+            for (int i = 0; i < bdry_edges_count; ++i) {
+                int bdry_eid = bdry_edges[i];
+                if ( used_edges[bdry_eid] == true )
+                    continue;       // this edge is already used
+                Index2i bdry_ev = Mesh.GetOrientedBoundaryEdgeV(bdry_eid);
+                if (bdry_ev.a != bowtie_v)
+                    continue;       // have to be able to chain to end of current edge, orientation-wise
+
+                // compute projected angle
+                Vector3d bc = Mesh.GetVertex(bdry_ev.b) - Mesh.GetVertex(bowtie_v);
+                float fAngleS = MathUtil.PlaneAngleSignedD((Vector3f)ab, (Vector3f)bc, (Vector3f)n);
+
+                // turn left!
+                if ( best_angle == double.MaxValue || fAngleS < best_angle ) {
+                    best_angle = fAngleS;
+                    best_e = bdry_eid;
+                }
+            }
+            Debug.Assert(best_e != -1);
+
+            return best_e;
+        }
 
 
 
