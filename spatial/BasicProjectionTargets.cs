@@ -10,6 +10,13 @@ namespace g3
         public DMesh3 Mesh { get; set; }
         public ISpatial Spatial { get; set; }
 
+        public MeshProjectionTarget() { }
+        public MeshProjectionTarget(DMesh3 mesh, ISpatial spatial)
+        {
+            Mesh = mesh;
+            Spatial = spatial;
+        }
+
         public Vector3d Project(Vector3d vPoint, int identifier = -1)
         {
             int tNearestID = Spatial.FindNearestTriangle(vPoint);

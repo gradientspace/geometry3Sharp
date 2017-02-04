@@ -84,6 +84,7 @@
     <Compile Include="math\Vector2f.cs" />
     <Compile Include="math\Vector2i.cs" />
     <Compile Include="mesh\DSubmesh3.cs" />
+    <Compile Include="mesh\EdgeLoop.cs" />
     <Compile Include="mesh\MeshConstraintUtil.cs" />
     <Compile Include="mesh\MeshEditor.cs" />
     <Compile Include="mesh\RegionRemesher.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="mesh\MeshMeasurements.cs" />
     <Compile Include="mesh\MeshTransforms.cs" />
     <Compile Include="mesh_generators\PlaneGenerators.cs" />
+    <Compile Include="mesh_ops\MeshExtrusion.cs" />
     <Compile Include="mesh_ops\SimpleHoleFiller.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="mesh\SimpleMesh.cs" />
@@ -115,6 +117,7 @@
     <Compile Include="math\Vector3d.cs" />
     <Compile Include="math\Vector3i.cs" />
     <Compile Include="math\Vector3f.cs" />
+    <Compile Include="queries\MeshValidation.cs" />
     <Compile Include="shapes3\Cylinder3.cs" />
     <Compile Include="solvers\DenseMatrix.cs" />
     <Compile Include="solvers\SparseMatrix.cs" />
@@ -179,6 +182,7 @@
     <Compile Include="intersection\IntrSegment3Box3.cs" />
     <Compile Include="intersection\IntrRay3Box3.cs" />
     <Compile Include="shapes3\Circle3.cs" />
+    <Compile Include="spatial\DCurveProjection.cs" />
     <Compile Include="spatial\DMeshAABBTree.cs" />
     <Compile Include="spatial\SpatialInterfaces.cs" />
   </ItemGroup>
