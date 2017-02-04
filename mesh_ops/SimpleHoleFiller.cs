@@ -10,8 +10,8 @@ namespace g3
         public DMesh3 Mesh;
         public EdgeLoop Loop;
 
-        int NewVertex;
-        int[] NewTriangles;
+        public int NewVertex;
+        public int[] NewTriangles;
 
 
         public SimpleHoleFiller(DMesh3 mesh, EdgeLoop loop)
@@ -24,7 +24,15 @@ namespace g3
         }
 
 
-        public bool Fill(int group_id = -1)
+
+        public virtual ValidationStatus Validate()
+        {
+            ValidationStatus loopStatus = MeshValidation.IsBoundaryLoop(Mesh, Loop);
+            return loopStatus;
+        }
+
+
+        public virtual bool Fill(int group_id = -1)
         {
             if (Loop.Vertices.Length < 3)
                 return false;

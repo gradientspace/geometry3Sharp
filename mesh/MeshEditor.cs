@@ -84,13 +84,55 @@ namespace g3
             operation_failed:
                 // remove what we added so far
                 if (i > 0) {
-                    if (remove_triangles(new_tris, i) == false)
-                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also falied to back out changes.");
+                    if (remove_triangles(new_tris, i-1) == false)
+                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also failed to back out changes.");
                 }
                 return null;
         }
 
 
+
+
+
+        public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1)
+        {
+            int N = vloop1.Length;
+            if (N != vloop2.Length)
+                throw new Exception("MeshEditor.StitchLoop: loops are not the same length!!");
+
+            int[] new_tris = new int[N * 2];
+
+            int i = 0;
+            for ( ; i < N; ++i ) {
+                int a = vloop1[i];
+                int b = vloop1[(i + 1) % N];
+                int c = vloop2[i];
+                int d = vloop2[(i + 1) % N];
+
+                Index3i t1 = new Index3i(b, a, d);
+                Index3i t2 = new Index3i(a, c, d);
+
+                int tid1 = Mesh.AppendTriangle(t1, group_id);
+                int tid2 = Mesh.AppendTriangle(t2, group_id);
+
+                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                    goto operation_failed;
+
+                new_tris[2 * i] = tid1;
+                new_tris[2 * i + 1] = tid2;
+            }
+
+            return new_tris;
+
+
+            operation_failed:
+                // remove what we added so far
+                if (i > 0) {
+                    if (remove_triangles(new_tris, 2*(i-1)) == false)
+                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                }
+                return null;
+        }
 
 
 
