@@ -6,13 +6,6 @@ using System.Diagnostics;
 namespace g3
 {
 
-    public class EdgeLoop
-    {
-        public int[] Vertices;
-        public int[] Edges;
-
-        public int[] BowtieVertices;
-    }
 
 
     public class MeshBoundaryLoops
@@ -131,7 +124,7 @@ namespace g3
                         Loops.Add(subloops[i]);
                 } else {
                     // clean simple loop, convert to EdgeLoop instance
-                    EdgeLoop loop = new EdgeLoop();
+                    EdgeLoop loop = new EdgeLoop(Mesh);
                     loop.Vertices = loop_verts.ToArray();
                     loop.Edges = loop_edges.ToArray();
                     Loops.Add(loop);
@@ -230,7 +223,7 @@ namespace g3
 
             // we might not actually have any duplicates, if we got luck. Early out in that case
             if ( dupes.Count == 0 ) {
-                subs.Add(new EdgeLoop() {
+                subs.Add(new EdgeLoop(Mesh) {
                     Vertices = loopV.ToArray(), Edges = loopE.ToArray(), BowtieVertices = bowties.ToArray()
                 });
                 return subs;
@@ -267,7 +260,7 @@ namespace g3
 
                 Debug.Assert(loopV[start_i] == bv && loopV[end_i] == bv );
 
-                EdgeLoop loop = new EdgeLoop();
+                EdgeLoop loop = new EdgeLoop(Mesh);
                 loop.Vertices = extract_span(loopV, start_i, end_i, true);
                 loop.BowtieVertices = bowties.ToArray();
                 subs.Add(loop);
@@ -286,7 +279,7 @@ namespace g3
                     nLeft++;
             }
             if (nLeft > 0) {
-                EdgeLoop loop = new EdgeLoop();
+                EdgeLoop loop = new EdgeLoop(Mesh);
                 loop.Vertices = new int[nLeft];
                 int vi = 0;
                 for (int i = 0; i < loopV.Count; ++i) {
