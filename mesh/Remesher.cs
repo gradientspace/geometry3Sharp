@@ -61,6 +61,14 @@ namespace g3 {
         }
 
 
+        public DMesh3 Mesh {
+            get { return mesh; }
+        }
+        public MeshConstraints Constraints {
+            get { return constraints; }
+        }
+
+
         //! This object will be modified !!!
         public void SetExternalConstraints(MeshConstraints cons)
         {

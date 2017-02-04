@@ -242,5 +242,39 @@ namespace g3
         }
 
 
+
+
+        public static void EdgeLengthStats(DMesh3 mesh, out double minEdgeLen, out double maxEdgeLen, out double avgEdgeLen, int samples = 0)
+        {
+            minEdgeLen = double.MaxValue;
+            maxEdgeLen = double.MinValue;
+            avgEdgeLen = 0;
+            int avg_count = 0;
+            int MaxID = mesh.MaxEdgeID;
+
+            // if we are only taking some samples, use a prime-modulo-loop instead of random
+            int nPrime = (samples == 0 ) ? 1 : nPrime = 31337;
+            int max_count = (samples == 0) ? MaxID : samples;
+
+            Vector3d a = Vector3d.Zero, b = Vector3d.Zero;
+            int eid = 0;
+            int count = 0;
+            do {
+                if (mesh.IsEdge(eid)) {
+                    mesh.GetEdgeV(eid, ref a, ref b);
+                    double len = a.Distance(b);
+                    if (len < minEdgeLen) minEdgeLen = len;
+                    if (len > maxEdgeLen) maxEdgeLen = len;
+                    avgEdgeLen += len;
+                    avg_count++;
+                }
+                eid = (eid + nPrime) % MaxID;
+            } while (eid != 0 && count++ < max_count);
+
+            avgEdgeLen /= (double)avg_count;
+        }
+
+
+
     }
 }

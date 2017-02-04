@@ -297,9 +297,12 @@ namespace g3
 			}
 		}
 
-		public Vector3f GetVertexNormal(int vID) { 
-			return vertices_refcount.isValid(vID) ?
-                new Vector3f(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3f.AxisY;
+		public Vector3f GetVertexNormal(int vID) {
+            if (normals == null)
+                return Vector3f.AxisY;
+            else
+                return vertices_refcount.isValid(vID) ?
+                    new Vector3f(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3f.AxisY;
 		}
 
 		public void SetVertexNormal(int vID, Vector3f vNewNormal) {
@@ -471,6 +474,17 @@ namespace g3
             return edges_refcount.isValid(eID) ?
                 new Index2i(edges[4 * eID], edges[4 * eID + 1]) : InvalidEdge;
         }
+        public bool GetEdgeV(int eID, ref Vector3d a, ref Vector3d b) {
+            if ( edges_refcount.isValid(eID) ) {
+                int iv0 = 3 * edges[4 * eID];
+                a.x = vertices[iv0]; a.y = vertices[iv0 + 1]; a.z = vertices[iv0 + 2];
+                int iv1 = 3 * edges[4 * eID + 1];
+                b.x = vertices[iv1]; b.y = vertices[iv1 + 1]; b.z = vertices[iv1 + 2];
+                return true;
+            }
+            return false;
+        }
+
         public Index2i GetEdgeT(int eID) {
             return edges_refcount.isValid(eID) ?
                 new Index2i(edges[4 * eID + 2], edges[4 * eID + 3]) : InvalidEdge;

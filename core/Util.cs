@@ -119,6 +119,26 @@ namespace g3
 
 
 
+        static public T[] AppendArrays<T>(params object[] args)
+        {
+            int count = args.Length;
+            int N = 0;
+            for (int i = 0; i < count; ++i)
+                N += (args[i] as T[]).Length;
+
+            T[] result = new T[N];
+            int cur_offset = 0;
+            for ( int i = 0; i < count; ++i ) {
+                T[] c = args[i] as T[];
+                Array.Copy(c, 0, result, cur_offset, c.Length);
+                cur_offset += c.Length;
+            }
+
+            return result;
+        }
+
+
+
 
         // conversion to/from bytes
         public static byte[] StructureToByteArray(object obj)

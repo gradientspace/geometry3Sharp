@@ -30,6 +30,13 @@ namespace g3
         }
 
 
+        public void MapVerticesToSubmesh(int[] vertices)
+        {
+            for (int i = 0; i < vertices.Length; ++i)
+                vertices[i] = BaseToSubV[vertices[i]];
+        }
+
+
         public void ComputeBoundaryInfo(int[] subTriangles) {
             ComputeBoundaryInfo(subTriangles, subTriangles.Length);
         }

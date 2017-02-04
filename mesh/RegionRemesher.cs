@@ -9,6 +9,10 @@ namespace g3
         public DMesh3 BaseMesh;
         public DSubmesh3 Region;
 
+        // By default is initialized w/ all boundary constraints
+        // You can add more, but don't screw up!
+        MeshConstraints bdry_constraints;
+
         int[] cur_base_tris;
 
 
@@ -23,9 +27,9 @@ namespace g3
 
             // add boundary-edge constraints
             // [TODO] actually only want to constrain submesh border edges...
-            MeshConstraints cons = new MeshConstraints();
-            MeshConstraintUtil.FixAllBoundaryEdges(cons, Region.SubMesh);
-            SetExternalConstraints(cons);
+            bdry_constraints = new MeshConstraints();
+            MeshConstraintUtil.FixAllBoundaryEdges(bdry_constraints, Region.SubMesh);
+            SetExternalConstraints(bdry_constraints);
         }
 
 
