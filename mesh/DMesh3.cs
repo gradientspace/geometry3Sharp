@@ -412,6 +412,19 @@ namespace g3
                 new Index3i(triangle_edges[3 * tID], triangle_edges[3 * tID + 1], triangle_edges[3 * tID + 2]) : InvalidTriangle;
         }
 
+        public Index3i GetTriNeighbourTris(int tID) {
+            if (triangles_refcount.isValid(tID)) {
+                int tei = 3 * tID;
+                Index3i nbr_t = Index3i.Zero;
+                for (int j = 0; j < 3; ++j) {
+                    int ei = 4 * triangle_edges[tei + j];
+                    nbr_t[j] = (edges[ei + 3] == tID) ? edges[ei + 4] : edges[ei + 3];
+                }
+                return nbr_t;
+            } else
+                return InvalidTriangle;
+        }
+
 		public int GetTriangleGroup(int tID) { 
 			return (triangle_groups == null) ? -1 
                 : ( triangles_refcount.isValid(tID) ? triangle_groups[tID] : 0 );
@@ -824,6 +837,26 @@ namespace g3
                 return new Index2i(c, d);
             } else
                 return new Index2i(c, InvalidID);
+        }
+
+
+        public int FindTriangle(int a, int b, int c)
+        {
+            int eid = find_edge(a, b);
+            if (eid == InvalidID)
+                return InvalidID;
+            int ei = 4 * eid;
+            int ti = 3*edges[ei + 2];
+            Index3i tri = new Index3i(triangles[ti], triangles[ti + 1], triangles[ti + 2]);
+            if (IndexUtil.is_same_triangle(a, b, c, ref tri))
+                return edges[ei + 2];
+            if ( edges[ei + 3] != InvalidID ) {
+                ti = 3 * edges[ei + 3];
+                tri.a = triangles[ti]; tri.b = triangles[ti + 1]; tri.c = triangles[ti + 2];
+                if (IndexUtil.is_same_triangle(a, b, c, ref tri))
+                    return edges[ei + 3];
+            }
+            return InvalidID;
         }
 
 

@@ -103,5 +103,14 @@ namespace g3
             return DMesh3.InvalidID;
         }
 
+
+        public static bool is_same_triangle(int a, int b, int c, ref Index3i tri)
+        {
+            if (tri.a == a)         return same_pair_unordered(tri.b, tri.c, b, c);
+            else if ( tri.b == a )  return same_pair_unordered(tri.a, tri.c, b, c);
+            else if ( tri.c == a )  return same_pair_unordered(tri.a, tri.b, b, c);
+            return false;
+        }
+
     }
 }
