@@ -343,12 +343,21 @@ namespace g3
 
         void build_top_down(bool bSorted)
         {
+            // build list of valid triangles & centers. We skip any
+            // triangles that have infinite/garbage vertices...
             int i = 0;
             int[] triangles = new int[mesh.TriangleCount];
             Vector3d[] centers = new Vector3d[mesh.TriangleCount];
             foreach ( int ti in mesh.TriangleIndices()) {
-                triangles[i] = ti;
-                centers[i++] = mesh.GetTriCentroid(ti);
+                Vector3d centroid = mesh.GetTriCentroid(ti);
+                double d2 = centroid.LengthSquared;
+                bool bInvalid = double.IsNaN(d2) || double.IsInfinity(d2);
+                Debug.Assert(bInvalid == false);
+                if (bInvalid == false) {
+                    triangles[i] = ti;
+                    centers[i] = mesh.GetTriCentroid(ti);
+                    i++;
+                } // otherwise skip this tri
             }
 
             boxes_set tris = new boxes_set();
