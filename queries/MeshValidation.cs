@@ -8,6 +8,8 @@ namespace g3
     {
         Ok,
 
+        NotAVertex,
+
         NotBoundaryVertex,
         NotBoundaryEdge,
 
@@ -18,6 +20,26 @@ namespace g3
 
     public static class MeshValidation
     {
+
+        public static ValidationStatus IsEdgeLoop(DMesh3 mesh, EdgeLoop loop)
+        {
+           int N = loop.Vertices.Length;
+            for ( int i = 0; i < N; ++i ) {
+                if ( ! mesh.IsVertex(loop.Vertices[i]) )
+                    return ValidationStatus.NotAVertex;
+            }
+            for (int i = 0; i < N; ++i) {
+                int a = loop.Vertices[i];
+                int b = loop.Vertices[(i + 1) % N];
+
+                int eid = mesh.FindEdge(a, b);
+                if (eid == DMesh3.InvalidID)
+                    return ValidationStatus.VerticesNotConnectedByEdge;
+            }
+            return ValidationStatus.Ok;
+        }
+
+
 
         public static ValidationStatus IsBoundaryLoop(DMesh3 mesh, EdgeLoop loop)
         {
