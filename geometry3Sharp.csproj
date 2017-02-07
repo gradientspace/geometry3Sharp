@@ -86,8 +86,10 @@
     <Compile Include="math\Vector2i.cs" />
     <Compile Include="mesh\DSubmesh3.cs" />
     <Compile Include="mesh\EdgeLoop.cs" />
+    <Compile Include="mesh\FaceGroupUtil.cs" />
     <Compile Include="mesh\MeshConstraintUtil.cs" />
     <Compile Include="mesh\MeshEditor.cs" />
+    <Compile Include="mesh\MeshFaceSelection.cs" />
     <Compile Include="mesh\RegionRemesher.cs" />
     <Compile Include="mesh_generators\ArrowGenerators.cs" />
     <Compile Include="mesh_generators\BoxGenerators.cs" />
@@ -111,6 +113,7 @@
     <Compile Include="mesh\MeshTransforms.cs" />
     <Compile Include="mesh_generators\PlaneGenerators.cs" />
     <Compile Include="mesh_ops\MeshExtrusion.cs" />
+    <Compile Include="mesh_ops\MeshLoopSmooth.cs" />
     <Compile Include="mesh_ops\SimpleHoleFiller.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="mesh\SimpleMesh.cs" />
