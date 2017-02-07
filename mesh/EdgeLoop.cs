@@ -23,7 +23,7 @@ namespace g3
         {
             AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
             for (int i = 0; i < Vertices.Length; ++i)
-                box.Contain(Mesh.GetVertex(i));
+                box.Contain(Mesh.GetVertex(Vertices[i]));
             return box;
         }
 
