@@ -14,13 +14,18 @@ namespace g3
         public DMesh3 SubMesh;
         public MeshComponents WantComponents = MeshComponents.All;
 
-        public IndexFlagSet BaseSubmeshV;       // we compute this anyway, might as well hang onto it
-        public IndexMap BaseToSubV;
-        public DVector<int> SubToBaseV;
+        
+        public IndexFlagSet BaseSubmeshV;       // vertices in base mesh that are in submesh
+                                                // (we compute this anyway, might as well hang onto it)
+
+        public IndexMap BaseToSubV;             // vertex index map from base to submesh 
+        public DVector<int> SubToBaseV;         // vertex index map from submesh to base mesh
 
 
         // boundary info
-        public IndexFlagSet BaseBorderV;
+        public IndexHashSet BaseBorderE;        // list of internal border edge indices on base mesh
+        public IndexHashSet BaseBoundaryE;      // list of mesh-boundary edges on base mesh that are in submesh
+        public IndexHashSet BaseBorderV;        // list of border vertex indices on base mesh
 
 
         public DSubmesh3(DMesh3 mesh, int[] subTriangles)
@@ -30,6 +35,12 @@ namespace g3
         }
 
 
+        public int MapVertexToSubmesh(Index2i v) {
+            return BaseToSubV[v.a];
+        }
+        public Index2i MapVerticesToSubmesh(Index2i v) {
+            return new Index2i(BaseToSubV[v.a], BaseToSubV[v.b]);
+        }
         public void MapVerticesToSubmesh(int[] vertices)
         {
             for (int i = 0; i < vertices.Length; ++i)
@@ -42,19 +53,32 @@ namespace g3
         }
         public void ComputeBoundaryInfo(IEnumerable<int> triangles, int tri_count)
         {
+            // set of base-mesh triangles that are in submesh
             IndexFlagSet sub_tris = new IndexFlagSet(BaseMesh.MaxTriangleID, tri_count);
             foreach (int ti in triangles)
                 sub_tris[ti] = true;
 
-            BaseBorderV = new IndexFlagSet(true, BaseMesh.MaxVertexID);
+            BaseBorderV = new IndexHashSet();
+            BaseBorderE = new IndexHashSet();
+            BaseBoundaryE = new IndexHashSet();
 
-            // this processes each edge internal edge twice...but it is cheap
+            // Iterate through edges in submesh roi on base mesh. If
+            // one of the tris of the edge is not in submesh roi, then this
+            // is a boundary edge.
+            //
+            // (edge iteration via triangle iteration processes each internal edge twice...)
             foreach (int ti in triangles) {
                 Index3i tedges = BaseMesh.GetTriEdges(ti);
                 for ( int j = 0; j < 3; ++j ) {
                     int eid = tedges[j];
                     Index2i tris = BaseMesh.GetEdgeT(eid);
-                    if (tris.b == DMesh3.InvalidID || sub_tris[tris.a] != sub_tris[tris.b]) { 
+                    if (tris.b == DMesh3.InvalidID || sub_tris[tris.a] != sub_tris[tris.b]) {
+
+                        if (tris.b == DMesh3.InvalidID)
+                            BaseBoundaryE[eid] = true;
+                        else
+                            BaseBorderE[eid] = true;
+
                         Index2i ve = BaseMesh.GetEdgeV(eid);
                         BaseBorderV[ve.a] = true;
                         BaseBorderV[ve.b] = true;

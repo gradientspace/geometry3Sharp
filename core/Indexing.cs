@@ -6,6 +6,28 @@ using System.Collections;
 namespace g3
 {
 
+
+    // just useful
+    public class IndexHashSet : HashSet<int>
+    {
+        public bool this[int key]
+        {
+            get {
+                return Contains(key);
+            }
+            set {
+                if (value == true)
+                    Add(key);
+                else if (value == false && Contains(key))
+                    Remove(key);
+            }
+        }
+    }
+
+
+
+
+
     // This class provides a similar interface to BitArray, but can optionally
     // use a HashSet (or perhaps some other DS) if the fraction of the index space 
     // required is small

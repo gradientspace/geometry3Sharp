@@ -25,10 +25,9 @@ namespace g3
 
             cur_base_tris = (int[])regionTris.Clone();
 
-            // add boundary-edge constraints
-            // [TODO] actually only want to constrain submesh border edges...
+            // constrain region-boundary edges
             bdry_constraints = new MeshConstraints();
-            MeshConstraintUtil.FixAllBoundaryEdges(bdry_constraints, Region.SubMesh);
+            MeshConstraintUtil.FixSubmeshBoundaryEdges(bdry_constraints, Region);
             SetExternalConstraints(bdry_constraints);
         }
 

@@ -25,6 +25,26 @@ namespace g3
         }
 
 
+        // loop through submesh border edges on basemesh, map to submesh, and
+        // pin those edges / vertices
+        public static void FixSubmeshBoundaryEdges(MeshConstraints cons, DSubmesh3 sub)
+        {
+            Debug.Assert(sub.BaseBorderE != null);
+            foreach ( int base_eid in sub.BaseBorderE ) {
+                Index2i base_ev = sub.BaseMesh.GetEdgeV(base_eid);
+                Index2i sub_ev = sub.MapVerticesToSubmesh(base_ev);
+                int sub_eid = sub.SubMesh.FindEdge(sub_ev.a, sub_ev.b);
+                Debug.Assert(sub_eid != DMesh3.InvalidID);
+                Debug.Assert(sub.SubMesh.edge_is_boundary(sub_eid));
+            
+                cons.SetOrUpdateEdgeConstraint(sub_eid, EdgeConstraint.FullyConstrained);
+                cons.SetOrUpdateVertexConstraint(sub_ev.a, VertexConstraint.Pinned);
+                cons.SetOrUpdateVertexConstraint(sub_ev.b, VertexConstraint.Pinned);
+            }
+        }
+
+
+
 
         // for all vertices in loopV, constrain to target
         // for all edges in loopV, disable flips and constrain to target
