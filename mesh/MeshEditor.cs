@@ -166,12 +166,16 @@ namespace g3
         // new_tris should be set to TriangleCount (ie it is not necessarily a map)
         // For new_verts, if we used an existing bdry vtx instead, we set the value to -(existing_index+1),
         // otherwise the value is new_index (+1 is to handle 0)
-        public void ReinsertSubmesh(DSubmesh3 sub, ref int[] new_tris, out IndexMap SubToNewV)
+        //
+        // Returns true if submesh successfully inserted, false if any triangles failed
+        // (which happens if triangle would result in non-manifold mesh)
+        public bool ReinsertSubmesh(DSubmesh3 sub, ref int[] new_tris, out IndexMap SubToNewV)
         {
             if (sub.BaseBorderV == null)
                 throw new Exception("MeshEditor.ReinsertSubmesh: Submesh does not have required boundary info. Call ComputeBoundaryInfo()!");
 
             DMesh3 submesh = sub.SubMesh;
+            bool bAllOK = true;
 
             IndexFlagSet done_v = new IndexFlagSet(submesh.MaxVertexID, submesh.TriangleCount/2);
             SubToNewV = new IndexMap(submesh.MaxVertexID, submesh.VertexCount);
@@ -217,12 +221,18 @@ namespace g3
                     new_t[j] = new_v;
                 }
 
+                Debug.Assert(Mesh.FindTriangle(new_t.a, new_t.b, new_t.c) == DMesh3.InvalidID);
+
                 int new_tid = Mesh.AppendTriangle(new_t, gid);
+                Debug.Assert(new_tid != DMesh3.InvalidID && new_tid != DMesh3.NonManifoldID);
+                if ( ! Mesh.IsTriangle(new_tid) )
+                    bAllOK = false;
+
                 if (new_tris != null)
                     new_tris[nti++] = new_tid;
             }
 
-
+            return bAllOK;
         }
 
 
