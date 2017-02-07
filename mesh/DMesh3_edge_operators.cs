@@ -51,6 +51,8 @@ namespace g3
             vertices_refcount.decrement(vID);
             Debug.Assert(vertices_refcount.isValid(vID) == false);
             vertex_edges[vID] = null;
+
+            updateTimeStamp();
             return true;
         }
 
@@ -118,6 +120,7 @@ namespace g3
                 }
             }
 
+            updateTimeStamp();
             return true;
         }
 

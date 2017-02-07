@@ -67,12 +67,14 @@ namespace g3 {
             DCurve3 curve = new DCurve3();
             foreach (int vid in vertices)
                 curve.AppendVertex(mesh.GetVertex(vid));
+            curve.Closed = true;
             return curve;
         }
         public static DCurve3 ExtractLoopV(IMesh mesh, int[] vertices) {
             DCurve3 curve = new DCurve3();
             for (int i = 0; i < vertices.Length; ++i)
                 curve.AppendVertex(mesh.GetVertex(vertices[i]));
+            curve.Closed = true;
             return curve;
         }
 

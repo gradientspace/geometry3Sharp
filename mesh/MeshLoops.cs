@@ -43,6 +43,8 @@ namespace g3
 
             // process all edges of mesh
             for ( int eid = 0; eid < NE; ++eid ) {
+                if (!Mesh.IsEdge(eid))
+                    continue;
                 if ( used_edge[eid] == true )
                     continue;
                 if (Mesh.edge_is_boundary(eid) == false)

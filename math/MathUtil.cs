@@ -112,6 +112,17 @@ namespace g3
 
 
 
+
+        // for ((i++) % N)-type loops, but where we might be using (i--)
+        public static int WrapSignedIndex(int val, int mod)
+        {
+            while (val < 0)
+                val += mod;
+            return val % mod;
+        }
+
+
+
         // there are fast approximations to this...
         public static double InvSqrt(double f)
         {

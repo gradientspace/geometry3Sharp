@@ -47,7 +47,7 @@ namespace g3
 
 
         public bool isValid(int index) {
-            return ( index < ref_counts.size && ref_counts[index] > 0 );
+            return ( index >= 0 && index < ref_counts.size && ref_counts[index] > 0 );
         }
         public bool isValidUnsafe(int index) {
             return ref_counts[index] > 0;
