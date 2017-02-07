@@ -119,13 +119,20 @@ namespace g3
 
             // verify compact check
             bool is_compact = vertices_refcount.is_dense;
-            for ( int vid = 0; vid < vertices.Length/3; ++vid ) {
-                DMESH_CHECK_OR_FAIL(vertices_refcount.isValid(vid));
+            if (is_compact) {
+                for (int vid = 0; vid < vertices.Length / 3; ++vid) {
+                    DMESH_CHECK_OR_FAIL(vertices_refcount.isValid(vid));
+                }
             }
 
             // vertex edges must exist and reference this vert
             foreach( int vID in VertexIndices()) { 
                 DMESH_CHECK_OR_FAIL(IsVertex(vID));
+
+                Vector3d v = GetVertex(vID);
+                DMESH_CHECK_OR_FAIL(double.IsNaN(v.LengthSquared) == false);
+                DMESH_CHECK_OR_FAIL(double.IsInfinity(v.LengthSquared) == false);
+
                 List<int> l = vertex_edges[vID];
                 foreach(int edgeid in l) { 
                     DMESH_CHECK_OR_FAIL(IsEdge(edgeid));

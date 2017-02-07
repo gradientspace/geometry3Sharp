@@ -50,6 +50,14 @@ namespace g3
                     add(triangles[i]);
             }
         }
+        public void SelectVertexOneRings(int[] vertices)
+        {
+            for ( int i = 0; i < vertices.Length; ++i ) {
+                int vid = vertices[i];
+                foreach (int tid in Mesh.VtxTrianglesItr(vid))
+                    add(tid);
+            }
+        }
 
 
 

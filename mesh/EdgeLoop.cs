@@ -41,6 +41,18 @@ namespace g3
         }
 
 
+        public bool IsBoundaryLoop()
+        {
+            int NV = Vertices.Length;
+            for (int i = 0; i < NV; ++i ) {
+                int eid = Mesh.FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
+                Debug.Assert(eid != DMesh3.InvalidID);
+                if (Mesh.edge_is_boundary(eid) == false)
+                    return false;
+            }
+            return true;
+        }
+
 
         public int FindNearestVertex(Vector3d v)
         {
