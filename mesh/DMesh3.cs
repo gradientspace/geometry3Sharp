@@ -418,7 +418,7 @@ namespace g3
                 Index3i nbr_t = Index3i.Zero;
                 for (int j = 0; j < 3; ++j) {
                     int ei = 4 * triangle_edges[tei + j];
-                    nbr_t[j] = (edges[ei + 3] == tID) ? edges[ei + 4] : edges[ei + 3];
+                    nbr_t[j] = (edges[ei + 2] == tID) ? edges[ei + 3] : edges[ei + 2];
                 }
                 return nbr_t;
             } else
@@ -428,6 +428,13 @@ namespace g3
 		public int GetTriangleGroup(int tID) { 
 			return (triangle_groups == null) ? -1 
                 : ( triangles_refcount.isValid(tID) ? triangle_groups[tID] : 0 );
+		}
+
+		public void SetTriangleGroup(int tid, int group_id) {
+			if ( triangle_groups != null && triangles_refcount.isValid(tid) ) {
+                triangle_groups[tid] = group_id;
+                updateTimeStamp();
+			}
 		}
 
 
