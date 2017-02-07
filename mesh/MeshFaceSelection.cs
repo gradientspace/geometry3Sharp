@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class MeshFaceSelection
+    public class MeshFaceSelection : IEnumerable<int>
     {
         public DMesh3 Mesh;
 
@@ -19,6 +19,14 @@ namespace g3
             Mesh = mesh;
             Selected = new HashSet<int>();
             temp = new List<int>();
+        }
+
+
+        public IEnumerator<int> GetEnumerator() {
+            return Selected.GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator() {
+            return Selected.GetEnumerator();
         }
 
 
@@ -57,6 +65,22 @@ namespace g3
                 foreach (int tid in Mesh.VtxTrianglesItr(vid))
                     add(tid);
             }
+        }
+        public void SelectVertexOneRings(IEnumerable<int> vertices)
+        {
+            foreach ( int vid in vertices ) { 
+                foreach (int tid in Mesh.VtxTrianglesItr(vid))
+                    add(tid);
+            }
+        }
+
+
+        public void Deselect(int tid) {
+            remove(tid);
+        }
+        public void Deselect(int[] triangles) {
+            for ( int i = 0; i < triangles.Length; ++i ) 
+                remove(triangles[i]);
         }
 
 
@@ -210,6 +234,7 @@ namespace g3
             count_nbrs(tid, out nbr_in, out nbr_out, out bdry_e);
             return (nbr_in == 1 && nbr_out == 2);
         }
+
 
     }
 }
