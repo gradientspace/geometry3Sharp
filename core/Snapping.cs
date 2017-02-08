@@ -10,7 +10,7 @@ namespace g3
             double sign = Math.Sign(fValue);
             fValue = Math.Abs(fValue);
             int nInc = (int)(fValue / fIncrement);
-            double fRem = Math.IEEERemainder(fValue, fIncrement);
+            double fRem = fValue % fIncrement;
             if (fRem > fIncrement / 2)
                 ++nInc;
             return sign * (double)nInc * fIncrement;
