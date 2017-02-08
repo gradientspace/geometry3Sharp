@@ -12,13 +12,13 @@ namespace g3
         public DMesh3 Mesh;
 
         HashSet<int> Selected;
-        List<int> temp;
+        //List<int> temp;
 
         public MeshVertexSelection(DMesh3 mesh)
         {
             Mesh = mesh;
             Selected = new HashSet<int>();
-            temp = new List<int>();
+            //temp = new List<int>();
         }
 
 

@@ -52,7 +52,7 @@ namespace g3
                     Vector3d next = Mesh.GetVertex(Loop.Vertices[(i + 2) % NV]);
 
                     Vector3d centroid = (prev + next) * 0.5;
-                    SmoothedPostions[i] = (1 - Alpha) * cur + (Alpha) * centroid;
+                    SmoothedPostions[i] = (1 - a) * cur + (a) * centroid;
                 }
 
                 // bake
