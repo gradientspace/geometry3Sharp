@@ -158,7 +158,7 @@ namespace g3
             Vector3f c = Center;
             Vector3f e = Extents; e.x *= sx; e.y *= sy; e.z *= sz;
             Min = new Vector3f(c.x - e.x, c.y - e.y, c.z - e.z);
-            Min = new Vector3f(c.x + e.x, c.y + e.y, c.z + e.z);
+            Max = new Vector3f(c.x + e.x, c.y + e.y, c.z + e.z);
         }
 
         public void Contain(Vector3f v)

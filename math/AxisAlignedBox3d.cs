@@ -137,7 +137,7 @@ namespace g3
             Vector3d c = Center;
             Vector3d e = Extents; e.x *= sx; e.y *= sy; e.z *= sz;
             Min = new Vector3d(c.x - e.x, c.y - e.y, c.z - e.z);
-            Min = new Vector3d(c.x + e.x, c.y + e.y, c.z + e.z);
+            Max = new Vector3d(c.x + e.x, c.y + e.y, c.z + e.z);
         }
 
         public void Contain(Vector3d v) {
