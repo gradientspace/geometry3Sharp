@@ -2,7 +2,7 @@ using System;
 
 namespace g3
 {
-    public struct AxisAlignedBox3d
+    public struct AxisAlignedBox3d : IComparable<AxisAlignedBox3d>, IEquatable<AxisAlignedBox3d>
     {
         public Vector3d Min;
         public Vector3d Max;
@@ -86,6 +86,35 @@ namespace g3
             get { return new Vector3d(0.5 * (Min.x + Max.x), 0.5 * (Min.y + Max.y), 0.5 * (Min.z + Max.z)); }
         }
 
+
+        public static bool operator ==(AxisAlignedBox3d a, AxisAlignedBox3d b) {
+            return a.Min == b.Min && a.Max == b.Max;
+        }
+        public static bool operator !=(AxisAlignedBox3d a, AxisAlignedBox3d b) {
+            return a.Min != b.Min || a.Max != b.Max;
+        }
+        public override bool Equals(object obj) {
+            return this == (AxisAlignedBox3d)obj;
+        }
+        public bool Equals(AxisAlignedBox3d other) {
+            return this == other;
+        }
+        public int CompareTo(AxisAlignedBox3d other) {
+            int c = this.Min.CompareTo(other.Min);
+            if (c == 0)
+                return this.Max.CompareTo(other.Max);
+            return c;
+        }
+        public override int GetHashCode() {
+            unchecked { // Overflow is fine, just wrap
+                int hash = (int) 2166136261;
+                hash = (hash * 16777619) ^ Min.GetHashCode();
+                hash = (hash * 16777619) ^ Max.GetHashCode();
+                return hash;
+            }
+        }
+
+
         // TODO
         ////! 0 == bottom-left, 1 = bottom-right, 2 == top-right, 3 == top-left
         //public Vector3d GetCorner(int i) {
@@ -101,6 +130,14 @@ namespace g3
         public void Contract(double fRadius) {
             Min.x += fRadius; Min.y += fRadius; Min.z += fRadius;
             Max.x -= fRadius; Max.y -= fRadius; Max.z -= fRadius;
+        }
+
+       public void Scale(double sx, double sy, double sz)
+        {
+            Vector3d c = Center;
+            Vector3d e = Extents; e.x *= sx; e.y *= sy; e.z *= sz;
+            Min = new Vector3d(c.x - e.x, c.y - e.y, c.z - e.z);
+            Min = new Vector3d(c.x + e.x, c.y + e.y, c.z + e.z);
         }
 
         public void Contain(Vector3d v) {
