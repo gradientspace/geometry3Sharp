@@ -1261,6 +1261,9 @@ namespace g3
         public DVector<double> VerticesBuffer {
             get { return vertices; }
         }
+        public RefCountVector VerticesRefCounts {
+            get { return vertices_refcount; }
+        }
         public DVector<float> NormalsBuffer {
             get { return normals; }
         }
@@ -1274,6 +1277,9 @@ namespace g3
         public DVector<int> TrianglesBuffer {
             get { return triangles; }
         }
+        public RefCountVector TrianglesRefCounts {
+            get { return triangles_refcount; }
+        }
         public DVector<int> GroupsBuffer {
             get { return triangle_groups; }
         }
@@ -1281,7 +1287,79 @@ namespace g3
         public DVector<int> EdgesBuffer{
             get { return edges; }
         }
+        public RefCountVector EdgesRefCounts {
+            get { return edges_refcount; }
+        }
 
+
+
+        // assumes that we have initialized vertices, triangles, and edges buffers,
+        // and edges refcounts. Rebuilds vertex and tri refcounts, triangle edges,
+        // vertex edges
+        public void RebuildFromEdgeRefcounts()
+        {
+            int MaxVID = vertices.Length / 3;
+            int MaxTID = triangles.Length / 3;
+
+            triangle_edges.resize(triangles.Length);
+            triangles_refcount.RawRefCounts.resize(MaxTID);
+
+            vertex_edges.resize(MaxVID);
+            vertices_refcount.RawRefCounts.resize(MaxVID);
+
+            int MaxEID = edges.Length / 4;
+            for ( int eid = 0; eid < MaxEID; ++eid ) {
+                if (edges_refcount.isValid(eid) == false)
+                    continue;
+                int va = edges[4 * eid];
+                int vb = edges[4 * eid + 1];
+                int t0 = edges[4 * eid + 2];
+                int t1 = edges[4 * eid + 3];
+
+                // set vertex and tri refcounts to 1
+                // find edges [a,b] in each triangle and set its tri-edge to this edge
+
+                vertices_refcount.set_Unsafe(va, 1);
+                vertices_refcount.set_Unsafe(vb, 1);
+                triangles_refcount.set_Unsafe(t0, 1);
+                Index3i tri0 = GetTriangle(t0);
+                int idx0 = IndexUtil.find_edge_index_in_tri(va, vb, ref tri0);
+                triangle_edges[3 * t0 + idx0] = eid;
+
+                if (t1 != InvalidID) {
+                    triangles_refcount.set_Unsafe(t1, 1);
+                    Index3i tri1 = GetTriangle(t1);
+                    int idx1 = IndexUtil.find_edge_index_in_tri(va, vb, ref tri1);
+                    triangle_edges[3 * t1 + idx1] = eid;
+                }
+
+                // add this edge to both vertices
+
+                if ( vertex_edges[va] == null ) 
+                    vertex_edges[va] = new List<int>();
+                vertex_edges[va].Add(eid);
+
+                if (vertex_edges[vb] == null)
+                    vertex_edges[vb] = new List<int>();
+                vertex_edges[vb].Add(eid);
+            }
+
+            // iterate over triangles and increment vtx refcount for each tri
+            for ( int tid = 0; tid < MaxTID; ++tid ) {
+                if (triangles_refcount.isValid(tid) == false)
+                    continue;
+                int a = triangles[3 * tid], b = triangles[3 * tid + 1], c = triangles[3 * tid + 2];
+                vertices_refcount.increment(a);
+                vertices_refcount.increment(b);
+                vertices_refcount.increment(c);
+            }
+
+            vertices_refcount.rebuild_free_list();
+            triangles_refcount.rebuild_free_list();
+            edges_refcount.rebuild_free_list();
+
+            updateTimeStamp();
+        }
 
 	}
 }

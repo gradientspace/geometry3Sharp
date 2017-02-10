@@ -54,5 +54,149 @@ namespace g3
 
 
 
+
+        public static int DMesh3Version = 1;
+
+        public static void Store(DMesh3 mesh, BinaryWriter writer)
+        {
+            writer.Write(DMesh3Version);
+
+            int nComponents = (int)mesh.Components;
+            writer.Write(nComponents);
+
+            Store(mesh.VerticesBuffer, writer);
+            Store(mesh.TrianglesBuffer, writer);
+            Store(mesh.EdgesBuffer, writer);
+            Store(mesh.EdgesRefCounts.RawRefCounts, writer);
+
+            if ((mesh.Components & MeshComponents.VertexNormals) != 0)
+                Store(mesh.NormalsBuffer, writer);
+            if ((mesh.Components & MeshComponents.VertexColors) != 0)
+                Store(mesh.ColorsBuffer, writer);
+            if ((mesh.Components & MeshComponents.VertexUVs) != 0)
+                Store(mesh.UVBuffer, writer);
+            if ((mesh.Components & MeshComponents.FaceGroups) != 0)
+                Store(mesh.GroupsBuffer, writer);
+        }
+
+
+
+        public static void Restore(DMesh3 mesh, BinaryReader reader)
+        {
+            int version = reader.ReadInt32();
+            if (version != DMesh3Version)
+                throw new Exception("gSerialization.Restore: Incorrect DMesh3Version!");
+
+            MeshComponents components = (MeshComponents)reader.ReadInt32();
+
+            Restore(mesh.VerticesBuffer, reader);
+            Restore(mesh.TrianglesBuffer, reader);
+            Restore(mesh.EdgesBuffer, reader);
+            Restore(mesh.EdgesRefCounts.RawRefCounts, reader);
+
+            if ((components & MeshComponents.VertexNormals) != 0) {
+                mesh.EnableVertexNormals(Vector3f.AxisY);
+                Restore(mesh.NormalsBuffer, reader);
+            } else
+                mesh.DiscardVertexNormals();
+
+            if ((components & MeshComponents.VertexColors) != 0) {
+                mesh.EnableVertexColors(Vector3f.One);
+                Restore(mesh.ColorsBuffer, reader);
+            } else
+                mesh.DiscardVertexColors();
+
+            if ((components & MeshComponents.VertexUVs) != 0) {
+                mesh.EnableVertexUVs(Vector2f.Zero);
+                Restore(mesh.UVBuffer, reader);
+            } else
+                mesh.DiscardVertexUVs();
+
+            if ((components & MeshComponents.FaceGroups) != 0) {
+                mesh.EnableTriangleGroups(0);
+                Restore(mesh.GroupsBuffer, reader);
+            } else
+                mesh.DiscardTriangleGroups();
+
+            mesh.RebuildFromEdgeRefcounts();
+        }
+
+
+        // [TODO] these could be a lot faster if DVector had a block-iterator...
+        public static void Store(DVector<double> vec, BinaryWriter writer)
+        {
+            byte[] buffer = new byte[vec.BlockCount * sizeof(double)];
+            int N = vec.Length;
+            writer.Write(N);
+            foreach ( DVector<double>.DBlock block in vec.BlockIterator() ) {
+                Buffer.BlockCopy(block.data, 0, buffer, 0, block.usedCount*sizeof(double));
+                writer.Write(buffer, 0, block.usedCount*sizeof(double));
+            }
+        }
+        public static void Restore(DVector<double> vec, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            byte[] bytes = reader.ReadBytes(N * sizeof(double));
+            double[] buffer = new double[N];
+            Buffer.BlockCopy(bytes, 0, buffer, 0, bytes.Length);
+            vec.Initialize(buffer);
+        }
+
+        public static void Store(DVector<float> vec, BinaryWriter writer)
+        {
+            byte[] buffer = new byte[vec.BlockCount * sizeof(float)];
+            int N = vec.Length;
+            writer.Write(N);
+            foreach ( DVector<float>.DBlock block in vec.BlockIterator() ) {
+                Buffer.BlockCopy(block.data, 0, buffer, 0, block.usedCount*sizeof(float));
+                writer.Write(buffer, 0, block.usedCount*sizeof(float));
+            }
+        }
+        public static void Restore(DVector<float> vec, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            byte[] bytes = reader.ReadBytes(N * sizeof(float));
+            float[] buffer = new float[N];
+            Buffer.BlockCopy(bytes, 0, buffer, 0, bytes.Length);
+            vec.Initialize(buffer);
+        }
+
+        public static void Store(DVector<int> vec, BinaryWriter writer)
+        {
+            byte[] buffer = new byte[vec.BlockCount * sizeof(int)];
+            int N = vec.Length;
+            writer.Write(N);
+            foreach ( DVector<int>.DBlock block in vec.BlockIterator() ) {
+                Buffer.BlockCopy(block.data, 0, buffer, 0, block.usedCount*sizeof(int));
+                writer.Write(buffer, 0, block.usedCount*sizeof(int));
+            }
+        }
+        public static void Restore(DVector<int> vec, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            byte[] bytes = reader.ReadBytes(N * sizeof(int));
+            int[] buffer = new int[N];
+            Buffer.BlockCopy(bytes, 0, buffer, 0, bytes.Length);
+            vec.Initialize(buffer);
+        }
+
+        public static void Store(DVector<short> vec, BinaryWriter writer)
+        {
+            byte[] buffer = new byte[vec.BlockCount * sizeof(short)];
+            int N = vec.Length;
+            writer.Write(N);
+            foreach ( DVector<short>.DBlock block in vec.BlockIterator() ) {
+                Buffer.BlockCopy(block.data, 0, buffer, 0, block.usedCount*sizeof(short));
+                writer.Write(buffer, 0, block.usedCount*sizeof(short));
+            }
+        }
+        public static void Restore(DVector<short> vec, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            byte[] bytes = reader.ReadBytes(N * sizeof(short));
+            short[] buffer = new short[N];
+            Buffer.BlockCopy(bytes, 0, buffer, 0, bytes.Length);
+            vec.Initialize(buffer);
+        }
     }
 }
