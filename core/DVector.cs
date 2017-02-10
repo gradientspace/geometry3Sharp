@@ -32,6 +32,12 @@ namespace g3
             }
         }
 
+        public DVector(T[] data)
+        {
+            nBlockSize = 2048;
+            Initialize(data);
+        }
+
         public DVector(IEnumerable<T> init)
         {
             nBlockSize = 2048;
@@ -44,9 +50,12 @@ namespace g3
                 Add(v);
         }
 
-        public int Length
-        {
+        public int Length {
             get { return (Blocks.Count - 1) * nBlockSize + iCurBlockUsed;  }
+        }
+
+        public int BlockCount {
+            get { return nBlockSize; }
         }
 
         public int size {
@@ -219,6 +228,30 @@ namespace g3
 
 
 
+        public void Initialize(T[] data)
+        {
+            int blocks = data.Length / nBlockSize;
+            Blocks = new List<T[]>();
+            int ai = 0;
+            for (int i = 0; i < blocks; ++i) {
+                T[] block = new T[nBlockSize];
+                Array.Copy(data, ai, block, 0, nBlockSize);
+                Blocks.Add(block);
+                ai += nBlockSize;
+            }
+            iCurBlockUsed = data.Length - ai;
+            if (iCurBlockUsed != 0) {
+                T[] last = new T[nBlockSize];
+                Array.Copy(data, ai, last, 0, iCurBlockUsed);
+                Blocks.Add(last);
+            } else {
+                iCurBlockUsed = nBlockSize;
+            }
+            iCurBlock = Blocks.Count - 1;
+        }
+
+
+
         /*
          * [RMS] C# resolves generics at compile-type, so we cannot call an overloaded
          *   function based on the generic type. Hence, we have these static helpers for
@@ -258,6 +291,20 @@ namespace g3
             }
             System.Runtime.InteropServices.Marshal.Copy(v.Blocks[N - 1], 0, pCur, v.iCurBlockUsed);
         }
+
+
+
+        // block iterator
+        public struct DBlock
+        {
+            public T[] data;
+            public int usedCount;
+        }
+		public IEnumerable< DBlock > BlockIterator() {
+            for (int i = 0; i < iCurBlock; ++i)
+                yield return new DBlock() { data = Blocks[i], usedCount = nBlockSize };
+            yield return new DBlock() { data = Blocks[iCurBlock], usedCount = iCurBlockUsed };
+		}
 
     }
 }
