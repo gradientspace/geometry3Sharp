@@ -7,7 +7,7 @@ using System.Text;
 namespace g3
 {
     //
-    // This class is just a wrapper around a static array that provides convenient 3-element set/get access
+    // This class is just a wrapper around a dvector that provides convenient 3-element set/get access
     // Useful for things like treating a float array as a list of vectors
     //
     public class DVectorArray3<T> : IEnumerable<T>

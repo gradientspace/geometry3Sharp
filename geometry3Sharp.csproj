@@ -89,6 +89,7 @@
     <Compile Include="mesh\FaceGroupUtil.cs" />
     <Compile Include="mesh\MeshConstraintUtil.cs" />
     <Compile Include="mesh\MeshEditor.cs" />
+    <Compile Include="mesh\MeshUVSet.cs" />
     <Compile Include="mesh\MeshVertexSelection.cs" />
     <Compile Include="mesh\MeshFaceSelection.cs" />
     <Compile Include="mesh\RegionRemesher.cs" />

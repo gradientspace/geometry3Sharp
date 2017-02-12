@@ -20,5 +20,23 @@ namespace g3
                 }
             }
         }
+
+
+        public static HashSet<int> FindAllGroups(DMesh3 mesh)
+        {
+            HashSet<int> Groups = new HashSet<int>();
+
+            if (mesh.HasTriangleGroups) {
+                int NT = mesh.MaxTriangleID;
+                for (int tid = 0; tid < NT; ++tid) {
+                    if (mesh.IsTriangle(tid)) {
+                        int gid = mesh.GetTriangleGroup(tid);
+                        Groups.Add(gid);
+                    }
+                }
+            }
+            return Groups;
+        }
+
     }
 }

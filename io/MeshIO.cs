@@ -69,6 +69,7 @@ namespace g3
         public bool bPerVertexNormals;
         public bool bPerVertexColors;
         public bool bWriteGroups;
+        public bool bWriteUVs;
 
         public bool bCombineMeshes;     // some STL readers do not handle multiple solids...
 
@@ -76,11 +77,14 @@ namespace g3
 
         public Action<int, int> ProgressFunc;
 
+        public Func<string> AsciiHeaderFunc;    // if you define this, returned string will be written as header start of ascii formats
+
         public static readonly WriteOptions Defaults = new WriteOptions() {
             bWriteBinary = false,
             bPerVertexNormals = false,
             bPerVertexColors = false,
             bWriteGroups = false,
+            bWriteUVs = false,
             bCombineMeshes = false,
             ProgressFunc = null,
 
@@ -93,10 +97,14 @@ namespace g3
     public struct WriteMesh
     {
         public IMesh Mesh;
-        public string Name;        // supported by some formats
+        public string Name;         // supported by some formats
+
+        public DenseMeshUVSet UVs;  // for supporting a separate UV layer (just one for now?)
 
         public WriteMesh(IMesh mesh, string name = "") {
-            Mesh = mesh; Name = name;
+            Mesh = mesh;
+            Name = name;
+            UVs = null;
         }
     }
 
