@@ -48,6 +48,13 @@ namespace g3
             this.origin = origin;
         }
 
+        public Frame3f(Vector3f origin, Vector3f x, Vector3f y, Vector3f z)
+        {
+            this.origin = origin;
+            Matrix3f m = new Matrix3f(x, y, z, false);
+            this.rotation = m.ToQuaternion();
+        }
+
 
         public Quaternionf Rotation
         {

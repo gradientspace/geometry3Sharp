@@ -150,7 +150,7 @@ namespace g3
             float twoWX = twoX * w; float twoWY = twoY * w; float twoWZ = twoZ * w;
             float twoXX = twoX * x; float twoXY = twoY * x; float twoXZ = twoZ * x;
             float twoYY = twoY * y; float twoYZ = twoZ * y; float twoZZ = twoZ * z;
-            Matrix3f m = new Matrix3f();
+            Matrix3f m = Matrix3f.Zero;
             m[0, 0] = 1 - (twoYY + twoZZ); m[0, 1] = twoXY - twoWZ; m[0, 2] = twoXZ + twoWY;
             m[1, 0] = twoXY + twoWZ; m[1, 1] = 1 - (twoXX + twoZZ); m[1, 2] = twoYZ - twoWX;
             m[2, 0] = twoXZ - twoWY; m[2, 1] = twoYZ + twoWX; m[2, 2] = 1 - (twoXX + twoYY);
@@ -177,6 +177,9 @@ namespace g3
 
         // this function can take non-normalized vectors vFrom and vTo (normalizes internally)
         public void SetFromTo(Vector3f vFrom, Vector3f vTo) {
+            // [TODO] this page seems to have optimized version:
+            //    http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
+
             // [RMS] not ideal to explicitly normalize here, but if we don't,
             //   output quaternion is not normalized and this causes problems,
             //   eg like drift if we do repeated SetFromTo()
