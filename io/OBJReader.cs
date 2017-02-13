@@ -92,7 +92,7 @@ namespace g3
 		public List<string> MTLFileSearchPaths { get; set; } 
 
         // connect to this to get warning messages
-		public event ErrorEventHandler warningEvent;
+		public event ParsingMessagesHandler warningEvent;
 
 
 
@@ -693,7 +693,7 @@ namespace g3
 
             var e = warningEvent;
             if ( e != null ) 
-                e(this, new ErrorEventArgs(new Exception(sMessage)));
+                e(sMessage, null);
         }
 
 

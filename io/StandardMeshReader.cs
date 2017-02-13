@@ -6,14 +6,83 @@ using System.IO;
 
 namespace g3
 {
+
+    public delegate void ParsingMessagesHandler(string message, object extra_data);
+
+
+    public interface MeshFormatReader
+    {
+        List<string> SupportedExtensions { get; }
+        IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler warnings);
+    }
+
+
     public class StandardMeshReader
     {
 
         // connect to this to get warning status messages
-        public event ErrorEventHandler warningEvent;
+        public event ParsingMessagesHandler warningEvent;
 
         public IMeshBuilder MeshBuilder { get; set; }
 
+
+        List<MeshFormatReader> Readers = new List<MeshFormatReader>();
+
+
+        public StandardMeshReader(bool bIncludeDefaultReaders = true)
+        {
+            Readers = new List<MeshFormatReader>();
+
+            if ( bIncludeDefaultReaders ) {
+                Readers.Add(new OBJFormatReader());
+                Readers.Add(new STLFormatReader());
+            }
+        }
+
+
+        public bool SupportsFormat(string sExtension)
+        {
+            foreach (var reader in Readers)
+                foreach (string ext in reader.SupportedExtensions)
+                    if (ext.Equals(sExtension, StringComparison.OrdinalIgnoreCase))
+                        return true;
+            return false;
+        }
+
+        public void AddFormatHandler(MeshFormatReader reader)
+        {
+            List<string> formats = reader.SupportedExtensions;
+            foreach (string s in formats)
+                if (SupportsFormat(s))
+                    throw new Exception("StandardMeshReader.AddFormatHandler: format " + s + " is already registered!");
+
+            Readers.Add(reader);
+        }
+
+
+        public IOReadResult Read(string sFilename, ReadOptions options)
+        {
+            string sExtension = Path.GetExtension(sFilename).Substring(1);
+
+            MeshFormatReader useReader = null;
+            foreach (var reader in Readers) {
+                foreach (string ext in reader.SupportedExtensions) {
+                    if (ext.Equals(sExtension, StringComparison.OrdinalIgnoreCase))
+                        useReader = reader;
+                }
+                if (useReader != null)
+                    break;
+            }
+            if ( useReader == null ) 
+                return new IOReadResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
+
+            try {
+                return useReader.ReadFile(sFilename, MeshBuilder, options, on_warning);
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.GenericReaderError, "Unknown error : exception : " + e.Message);
+            }
+
+        }
 
         static public IOReadResult ReadFile(string sFilename, ReadOptions options, IMeshBuilder builder)
         {
@@ -23,31 +92,53 @@ namespace g3
         }
 
 
-        public IOReadResult Read(string sFilename, ReadOptions options)
+        private void on_warning(string message, object extra_data)
         {
-             Func<string, ReadOptions, IOReadResult> readFunc = null;
+            if (warningEvent != null)
+                warningEvent(message, extra_data);
+        }
+    }
 
-            string sExtension = Path.GetExtension(sFilename);
 
-            if (sExtension.Equals(".obj", StringComparison.OrdinalIgnoreCase))
-                readFunc = Read_OBJ;
-            else if (sExtension.Equals(".stl", StringComparison.OrdinalIgnoreCase))
-                readFunc = Read_STL;
 
-            if ( readFunc == null )
-                return new IOReadResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
-
-            try {
-                return readFunc(sFilename, options);
-            } catch (Exception e) {
-                return new IOReadResult(IOCode.GenericReaderError, "Unknown error : exception : " + e.Message);
+    // MeshFormatReader impl for OBJ
+    public class OBJFormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions { get {
+                return new List<string>() { "obj" };
             }
-
         }
 
 
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            StreamReader stream = new StreamReader(sFilename);
+            if (stream.BaseStream == null)
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading");
 
-        IOReadResult Read_STL(string sFilename, ReadOptions options)
+            OBJReader reader = new OBJReader();
+            if (options.ReadMaterials)
+                reader.MTLFileSearchPaths.Add(Path.GetDirectoryName(sFilename));
+            reader.warningEvent += messages;
+
+            var result = reader.Read(stream, options, builder);
+            stream.Close();
+            return result;
+        }
+    }
+
+
+
+    // MeshFormatReader impl for STL
+    public class STLFormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions { get {
+                return new List<string>() { "stl" };
+            }
+        }
+
+
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             // detect binary STL
             FileStream stream = null;
@@ -74,42 +165,17 @@ namespace g3
             stream.Seek(0, SeekOrigin.Begin); // reset stream
 
             STLReader reader = new STLReader();
-            reader.warningEvent += on_warning;
+            reader.warningEvent += messages;
             IOReadResult result = (bIsBinary) ?
-                reader.Read(new BinaryReader(stream), options, MeshBuilder) :
-                reader.Read(new StreamReader(stream), options, MeshBuilder);
+                reader.Read(new BinaryReader(stream), options, builder) :
+                reader.Read(new StreamReader(stream), options, builder);
 
             stream.Close();
             return result;
         }
-
-
-
-        IOReadResult Read_OBJ(string sFilename, ReadOptions options)
-        {
-            StreamReader stream = new StreamReader(sFilename);
-            if (stream.BaseStream == null)
-                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading");
-
-            OBJReader reader = new OBJReader();
-            if (options.ReadMaterials)
-                reader.MTLFileSearchPaths.Add(Path.GetDirectoryName(sFilename));
-            reader.warningEvent += on_warning;
-
-            var result = reader.Read(stream, options, MeshBuilder);
-            stream.Close();
-            return result;
-        }
-
-
-        private void on_warning(object sender, ErrorEventArgs e)
-        {
-            if (warningEvent != null)
-                warningEvent(sender, e);
-        }
-
-
     }
+
+
 
 
 }
