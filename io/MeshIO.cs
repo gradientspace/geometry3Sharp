@@ -36,6 +36,10 @@ namespace g3
         {
 			ReadMaterials = false;
         }
+
+        public static readonly ReadOptions Defaults = new ReadOptions() {
+            ReadMaterials = false
+        };
     }
 
     public struct IOReadResult

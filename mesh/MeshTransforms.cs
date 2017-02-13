@@ -8,23 +8,45 @@ namespace g3
     public static class MeshTransforms
     {
 
-        public static void Translate(DMesh3 mesh, double tx, double ty, double tz)
+        public static void Translate(IDeformableMesh mesh, double tx, double ty, double tz)
         {
-            foreach (int vid in mesh.VertexIndices()) {
-                Vector3d v = mesh.GetVertex(vid);
-                v.x += tx; v.y += ty; v.z += tz;
-                mesh.SetVertex(vid, v);
+            int NV = mesh.MaxVertexID;
+            for ( int vid = 0; vid < NV; ++vid ) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3d v = mesh.GetVertex(vid);
+                    v.x += tx; v.y += ty; v.z += tz;
+                    mesh.SetVertex(vid, v);
+                }
             }
         }
-        public static void Scale(DMesh3 mesh, double sx, double sy, double sz)
+
+
+        public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaternionf rotation)
         {
-            foreach (int vid in mesh.VertexIndices()) {
-                Vector3d v = mesh.GetVertex(vid);
-                v.x *= sx; v.y *= sy; v.z *= sz;
-                mesh.SetVertex(vid, v);
+            int NV = mesh.MaxVertexID;
+            for ( int vid = 0; vid < NV; ++vid ) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3d v = mesh.GetVertex(vid);
+                    v -= origin;
+                    v = (Vector3d)(rotation * (Vector3f)v);
+                    v += origin;
+                    mesh.SetVertex(vid, v);
+                }
             }
         }
-        public static void Scale(DMesh3 mesh, double s)
+
+        public static void Scale(IDeformableMesh mesh, double sx, double sy, double sz)
+        {
+            int NV = mesh.MaxVertexID;
+            for ( int vid = 0; vid < NV; ++vid ) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3d v = mesh.GetVertex(vid);
+                    v.x *= sx; v.y *= sy; v.z *= sz;
+                    mesh.SetVertex(vid, v);
+                }
+            }
+        }
+        public static void Scale(IDeformableMesh mesh, double s)
         {
             Scale(mesh, s, s, s);
         }
@@ -32,19 +54,32 @@ namespace g3
 
 
 
+        public static void ConvertZUpToYUp(IDeformableMesh mesh)
+        {
+            int NV = mesh.MaxVertexID;
+            for ( int vid = 0; vid < NV; ++vid ) {
+                if ( mesh.IsVertex(vid) ) {
+                    Vector3d v = mesh.GetVertex(vid);
+                    mesh.SetVertex(vid, new Vector3d(v.x, v.z, -v.y));
+                }
+            }
+        }
+
+
+
         public static void FlipLeftRightCoordSystems(IDeformableMesh mesh)
         {
             int NV = mesh.MaxVertexID;
-            for ( int i = 0; i < NV; ++i ) {
-                if ( mesh.IsVertex(i) ) {
-                    Vector3d v = mesh.GetVertex(i);
+            for ( int vid = 0; vid < NV; ++vid ) {
+                if ( mesh.IsVertex(vid) ) {
+                    Vector3d v = mesh.GetVertex(vid);
                     v.z = -v.z;
-                    mesh.SetVertex(i, v);
+                    mesh.SetVertex(vid, v);
 
                     if (mesh.HasVertexNormals) {
-                        Vector3f n = mesh.GetVertexNormal(i);
+                        Vector3f n = mesh.GetVertexNormal(vid);
                         n.z = -n.z;
-                        mesh.SetVertexNormal(i, n);
+                        mesh.SetVertexNormal(vid, n);
                     }
                 }
             }

@@ -151,6 +151,17 @@ namespace g3
         }
 
 
+        public DMesh3(IMesh copy, bool bIsCompactHint, bool bWantNormals = true, bool bWantColors = true, bool bWantUVs = true)
+        {
+            Copy(copy, bIsCompactHint, bWantNormals, bWantColors, bWantUVs);
+        }
+        public DMesh3(IMesh copy, bool bIsCompactHint, MeshComponents flags) : 
+            this(copy, bIsCompactHint, (flags & MeshComponents.VertexNormals) != 0,  (flags & MeshComponents.VertexColors) != 0,
+                  (flags & MeshComponents.VertexUVs) != 0 )
+        {
+        }
+
+
         public void CompactCopy(DMesh3 copy, bool bNormals = true, bool bColors = true, bool bUVs = true)
         {
             if ( copy.IsCompact ) {
@@ -220,6 +231,45 @@ namespace g3
             edges = new DVector<int>(copy.edges);
             edges_refcount = new RefCountVector(copy.edges_refcount);
         }
+
+
+
+        public void Copy(IMesh copy, bool bIsDense = false, bool bNormals = true, bool bColors = true, bool bUVs = true)
+        {
+            if (bIsDense == false)
+                throw new Exception("DMesh3.Copy: current requires that IMesh be dense/compact");
+
+            vertices = new DVector<double>();
+            vertex_edges = new DVector<List<int>>();
+            vertices_refcount = new RefCountVector();
+            triangles = new DVector<int>();
+            triangle_edges = new DVector<int>();
+            triangles_refcount = new RefCountVector();
+            edges = new DVector<int>();
+            edges_refcount = new RefCountVector();
+
+            normals = (bNormals && copy.HasVertexNormals) ? new DVector<float>() : null;
+            colors = (bColors && copy.HasVertexColors) ? new DVector<float>() : null;
+            uv = (bUVs && copy.HasVertexUVs) ? new DVector<float>() : null;
+            triangle_groups = (copy.HasTriangleGroups) ? new DVector<int>() : null;
+
+            int NV = copy.MaxVertexID;
+            //int[] mapV = new int[NV];
+            for ( int vid = 0; vid < NV; ++vid ) {
+                NewVertexInfo vinfo = copy.GetVertexAll(vid);
+                int new_vid = AppendVertex(vinfo);
+                Debug.Assert(new_vid == vid);
+            }
+
+            int NT = copy.MaxTriangleID;
+            for ( int tid = 0; tid < NT; tid++ ) { 
+                Index3i t = copy.GetTriangle(tid);
+                //t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
+                int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
+                AppendTriangle(t, g);
+            }
+        }
+
 
 
 
