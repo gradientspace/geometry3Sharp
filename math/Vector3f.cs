@@ -37,6 +37,19 @@ namespace g3
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
         }
 
+        public Vector2f xy {
+            get { return new Vector2f(x, y); }
+            set { x = xy.x; y = xy.y; }
+        }
+        public Vector2f xz {
+            get { return new Vector2f(x, z); }
+            set { x = xy.x; z = xy.y; }
+        }
+        public Vector2f yz {
+            get { return new Vector2f(y, z); }
+            set { y = xy.x; z = xy.y; }
+        }
+
         public float LengthSquared
         {
             get { return x * x + y * y + z * z; }
