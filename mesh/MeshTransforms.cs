@@ -21,6 +21,13 @@ namespace g3
         }
 
 
+        public static Vector3d Rotate(Vector3d pos, Vector3d origin, Quaternionf rotation)
+        {
+            Vector3d v = pos - origin;
+            v = (Vector3d)(rotation * (Vector3f)v);
+            v += origin;
+            return v;
+        }
         public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaternionf rotation)
         {
             int NV = mesh.MaxVertexID;
@@ -53,7 +60,10 @@ namespace g3
 
 
 
-
+        public static Vector3d ConvertZUpToYUp(Vector3d v)
+        {
+            return new Vector3d(v.x, v.z, -v.y);
+        }
         public static void ConvertZUpToYUp(IDeformableMesh mesh)
         {
             int NV = mesh.MaxVertexID;
@@ -65,8 +75,26 @@ namespace g3
             }
         }
 
+        public static Vector3d ConvertYUpToZUp(Vector3d v)
+        {
+            return new Vector3d(v.x, -v.z, v.y);
+        }
+        public static void ConvertYUpToZUp(IDeformableMesh mesh)
+        {
+            int NV = mesh.MaxVertexID;
+            for ( int vid = 0; vid < NV; ++vid ) {
+                if ( mesh.IsVertex(vid) ) {
+                    Vector3d v = mesh.GetVertex(vid);
+                    mesh.SetVertex(vid, new Vector3d(v.x, -v.z, v.y));
+                }
+            }
+        }
 
 
+        public static Vector3d FlipLeftRightCoordSystems(Vector3d v)
+        {
+            return new Vector3d(v.x, v.y, -v.z);
+        }
         public static void FlipLeftRightCoordSystems(IDeformableMesh mesh)
         {
             int NV = mesh.MaxVertexID;

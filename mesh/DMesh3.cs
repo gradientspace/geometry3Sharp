@@ -108,6 +108,7 @@ namespace g3
         DVector<int> edges;
 
         int timestamp = 0;
+        int max_group_id = 0;
 
         public DMesh3(bool bWantNormals = true, bool bWantColors = false, bool bWantUVs = false, bool bWantTriGroups = false)
         {
@@ -126,6 +127,7 @@ namespace g3
             triangles_refcount = new RefCountVector();
 			if ( bWantTriGroups )
 				triangle_groups = new DVector<int>();
+            max_group_id = 0;
 
             edges = new DVector<int>();
             edges_refcount = new RefCountVector();
@@ -177,6 +179,7 @@ namespace g3
             triangles_refcount = new RefCountVector();
             edges = new DVector<int>();
             edges_refcount = new RefCountVector();
+            max_group_id = 0;
 
             normals = (bNormals && copy.normals != null) ? new DVector<float>() : null;
             colors = (bColors && copy.colors != null) ? new DVector<float>() : null;
@@ -200,6 +203,7 @@ namespace g3
                 t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
                 AppendTriangle(t, g);
+                max_group_id = Math.Max(max_group_id, g);
             }
         }
 
@@ -227,6 +231,7 @@ namespace g3
             triangles_refcount = new RefCountVector(copy.triangles_refcount);
             if (copy.triangle_groups != null)
                 triangle_groups = new DVector<int>(copy.triangle_groups);
+            max_group_id = copy.max_group_id;
 
             edges = new DVector<int>(copy.edges);
             edges_refcount = new RefCountVector(copy.edges_refcount);
@@ -247,6 +252,7 @@ namespace g3
             triangles_refcount = new RefCountVector();
             edges = new DVector<int>();
             edges_refcount = new RefCountVector();
+            max_group_id = 0;
 
             normals = (bNormals && copy.HasVertexNormals) ? new DVector<float>() : null;
             colors = (bColors && copy.HasVertexColors) ? new DVector<float>() : null;
@@ -267,6 +273,7 @@ namespace g3
                 //t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
                 AppendTriangle(t, g);
+                max_group_id = Math.Max(max_group_id, g);
             }
         }
 
@@ -301,6 +308,9 @@ namespace g3
 		public int MaxEdgeID {
 			get { return edges_refcount.max_index; }
 		}
+        public int MaxGroupID {
+            get { return max_group_id; }
+        }
 
         public bool HasVertexColors { get { return colors != null; } }
         public bool HasVertexNormals { get { return normals != null; } }
@@ -483,9 +493,14 @@ namespace g3
 		public void SetTriangleGroup(int tid, int group_id) {
 			if ( triangle_groups != null && triangles_refcount.isValid(tid) ) {
                 triangle_groups[tid] = group_id;
+                max_group_id = Math.Max(max_group_id, group_id);
                 updateTimeStamp();
 			}
 		}
+
+        public int AllocateTriangleGroup() {
+            return max_group_id++;
+        }
 
 
         public void GetTriVertices(int tID, ref Vector3d v0, ref Vector3d v1, ref Vector3d v2) {
@@ -728,8 +743,10 @@ namespace g3
             triangles.insert(tv[2], i + 2);
             triangles.insert(tv[1], i + 1);
             triangles.insert(tv[0], i);
-			if ( triangle_groups != null )
-				triangle_groups.insert(gid, tid);
+            if (triangle_groups != null) {
+                triangle_groups.insert(gid, tid);
+                max_group_id = Math.Max(max_group_id, gid);
+            }
 
             // increment ref counts and update/create edges
             vertices_refcount.increment(tv[0]);
@@ -819,9 +836,11 @@ namespace g3
             triangle_groups.resize(NT);
             for (int i = 0; i < NT; ++i)
                 triangle_groups[i] = initial_group;
+            max_group_id = 0;
         }
         public void DiscardTriangleGroups() {
             triangle_groups = null;
+            max_group_id = 0;
         }
 
 
