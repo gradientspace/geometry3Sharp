@@ -36,6 +36,7 @@ namespace g3
             if ( bIncludeDefaultReaders ) {
                 Readers.Add(new OBJFormatReader());
                 Readers.Add(new STLFormatReader());
+                Readers.Add(new OFFFormatReader());
             }
         }
 
@@ -175,6 +176,32 @@ namespace g3
         }
     }
 
+
+
+
+    // MeshFormatReader impl for OFF
+    public class OFFFormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions { get {
+                return new List<string>() { "off" };
+            }
+        }
+
+
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            StreamReader stream = new StreamReader(sFilename);
+            if (stream.BaseStream == null)
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading");
+
+            OFFReader reader = new OFFReader();
+            reader.warningEvent += messages;
+
+            var result = reader.Read(stream, options, builder);
+            stream.Close();
+            return result;
+        }
+    }
 
 
 

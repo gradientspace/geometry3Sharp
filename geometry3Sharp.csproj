@@ -70,9 +70,12 @@
     <Compile Include="intersection\IntrLine3AxisAlignedBox3.cs" />
     <Compile Include="intersection\IntrRay3AxisAlignedBox3.cs" />
     <Compile Include="io\MaterialTypes.cs" />
+    <Compile Include="io\OFFReader.cs" />
+    <Compile Include="io\OFFWriter.cs" />
     <Compile Include="io\STLReader.cs" />
     <Compile Include="io\STLWriter.cs" />
     <Compile Include="io\gSerialization.cs" />
+    <Compile Include="math\ColorHSV.cs" />
     <Compile Include="math\Frame3f.cs" />
     <Compile Include="math\IndexTypes.cs" />
     <Compile Include="math\IndexUtil.cs" />
