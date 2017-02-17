@@ -140,9 +140,9 @@ namespace g3
         public int FindNearestHitTriangle(Ray3d ray, double fMaxDist = double.MaxValue)
         {
             if (mesh_timestamp != mesh.Timestamp)
-                throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+                throw new Exception("DMeshAABBTree3.FindNearestHitTriangle: mesh has been modified since tree construction");
             if (ray.Direction.IsNormalized == false)
-                throw new Exception("DMeshAABBTree3.FindNearestTriangle: ray direction is not normalized");
+                throw new Exception("DMeshAABBTree3.FindNearestHitTriangle: ray direction is not normalized");
 
             // [RMS] note: using float.MaxValue here because we need to use <= to compare box hit
             //   to fNearestT, and box hit returns double.MaxValue on no-hit. So, if we set
