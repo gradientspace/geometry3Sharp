@@ -8,6 +8,9 @@ namespace g3
     {
         public List<DMesh3> Meshes;
         public List<GenericMaterial> Materials;
+
+		// this is a map from index into Meshes to index into Materials (-1 if no material)
+		//  (so, currently we can only have 1 material per mesh!)
         public List<int> MaterialAssignment;
 
         int nActiveMesh;

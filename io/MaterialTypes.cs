@@ -64,7 +64,7 @@ namespace g3
             name = "///INVALID_NAME";
             Ka = Kd = Ks = Ke = Tf = Invalid;
             illum = -1;
-            d = Ns = sharpness = Ni = Single.NaN;
+			d = Ns = sharpness = Ni = Single.MinValue;
         }
 
         override public Vector3f DiffuseColor {

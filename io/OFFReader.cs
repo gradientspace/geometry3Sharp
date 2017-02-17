@@ -8,10 +8,12 @@ using System.Threading;
 
 namespace g3
 {
+	//
+	// Parse OFF mesh format
+	// https://en.wikipedia.org/wiki/OFF_(file_format)
+	// 
     class OFFReader : IMeshReader
     {
-
-
         // connect to this to get warning messages
 		public event ParsingMessagesHandler warningEvent;
 
@@ -26,13 +28,22 @@ namespace g3
 
         public IOReadResult Read(TextReader reader, ReadOptions options, IMeshBuilder builder)
         {
+			// format is:
+			//
+			// OFF
+			// VCOUNT TCOUNT     (2 ints)
+			// x y z
+			// ...
+			// 3 va vb vc
+			// ...
+			//
+
             string first_line = reader.ReadLine();
             if (first_line.StartsWith("OFF") == false)
                 return new IOReadResult(IOCode.FileParsingError, "ascii OFF file must start with OFF header");
 
             int nVertexCount = 0;
             int nTriangleCount = 0;
-            int nEdgeCount = 0;
 
             int nLines = 0;
             while (reader.Peek() >= 0) {
@@ -49,7 +60,7 @@ namespace g3
                     return new IOReadResult(IOCode.FileParsingError, "first non-comment line of OFF must be vertex/tri/edge counts, found: " + line);
                 nVertexCount = int.Parse(tokens[0]);
                 nTriangleCount = int.Parse(tokens[1]);
-                nEdgeCount = int.Parse(tokens[2]);
+                //int nEdgeCount = int.Parse(tokens[2]);
                 break;
             }
 
