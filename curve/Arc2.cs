@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace g3 {
 
@@ -100,14 +101,15 @@ namespace g3 {
             double lengthPmC = PmC.Length;
             if (lengthPmC > MathUtil.Epsilon) {
                 Vector2d dv = PmC / lengthPmC;
-                double theta = Math.Atan2(dv.y, dv.x);
-                if (theta < AngleStartDeg || theta > AngleEndDeg) {
-                    theta = MathUtil.Clamp(theta, AngleStartDeg * MathUtil.Deg2Rad, AngleEndDeg * MathUtil.Deg2Rad);
-                    double c = Math.Cos(theta), s = Math.Sin(theta);
+				double theta = Math.Atan2(dv.y, dv.x) * MathUtil.Rad2Deg;
+				if ( ! (theta >= AngleStartDeg && theta <= AngleEndDeg) ) {
+					double ctheta = MathUtil.ClampAngleDeg(theta, AngleStartDeg, AngleEndDeg);
+                    double radians = ctheta * MathUtil.Deg2Rad;
+					double c = Math.Cos(radians), s = Math.Sin(radians);
                     Vector2d pos = new Vector2d(Center.x + Radius * c, Center.y + Radius * s);
-                    return pos.Distance(point);
+					return pos.Distance(point);
                 } else {
-                    return Math.Abs(lengthPmC - Radius);
+					return Math.Abs(lengthPmC - Radius);
                 }
             } else {
                 return Radius;
