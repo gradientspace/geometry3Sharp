@@ -25,7 +25,6 @@ namespace g3
 
         public IMeshBuilder MeshBuilder { get; set; }
 
-
         List<MeshFormatReader> Readers = new List<MeshFormatReader>();
 
 

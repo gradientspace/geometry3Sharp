@@ -530,6 +530,11 @@ namespace g3
             return Meshes[nActiveMesh].AppendVertex(info);
         }
 
+        public bool SupportsMetaData { get { return false; } }
+        public void AppendMetaData(string identifier, object data)
+        {
+            throw new NotImplementedException("SimpleMeshBuilder: metadata not supported");
+        }
 
 
         // just store GenericMaterial object, we can't use it here

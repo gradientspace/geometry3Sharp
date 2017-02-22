@@ -74,6 +74,8 @@ namespace g3
 			bHaveN = bHaveC = bHaveUV = true;
 		}
     }
+
+
     public interface IMeshBuilder
     {
         // return ID of new mesh
@@ -94,6 +96,10 @@ namespace g3
 
         // do material assignment to mesh, where meshID comes from IMeshBuilder
         void AssignMaterial(int materialID, int meshID);
+
+        // optional
+        bool SupportsMetaData { get; }
+        void AppendMetaData(string identifier, object data);
     }
 
 
