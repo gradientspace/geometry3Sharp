@@ -8,6 +8,70 @@ namespace g3
 {
     public static class gSerialization
     {
+
+        public static void Store(Vector3f v, BinaryWriter writer)
+        {
+            writer.Write(v.x);
+            writer.Write(v.y);
+            writer.Write(v.z);
+        }
+        public static void Restore(ref Vector3f v, BinaryReader reader)
+        {
+            v.x = reader.ReadSingle();
+            v.y = reader.ReadSingle();
+            v.z = reader.ReadSingle();
+        }
+
+        public static void Store(Quaternionf q, BinaryWriter writer)
+        {
+            writer.Write(q.x);
+            writer.Write(q.y);
+            writer.Write(q.z);
+            writer.Write(q.w);
+        }
+        public static void Restore(ref Quaternionf q, BinaryReader reader)
+        {
+            q.x = reader.ReadSingle();
+            q.y = reader.ReadSingle();
+            q.z = reader.ReadSingle();
+            q.w = reader.ReadSingle();
+        }
+
+
+
+        public static void Store(Frame3f vFrame, BinaryWriter writer)
+        {
+            Store(vFrame.Origin, writer);
+            Store(vFrame.Rotation, writer);
+        }
+        public static void Restore(ref Frame3f vFrame, BinaryReader reader)
+        {
+            Vector3f origin = Vector3f.Zero;
+            Quaternionf orientation = Quaternionf.Identity;
+            Restore(ref origin, reader);
+            Restore(ref orientation, reader);
+            vFrame = new Frame3f(origin, orientation);
+        }
+
+
+
+
+
+        public static void Store(List<int> values, BinaryWriter writer)
+        {
+            writer.Write(values.Count);
+            for (int i = 0; i < values.Count; ++i)
+                writer.Write(values[i]);
+        }
+        public static void Restore(List<int> values, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            for (int i = 0; i < N; ++i)
+                values.Add(reader.ReadInt32());
+        }
+
+
+
         public static void Store(Polygon2d polygon, BinaryWriter writer)
         {
             writer.Write(polygon.VertexCount);
