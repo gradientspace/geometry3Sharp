@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="approximation\BiArcFit2.cs" />
+    <Compile Include="core\CommandArgumentSet.cs" />
     <Compile Include="core\DVector.cs" />
     <Compile Include="core\FileSystemUtils.cs" />
     <Compile Include="core\gParallel.cs" />
