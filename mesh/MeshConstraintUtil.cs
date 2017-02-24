@@ -25,6 +25,25 @@ namespace g3
         }
 
 
+        // for all mesh boundary vertices, pin in current position, but allow collapses
+        public static void FixAllBoundaryEdges_AllowCollapse(MeshConstraints cons, DMesh3 mesh, int setID)
+        {
+            EdgeConstraint edgeCons = new EdgeConstraint(EdgeRefineFlags.NoFlip | EdgeRefineFlags.NoSplit);
+            VertexConstraint vertCons = new VertexConstraint(true, setID);
+
+            int NE = mesh.MaxEdgeID;
+            for ( int ei = 0; ei < NE; ++ei ) {
+                if ( mesh.IsEdge(ei) && mesh.edge_is_boundary(ei) ) {
+                    cons.SetOrUpdateEdgeConstraint(ei, edgeCons);
+
+                    Index2i ev = mesh.GetEdgeV(ei);
+                    cons.SetOrUpdateVertexConstraint(ev.a, vertCons);
+                    cons.SetOrUpdateVertexConstraint(ev.b, vertCons);
+                }
+            }
+        }
+
+
         // loop through submesh border edges on basemesh, map to submesh, and
         // pin those edges / vertices
         public static void FixSubmeshBoundaryEdges(MeshConstraints cons, DSubmesh3 sub)

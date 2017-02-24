@@ -517,6 +517,16 @@ namespace g3
             return new Vector3d(vertices[3 * a], vertices[3 * a + 1], vertices[3 * a + 2]);
         }
 
+        public Vector3d GetTriBaryPoint(int tID, double bary0, double bary1, double bary2) { 
+            int ai = 3 * triangles[3 * tID], 
+                bi = 3 * triangles[3 * tID + 1], 
+                ci = 3 * triangles[3 * tID + 2];
+            return new Vector3d(
+                (bary0*vertices[ai] + bary1*vertices[bi] + bary2*vertices[ci]),
+                (bary0*vertices[ai + 1] + bary1*vertices[bi + 1] + bary2*vertices[ci + 1]),
+                (bary0*vertices[ai + 2] + bary1*vertices[bi + 2] + bary2*vertices[ci + 2]));
+        }
+
         public Vector3d GetTriNormal(int tID)
         {
             Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
@@ -526,12 +536,14 @@ namespace g3
 
         public Vector3d GetTriCentroid(int tID)
         {
-            int a = triangles[3 * tID], b = triangles[3 * tID + 1], c = triangles[3 * tID + 2];
+            int ai = 3 * triangles[3 * tID], 
+                bi = 3 * triangles[3 * tID + 1], 
+                ci = 3 * triangles[3 * tID + 2];
             double f = (1.0 / 3.0);
             return new Vector3d(
-                (vertices[3 * a] + vertices[3 * b] + vertices[3 * c]) * f,
-                (vertices[3 * a + 1] + vertices[3 * b + 1] + vertices[3 * c + 1]) * f,
-                (vertices[3 * a + 2] + vertices[3 * b + 2] + vertices[3 * c + 2]) * f );
+                (vertices[ai] + vertices[bi] + vertices[ci]) * f,
+                (vertices[ai + 1] + vertices[bi + 1] + vertices[ci + 1]) * f,
+                (vertices[ai + 2] + vertices[bi + 2] + vertices[ci + 2]) * f );
         }
 
 
@@ -552,6 +564,21 @@ namespace g3
         }
 
 
+        public Frame3f GetTriFrame(int tID, int nEdge = 0)
+        {
+            int ti = 3 * tID;
+            int a = triangles[ti + (nEdge % 3)];
+            int b = triangles[ti + ((nEdge+1) % 3)];
+            int c = triangles[ti + ((nEdge+2) % 3)];
+            Vector3d v0 = new Vector3d(vertices[3 * a], vertices[3 * a + 1], vertices[3 * a + 2]);
+            Vector3d v1 = new Vector3d(vertices[3 * b], vertices[3 * b + 1], vertices[3 * b + 2]);
+            Vector3d v2 = new Vector3d(vertices[3 * c], vertices[3 * c + 1], vertices[3 * c + 2]);
+            Vector3f edge = (Vector3f)(v1 - v0).Normalized;
+            Vector3f normal = (Vector3f)MathUtil.Normal(v0, v1, v2);
+            Vector3f other = edge.Cross(normal);
+            Vector3f center = (Vector3f)(v0 + v1 + v2) / 3;
+            return new Frame3f(center, edge, other, normal);
+        }
 
 
 
