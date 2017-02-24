@@ -19,7 +19,11 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 - **VectorArray2/VectorArray3**: wrapper around regular array providing N-element access
     - eg operator[] gets/sets Vector3d for VectorArray3d, internally is double[3*count]
 
-- **Units**: enums & conversions
+- **Units**: enums, conversions, string representations
+
+- **gParallel**: multi-threading utilities, including parallel *ForEach* that works w/ .Net 3.5
+
+- **gSerialization**: binary serialization of core types (vectors, frames, polygons, DMesh3)
 
 # Math
 
@@ -42,6 +46,10 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 - **Integrate1d**: Romberg integration, Gaussian quadrature with legendre polynomials, trapezoid rule
 - **Interval1d**: 1D interval class/intersection/etc
+
+- basic arbitrary-size **DenseMatrix**, **DiagonalMatrix**, **SymmetricSparseMatrix**
+- **SparseSymmetricCG** conjugate-gradient matrix solver
+
 
 # Queries
 
@@ -82,7 +90,7 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 - **DMeshAABBTree**: mesh axis-aligned bounding box tree
 	- bottom-up construction using mesh topology to accelerate leaf node layer
 	- generic traversal interface
-	- Queries for NearestTriangle, (more to come)
+	- Queries for NearestTriangle, FindNearestHitTriangle (raycast), (more to come)
 
 - **Remesher**: edge split/flip/collapse + vtx smooth remeshing
 	- entire mesh can be constrained to lie on an IProjectionTarget (eg for reprojection onto initial surface)
@@ -92,15 +100,26 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 		- vertices can be constrained to an IProjectionTarget - eg 3D polylines, smooth curves, surfaces, etc
 
 - various mesh generators
-    - open & closed cylinders, disc, punctured disc, with start/end angles
+    - most mesh generators support generating shared or not-shared vertices along sharp edges, UV seams, etc
+    - some support generating sections of shape (eg wedge-shaped portion of cylinder)
+    - **TrivialBox3Generator**
+    - **OpenCylinderGenerator**, **CappedCylinderGenerator**, **ConeGenerator**  (support start/end angles)
+    - **TrivialDiscGenerator**, **PuncturedDiscGenerator**, **TrivialRectGenerator**
     - **VerticalGeneralizedCylinderGenerator**
     - **TubeGenerator**: polygon swept along polyline
-    - trivial plane
     - **Curve3Axis3RevolveGenerator**: 3D polyline revolved around 3D axis
     - **Curve3Curve3RevolveGenerator**: 3D polyline revolved around 3D polyline (!)
     
-- OBJ reader/writer 
-    - reader supports OBJ materials and texture maps (paths, you sort out loading images yourself)
+- Mesh Format I/O
+    - format-agnostic **StandardMeshReader** and **StandardMeshWriter**
+        - can register additional format handlers beyond supported defaults
+        - constructs mesh via generic interface, **SimpleMeshBuilder** and **DMesh3Builder** provided
+    - readers & writers configurable via **ReadOptions** and **WriteOptions**
+    - **OBJReader/Writer** - supports vertex colors extension, read/write face groups, UVs, OBJ .mtl files
+        - stores texture map paths but you have to load images yourself
+        - currently **cannot** produce meshes with multiple UVs per vertex (not supported in DMesh3), vertices will be duplicated along UV seams
+    - **STLReader/Writer** - STL format, basic vertex welding to reconstruct topology
+    - **OFFReader/Writer** - OFF file format
 
 
 # 2D Curves
