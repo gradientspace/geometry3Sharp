@@ -92,7 +92,7 @@ namespace g3
                 qz = 0.25f * S;
             }
 
-            return new Quaternionf(qx, qy, qz, qw);
+            return new Quaternionf(qx, qy, qz, qw).Normalized;
         }
 
 
