@@ -376,7 +376,7 @@ namespace g3 {
         {
             collapse_to = -1;
             if (constraints == null)
-                return false;
+                return true;
             bool bVtx = can_collapse_vtx(eid, a, b, out collapse_to);
             if (bVtx == false)
                 return false;
