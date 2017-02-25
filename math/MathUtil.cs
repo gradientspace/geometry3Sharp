@@ -332,7 +332,7 @@ namespace g3
 		//            <0 for P2 right of the line
 		public static double IsLeft( Vector2d P0, Vector2d P1, Vector2d P2 )
 		{
-			return ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y) );
+			return Math.Sign( ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y) ) );
 		}
 
 
