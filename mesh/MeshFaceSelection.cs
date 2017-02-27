@@ -21,6 +21,31 @@ namespace g3
             temp = new List<int>();
         }
 
+        // convert vertex selection to face selection. Require at least minCount verts of
+        // tri to be selected (valid values are 1,2,3)
+        public MeshFaceSelection(DMesh3 mesh, MeshVertexSelection convertV, int minCount = 3) : this(mesh)
+        {
+            minCount = MathUtil.Clamp(minCount, 1, 3);
+
+            foreach ( int tid in mesh.TriangleIndices() ) {
+                Index3i tri = mesh.GetTriangle(tid);
+
+                if (minCount == 1) {
+                    if (convertV.IsSelected(tri.a) || convertV.IsSelected(tri.b) || convertV.IsSelected(tri.c))
+                        add(tid);
+                } else if (minCount == 3) {
+                    if (convertV.IsSelected(tri.a) && convertV.IsSelected(tri.b) && convertV.IsSelected(tri.c))
+                        add(tid);
+                } else {
+                    int n = (convertV.IsSelected(tri.a) ? 1 : 0) +
+                            (convertV.IsSelected(tri.b) ? 1 : 0) +
+                            (convertV.IsSelected(tri.c) ? 1 : 0);
+                    if (n >= minCount)
+                        add(tid);
+                }
+            }
+        }
+
 
         public IEnumerator<int> GetEnumerator() {
             return Selected.GetEnumerator();
@@ -30,10 +55,6 @@ namespace g3
         }
 
 
-        private bool is_selected(int tid)
-        {
-            return Selected.Contains(tid);
-        }
         private void add(int tid)
         {
             Selected.Add(tid);
@@ -43,6 +64,12 @@ namespace g3
             Selected.Remove(tid);
         }
 
+
+
+        public bool IsSelected(int tid)
+        {
+            return Selected.Contains(tid);
+        }
 
 
         public void Select(int tid)
@@ -105,7 +132,7 @@ namespace g3
             foreach ( int tid in Selected ) { 
                 Index3i nbr_tris = Mesh.GetTriNeighbourTris(tid);
                 for (int j = 0; j < 3; ++j) {
-                    if (nbr_tris[j] != DMesh3.InvalidID && is_selected(nbr_tris[j]) == false)
+                    if (nbr_tris[j] != DMesh3.InvalidID && IsSelected(nbr_tris[j]) == false)
                         temp.Add(nbr_tris[j]);
                 }
             }
@@ -124,7 +151,7 @@ namespace g3
                 for (int j = 0; j < 3; ++j) {
                     int vid = tri_v[j];
                     foreach (int nbr_t in Mesh.VtxTrianglesItr(vid)) {
-                        if (is_selected(nbr_t) == false)
+                        if (IsSelected(nbr_t) == false)
                             temp.Add(nbr_t);
                     }
                 }
@@ -161,7 +188,7 @@ namespace g3
                 Index3i nbr_tris = Mesh.GetTriNeighbourTris(tid);
                 for (int j = 0; j < 3; ++j) {
                     int nbr_t = nbr_tris[j];
-                    if (is_selected(nbr_t))
+                    if (IsSelected(nbr_t))
                         continue;
                     if (is_ear(nbr_t))
                         temp.Add(nbr_t);
@@ -206,7 +233,7 @@ namespace g3
                 int nbr_t = nbr_tris[j];
                 if (nbr_t == DMesh3.InvalidID)
                     bdry_e++;
-                else if (is_selected(nbr_t) == true)
+                else if (IsSelected(nbr_t) == true)
                     nbr_in++;
                 else
                     nbr_out++;
@@ -214,7 +241,7 @@ namespace g3
         }
         private bool is_ear(int tid)
         {
-            if (is_selected(tid) == true)
+            if (IsSelected(tid) == true)
                 return false;
             int nbr_in, nbr_out, bdry_e;
             count_nbrs(tid, out nbr_in, out nbr_out, out bdry_e);
@@ -228,7 +255,7 @@ namespace g3
         }
         private bool is_fin(int tid)
         {
-            if (is_selected(tid) == false)
+            if (IsSelected(tid) == false)
                 return false;
             int nbr_in, nbr_out, bdry_e;
             count_nbrs(tid, out nbr_in, out nbr_out, out bdry_e);
