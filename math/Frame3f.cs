@@ -126,6 +126,14 @@ namespace g3
             return this.Rotated(new Quaternionf(GetAxis(nAxis), fAngle));
         }
 
+        // this rotates the frame around its own axes, rather than around the world axes,
+        // which is what Rotate() does. So, RotateAroundAxis(AxisAngleD(Z,180)) is equivalent
+        // to Rotate(AxisAngleD(My_AxisZ,180)). 
+        public void RotateAroundAxes(Quaternionf q)
+        {
+            rotation = rotation * q;
+        }
+
         public void RotateAround(Vector3f point, Quaternionf q)
         {
             Debug.Assert(rotation.w != 0);
