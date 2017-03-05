@@ -241,6 +241,35 @@ namespace g3
 
 
 
+
+        public bool AppendMesh(IMesh appendMesh)
+        {
+            int[] mapV = new int[appendMesh.MaxVertexID];
+            foreach (int vid in appendMesh.VertexIndices() ) {
+                NewVertexInfo vinfo = appendMesh.GetVertexAll(vid);
+                int newvid = Mesh.AppendVertex(vinfo);
+                mapV[vid] = newvid;
+            }
+
+            foreach (int tid in appendMesh.TriangleIndices()) {
+                Index3i t = appendMesh.GetTriangle(tid);
+                t.a = mapV[t.a];
+                t.b = mapV[t.b];
+                t.c = mapV[t.c];
+                int gid = appendMesh.GetTriangleGroup(tid);
+                Mesh.AppendTriangle(t, gid);
+            }
+
+            return true;
+        }
+
+
+
+
+
+
+
+
         // this is for backing out changes we have made...
         bool remove_triangles(int[] tri_list, int count)
         {
