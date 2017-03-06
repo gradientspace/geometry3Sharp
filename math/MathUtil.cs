@@ -4,7 +4,7 @@
 namespace g3
 {
 
-    public class MathUtil
+    public static class MathUtil
     {
 
         public const double Deg2Rad = (Math.PI / 180.0);
@@ -119,6 +119,25 @@ namespace g3
             while (val < 0)
                 val += mod;
             return val % mod;
+        }
+
+
+        // compute min and max of a,b,c with max 3 comparisons (sometimes 2)
+        public static void MinMax(double a, double b, double c, out double min, out double max)
+        {
+            if ( a < b ) {
+                if ( a < c ) {
+                    min = a; max = Math.Max(b, c);
+                } else {
+                    min = c; max = b;
+                }
+            } else {
+                if ( a > c ) {
+                    max = a; min = Math.Min(b, c);
+                } else {
+                    min = b; max = c;
+                }
+            }
         }
 
 

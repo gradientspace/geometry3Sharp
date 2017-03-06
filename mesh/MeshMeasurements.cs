@@ -180,5 +180,35 @@ namespace g3
 
 
 
+        public static AxisAlignedBox3d Bounds(DMesh3 mesh, Func<Vector3d, Vector3d> TransformF )
+        {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            if (TransformF == null) {
+                foreach (Vector3d v in mesh.Vertices())
+                    bounds.Contain(v);
+            } else {
+                foreach (Vector3d v in mesh.Vertices()) {
+                    Vector3d vT = TransformF(v);
+                    bounds.Contain(vT);
+                }
+            }
+            return bounds;
+        }
+        public static AxisAlignedBox3d Bounds(IMesh mesh, Func<Vector3d, Vector3d> TransformF )
+        {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            if (TransformF == null) {
+                foreach (int vID in mesh.VertexIndices())
+                    bounds.Contain(mesh.GetVertex(vID));
+            } else {
+                foreach (int vID in mesh.VertexIndices()) {
+                    Vector3d vT = TransformF(mesh.GetVertex(vID));
+                    bounds.Contain(vT);
+                }
+            }
+            return bounds;
+        }
+
+
     }
 }
