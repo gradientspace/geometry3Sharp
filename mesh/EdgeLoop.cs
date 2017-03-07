@@ -134,5 +134,21 @@ namespace g3
 
 
 
+
+        // utility function
+        public static int[] VertexLoopToEdgeLoop(DMesh3 mesh, int[] vertex_loop)
+        {
+            int NV = vertex_loop.Length;
+            int[] edges = new int[NV];
+            for ( int i = 0; i < NV; ++i ) {
+                int v0 = i;
+                int v1 = (i + 1) % NV;
+                edges[i] = mesh.FindEdge(v0, v1);
+            }
+            return edges;
+        }
+
+
+
     }
 }
