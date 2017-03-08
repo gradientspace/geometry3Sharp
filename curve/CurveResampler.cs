@@ -66,7 +66,7 @@ namespace g3
                 lengths = new double[Nstop];
             bool bFoundSplit = false;
             bool bFoundCollapse = false;
-            for (int i = 0; i < Nstop; ++i) {
+            for (int i = 0; i < Nstop - 1; ++i) {
                 lengths[i] = curve.GetVertex(i).DistanceSquared(curve.GetVertex((i + 1) % N));
                 if (lengths[i] > fMaxSqr)
                     bFoundSplit = true;

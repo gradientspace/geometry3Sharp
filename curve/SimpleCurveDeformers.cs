@@ -35,20 +35,59 @@ namespace g3
         public InPlaceIterativeCurveSmooth()
         {
             Start = End = -1;
+            Alpha = 0.25f;
         }
+        public InPlaceIterativeCurveSmooth(DCurve3 curve, float alpha = 0.25f)
+        {
+            Curve = curve;
+            Start = 0;
+            End = Curve.VertexCount;
+            Alpha = alpha;
+        }
+
 
         public void UpdateDeformation(int nIterations = 1)
         {
-            if (Start < 0 || Start >= Curve.VertexCount || End >= Curve.VertexCount)
+            if (Curve.Closed)
+                UpdateDeformation_Closed(nIterations);
+            else
+                UpdateDeformation_Open(nIterations);
+        }
+
+
+        public void UpdateDeformation_Closed(int nIterations = 1)
+        {
+            if (Start < 0 || Start > Curve.VertexCount || End > Curve.VertexCount)
                 throw new ArgumentOutOfRangeException("InPlaceIterativeCurveSmooth.UpdateDeformation: range is invalid");
 
-            for (int i = Start; i <= End; ++i) {
-                if (i == 0 || i >= Curve.VertexCount - 1)
-                    continue;
+            int N = Curve.VertexCount;
+            for (int iter = 0; iter < nIterations; ++iter) {
+                for (int ii = Start; ii < End; ++ii) {
+                    int i = (ii % N);
+                    int iPrev = (ii == 0) ? N - 1 : ii - 1;
+                    int iNext = (ii + 1) % N;
+                    Vector3d prev = Curve[iPrev], next = Curve[iNext];
+                    Vector3d c = (prev + next) * 0.5f;
+                    Curve[i] = (1 - Alpha) * Curve[i] + (Alpha) * c;
+                }
+            }
+        }
 
-                Vector3d prev = Curve[i - 1], next = Curve[i + 1];
-                Vector3d c = (prev + next) * 0.5f;
-                Curve[i] = (1 - Alpha) * Curve[i] + (Alpha) * c;
+
+        public void UpdateDeformation_Open(int nIterations = 1)
+        {
+            if (Start < 0 || Start > Curve.VertexCount || End > Curve.VertexCount)
+                throw new ArgumentOutOfRangeException("InPlaceIterativeCurveSmooth.UpdateDeformation: range is invalid");
+
+            for (int iter = 0; iter < nIterations; ++iter) {
+                for (int i = Start; i <= End; ++i) {
+                    if (i == 0 || i >= Curve.VertexCount - 1)
+                        continue;
+
+                    Vector3d prev = Curve[i - 1], next = Curve[i + 1];
+                    Vector3d c = (prev + next) * 0.5f;
+                    Curve[i] = (1 - Alpha) * Curve[i] + (Alpha) * c;
+                }
             }
         }
 
