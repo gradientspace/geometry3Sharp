@@ -5,6 +5,17 @@ namespace g3
 	{
 
 
+        public static IParametricCurve2d Convert(Polygon2d poly)
+        {
+            ParametricCurveSequence2 seq = new ParametricCurveSequence2();
+            int N = poly.VertexCount;
+            for (int i = 0; i < N; ++i)
+                seq.Append(new Segment2d(poly[i], poly[(i + 1)%N]));
+            seq.IsClosed = true;
+            return seq;
+        }
+
+
 		// 2D curve utils?
 		public static double SampledDistance(IParametricCurve2d c, Vector2d point, int N = 100)
 		{

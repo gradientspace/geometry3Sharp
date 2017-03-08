@@ -22,9 +22,23 @@ namespace g3 {
 
 
 
+		public static VectorArray2d SampleT(IParametricCurve2d curve, int N)
+		{
+            double fLenT = curve.ParamLength;
+			VectorArray2d vec = new VectorArray2d(N);
+            double divide = (curve.IsClosed) ? (double)N : (double)(N - 1);
+			for ( int i = 0; i < N; ++i ) {
+				double t = (double)i / divide;
+				vec[i] = curve.SampleT(t * fLenT);
+			}
+			return vec;
+		}
+
+
+
 		public static VectorArray2d SampleT(IParametricCurve2d curve, double fSpacing)
 		{
-			double fLenT = 1.0f;		// assumption for now is that all curves span [0,1] t-range
+            double fLenT = curve.ParamLength;
 
 			int nSteps = Math.Max( (int)(fLenT / fSpacing)+1, 2 );
 
