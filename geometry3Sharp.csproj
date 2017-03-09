@@ -80,6 +80,7 @@
     <Compile Include="io\STLWriter.cs" />
     <Compile Include="io\gSerialization.cs" />
     <Compile Include="math\BoundsUtil.cs" />
+    <Compile Include="math\Colorb.cs" />
     <Compile Include="math\ColorHSV.cs" />
     <Compile Include="math\Frame3f.cs" />
     <Compile Include="math\IndexTypes.cs" />
