@@ -177,9 +177,8 @@ namespace g3
 
 
         public bool Contains(Vector3d v) {
-            return (Min.x <= v.x) && (Min.y <= v.y) 
-                && (Max.x >= v.x) && (Max.y >= v.y)
-                && (Max.z >= v.z) && (Max.z >= v.z);
+            return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
+                && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
         }
         public bool Intersects(AxisAlignedBox3d box) {
             return !((box.Max.x <= Min.x) || (box.Min.x >= Max.x) 
