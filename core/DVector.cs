@@ -193,12 +193,15 @@ namespace g3
             for (int k = 0; k < nLen; ++k)
                 data[k] = this[k];
         }
-        public T[] GetBuffer()
+        public T[] GetBuffer()      // todo: deprecate this...
         {
             T[] data = new T[this.Length];
             for (int k = 0; k < this.Length; ++k)
                 data[k] = this[k];
             return data;
+        }
+        public T[] ToArray() {
+            return GetBuffer();
         }
 
         // warning: this may be quite slow!
