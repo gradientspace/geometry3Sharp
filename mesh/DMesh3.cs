@@ -534,6 +534,18 @@ namespace g3
             return MathUtil.Normal(v0, v1, v2);
         }
 
+        public Vector3d GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) { 
+            int ai = 3 * triangles[3 * tID], 
+                bi = 3 * triangles[3 * tID + 1], 
+                ci = 3 * triangles[3 * tID + 2];
+            Vector3d n = new Vector3d(
+                (bary0*normals[ai] + bary1*normals[bi] + bary2*normals[ci]),
+                (bary0*normals[ai + 1] + bary1*normals[bi + 1] + bary2*normals[ci + 1]),
+                (bary0*normals[ai + 2] + bary1*normals[bi + 2] + bary2*normals[ci + 2]));
+            n.Normalize();
+            return n;
+        }
+
         public Vector3d GetTriCentroid(int tID)
         {
             int ai = 3 * triangles[3 * tID], 
