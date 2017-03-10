@@ -152,14 +152,14 @@ namespace g3
                         Vector3d v = (ModifiedV[i]) ? NewV[i] : Curve[i];
                         double d2 = (v - vPreviousPos).LengthSquared;
                         if (ModifiedV[i] ||  d2 < r2) {         // always smooth any modified verts
-                            double t = WeightFunc(Math.Sqrt(d2), Radius);
+                            double a = SmoothAlpha * WeightFunc(Math.Sqrt(d2), Radius);
 
                             int iPrev = (i == 0) ? N - 1 : i - 1;
                             int iNext = (i + 1) % N;
                             Vector3d vPrev = (ModifiedV[iPrev]) ? NewV[iPrev] : Curve[iPrev];
                             Vector3d vNext = (ModifiedV[iNext]) ? NewV[iNext] : Curve[iNext];
                             Vector3d c = (vPrev + vNext) * 0.5f;
-                            NewV[i] = (1 - SmoothAlpha) * v + (SmoothAlpha) * c;
+                            NewV[i] = (1 - a) * v + (a) * c;
                             ModifiedV[i] = true;
 
                             if (i > 0)
