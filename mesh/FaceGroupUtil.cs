@@ -97,5 +97,20 @@ namespace g3
         }
 
 
+
+
+        public static List<int> FindTrianglesByGroup(IMesh mesh, int findGroupID)
+        {
+            List<int> tris = new List<int>();
+            if (mesh.HasTriangleGroups == false)
+                return tris;
+            foreach ( int tid in mesh.TriangleIndices() ) {
+                if ( mesh.GetTriangleGroup(tid) == findGroupID)
+                    tris.Add(tid);
+            }
+            return tris;
+        }
+
+
     }
 }

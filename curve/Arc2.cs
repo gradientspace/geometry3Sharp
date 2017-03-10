@@ -29,6 +29,13 @@ namespace g3 {
 		}
 
 
+		public Vector2d P0 {
+			get { return SampleT(0.0); }
+		}
+		public Vector2d P1 {
+			get { return SampleT(1.0); }
+		}
+
 		public bool IsClosed {
 			get { return false; }
 		}

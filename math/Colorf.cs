@@ -44,13 +44,8 @@ namespace g3
         public Vector3f ToRGB() {
             return new Vector3f(r, g, b);
         }
-        public byte[] ToBytes() {
-            return new byte[4] {
-                (byte)MathUtil.Clamp((int)(r*255.0f), 0, 255),
-                (byte)MathUtil.Clamp((int)(g*255.0f), 0, 255),
-                (byte)MathUtil.Clamp((int)(b*255.0f), 0, 255),
-                (byte)MathUtil.Clamp((int)(a*255.0f), 0, 255),
-            };
+        public Colorb ToBytes() {
+            return new Colorb(r, g, b, a);
         }
 
         public void Set(Colorf o)
@@ -228,6 +223,11 @@ namespace g3
         public static implicit operator Color(Colorf c)
         {
             return new Color(c.r, c.g, c.b, c.a);
+        }
+        public static implicit operator Color32(Colorf c)
+        {
+            Colorb cb = c.ToBytes();
+            return new Color32(cb.r, cb.g, cb.b, cb.a);
         }
 #endif
 

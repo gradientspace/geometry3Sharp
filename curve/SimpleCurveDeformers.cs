@@ -35,125 +35,65 @@ namespace g3
         public InPlaceIterativeCurveSmooth()
         {
             Start = End = -1;
+            Alpha = 0.25f;
         }
+        public InPlaceIterativeCurveSmooth(DCurve3 curve, float alpha = 0.25f)
+        {
+            Curve = curve;
+            Start = 0;
+            End = Curve.VertexCount;
+            Alpha = alpha;
+        }
+
 
         public void UpdateDeformation(int nIterations = 1)
         {
-            if (Start < 0 || Start >= Curve.VertexCount || End >= Curve.VertexCount)
+            if (Curve.Closed)
+                UpdateDeformation_Closed(nIterations);
+            else
+                UpdateDeformation_Open(nIterations);
+        }
+
+
+        public void UpdateDeformation_Closed(int nIterations = 1)
+        {
+            if (Start < 0 || Start > Curve.VertexCount || End > Curve.VertexCount)
                 throw new ArgumentOutOfRangeException("InPlaceIterativeCurveSmooth.UpdateDeformation: range is invalid");
 
-            for (int i = Start; i <= End; ++i) {
-                if (i == 0 || i >= Curve.VertexCount - 1)
-                    continue;
-
-                Vector3d prev = Curve[i - 1], next = Curve[i + 1];
-                Vector3d c = (prev + next) * 0.5f;
-                Curve[i] = (1 - Alpha) * Curve[i] + (Alpha) * c;
-            }
-        }
-
-    }
-
-
-
-
-
-    public class SculptMoveDeformation
-    {
-        DCurve3 _curve;
-        public DCurve3 Curve
-        {
-            get { return _curve; }
-            set { if (_curve != value) { _curve = value; } }
-        }
-
-        // weight function applied over falloff region. currently linear!
-        Func<double, double, double> _weightfunc;
-        public Func<double, double, double> WeightFunc
-        {
-            get { return _weightfunc; }
-            set { if (_weightfunc != value) { _weightfunc = value; } }
-        }
-
-        public double Radius = 0.1f;
-
-        // if > 0, apply smoothing pass after deformation
-        public double SmoothT = 0.0f;
-
-        public SculptMoveDeformation()
-        {
-            WeightFunc = (d, r) => { return MathUtil.WyvillFalloff01(MathUtil.Clamp(d / r, 0.0, 1.0)); };
-        }
-
-
-        Vector3d prev;
-
-        public void BeginDeformation(Vector3d vStartPos)
-        {
-            prev = vStartPos;
-        }
-
-
-
-        // returns max edge length of moved vertices, after deformation
-        public struct DeformInfo
-        {
-            public double maxEdgeLenSqr;
-            public double minEdgeLenSqr;
-        }
-        public DeformInfo UpdateDeformation(Vector3d vNextPos)
-        {
-            DeformInfo di = new DeformInfo() { maxEdgeLenSqr = 0, minEdgeLenSqr = double.MaxValue };
-
-            Vector3d vDelta = (vNextPos - prev);
-            if (vDelta.Length < 0.0001f)
-                return di;
-
-            double r2 = Radius * Radius;
-
             int N = Curve.VertexCount;
-            int pending_smooth_i = -1;
-            for ( int i = 0; i < N; ++i ) {
-
-                bool bModified = false;
-                Vector3d v = Curve[i];
-                double d2 = (v - prev).LengthSquared;
-                if ( d2 < r2 ) {
-                    double t = WeightFunc( Math.Sqrt(d2), r2);
-                    Vector3d vNew = v + t * vDelta;
-
-                    if (i > 0) {
-                        double dp = vNew.DistanceSquared(Curve[i - 1]);
-                        di.maxEdgeLenSqr = Math.Max(dp, di.maxEdgeLenSqr);
-                        di.minEdgeLenSqr = Math.Min(dp, di.minEdgeLenSqr);
-                    }
-                    if (i < N - 1) {
-                        double dn = vNew.DistanceSquared(Curve[i + 1]);
-                        di.maxEdgeLenSqr = Math.Max(dn, di.maxEdgeLenSqr);
-                        di.minEdgeLenSqr = Math.Min(dn, di.minEdgeLenSqr);
-                    }
-
-                    Curve[i] = vNew;
-                    bModified = true;
+            for (int iter = 0; iter < nIterations; ++iter) {
+                for (int ii = Start; ii < End; ++ii) {
+                    int i = (ii % N);
+                    int iPrev = (ii == 0) ? N - 1 : ii - 1;
+                    int iNext = (ii + 1) % N;
+                    Vector3d prev = Curve[iPrev], next = Curve[iNext];
+                    Vector3d c = (prev + next) * 0.5f;
+                    Curve[i] = (1 - Alpha) * Curve[i] + (Alpha) * c;
                 }
-
-                if (pending_smooth_i > 0) {
-                    Vector3d c = Curve.Centroid(pending_smooth_i);
-                    Curve[pending_smooth_i] = Vector3d.Lerp(Curve[pending_smooth_i], c, SmoothT);
-                }
-
-                if (bModified && SmoothT > 0 && i > 0 && i < N - 1)
-                    pending_smooth_i = i;
-
             }
-
-            prev = vNextPos;
-            return di;
         }
 
 
+        public void UpdateDeformation_Open(int nIterations = 1)
+        {
+            if (Start < 0 || Start > Curve.VertexCount || End > Curve.VertexCount)
+                throw new ArgumentOutOfRangeException("InPlaceIterativeCurveSmooth.UpdateDeformation: range is invalid");
+
+            for (int iter = 0; iter < nIterations; ++iter) {
+                for (int i = Start; i <= End; ++i) {
+                    if (i == 0 || i >= Curve.VertexCount - 1)
+                        continue;
+
+                    Vector3d prev = Curve[i - 1], next = Curve[i + 1];
+                    Vector3d c = (prev + next) * 0.5f;
+                    Curve[i] = (1 - Alpha) * Curve[i] + (Alpha) * c;
+                }
+            }
+        }
 
     }
+
+
 
 
 

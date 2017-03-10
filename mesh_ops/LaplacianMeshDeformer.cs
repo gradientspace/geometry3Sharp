@@ -22,8 +22,10 @@ namespace g3
         {
             public Vector3d Position;
             public double Weight;
+            public bool PostFix;
         }
         Dictionary<int, SoftConstraintV> SoftConstraints = new Dictionary<int, SoftConstraintV>();
+        bool HavePostFixedConstraints = false;
 
 
         // needs to be updated after constraints
@@ -44,15 +46,17 @@ namespace g3
         }
 
 
-        public void SetConstraint(int vID, Vector3d targetPos, double weight)
+        public void SetConstraint(int vID, Vector3d targetPos, double weight, bool bForceToFixedPos = false)
         {
-            SoftConstraints[vID] = new SoftConstraintV() { Position = targetPos, Weight = weight };
+            SoftConstraints[vID] = new SoftConstraintV() { Position = targetPos, Weight = weight, PostFix = bForceToFixedPos };
+            HavePostFixedConstraints = HavePostFixedConstraints || bForceToFixedPos;
             need_solve_update = true;
         }
 
         public void ClearConstraints()
         {
             SoftConstraints.Clear();
+            HavePostFixedConstraints = false;
             need_solve_update = true;
         }
 
@@ -204,6 +208,17 @@ namespace g3
                 int vid = ToMeshV[i];
                 Result[vid] = new Vector3d(Sx[i], Sy[i], Sz[i]);
             }
+
+            // apply post-fixed constraints
+            if (HavePostFixedConstraints) {
+                foreach (var constraint in SoftConstraints) {
+                    if (constraint.Value.PostFix) {
+                        int vid = constraint.Key;
+                        Result[vid] = constraint.Value.Position;
+                    }
+                }
+            }
+
             return true;
         }
 

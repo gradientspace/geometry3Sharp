@@ -35,9 +35,18 @@ namespace g3
         }
 
 
-        public int MapVertexToSubmesh(Index2i v) {
-            return BaseToSubV[v.a];
+        // [RMS] wtf? what is this for? commenting out for now...
+        //public int MapVertexToSubmesh(Index2i v) {
+        //    return BaseToSubV[v.a];
+        //}
+
+        public int MapVertexToSubmesh(int base_vID) {
+            return BaseToSubV[base_vID];
         }
+        public int MapVertexToBaseMesh(int sub_vID) {
+            return SubToBaseV[sub_vID];
+        }
+
         public Index2i MapVerticesToSubmesh(Index2i v) {
             return new Index2i(BaseToSubV[v.a], BaseToSubV[v.b]);
         }

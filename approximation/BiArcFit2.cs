@@ -68,7 +68,7 @@ namespace g3
 
 			if (arc2.IsSegment) {
 				Arc2IsSegment = true;
-				Segment2 = new Segment2d(arc2.P0, arc2.P1);
+				Segment2 = new Segment2d(arc2.P1, arc2.P0);
 			} else {
 				Arc2IsSegment = false;
 				Arc2 = get_arc(1);
@@ -96,10 +96,9 @@ namespace g3
 
         public List<IParametricCurve2d> Curves {
             get {
-                return new List<IParametricCurve2d>() {
-                    (Arc1IsSegment) ? (IParametricCurve2d)Segment1 : (IParametricCurve2d)Arc1,
-                    (Arc2IsSegment) ? (IParametricCurve2d)Segment2 : (IParametricCurve2d)Arc2
-                };
+				IParametricCurve2d c1 = (Arc1IsSegment) ? (IParametricCurve2d)Segment1 : (IParametricCurve2d)Arc1;
+				IParametricCurve2d c2 = (Arc2IsSegment) ? (IParametricCurve2d)Segment2 : (IParametricCurve2d)Arc2;
+				return new List<IParametricCurve2d>() { c1, c2 };
             }
         }
 

@@ -30,26 +30,27 @@ namespace g3
         }
 
 
-        private bool is_selected(int tid)
+        private void add(int vID)
         {
-            return Selected.Contains(tid);
+            Selected.Add(vID);
         }
-        private void add(int tid)
+        private void remove(int vID)
         {
-            Selected.Add(tid);
-        }
-        private void remove(int tid)
-        {
-            Selected.Remove(tid);
+            Selected.Remove(vID);
         }
 
 
-
-        public void Select(int tid)
+        public bool IsSelected(int vID)
         {
-            Debug.Assert(Mesh.IsVertex(tid));
-            if (Mesh.IsVertex(tid))
-                add(tid);
+            return Selected.Contains(vID);
+        }
+
+
+        public void Select(int vID)
+        {
+            Debug.Assert(Mesh.IsVertex(vID));
+            if (Mesh.IsVertex(vID))
+                add(vID);
         }
         public void Select(int[] vertices)
         {
@@ -75,8 +76,8 @@ namespace g3
 
 
 
-        public void Deselect(int vid) {
-            remove(vid);
+        public void Deselect(int vID) {
+            remove(vID);
         }
         public void Deselect(int[] vertices) {
             for ( int i = 0; i < vertices.Length; ++i ) 

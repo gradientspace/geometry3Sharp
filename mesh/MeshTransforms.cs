@@ -156,12 +156,12 @@ namespace g3
         public static Frame3f FlipLeftRightCoordSystems(Frame3f f)
         {
             throw new NotImplementedException("this doesn't work...frame becomes broken somehow?");
-            return new Frame3f(
-                FlipLeftRightCoordSystems(f.Origin),
-                f.X, f.Y, f.Z);
-                //FlipLeftRightCoordSystems(f.X),
-                //FlipLeftRightCoordSystems(f.Y),
-                //FlipLeftRightCoordSystems(f.Z));
+            //return new Frame3f(
+            //    FlipLeftRightCoordSystems(f.Origin),
+            //    f.X, f.Y, f.Z);
+            //    //FlipLeftRightCoordSystems(f.X),
+            //    //FlipLeftRightCoordSystems(f.Y),
+            //    //FlipLeftRightCoordSystems(f.Z));
         }
         public static void FlipLeftRightCoordSystems(IDeformableMesh mesh)
         {
