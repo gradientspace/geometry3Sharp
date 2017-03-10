@@ -156,5 +156,9 @@ namespace g3
         }
 
 
+		public bool HasConstraints {
+			get { return Edges.Count > 0 || Vertices.Count > 0; }
+		}
+
     }
 }

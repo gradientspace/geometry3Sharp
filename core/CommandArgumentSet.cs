@@ -48,6 +48,17 @@ namespace g3
         }
 
 
+		public bool Validate(string sParam, params string[] values) {
+			if ( Strings.ContainsKey(sParam) == false )
+				throw new Exception("Argument set does not contain " + sParam);
+			string s = Strings[sParam];
+			for ( int i = 0; i < values.Length; ++i ) {
+				if (s == values[i])
+					return true;
+			}
+			return false;
+		}
+
 
         public bool Parse(string[] arguments)
         {
