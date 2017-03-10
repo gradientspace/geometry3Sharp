@@ -71,6 +71,30 @@ namespace g3
         }
 
 
+        public static void Store(DCurve3 curve, BinaryWriter writer)
+        {
+            writer.Write(curve.Closed);
+            writer.Write(curve.VertexCount);
+            for (int i = 0; i < curve.VertexCount; ++i) {
+                writer.Write(curve[i].x);
+                writer.Write(curve[i].y);
+                writer.Write(curve[i].z);
+            }
+        }
+        public static void Restore(DCurve3 curve, BinaryReader reader)
+        {
+            curve.Closed = reader.ReadBoolean();
+            int count = reader.ReadInt32();
+            for ( int i = 0; i < count; ++i ) {
+                double x = reader.ReadDouble();
+                double y = reader.ReadDouble();
+                double z = reader.ReadDouble();
+                curve.AppendVertex(new Vector3d(x, y, z));
+            }
+        }
+
+
+
 
         public static void Store(Polygon2d polygon, BinaryWriter writer)
         {
