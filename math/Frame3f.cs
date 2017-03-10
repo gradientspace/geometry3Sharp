@@ -190,13 +190,28 @@ namespace g3
             v = Quaternionf.Inverse(this.rotation) * v;
             return v;
         }
+        public Vector3d ToFrameP(Vector3d v)
+        {
+            v = v - this.origin;
+            v = Quaternionf.Inverse(this.rotation) * v;
+            return v;
+        }
         public Vector3f FromFrameP(Vector3f v)
+        {
+            return this.rotation * v + this.origin;
+        }
+        public Vector3d FromFrameP(Vector3d v)
         {
             return this.rotation * v + this.origin;
         }
 
 
+
         public Vector3f ToFrameV(Vector3f v)
+        {
+            return Quaternionf.Inverse(this.rotation) * v;
+        }
+        public Vector3d ToFrameV(Vector3d v)
         {
             return Quaternionf.Inverse(this.rotation) * v;
         }
@@ -204,6 +219,12 @@ namespace g3
         {
             return this.rotation * v;
         }
+        public Vector3d FromFrameV(Vector3d v)
+        {
+            return this.rotation * v;
+        }
+
+
 
         public Quaternionf ToFrame(Quaternionf q)
         {

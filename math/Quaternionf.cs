@@ -97,6 +97,19 @@ namespace g3
                 v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
         }
 
+        // so convenient
+        public static Vector3d operator *(Quaternionf q, Vector3d v) {
+            //return q.ToRotationMatrix() * v;
+            // inline-expansion of above:
+            double twoX = 2 * q.x; double twoY = 2 * q.y; double twoZ = 2 * q.z;
+            double twoWX = twoX * q.w; double twoWY = twoY * q.w; double twoWZ = twoZ * q.w;
+            double twoXX = twoX * q.x; double twoXY = twoY * q.x; double twoXZ = twoZ * q.x;
+            double twoYY = twoY * q.y; double twoYZ = twoZ * q.y; double twoZZ = twoZ * q.z;
+            return new Vector3d(
+                v.x * (1 - (twoYY + twoZZ)) + v.y * (twoXY - twoWZ) + v.z * (twoXZ + twoWY),
+                v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
+                v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
+        }
 
 
         // these multiply quaternion by (1,0,0), (0,1,0), (0,0,1), respectively.
