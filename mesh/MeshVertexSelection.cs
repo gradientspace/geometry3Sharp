@@ -59,6 +59,14 @@ namespace g3
                     add(vertices[i]);
             }
         }
+        public void Select(IEnumerable<int> vertices)
+        {
+            foreach ( int vID in vertices ) { 
+                if (Mesh.IsVertex(vID))
+                    add(vID);
+            }
+        }
+
         public void SelectTriangleVertices(int[] triangles)
         {
             for ( int i = 0; i < triangles.Length; ++i ) {

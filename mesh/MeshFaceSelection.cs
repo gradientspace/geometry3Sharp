@@ -65,6 +65,12 @@ namespace g3
         }
 
 
+        public int Count
+        {
+            get { return Selected.Count; }
+        }
+
+
 
         public bool IsSelected(int tid)
         {
@@ -85,6 +91,14 @@ namespace g3
                     add(triangles[i]);
             }
         }
+        public void Select(IEnumerable<int> triangles)
+        {
+            foreach ( int tID in triangles ) { 
+                if (Mesh.IsTriangle(tID))
+                    add(tID);
+            }
+        }
+
         public void SelectVertexOneRings(int[] vertices)
         {
             for ( int i = 0; i < vertices.Length; ++i ) {
@@ -109,7 +123,10 @@ namespace g3
             for ( int i = 0; i < triangles.Length; ++i ) 
                 remove(triangles[i]);
         }
-
+        public void Deselect(IEnumerable<int> triangles) {
+            foreach ( int tid in triangles )
+                remove(tid);
+        }
 
 
 
@@ -125,13 +142,15 @@ namespace g3
 
 
 
-        public void ExpandToFaceNeighbours()
+        public void ExpandToFaceNeighbours(Func<int, bool> FilterF = null)
         {
             temp.Clear();
 
             foreach ( int tid in Selected ) { 
                 Index3i nbr_tris = Mesh.GetTriNeighbourTris(tid);
                 for (int j = 0; j < 3; ++j) {
+                    if (FilterF != null && FilterF(nbr_tris[j]) == false)
+                        continue;
                     if (nbr_tris[j] != DMesh3.InvalidID && IsSelected(nbr_tris[j]) == false)
                         temp.Add(nbr_tris[j]);
                 }
@@ -142,7 +161,8 @@ namespace g3
         }
 
 
-        public void ExpandToOneRingNeighbours()
+        // this may process vertices multiple times...
+        public void ExpandToOneRingNeighbours(Func<int, bool> FilterF = null)
         {
             temp.Clear();
 
@@ -151,6 +171,8 @@ namespace g3
                 for (int j = 0; j < 3; ++j) {
                     int vid = tri_v[j];
                     foreach (int nbr_t in Mesh.VtxTrianglesItr(vid)) {
+                        if (FilterF != null && FilterF(nbr_t) == false)
+                            continue;
                         if (IsSelected(nbr_t) == false)
                             temp.Add(nbr_t);
                     }

@@ -188,5 +188,20 @@ namespace g3
 
         }
 
+
+
+
+        public static void PerVertexTransform(IDeformableMesh mesh, Func<Vector3d,Vector3d> TransformF )
+        {
+            int NV = mesh.MaxVertexID;
+            for (int vid = 0; vid < NV; ++vid) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3d newPos = TransformF(mesh.GetVertex(vid));
+                    mesh.SetVertex(vid, newPos);
+                }
+            }
+        }
+
+
     }
 }
