@@ -23,8 +23,17 @@ namespace g3
         public Matrix3f(float[,] mat) {
             m = new float[9] { mat[0, 0], mat[0, 1], mat[0, 2], mat[1, 0], mat[1, 1], mat[1, 2], mat[2, 0], mat[2, 1], mat[2, 2] };
         }
+        public Matrix3f(float[] mat) {
+            m = new float[9];
+            Array.Copy(mat, m, 9);
+        }
         public Matrix3f(double[,] mat) {
             m = new float[9] { (float)mat[0, 0], (float)mat[0, 1], (float)mat[0, 2], (float)mat[1, 0], (float)mat[1, 1], (float)mat[1, 2], (float)mat[2, 0], (float)mat[2, 1], (float)mat[2, 2] };
+        }
+        public Matrix3f(double[] mat) {
+            m = new float[9];
+            for (int i = 0; i < 9; ++i)
+                m[i] = (float)mat[i];
         }
         public Matrix3f(Vector3f v1, Vector3f v2, Vector3f v3, bool bRows)
         {

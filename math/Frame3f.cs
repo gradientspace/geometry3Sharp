@@ -24,6 +24,11 @@ namespace g3
             rotation = Quaternionf.Identity;
             this.origin = origin;
         }
+        public Frame3f(Vector3d origin)
+        {
+            rotation = Quaternionf.Identity;
+            this.origin = (Vector3f)origin;
+        }
 
         public Frame3f(Vector3f origin, Vector3f setZ)
         {

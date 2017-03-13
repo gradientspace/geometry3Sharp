@@ -7,8 +7,10 @@ using UnityEngine;
 
 namespace g3
 {
+    // mostly ported from WildMagic5 Wm5Quaternion, from geometrictools.com
     public struct Quaternionf
     {
+        // note: in Wm5 version, this is a 4-element array stored in order (w,x,y,z).
         public float x, y, z, w;
 
         public Quaternionf(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
@@ -26,6 +28,10 @@ namespace g3
         public Quaternionf(Quaternionf p, Quaternionf q, float t) {
             x = y = z = 0; w = 1;
             SetToSlerp(p, q, t);
+        }
+        public Quaternionf(Matrix3f mat) {
+            x = y = z = 0; w = 1;
+            SetFromRotationMatrix(mat);
         }
 
         static public readonly Quaternionf Zero = new Quaternionf(0.0f, 0.0f, 0.0f, 0.0f);
@@ -252,6 +258,52 @@ namespace g3
         public static Quaternionf Slerp(Quaternionf p, Quaternionf q, float t) {
             return new Quaternionf(p, q, t);
         }
+
+
+
+        public void SetFromRotationMatrix(Matrix3f rot)
+        {
+            // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
+            // article "Quaternion Calculus and Fast Animation".
+            Index3i next = new Index3i(1, 2, 0);
+
+            float trace = rot[0, 0] + rot[1, 1] + rot[2, 2];
+            float root;
+
+            if (trace > 0) {
+                // |w| > 1/2, may as well choose w > 1/2
+                root = (float)Math.Sqrt(trace + (float)1);  // 2w
+                w = ((float)0.5) * root;
+                root = ((float)0.5) / root;  // 1/(4w)
+                x = (rot[2, 1] - rot[1, 2]) * root;
+                y = (rot[0, 2] - rot[2, 0]) * root;
+                z = (rot[1, 0] - rot[0, 1]) * root;
+            } else {
+                // |w| <= 1/2
+                int i = 0;
+                if (rot[1, 1] > rot[0, 0]) {
+                    i = 1;
+                }
+                if (rot[2, 2] > rot[i, i]) {
+                    i = 2;
+                }
+                int j = next[i];
+                int k = next[j];
+
+                root = (float)Math.Sqrt(rot[i, i] - rot[j, j] - rot[k, k] + (float)1);
+
+                Vector3f quat = new Vector3f(x, y, z);
+                quat[i] = ((float)0.5) * root;
+                root = ((float)0.5) / root;
+                w = (rot[k, j] - rot[j, k]) * root;
+                quat[j] = (rot[j, i] + rot[i, j]) * root;
+                quat[k] = (rot[k, i] + rot[i, k]) * root;
+                x = quat.x; y = quat.y; z = quat.z;
+            }
+
+            Normalize();   // we prefer normalized quaternions...
+        }
+
 
 
 
