@@ -9,6 +9,17 @@ namespace g3
     public static class gSerialization
     {
 
+        public static void Store(Vector2f v, BinaryWriter writer)
+        {
+            writer.Write(v.x);
+            writer.Write(v.y);
+        }
+        public static void Restore(ref Vector2f v, BinaryReader reader)
+        {
+            v.x = reader.ReadSingle();
+            v.y = reader.ReadSingle();
+        }
+
         public static void Store(Vector3f v, BinaryWriter writer)
         {
             writer.Write(v.x);
@@ -139,6 +150,154 @@ namespace g3
                 polygon.AddHole(holepoly, false);
             }
         }
+
+
+
+
+
+
+        public static void Store(Segment2d segment, BinaryWriter writer)
+        {
+            writer.Write(segment.Center.x);
+            writer.Write(segment.Center.y);
+            writer.Write(segment.Direction.x);
+            writer.Write(segment.Direction.y);
+            writer.Write(segment.Extent);
+        }
+        public static void Restore(ref Segment2d segment, BinaryReader reader)
+        {
+            segment.Center.x = reader.ReadDouble();
+            segment.Center.y = reader.ReadDouble();
+            segment.Direction.x = reader.ReadDouble();
+            segment.Direction.y = reader.ReadDouble();
+            segment.Extent = reader.ReadDouble();
+        }
+
+
+        public static void Store(Arc2d arc, BinaryWriter writer)
+        {
+            writer.Write(arc.Center.x);
+            writer.Write(arc.Center.y);
+            writer.Write(arc.Radius);
+            writer.Write(arc.AngleStartDeg);
+            writer.Write(arc.AngleEndDeg);
+            writer.Write(arc.IsReversed);
+        }
+        public static void Restore(ref Arc2d arc, BinaryReader reader)
+        {
+            arc.Center.x = reader.ReadDouble();
+            arc.Center.y = reader.ReadDouble();
+            arc.Radius = reader.ReadDouble();
+            arc.AngleStartDeg = reader.ReadDouble();
+            arc.AngleEndDeg = reader.ReadDouble();
+            arc.IsReversed = reader.ReadBoolean();
+        }
+
+
+        public static void Store(Circle2d circle, BinaryWriter writer)
+        {
+            writer.Write(circle.Center.x);
+            writer.Write(circle.Center.y);
+            writer.Write(circle.Radius);
+            writer.Write(circle.IsReversed);
+        }
+        public static void Restore(ref Circle2d circle, BinaryReader reader)
+        {
+            circle.Center.x = reader.ReadDouble();
+            circle.Center.y = reader.ReadDouble();
+            circle.Radius = reader.ReadDouble();
+            circle.IsReversed = reader.ReadBoolean();
+        }
+
+
+        public static void Store(ParametricCurveSequence2 sequence, BinaryWriter writer)
+        {
+            writer.Write(sequence.IsClosed);
+            writer.Write((int)sequence.Count);
+            foreach (IParametricCurve2d c in sequence.Curves)
+                Store(c, writer);
+        }
+
+        public static void Restore(ref ParametricCurveSequence2 sequence, BinaryReader reader)
+        {
+            sequence.IsClosed = reader.ReadBoolean();
+            int N = reader.ReadInt32();
+            for ( int i = 0; i < N; ++i ) {
+                IParametricCurve2d c;
+                Restore(out c, reader);
+                sequence.Append(c);
+            }
+        }
+
+
+
+        public static void Store(IParametricCurve2d curve, BinaryWriter writer)
+        {
+            if (curve is Segment2d) {
+                writer.Write((int)1);
+                Store((Segment2d)curve, writer);
+            } else if (curve is Circle2d) {
+                writer.Write((int)2);
+                Store((Circle2d)curve, writer);
+            } else if (curve is Arc2d) {
+                writer.Write((int)3);
+                Store((Arc2d)curve, writer);
+            } else if ( curve is ParametricCurveSequence2 ) {
+                writer.Write((int)100);
+                Store(curve as ParametricCurveSequence2, writer);
+            }
+        }
+
+        public static void Restore(out IParametricCurve2d curve, BinaryReader reader)
+        {
+            curve = null;
+            int nType = reader.ReadInt32();
+            if ( nType == 1 ) {
+                Segment2d segment = new Segment2d();
+                Restore(ref segment, reader);
+                curve = segment;
+            } else if ( nType == 2 ) {
+                Circle2d circle = new Circle2d(Vector2d.Zero, 1.0);
+                Restore(ref circle, reader);
+                curve = circle;
+            } else if ( nType == 3 ) {
+                Arc2d arc = new Arc2d(Vector2d.Zero, 1.0, 0, 1);
+                Restore(ref arc, reader);
+                curve = arc;
+            } else if ( nType == 100 ) {
+                ParametricCurveSequence2 seq = new ParametricCurveSequence2();
+                Restore(ref seq, reader);
+                curve = seq;
+            } else {
+                throw new Exception("gSerialization.Restore: IParametricCurve2D : unknown curve type " + nType.ToString());
+            }
+        }
+
+
+        public static void Store(PlanarSolid2d solid, BinaryWriter writer)
+        {
+            Store(solid.Outer, writer);
+            writer.Write(solid.Holes.Count);
+            for ( int i = 0; i < solid.Holes.Count; ++i )
+                Store(solid.Holes[i], writer);
+        }
+
+        public static void Restore(PlanarSolid2d solid, BinaryReader reader)
+        {
+            IParametricCurve2d outer;
+            Restore(out outer, reader);
+            solid.SetOuter(outer, true); // !! currently CW/CCW is ignored!
+
+            int hole_count = reader.ReadInt32();
+            for ( int i = 0; i < hole_count; ++i ) {
+                IParametricCurve2d hole;
+                Restore(out hole, reader);
+                solid.AddHole(hole);
+            }
+        }
+
+
+
 
 
 
