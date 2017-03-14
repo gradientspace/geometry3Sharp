@@ -185,6 +185,35 @@ namespace g3
 
 
 
+        public void FloodFill(int tSeed, Func<int,bool> FilterF = null)
+        {
+            FloodFill(new int[] { tSeed }, FilterF);
+        }
+        public void FloodFill(int[] Seeds, Func<int,bool> FilterF = null)
+        {
+            // why does dvector version of this hang??
+            DVector<int> stack = new DVector<int>(Seeds);
+            while ( stack.size > 0 ) {
+
+                int tID = stack.back;
+                stack.pop_back();
+
+                Index3i nbrs = Mesh.GetTriNeighbourTris(tID);
+                for ( int j = 0; j < 3; ++j ) {
+                    int nbr_tid = nbrs[j];
+                    if (nbr_tid == DMesh3.InvalidID || IsSelected(nbr_tid))
+                        continue;
+                    if (FilterF != null && FilterF(nbr_tid) == false)
+                        continue;
+                    add(nbr_tid);
+
+                    stack.push_back(nbr_tid);
+                }
+            }
+        }
+
+
+
         // return true if we clipped something
         public bool ClipFins()
         {
