@@ -5,6 +5,13 @@ using System.Text;
 
 namespace g3
 {
+
+    //
+    // [RMS] AAAAHHHH usage of Blocks vs iCurBlock is not consistent!!
+    //   - Should be supporting Capacity vs Size...
+    //   - this[] operator does not check bounds, so it can write to any valid Block
+    //   - some fns discard Blocks beyond iCurBlock
+    //   - wtf...
     public class DVector<T>
     {
         List<T[]> Blocks;
@@ -50,8 +57,14 @@ namespace g3
                 Add(v);
         }
 
+
+
+        //public int Capacity {
+        //    get { return Blocks.Count * nBlockSize;  }
+        //}
+
         public int Length {
-            get { return (Blocks.Count - 1) * nBlockSize + iCurBlockUsed;  }
+            get { return iCurBlock * nBlockSize + iCurBlockUsed;  }
         }
 
         public int BlockCount {
@@ -109,6 +122,8 @@ namespace g3
             {
                 iCurBlock--;
                 iCurBlockUsed = nBlockSize;
+
+                // remove block ??
             }
         }
 
