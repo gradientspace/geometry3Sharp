@@ -24,6 +24,9 @@ namespace g3
 		static public readonly Interval1i Empty = new Interval1i(int.MaxValue, -int.MaxValue);
 		static public readonly Interval1i Infinite = new Interval1i(-int.MaxValue, int.MaxValue);
 
+        /// <summary> construct interval [0, N-1] </summary>
+        static public Interval1i Range(int N) { return new Interval1i(0, N - 1); }
+
 
         public int this[int key]
         {
