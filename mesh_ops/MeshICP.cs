@@ -15,6 +15,7 @@ namespace g3
         public Vector3d Translation;
         public Quaternionf Rotation;
 
+        public Action<string> VerboseF = null;
         public int MaxIterations = 50;
 
         public double ConvergeTolerance = 0.00001;
@@ -25,7 +26,7 @@ namespace g3
         Vector3d[] From;
         Vector3d[] To;
         double[] Weights;
-
+        double LastError;
 
         public MeshICP(IPointSet source, DMeshAABBTree3 target)
         {
@@ -54,7 +55,7 @@ namespace g3
             update_to();
 
 
-            double prev_error = measure_error();
+            LastError = measure_error();
 
             int nTolPasssed = 0;
             int nMaxTolPassed = 5;      // if we get this many iterations without
@@ -62,22 +63,32 @@ namespace g3
 
             for (int i = 0; i < MaxIterations && nTolPasssed < nMaxTolPassed; ++i) {
 
-                System.Console.WriteLine("{0} {1}", prev_error, nTolPasssed);
+                if (VerboseF != null)
+                    VerboseF(string.Format("[ICP] iter {0} : error {1}", i, LastError));
 
                 update_transformation();
                 update_from();
                 update_to();
 
                 double err = measure_error();
-                if ( Math.Abs(prev_error - err) < ConvergeTolerance ) {
+                if ( Math.Abs(LastError - err) < ConvergeTolerance ) {
                     nTolPasssed++;
                 } else {
-                    prev_error = err;
+                    LastError = err;
                     nTolPasssed = 0;
                 }
             }
 
             Converged = (nTolPasssed >= nMaxTolPassed);
+        }
+
+
+        /// <summary>
+        /// returns last measured deviation error metric (currently mean distance)
+        /// </summary>
+        public double Error
+        {
+            get { return LastError; }
         }
 
 
