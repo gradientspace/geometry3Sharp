@@ -6,36 +6,45 @@ using System.Text;
 
 namespace g3
 {
-    public interface IMesh
+    public interface IPointSet
     {
         int VertexCount { get; }
-        int TriangleCount { get; }
 		int MaxVertexID { get; }
-		int MaxTriangleID { get; }
 
-        bool HasVertexColors { get; }
         bool HasVertexNormals { get; }
-        bool HasVertexUVs { get; }
+        bool HasVertexColors { get; }
 
         Vector3d GetVertex(int i);
         Vector3f GetVertexNormal(int i);
         Vector3f GetVertexColor(int i);
-        Vector2f GetVertexUV(int i);
-		NewVertexInfo GetVertexAll(int i);
 
+        bool IsVertex(int vID);
+
+        // iterators allow us to work with gaps in index space
+        System.Collections.Generic.IEnumerable<int> VertexIndices();
+    }
+
+
+
+    public interface IMesh : IPointSet
+    {
+        int TriangleCount { get; }
+		int MaxTriangleID { get; }
+
+        bool HasVertexUVs { get; }
+        Vector2f GetVertexUV(int i);
+
+        NewVertexInfo GetVertexAll(int i);
 
         bool HasTriangleGroups { get; }
 
         Index3i GetTriangle(int i);
         int GetTriangleGroup(int i);
 
-        bool IsVertex(int vID);
         bool IsTriangle(int tID);
 
         // iterators allow us to work with gaps in index space
-        System.Collections.Generic.IEnumerable<int> VertexIndices();
         System.Collections.Generic.IEnumerable<int> TriangleIndices();
-
     }
 
 
