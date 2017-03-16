@@ -287,7 +287,42 @@ namespace g3
         {
             public List<GeneralPolygon2d> Polygons;
             public List<PlanarSolid2d> Solids;
+
+
+            public AxisAlignedBox2d Bounds {
+                get {
+                    AxisAlignedBox2d bounds = AxisAlignedBox2d.Empty;
+                    foreach (GeneralPolygon2d p in Polygons)
+                        bounds.Contain(p.Bounds);
+                    return bounds;
+                }
+            }
+
+
+            public double Area {
+                get {
+                    double area = 0;
+                    foreach (GeneralPolygon2d p in Polygons)
+                        area += p.Area;
+                    return area;
+                }
+            }
+
+
+            public double HolesArea {
+                get {
+                    double area = 0;
+                    foreach (GeneralPolygon2d p in Polygons) {
+                        foreach ( Polygon2d h in p.Holes )
+                            area += Math.Abs(h.SignedArea);
+                    }
+                    return area;
+                }
+            }
         }
+
+
+
 
         // Finds set of "solid" regions - eg boundary loops with interior holes.
         // Result has outer loops being clockwise, and holes counter-clockwise
