@@ -222,6 +222,12 @@ namespace g3
         }
 
 
+        public static Vector2f Lerp(Vector2f a, Vector2f b, float t)
+        {
+            float s = 1 - t;
+            return new Vector2f(s * a.x + t * b.x, s * a.y + t * b.y);
+        }
+
 
         public override string ToString() {
             return string.Format("{0:F8} {1:F8}", x, y);
