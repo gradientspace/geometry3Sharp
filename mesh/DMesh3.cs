@@ -21,7 +21,9 @@ namespace g3
         Failed_InvalidNeighbourhood = 23,       // these are all failures for CollapseEdge
         Failed_FoundDuplicateTriangle = 24,
         Failed_CollapseTetrahedron = 25,
-        Failed_CollapseTriangle = 26
+        Failed_CollapseTriangle = 26,
+
+        Failed_WouldCreateBowtie = 30
     };
 
 
@@ -1047,18 +1049,18 @@ namespace g3
 
 
 
+        // ack...duplicate of GetTriNbrTris, but unused??
+   //     public Index3i GetTriTriangles(int tID) {
+   //         if (!IsTriangle(tID))
+   //             return InvalidTriangle;
+			//int i = 3*tID;
+   //         return new Index3i(
+   //             edge_other_t(triangle_edges[i], tID),
+   //             edge_other_t(triangle_edges[i + 1], tID),
+   //             edge_other_t(triangle_edges[i + 2], tID));
+   //     }
 
-        Index3i GetTriTriangles(int tID) {
-            if (!IsTriangle(tID))
-                return InvalidTriangle;
-			int i = 3*tID;
-            return new Index3i(
-                edge_other_t(triangle_edges[i], tID),
-                edge_other_t(triangle_edges[i + 1], tID),
-                edge_other_t(triangle_edges[i + 2], tID));
-        }
-
-        MeshResult GetVtxTriangles(int vID, List<int> vTriangles, bool bUseOrientation)
+        public MeshResult GetVtxTriangles(int vID, List<int> vTriangles, bool bUseOrientation)
         {
             if (!IsVertex(vID))
                 return MeshResult.Failed_NotAVertex;
@@ -1088,6 +1090,38 @@ namespace g3
                 }
             }
             return MeshResult.Ok;
+        }
+
+
+        /// <summary>
+        /// return # of triangles attached to vID, or -1 if invalid vertex
+        /// if bBruteForce = true, explicitly checks, which creates a list and is expensive
+        /// default is false, uses orientation, no memory allocation
+        /// </summary>
+        public int GetVtxTriangleCount(int vID, bool bBruteForce = false)
+        {
+            if ( bBruteForce ) {
+                List<int> vTriangles = new List<int>();
+                if (GetVtxTriangles(vID, vTriangles, false) != MeshResult.Ok)
+                    return -1;
+                return vTriangles.Count;
+            }
+
+            if (!IsVertex(vID))
+                return -1;
+            List<int> vedges = vertex_edges[vID];
+            int N = 0;
+            foreach (int eid in vedges) {
+                int vOther = edge_other_v(eid, vID);
+				int i = 4*eid;
+                int et0 = edges[i + 2];
+                if (tri_has_sequential_v(et0, vID, vOther))
+                    N++;
+                int et1 = edges[i + 3];
+                if (et1 != InvalidID && tri_has_sequential_v(et1, vID, vOther))
+                    N++;
+            }
+            return N;
         }
 
 
@@ -1281,6 +1315,22 @@ namespace g3
                     if (group_id != g1)
                         return true;        // saw multiple group IDs
                 }
+            }
+            return false;
+        }
+
+
+
+        /// <summary>
+        /// returns true if vID is a "bowtie" vertex, ie multiple disjoint triangle sets in one-ring
+        /// </summary>
+        public bool IsBowtieVertex(int vID)
+        {
+            if (vertices_refcount.isValid(vID)) {
+                int nTris = GetVtxTriangleCount(vID);
+                List<int> edges = vertex_edges[vID];
+                if (!(nTris == GetVtxEdges(vID).Count || nTris == GetVtxEdges(vID).Count - 1))
+                    return true;
             }
             return false;
         }
