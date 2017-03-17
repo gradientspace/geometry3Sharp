@@ -71,6 +71,12 @@ namespace g3
 			get { return Math.Abs( (x * x + y * y) - 1) < MathUtil.ZeroTolerance; }
 		}
 
+        public bool IsFinite
+        {
+            get { double f = x + y; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
+        }
+
+
 
         public double Dot(Vector2d v2)
         {

@@ -90,6 +90,11 @@ namespace g3
 			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerance; }
 		}
 
+        public bool IsFinite
+        {
+            get { double f = x + y + z; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
+        }
+
         public double Dot(Vector3d v2)
         {
             return x * v2.x + y * v2.y + z * v2.z;

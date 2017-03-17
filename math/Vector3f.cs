@@ -89,6 +89,14 @@ namespace g3
             }
         }
 
+		public bool IsNormalized {
+			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerancef; }
+		}
+
+        public bool IsFinite
+        {
+            get { float f = x + y + z; return float.IsNaN(f) == false && float.IsInfinity(f) == false; }
+        }
 
         public float Dot(Vector3f v2)
         {
