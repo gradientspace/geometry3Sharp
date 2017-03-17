@@ -148,8 +148,8 @@ namespace g3
                 if (triangles[i] == DMesh3.InvalidID)
                     continue;
 
-                bool bOK = Mesh.RemoveTriangle(triangles[i], bRemoveIsolatedVerts, false);
-                if (!bOK)
+                MeshResult result = Mesh.RemoveTriangle(triangles[i], bRemoveIsolatedVerts, false);
+                if (result != MeshResult.Ok)
                     bAllOK = false;
             }
             return bAllOK;
@@ -269,13 +269,46 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Remove all bowtie vertices in mesh. Makes one pass unless
+        ///   bRepeatUntilClean = true, in which case repeats until no more bowties found
+        /// Returns true if any vertices were removed
+        /// </summary>
+        public bool RemoveAllBowtieVertices(bool bRepeatUntilClean)
+        {
+            int nRemoved = 0;
+
+            while (true) {
+                List<int> bowties = new List<int>();
+                foreach (int vID in Mesh.VertexIndices()) {
+                    if (Mesh.IsBowtieVertex(vID))
+                        bowties.Add(vID);
+                }
+                if (bowties.Count == 0)
+                    break;
+
+                foreach (int vID in bowties) {
+                    MeshResult result = Mesh.RemoveVertex(vID, true, false);
+                    Debug.Assert(result == MeshResult.Ok);
+                    nRemoved++;
+                }
+                if (bRepeatUntilClean == false)
+                    break;
+            }
+            return (nRemoved > 0);
+        }
+
+
+
+
+
 
         // this is for backing out changes we have made...
         bool remove_triangles(int[] tri_list, int count)
         {
             for (int i = 0; i < count; ++i) {
-                bool bOK = Mesh.RemoveTriangle(tri_list[i], false, false);
-                if (!bOK)
+                MeshResult result = Mesh.RemoveTriangle(tri_list[i], false, false);
+                if (result != MeshResult.Ok)
                     return false;
             }
             return true;
