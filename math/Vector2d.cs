@@ -170,7 +170,10 @@ namespace g3
         {
             return new Vector2d(v.x / f, v.y / f);
         }
-
+        public static Vector2d operator /(double f, Vector2d v)
+        {
+            return new Vector2d(f / v.x, f / v.y);
+        }
 
 
         public static bool operator ==(Vector2d a, Vector2d b)

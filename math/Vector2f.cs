@@ -170,7 +170,10 @@ namespace g3
         {
             return new Vector2f(v.x / f, v.y / f);
         }
-
+        public static Vector2f operator /(float f, Vector2f v)
+        {
+            return new Vector2f(f / v.x, f / v.y);
+        }
 
 
 

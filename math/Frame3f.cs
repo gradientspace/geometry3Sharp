@@ -111,10 +111,24 @@ namespace g3
         {
             return new Frame3f(this.origin + fDistance * this.GetAxis(nAxis), this.rotation);
         }
+
+        public void Scale(float f)
+        {
+            origin *= f;
+        }
+        public void Scale(Vector3f scale)
+        {
+            origin *= scale;
+        }
         public Frame3f Scaled(float f)
         {
             return new Frame3f(f * this.origin, this.rotation);
         }
+        public Frame3f Scaled(Vector3f scale)
+        {
+            return new Frame3f(scale * this.origin, this.rotation);
+        }
+
         public void Rotate(Quaternionf q)
         {
             Debug.Assert(rotation.w != 0);      // catch un-initialized quaternions

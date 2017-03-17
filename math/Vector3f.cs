@@ -190,7 +190,10 @@ namespace g3
         {
             return new Vector3f(v.x /f, v.y /f, v.z /f);
         }
-
+        public static Vector3f operator /(float f, Vector3f v)
+        {
+            return new Vector3f(f / v.x, f / v.y, f / v.z);
+        }
 
         public static Vector3f operator *(Vector3f a, Vector3f b)
         {
