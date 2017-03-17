@@ -151,6 +151,8 @@ namespace g3
 			int eab_i = 4*eab;
 			int a = edges[eab_i], b = edges[eab_i + 1];
 			int t0 = edges[eab_i + 2];
+            if (t0 == InvalidID)
+                return MeshResult.Failed_BrokenTopology;
 			Index3i T0tv = GetTriangle(t0);
 			int[] T0tv_array = T0tv.array;
 			int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, T0tv_array);
@@ -409,6 +411,8 @@ namespace g3
 				return MeshResult.Failed_NotAnEdge;
 
 			int t0 = edges[4*eab+2];
+            if (t0 == InvalidID)
+                return MeshResult.Failed_BrokenTopology;
 			Index3i T0tv = GetTriangle(t0);
 			int c = IndexUtil.find_tri_other_vtx(a, b, T0tv);
 
