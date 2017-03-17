@@ -349,7 +349,9 @@ namespace g3
                 new Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]) : InvalidVertex;
         }
 
-		public void SetVertex(int vID, Vector3d vNewPos) {
+        public void SetVertex(int vID, Vector3d vNewPos) {
+            Debug.Assert(vNewPos.IsFinite);     // this will really catch a lot of bugs...
+
 			if ( vertices_refcount.isValid(vID) ) {
 				int i = 3*vID;
 				vertices[i] = vNewPos.x; vertices[i+1] = vNewPos.y; vertices[i+2] = vNewPos.z;

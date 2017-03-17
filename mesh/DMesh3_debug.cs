@@ -110,6 +110,7 @@ namespace g3
                 Index2i et = GetEdgeT(eID);
                 DMESH_CHECK_OR_FAIL(IsVertex(ev[0]));
                 DMESH_CHECK_OR_FAIL(IsVertex(ev[1]));
+                DMESH_CHECK_OR_FAIL(et[0] != InvalidID);
                 DMESH_CHECK_OR_FAIL(ev[0] < ev[1]);
                 DMESH_CHECK_OR_FAIL(IsTriangle(et[0]));
                 if (et[1] != InvalidID) {

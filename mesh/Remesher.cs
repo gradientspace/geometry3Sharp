@@ -523,6 +523,7 @@ namespace g3 {
                     return;
 
                 Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
+                Debug.Assert(vSmoothed.IsFinite);     // this will really catch a lot of bugs...
 
                 // project onto either vtx constraint target, or surface target
                 if (vc.Target != null) {
