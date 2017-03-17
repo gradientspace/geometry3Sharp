@@ -42,10 +42,43 @@ namespace g3
 
 
 
-        // [TODO] support non-isolated vertices
-        public bool RemoveVertex(int vID)
+        /// <summary>
+        /// Remove vertex vID, and all connected triangles if bRemoveAllTriangles = true
+        /// (if false, them throws exception if there are still any triangles!)
+        /// if bPreserveManifold, checks that we will not create a bowtie vertex first
+        /// </summary>
+        public MeshResult RemoveVertex(int vID, bool bRemoveAllTriangles = true, bool bPreserveManifold = true)
         {
-            if (vertices_refcount.refCount(vID) != 1)
+            if (vertices_refcount.isValid(vID) == false)
+                return MeshResult.Failed_NotAVertex;
+
+            if ( bRemoveAllTriangles ) {
+
+                // if any one-ring vtx is a boundary vtx and one of its outer-ring edges is an
+                // interior edge then we will create a bowtie if we remove that triangle
+                if ( bPreserveManifold ) {
+                    foreach ( int tid in VtxTrianglesItr(vID) ) {
+                        Index3i tri = GetTriangle(tid);
+                        int j = IndexUtil.find_tri_index(vID, tri);
+                        int oa = tri[(j + 1) % 3], ob = tri[(j + 2) % 3];
+                        int eid = find_edge(oa,ob);
+                        if (edge_is_boundary(eid))
+                            continue;
+                        if (vertex_is_boundary(oa) || vertex_is_boundary(ob))
+                            return MeshResult.Failed_WouldCreateBowtie;
+                    }
+                }
+
+                List<int> tris = new List<int>();
+                GetVtxTriangles(vID, tris, true);
+                foreach (int tID in tris) {
+                    MeshResult result = RemoveTriangle(tID, false, bPreserveManifold);
+                    if (result != MeshResult.Ok)
+                        return result;
+                }
+            }
+
+            if ( vertices_refcount.refCount(vID) != 1)
                 throw new NotImplementedException("DMesh3.RemoveVertex: vertex is still referenced");
 
             vertices_refcount.decrement(vID);
@@ -53,22 +86,23 @@ namespace g3
             vertex_edges[vID] = null;
 
             updateTimeStamp();
-            return true;
+            return MeshResult.Ok;
         }
 
 
 
-
-        // Remove a tID from the mesh. Also removes any unreferenced edges after tri is removed.
-        // If bRemoveIsolatedVertices is false, then if you remove all tris from a vert, that vert is also removed.
-        // If bPreserveManifold, we check that you will not create a bowtie vertex (and return false).
-        //   If this check is not done, you have to make sure you don't create a bowtie, because other
-        //   code assumes we don't have bowties, and will not handle it properly
-        public bool RemoveTriangle(int tID, bool bRemoveIsolatedVertices = true, bool bPreserveManifold = true)
+        /// <summary>
+        /// Remove a tID from the mesh. Also removes any unreferenced edges after tri is removed.
+        /// If bRemoveIsolatedVertices is false, then if you remove all tris from a vert, that vert is also removed.
+        /// If bPreserveManifold, we check that you will not create a bowtie vertex (and return false).
+        ///   If this check is not done, you have to make sure you don't create a bowtie, because other
+        ///   code assumes we don't have bowties, and will not handle it properly
+        /// </summary>
+        public MeshResult RemoveTriangle(int tID, bool bRemoveIsolatedVertices = true, bool bPreserveManifold = true)
         {
             if ( ! triangles_refcount.isValid(tID) ) {
                 Debug.Assert(false);
-                return false;
+                return MeshResult.Failed_NotATriangle;
             }
 
             Index3i tv = GetTriangle(tID);
@@ -81,7 +115,7 @@ namespace g3
                 for (int j = 0; j < 3; ++j) {
                     if (vertex_is_boundary(tv[j])) {
                         if (edge_is_boundary(te[j]) == false && edge_is_boundary(te[(j + 2) % 3]) == false)
-                            return false;
+                            return MeshResult.Failed_WouldCreateBowtie;
                     }
                 }
             }
@@ -121,7 +155,7 @@ namespace g3
             }
 
             updateTimeStamp();
-            return true;
+            return MeshResult.Ok;
         }
 
 
