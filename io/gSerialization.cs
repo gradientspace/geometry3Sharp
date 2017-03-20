@@ -82,6 +82,35 @@ namespace g3
         }
 
 
+        public static void Store(List<float> values, BinaryWriter writer)
+        {
+            writer.Write(values.Count);
+            for (int i = 0; i < values.Count; ++i)
+                writer.Write(values[i]);
+        }
+        public static void Restore(List<float> values, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            for (int i = 0; i < N; ++i)
+                values.Add(reader.ReadSingle());
+        }
+
+
+
+        public static void Store(List<double> values, BinaryWriter writer)
+        {
+            writer.Write(values.Count);
+            for (int i = 0; i < values.Count; ++i)
+                writer.Write(values[i]);
+        }
+        public static void Restore(List<double> values, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            for (int i = 0; i < N; ++i)
+                values.Add(reader.ReadDouble());
+        }
+
+
         public static void Store(DCurve3 curve, BinaryWriter writer)
         {
             writer.Write(curve.Closed);
