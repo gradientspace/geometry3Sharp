@@ -6,6 +6,14 @@ namespace g3
     public static class FaceGroupUtil
     {
 
+        public static void SetGroupID(DMesh3 mesh, int to)
+        {
+            if (mesh.HasTriangleGroups == false)
+                return;
+            foreach (int tid in mesh.TriangleIndices())
+                mesh.SetTriangleGroup(tid, to);
+        }
+
         public static void SetGroupToGroup(DMesh3 mesh, int from, int to)
         {
             if (mesh.HasTriangleGroups == false)

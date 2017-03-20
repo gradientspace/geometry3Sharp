@@ -24,6 +24,14 @@ namespace g3
         public const float Epsilonf = 1.192092896e-07F;
 
 
+        public static bool IsFinite(double d) {
+            return double.IsInfinity(d) == false && double.IsNaN(d) == false;
+        }
+        public static bool IsFinite(float d) {
+            return float.IsInfinity(d) == false && float.IsNaN(d) == false;
+        }
+
+
         public static bool EpsilonEqual(double a, double b, double epsilon = MathUtil.Epsilon) {
             return Math.Abs(a - b) < epsilon;
         }

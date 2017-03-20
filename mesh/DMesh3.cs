@@ -538,6 +538,13 @@ namespace g3
             return MathUtil.Normal(v0, v1, v2);
         }
 
+        public double GetTriArea(int tID)
+        {
+            Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
+            GetTriVertices(tID, ref v0, ref v1, ref v2);
+            return MathUtil.Area(v0, v1, v2);
+        }
+
         public Vector3d GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) { 
             int ai = 3 * triangles[3 * tID], 
                 bi = 3 * triangles[3 * tID + 1], 
