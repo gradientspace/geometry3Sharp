@@ -186,8 +186,7 @@ namespace g3
             normals = (bNormals && copy.normals != null) ? new DVector<float>() : null;
             colors = (bColors && copy.colors != null) ? new DVector<float>() : null;
             uv = (bUVs && copy.uv != null) ? new DVector<float>() : null;
-
-            // WHAT ABOUT FACE GROUPS ARRAY??
+            triangle_groups = (copy.triangle_groups != null) ? new DVector<int>() : null;
 
             // [TODO] if we knew some of these were dense we could copy directly...
 
@@ -508,12 +507,12 @@ namespace g3
 
 
         public void GetTriVertices(int tID, ref Vector3d v0, ref Vector3d v1, ref Vector3d v2) {
-            int a = triangles[3 * tID];
-            v0.x = vertices[3 * a]; v0.y = vertices[3 * a + 1]; v0.z = vertices[3 * a + 2];
-            int b = triangles[3 * tID + 1];
-            v1.x = vertices[3 * b]; v1.y = vertices[3 * b + 1]; v1.z = vertices[3 * b + 2];
-            int c = triangles[3 * tID + 2];
-            v2.x = vertices[3 * c]; v2.y = vertices[3 * c + 1]; v2.z = vertices[3 * c + 2];
+            int ai = 3 * triangles[3 * tID];
+            v0.x = vertices[ai]; v0.y = vertices[ai + 1]; v0.z = vertices[ai + 2];
+            int bi = 3 * triangles[3 * tID + 1];
+            v1.x = vertices[bi]; v1.y = vertices[bi + 1]; v1.z = vertices[bi + 2];
+            int ci = 3 * triangles[3 * tID + 2];
+            v2.x = vertices[ci]; v2.y = vertices[ci + 1]; v2.z = vertices[ci + 2];
         }
 
         public Vector3d GetTriVertex(int tid, int j) {
