@@ -270,12 +270,20 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Compute intersection of ray with plane passing through frame origin, normal
+        /// to the specified axis. 
+        /// If the ray is parallel to the plane, no intersection can be found, and
+        /// we return Vector3f.Invalid
+        /// </summary>
         public Vector3f RayPlaneIntersection(Vector3f ray_origin, Vector3f ray_direction, int nAxisAsNormal)
         {
             Vector3f N = GetAxis(nAxisAsNormal);
             float d = -Vector3f.Dot(Origin, N);
-            float t = -(Vector3f.Dot(ray_origin, N) + d) / (Vector3f.Dot(ray_direction, N));
+            float div = Vector3f.Dot(ray_direction, N);
+            if (MathUtil.EpsilonEqual(div, 0, MathUtil.ZeroTolerancef))
+                return Vector3f.Invalid;
+            float t = -(Vector3f.Dot(ray_origin, N) + d) / div;
             return ray_origin + t * ray_direction;
         }
 
