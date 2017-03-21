@@ -78,6 +78,7 @@ namespace g3
             // find # of groups and triangle count for each
             Dictionary<int, int> counts = CountAllGroups(mesh);
             List<int> GroupIDs = new List<int>(counts.Keys);
+            GroupIDs.Sort();        // might as well sort ascending...
             Dictionary<int, int> groupMap = new Dictionary<int, int>();
 
             // allocate sets

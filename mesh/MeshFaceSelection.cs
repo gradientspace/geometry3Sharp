@@ -191,10 +191,8 @@ namespace g3
         }
         public void FloodFill(int[] Seeds, Func<int,bool> FilterF = null)
         {
-            // why does dvector version of this hang??
             DVector<int> stack = new DVector<int>(Seeds);
             while ( stack.size > 0 ) {
-
                 int tID = stack.back;
                 stack.pop_back();
 
