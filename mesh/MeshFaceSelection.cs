@@ -12,14 +12,27 @@ namespace g3
         public DMesh3 Mesh;
 
         HashSet<int> Selected;
-        List<int> temp;
+
+        List<int> temp, temp2;
+        BitArray tempBits;
 
         public MeshFaceSelection(DMesh3 mesh)
         {
             Mesh = mesh;
             Selected = new HashSet<int>();
             temp = new List<int>();
+            temp2 = new List<int>();
         }
+
+
+        protected BitArray Bitmap {
+            get {
+                if (tempBits == null)
+                    tempBits = new BitArray(Mesh.MaxTriangleID);
+                return tempBits;
+            }
+        }
+
 
         // convert vertex selection to face selection. Require at least minCount verts of
         // tri to be selected (valid values are 1,2,3)
@@ -161,7 +174,14 @@ namespace g3
         }
 
 
-        // this may process vertices multiple times...
+        /// <summary>
+        /// Add all triangles in vertex one-rings of current selection to set.
+        /// On a large mesh this is quite expensive as we don't know the boundary,
+        /// so we have to iterate over all triangles.
+        /// 
+        /// Return false from FilterF to prevent triangles from being included.
+        /// </summary>
+        /// <param name="FilterF"></param>
         public void ExpandToOneRingNeighbours(Func<int, bool> FilterF = null)
         {
             temp.Clear();
@@ -182,6 +202,56 @@ namespace g3
             for (int i = 0; i < temp.Count; ++i)
                 add(temp[i]);
         }
+
+
+        /// <summary>
+        /// Expand selection by N vertex one-rings. This is *significantly* faster
+        /// than calling ExpandToOnering() multiple times, because we can track
+        /// the growing front and only check the new triangles.
+        /// 
+        /// Return false from FilterF to prevent triangles from being included.
+        /// </summary>
+        public void ExpandToOneRingNeighbours(int nRings, Func<int, bool> FilterF = null)
+        {
+            if ( nRings == 1 ) {
+                ExpandToOneRingNeighbours(FilterF);
+                return;
+            }
+
+            var addTris = temp;
+            var checkTris = temp2;
+            checkTris.Clear();
+            checkTris.AddRange(Selected);
+
+            Bitmap.SetAll(false);
+            foreach (int tid in Selected)
+                Bitmap.Set(tid, true);
+
+            for (int ri = 0; ri < nRings; ++ri) {
+                addTris.Clear();
+
+                foreach (int tid in checkTris) {
+                    Index3i tri_v = Mesh.GetTriangle(tid);
+                    for (int j = 0; j < 3; ++j) {
+                        int vid = tri_v[j];
+                        foreach (int nbr_t in Mesh.VtxTrianglesItr(vid)) {
+                            if (FilterF != null && FilterF(nbr_t) == false)
+                                continue;
+                            if (Bitmap.Get(nbr_t) == false) {
+                                addTris.Add(nbr_t);
+                                Bitmap.Set(nbr_t, true);
+                            }
+                        }
+                    }
+                }
+
+                for (int i = 0; i < addTris.Count; ++i)
+                    add(addTris[i]);
+
+                var t = checkTris; checkTris = addTris; addTris = t;   // swap
+            }
+        }
+
 
 
 
