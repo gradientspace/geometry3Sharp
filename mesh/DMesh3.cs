@@ -1401,6 +1401,8 @@ namespace g3
         int cached_is_closed_timstamp = -1;
 
         public bool IsClosed() {
+            if (TriangleCount == 0)
+                return false;
             // [RMS] under possibly-mistaken belief that foreach() has some overhead...
             if (MaxEdgeID / EdgeCount > 5) {
                 foreach (int eid in edges_refcount)

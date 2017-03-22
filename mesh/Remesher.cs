@@ -110,6 +110,9 @@ namespace g3 {
 
 
 		public void BasicRemeshPass() {
+            if (mesh.TriangleCount == 0)    // badness if we don't catch this...
+                return;
+
             begin_pass();
 
             // Iterate over all edges in the mesh at start of pass.
