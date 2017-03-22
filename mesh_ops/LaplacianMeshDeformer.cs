@@ -53,6 +53,10 @@ namespace g3
             need_solve_update = true;
         }
 
+        public bool IsConstrained(int vID) {
+            return SoftConstraints.ContainsKey(vID);
+        }
+
         public void ClearConstraints()
         {
             SoftConstraints.Clear();

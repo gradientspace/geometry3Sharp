@@ -31,6 +31,17 @@ namespace g3
             SetExternalConstraints(bdry_constraints);
         }
 
+
+        /// <summary>
+        /// list of sub-region triangles. This is either the input regionTris,
+        /// or the submesh triangles after they are re-inserted.
+        /// </summary>
+        public int[] CurrentBaseTriangles
+        {
+            get { return cur_base_tris; }
+        }
+
+
         // After remeshing we may create an internal edge between two boundary vertices [a,b].
         // Those vertices will be merged with vertices c and d in the base mesh. If the edge
         // [c,d] already exists in the base mesh, then after the merge we would have at least

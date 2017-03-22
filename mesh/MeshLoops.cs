@@ -8,7 +8,7 @@ namespace g3
 
 
 
-    public class MeshBoundaryLoops
+    public class MeshBoundaryLoops : IEnumerable<EdgeLoop>
     {
         public DMesh3 Mesh;
         public List<EdgeLoop> Loops;
@@ -18,6 +18,15 @@ namespace g3
             this.Mesh = mesh;
             Compute();
         }
+
+
+        public IEnumerator<EdgeLoop> GetEnumerator() {
+            return Loops.GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator() {
+            return Loops.GetEnumerator();
+        }
+
 
 
         // This algorithm assumes that triangles are oriented consistently, 
