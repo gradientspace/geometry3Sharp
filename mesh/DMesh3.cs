@@ -916,6 +916,14 @@ namespace g3
         }
 
 
+        public IEnumerable<int> BoundaryEdgeIndices() {
+            foreach ( int eid in edges_refcount ) {
+                if (edges[4 * eid + 3] == InvalidID)
+                    yield return eid;
+            }
+        }
+
+
         public IEnumerable<Vector3d> Vertices() {
             foreach (int vid in vertices_refcount) {
                 int i = 3 * vid;
@@ -1223,6 +1231,9 @@ namespace g3
 		}
 
 
+        public bool IsBoundaryEdge(int eid) {
+            return edges[4 * eid + 3] == InvalidID;
+        }
         public bool edge_is_boundary(int eid) {
             return edges[4 * eid + 3] == InvalidID;
         }
@@ -1247,12 +1258,20 @@ namespace g3
         }
 
 
+        // ugh need to deprecate this...weird API!
 		public bool vertex_is_boundary(int vid) {
 			foreach ( int e in vertex_edges[vid] )
 				if ( edge_is_boundary(e) )
 					return true;
 			return false;
 		}
+        public bool IsBoundaryVertex(int vid) {
+            foreach (int e in vertex_edges[vid]) {
+                if (edges[4 * e + 3] == InvalidID)
+                    return true;
+            }
+            return false;
+        }
 
 
 
