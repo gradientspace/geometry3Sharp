@@ -24,6 +24,24 @@ namespace g3
 
 
 
+    public struct Vector3fTuple3
+    {
+        public Vector3f V0, V1, V2;
+
+        public Vector3fTuple3(Vector3f v0, Vector3f v1, Vector3f v2)
+        {
+            V0 = v0; V1 = v1; V2 = v2;
+        }
+
+        public Vector3f this[int key]
+        {
+            get { return (key == 0) ? V0 : (key == 1) ? V1 : V2; }
+            set { if (key == 0) V0 = value; else if (key == 1) V1 = value; else V2 = value; }
+        }
+    }
+
+
+
 
     public struct Vector2dTuple2
     {

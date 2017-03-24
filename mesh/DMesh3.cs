@@ -475,6 +475,35 @@ namespace g3
 		}
 
 
+        /// <summary>
+        /// Compute a normal/tangent frame at vertex that is "stable" as long as
+        /// the mesh topology doesn't change, meaning that one axis of the frame
+        /// will be computed from projection of outgoing edge.
+        /// Requires that vertex normals are available.
+        /// </summary>
+        public Frame3f GetVertexFrame(int vID, int nFrameNormal = 2)
+        {
+            Debug.Assert(HasVertexNormals);
+
+            int vi = 3 * vID;
+            Vector3d v = new Vector3d(vertices[vi], vertices[vi + 1], vertices[vi + 2]);
+            Vector3d normal = new Vector3d(normals[vi], normals[vi + 1], normals[vi + 2]);
+            int eid = vertex_edges[vID][0];
+            int ovi = 3 * edge_other_v(eid, vID);
+            Vector3d ov = new Vector3d(vertices[ovi], vertices[ovi + 1], vertices[ovi + 2]);
+            Vector3d edge = (ov - v);
+            edge.Normalize();
+
+            Vector3d t2 = edge.Cross(normal);
+            t2.Normalize();
+            Vector3d t1 = normal.Cross(t2);
+            t1.Normalize();
+
+            return new Frame3f((Vector3f)v, (Vector3f)t1, (Vector3f)t2, (Vector3f)normal);
+        }
+
+
+
 
         public Index3i GetTriangle(int tID) {
             return triangles_refcount.isValid(tID) ?
