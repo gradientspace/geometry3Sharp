@@ -54,11 +54,14 @@ namespace g3
 
 
 
-
+        // TODO: parallel version, cache tri normals
         void Compute_FaceAvg_AreaWeighted()
         {
             int NV = Mesh.MaxVertexID;
-            Normals.resize(NV);
+            if ( NV != Normals.size ) 
+                Normals.resize(NV);
+            for (int i = 0; i < NV; ++i)
+                Normals[i] = Vector3d.Zero;
 
             int NT = Mesh.MaxTriangleID;
             for (int ti = 0; ti < NT; ++ti) {
