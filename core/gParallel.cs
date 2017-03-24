@@ -34,6 +34,7 @@ namespace g3
         {
             int numProcs = Environment.ProcessorCount;
             int remainingWorkItems = numProcs;
+            Exception last_exception = null;
             using (var enumerator = source.GetEnumerator()) {
                 using (ManualResetEvent mre = new ManualResetEvent(false)) {
                     // Create each of the work items.
@@ -49,7 +50,17 @@ namespace g3
                                         break;
                                     nextItem = enumerator.Current;
                                 }
-                                body(nextItem);
+
+                                // [RMS] added try/catch here because if body() throws an exception
+                                // then one thread breaks out of loop, and somehow we end up hung forever.
+                                // (Maybe the WaitOne() on other threads never finishes?)
+                                // Anyway, we will just hold onto the exception and throw it at the end.
+                                try {
+                                    body(nextItem);
+                                } catch (Exception e) {
+                                    last_exception = e;
+                                    break;
+                                }
                             }
                             if (Interlocked.Decrement(ref remainingWorkItems) == 0)
                                 mre.Set();
@@ -59,6 +70,10 @@ namespace g3
                     mre.WaitOne();
                 }
             }
+
+            // pass on last exception thrown by enumerables
+            if (last_exception != null)
+                throw last_exception;
         }
 
 
