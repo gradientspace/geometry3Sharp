@@ -108,6 +108,7 @@
     <Compile Include="mesh\MeshConstraintUtil.cs" />
     <Compile Include="mesh\MeshDecomposition.cs" />
     <Compile Include="mesh\MeshEditor.cs" />
+    <Compile Include="mesh\MeshNormals.cs" />
     <Compile Include="mesh\MeshUVSet.cs" />
     <Compile Include="mesh\MeshVertexSelection.cs" />
     <Compile Include="mesh\MeshFaceSelection.cs" />
