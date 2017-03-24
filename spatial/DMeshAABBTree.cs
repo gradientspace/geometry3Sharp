@@ -71,7 +71,7 @@ namespace g3
                 build_top_down(false);
             else if (eStrategy == BuildStrategy.Default)
                 build_top_down(false);
-            mesh_timestamp = mesh.Timestamp;
+            mesh_timestamp = mesh.ShapeTimestamp;
         }
 
 
@@ -79,7 +79,7 @@ namespace g3
         public bool SupportsNearestTriangle { get { return true; } }
         public int FindNearestTriangle(Vector3d p, double fMaxDist = double.MaxValue)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
 
             double fNearestSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
@@ -139,7 +139,7 @@ namespace g3
         public bool SupportsTriangleRayIntersection { get { return true; } }
         public int FindNearestHitTriangle(Ray3d ray, double fMaxDist = double.MaxValue)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.FindNearestHitTriangle: mesh has been modified since tree construction");
             if (ray.Direction.IsNormalized == false)
                 throw new Exception("DMeshAABBTree3.FindNearestHitTriangle: ray direction is not normalized");
@@ -219,7 +219,7 @@ namespace g3
         // returns cout
         public int FindAllHitTriangles(Ray3d ray, List<int> hitTriangles = null, double fMaxDist = double.MaxValue)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.FindNearestHitTriangle: mesh has been modified since tree construction");
             if (ray.Direction.IsNormalized == false)
                 throw new Exception("DMeshAABBTree3.FindNearestHitTriangle: ray direction is not normalized");
@@ -287,7 +287,7 @@ namespace g3
         // TransformF takes vertices of testMesh to our tree
         public bool TestIntersection(IMesh testMesh, Func<Vector3d, Vector3d> TransformF, bool bBoundsCheck = true)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.TestIntersection: mesh has been modified since tree construction");
 
             if (bBoundsCheck) {
@@ -309,7 +309,7 @@ namespace g3
         }
         public bool TestIntersection(Triangle3d triangle)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.TestIntersection: mesh has been modified since tree construction");
 
             AxisAlignedBox3d triBounds = BoundsUtil.Bounds(ref triangle);
@@ -362,7 +362,7 @@ namespace g3
         // TransformF takes vertices of otherTree to our tree - can be null if in same coord space
         public bool TestIntersection(DMeshAABBTree3 otherTree, Func<Vector3d, Vector3d> TransformF)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.TestIntersection: mesh has been modified since tree construction");
 
             if (find_any_intersection(root_index, otherTree, TransformF, otherTree.root_index, 0))
@@ -509,7 +509,7 @@ namespace g3
         // Returns pairs of intersecting triangles, which could intersect in either point or segment
         public IntersectionsQueryResult FindIntersections(DMeshAABBTree3 otherTree, Func<Vector3d, Vector3d> TransformF)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.FindIntersections: mesh has been modified since tree construction");
 
             IntersectionsQueryResult result = new IntersectionsQueryResult();
@@ -686,7 +686,7 @@ namespace g3
         // walk over tree, calling functions in TreeTraversal object for internal nodes and triangles
         public void DoTraversal(TreeTraversal traversal)
         {
-            if (mesh_timestamp != mesh.Timestamp)
+            if (mesh_timestamp != mesh.ShapeTimestamp)
                 throw new Exception("DMeshAABBTree3.DoTraversal: mesh has been modified since tree construction");
 
             tree_traversal(root_index, 0, traversal);

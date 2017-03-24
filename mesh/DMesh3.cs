@@ -78,6 +78,10 @@ namespace g3
 	// The function CheckValidity() does extensive sanity checking on the mesh data structure.
 	// Use this to test your code, both for mesh construction and editing!!
 	// 
+    //
+    // TODO:
+    //  - DVector w/ 'stride' option, so that we can guarantee that tuples are in single block.
+    //    The can have custom accessor that looks up entire tuple
     public partial class DMesh3 : IDeformableMesh
     {
         public const int InvalidID = -1;
@@ -110,6 +114,8 @@ namespace g3
         DVector<int> edges;
 
         int timestamp = 0;
+        int shape_timestamp = 0;
+
         int max_group_id = 0;
 
         public DMesh3(bool bWantNormals = true, bool bWantColors = false, bool bWantUVs = false, bool bWantTriGroups = false)
@@ -281,11 +287,16 @@ namespace g3
 
 
 
-		void updateTimeStamp() {
+		void updateTimeStamp(bool bShapeChange) {
             timestamp++;
+            if (bShapeChange)
+                shape_timestamp++;
 		}
         public int Timestamp {
             get { return timestamp; }
+        }
+        public int ShapeTimestamp {
+            get { return shape_timestamp; }
         }
 
 
@@ -356,7 +367,7 @@ namespace g3
 			if ( vertices_refcount.isValid(vID) ) {
 				int i = 3*vID;
 				vertices[i] = vNewPos.x; vertices[i+1] = vNewPos.y; vertices[i+2] = vNewPos.z;
-                updateTimeStamp();
+                updateTimeStamp(true);
 			}
 		}
 
@@ -372,7 +383,7 @@ namespace g3
 			if ( HasVertexNormals && vertices_refcount.isValid(vID) ) {
 				int i = 3*vID;
 				normals[i] = vNewNormal.x; normals[i+1] = vNewNormal.y; normals[i+2] = vNewNormal.z;
-                updateTimeStamp();
+                updateTimeStamp(false);
 			}
 		}
 
@@ -385,7 +396,7 @@ namespace g3
 			if ( HasVertexColors && vertices_refcount.isValid(vID) ) {
 				int i = 3*vID;
 				colors[i] = vNewColor.x; colors[i+1] = vNewColor.y; colors[i+2] = vNewColor.z;
-                updateTimeStamp();
+                updateTimeStamp(false);
 			}
 		}
 
@@ -398,7 +409,7 @@ namespace g3
 			if ( HasVertexUVs && vertices_refcount.isValid(vID) ) {
 				int i = 2*vID;
 				uv[i] = vNewUV.x; uv[i+1] = vNewUV.y;
-                updateTimeStamp();
+                updateTimeStamp(false);
 			}
 		}
 
@@ -497,7 +508,7 @@ namespace g3
 			if ( triangle_groups != null && triangles_refcount.isValid(tid) ) {
                 triangle_groups[tid] = group_id;
                 max_group_id = Math.Max(max_group_id, group_id);
-                updateTimeStamp();
+                updateTimeStamp(false);
 			}
 		}
 
@@ -705,7 +716,7 @@ namespace g3
 
             vertex_edges.insert(new List<int>(), vid);
 
-            updateTimeStamp();
+            updateTimeStamp(true);
             return vid;
         }
 
@@ -757,7 +768,7 @@ namespace g3
 
             vertex_edges.insert(new List<int>(), vid);
 
-            updateTimeStamp();
+            updateTimeStamp(true);
             return vid;
         }
 
@@ -806,7 +817,7 @@ namespace g3
             add_tri_edge(tid, tv[1], tv[2], 1, e1);
             add_tri_edge(tid, tv[2], tv[0], 2, e2);
 
-            updateTimeStamp();
+            updateTimeStamp(true);
             return tid;
         }
         // helper fn for above, just makes code cleaner
@@ -1545,7 +1556,7 @@ namespace g3
             triangles_refcount.rebuild_free_list();
             edges_refcount.rebuild_free_list();
 
-            updateTimeStamp();
+            updateTimeStamp(true);
         }
 
 	}

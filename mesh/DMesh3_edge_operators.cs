@@ -14,7 +14,7 @@ namespace g3
             if (!IsTriangle(tID))
                 return MeshResult.Failed_NotATriangle;
             internal_reverse_tri_orientation(tID);
-            updateTimeStamp();
+            updateTimeStamp(true);
             return MeshResult.Ok;
         }
         void internal_reverse_tri_orientation(int tID) {
@@ -36,7 +36,7 @@ namespace g3
 					normals[i+2] = -normals[i+2];
 				}
 			}
-            updateTimeStamp();
+            updateTimeStamp(true);
 		}
 
 
@@ -85,7 +85,7 @@ namespace g3
             Debug.Assert(vertices_refcount.isValid(vID) == false);
             vertex_edges[vID] = null;
 
-            updateTimeStamp();
+            updateTimeStamp(true);
             return MeshResult.Ok;
         }
 
@@ -154,7 +154,7 @@ namespace g3
                 }
             }
 
-            updateTimeStamp();
+            updateTimeStamp(true);
             return MeshResult.Ok;
         }
 
@@ -234,7 +234,7 @@ namespace g3
 				split.vNew = f;
                 split.eNew = efb;
 
-				updateTimeStamp();
+				updateTimeStamp(true);
 				return MeshResult.Ok;
 
 			} else {		// interior triangle branch
@@ -296,7 +296,7 @@ namespace g3
 				split.vNew = f;
                 split.eNew = efb;
 
-				updateTimeStamp();
+				updateTimeStamp(true);
 				return MeshResult.Ok;
 			}
 
@@ -392,7 +392,7 @@ namespace g3
 			flip.ov0 = c; flip.ov1 = d;
 			flip.t0 = t0; flip.t1 = t1;
 
-			updateTimeStamp();
+			updateTimeStamp(true);
 			return MeshResult.Ok;
 		}
 
@@ -644,7 +644,7 @@ namespace g3
             collapse.eRemoved0 = eac; collapse.eRemoved1 = ead;
             collapse.eKept0 = ebc; collapse.eKept1 = ebd;
 
-			updateTimeStamp();
+			updateTimeStamp(true);
 			return MeshResult.Ok;
 		}
 
