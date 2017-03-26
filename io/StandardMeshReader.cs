@@ -23,14 +23,27 @@ namespace g3
         // connect to this to get warning status messages
         public event ParsingMessagesHandler warningEvent;
 
+        /// <summary>
+        /// The various format handlers will use this IMeshBuilder to construct meshes
+        /// based on the file data and read options.
+        /// Default is initialized to DMesh3Builder
+        /// </summary>
         public IMeshBuilder MeshBuilder { get; set; }
 
+        /// <summary>
+        /// Set of format handlers
+        /// </summary>
         List<MeshFormatReader> Readers = new List<MeshFormatReader>();
 
 
+        /// <summary>
+        /// Construct a MeshReader, optionally with default format handlers
+        /// Initializes MeshBuilder to a DMesh3Builder
+        /// </summary>
         public StandardMeshReader(bool bIncludeDefaultReaders = true)
         {
             Readers = new List<MeshFormatReader>();
+            MeshBuilder = new DMesh3Builder();
 
             if ( bIncludeDefaultReaders ) {
                 Readers.Add(new OBJFormatReader());
@@ -40,6 +53,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Check if extension type is supported
+        /// </summary>
         public bool SupportsFormat(string sExtension)
         {
             foreach (var reader in Readers)
@@ -49,6 +65,10 @@ namespace g3
             return false;
         }
 
+
+        /// <summary>
+        /// Add a handler for a given formta
+        /// </summary>
         public void AddFormatHandler(MeshFormatReader reader)
         {
             List<string> formats = reader.SupportedExtensions;
@@ -60,6 +80,10 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Read mesh file at path, with given Options. Result is stored
+        /// in MeshBuilder parameter
+        /// </summary>
         public IOReadResult Read(string sFilename, ReadOptions options)
         {
             if (MeshBuilder == null)
@@ -87,11 +111,27 @@ namespace g3
 
         }
 
+
+        /// <summary>
+        /// Read mesh file using options and builder. You must provide our own Builder
+        /// here because the reader is not returned
+        /// </summary>
         static public IOReadResult ReadFile(string sFilename, ReadOptions options, IMeshBuilder builder)
         {
             StandardMeshReader reader = new StandardMeshReader();
             reader.MeshBuilder = builder;
             return reader.Read(sFilename, options);
+        }
+
+
+        /// <summary>
+        /// This is basically a utility function, returns first mesh in file, with default options.
+        /// </summary>
+        static public DMesh3 ReadMesh(string sFilename)
+        {
+            DMesh3Builder builder = new DMesh3Builder();
+            IOReadResult result = ReadFile(sFilename, ReadOptions.Defaults, builder);
+            return (result.code == IOCode.Ok) ? builder.Meshes[0] : null;
         }
 
 
