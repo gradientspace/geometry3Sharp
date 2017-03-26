@@ -13,7 +13,12 @@ namespace g3
         public Quaternionf Rotation;
 
         public Action<string> VerboseF = null;
+
         public int MaxIterations = 50;
+
+        public bool UseNormals = false;
+        public double MaxAllowableDistance = double.MaxValue;
+
 
         public double ConvergeTolerance = 0.00001;
         public bool Converged = false;
@@ -95,10 +100,17 @@ namespace g3
         /// </summary>
         public void UpdateVertices(IDeformableMesh target)
         {
+            bool bNormals = target.HasVertexNormals;
+
             update_from();
             foreach (int vid in target.VertexIndices()) {
                 int i = MapV[vid];
                 target.SetVertex(vid, From[i]);
+
+                if ( bNormals ) {
+                    target.SetVertexNormal(vid,
+                        Rotation * target.GetVertexNormal(vid));
+                }
             }
         }
 
@@ -132,7 +144,6 @@ namespace g3
                 Vector3d v = Source.GetVertex(vid);
 
                 From[i++] = (Rotation * v) + Translation;
-
             }
         }
 
@@ -141,16 +152,36 @@ namespace g3
         {
             double max_dist = double.MaxValue;
 
-            Interval1i range = Interval1i.Range(From.Length);
-            gParallel.ForEach(range, (i) => {
-                int tid = TargetSurface.FindNearestTriangle(From[i], max_dist);
-                if (tid == DMesh3.InvalidID) {
-                    Weights[i] = 0;
+            bool bNormals = (UseNormals && Source.HasVertexNormals);
 
-                } else {
-                    DistPoint3Triangle3 d = MeshQueries.TriangleDistance(TargetSurface.Mesh, tid, From[i]);
-                    To[i] = d.TriangleClosest;
+            Interval1i range = Interval1i.Range(From.Length);
+            gParallel.ForEach(range, (vi) => {
+                int tid = TargetSurface.FindNearestTriangle(From[vi], max_dist);
+                if (tid == DMesh3.InvalidID) {
+                    Weights[vi] = 0;
+                    return;
                 }
+
+                DistPoint3Triangle3 d = MeshQueries.TriangleDistance(TargetSurface.Mesh, tid, From[vi]);
+                if ( d.DistanceSquared > MaxAllowableDistance*MaxAllowableDistance ) {
+                    Weights[vi] = 0;
+                    return;
+                }
+
+                To[vi] = d.TriangleClosest;
+                Weights[vi] = 1.0f;
+
+                if ( bNormals ) {
+                    Vector3f fromN = Rotation * Source.GetVertexNormal(vi);
+                    Vector3f toN = (Vector3f)TargetSurface.Mesh.GetTriNormal(tid);
+                    float fDot = fromN.Dot(toN);
+                    Debug.Assert(MathUtil.IsFinite(fDot));
+                    if (fDot < 0)
+                        Weights[vi] = 0;
+                    else
+                        Weights[vi] += Math.Sqrt(fDot);
+                }
+
             });
         }
 
@@ -160,37 +191,39 @@ namespace g3
         double measure_error()
         {
             double sum = 0;
+            double wsum = 0;
             for ( int i = 0; i < From.Length; ++i ) {
                 sum += Weights[i] * From[i].Distance(To[i]);
+                wsum += Weights[i];
             }
-            return sum / (double)From.Length;
+            return sum / wsum;
         }
 
 
         /// <summary>
         /// Solve for Translate/Rotate update, based on current From and To
         /// Note: From and To are invalidated, will need to be re-computed after calling this
-        /// TODO: support weights
         /// </summary>
         void update_transformation()
         {
             int N = From.Length;
 
             // normalize weights
-            // todo: cache?
-            //double wSum = 0;
-            //for (int i = 0; i < N; ++i)
-            //    wSum += Weights[i];
+            double wSum = 0;
+            for (int i = 0; i < N; ++i) {
+                wSum += Weights[i];
+            }
 
-            double wSum = 1.0 / (double)N;
+            double wSumInv = 1.0 / wSum;
 
             // compute means
             Vector3d MeanX = Vector3d.Zero;
             Vector3d MeanY = Vector3d.Zero;
             for ( int i = 0; i < N; ++i ) {
-                MeanX += From[i] * wSum;
-                MeanY += To[i] * wSum;
+                MeanX += (Weights[i] * wSumInv) * From[i];
+                MeanY += (Weights[i] * wSumInv) * To[i];
             }
+
 
             // subtract means
             for ( int i = 0; i < N; ++i ) {
@@ -204,7 +237,7 @@ namespace g3
             for (int k = 0; k < 3; ++k) {
                 int r = 3 * k;
                 for (int i = 0; i < N; ++i) {
-                    double lhs = From[i][k];
+                    double lhs = (Weights[i] * wSumInv) * From[i][k];
                     M[r + 0] += lhs * To[i].x;
                     M[r + 1] += lhs * To[i].y;
                     M[r + 2] += lhs * To[i].z;
