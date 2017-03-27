@@ -26,7 +26,7 @@ namespace g3
 
     public class TrivialBox3Generator : MeshGenerator
     {
-        public Box3d Box;
+        public Box3d Box = Box3d.UnitZeroCentered;
         public bool NoSharedVertices = false;
 
         public override void Generate()
