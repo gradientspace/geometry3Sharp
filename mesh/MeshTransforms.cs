@@ -190,7 +190,6 @@ namespace g3
 
 
 
-
         public static void PerVertexTransform(IDeformableMesh mesh, Func<Vector3d,Vector3d> TransformF )
         {
             int NV = mesh.MaxVertexID;

@@ -97,6 +97,7 @@
     <Compile Include="math\Plane3.cs" />
     <Compile Include="math\Quaternionf.cs" />
     <Compile Include="math\QueryTuple2d.cs" />
+    <Compile Include="math\TransformSequence.cs" />
     <Compile Include="math\Vector2d.cs" />
     <Compile Include="math\Vector2f.cs" />
     <Compile Include="math\Vector2i.cs" />

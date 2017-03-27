@@ -32,6 +32,19 @@ namespace g3
             v.y = reader.ReadSingle();
             v.z = reader.ReadSingle();
         }
+        public static void Store(Vector3d v, BinaryWriter writer)
+        {
+            writer.Write(v.x);
+            writer.Write(v.y);
+            writer.Write(v.z);
+        }
+        public static void Restore(ref Vector3d v, BinaryReader reader)
+        {
+            v.x = reader.ReadDouble();
+            v.y = reader.ReadDouble();
+            v.z = reader.ReadDouble();
+        }
+
 
         public static void Store(Quaternionf q, BinaryWriter writer)
         {
