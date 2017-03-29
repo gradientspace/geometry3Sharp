@@ -6,8 +6,12 @@ using System.IO;
 
 namespace g3
 {
-    public class StandardMeshWriter
+    public class StandardMeshWriter : IDisposable
     {
+        public void Dispose()
+        {
+        }
+
 
         static public IOWriteResult WriteFile(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
