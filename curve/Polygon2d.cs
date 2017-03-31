@@ -108,7 +108,7 @@ namespace g3
 					Vector2d v2 = vertices[(i+1) % N];
 					fArea += v1.x * v2.y - v1.y * v2.x;
 				}
-				return fArea;	
+				return fArea * 0.5;	
 			}
 		}
 
