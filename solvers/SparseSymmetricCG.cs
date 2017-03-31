@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace g3
 {
@@ -15,10 +12,12 @@ namespace g3
         public double[] B;
 
         // X will be used as initial guess if non-null and UseXAsInitialGuess is true
+        // After Solve(), solution will be available in X
         public double[] X;
         public bool UseXAsInitialGuess = true;
 
         public int MaxIterations = 1024;
+        public int Iterations;
 
         // internal
         double[] R, P, W, Z;
@@ -28,6 +27,7 @@ namespace g3
 
         public bool Solve()
         {
+            Iterations = 0;
             int size = B.Length;
 
             // Based on the algorithm in "Matrix Computations" by Golum and Van Loan.
@@ -45,8 +45,18 @@ namespace g3
                 InitializeR(R);
             }
 
-            // The first iteration.
+            // [RMS] these were inside loop but they are constant!
+            double norm = BufferUtil.Dot(B, B);
+            double root1 = Math.Sqrt(norm);
+
+            // The first iteration. 
             double rho0 = BufferUtil.Dot(R, R);
+
+            // [RMS] If we were initialized w/ constraints already satisfied, 
+            //   then we are done! (happens for example in mesh deformations)
+            if (rho0 < MathUtil.ZeroTolerance * root1)
+                return true;
+
             Array.Copy(R, P, R.Length);
 
             MultiplyF(P, W);
@@ -55,10 +65,6 @@ namespace g3
             BufferUtil.MultiplyAdd(X, alpha, P);
             BufferUtil.MultiplyAdd(R, -alpha, W);
             double rho1 = BufferUtil.Dot(R, R);
-
-            // [RMS] these were inside loop but they are constant!
-            double norm = BufferUtil.Dot(B, B);
-            double root1 = Math.Sqrt(norm);
 
             // The remaining iterations.
             int iter;
@@ -81,7 +87,8 @@ namespace g3
             }
 
 
-            System.Console.WriteLine("{0} iterations", iter);
+            //System.Console.WriteLine("{0} iterations", iter);
+            Iterations = iter;
             return iter < MaxIterations;
         }
 
@@ -109,6 +116,7 @@ namespace g3
 
         public bool SolvePreconditioned()
         {
+            Iterations = 0;
             int size = B.Length;
 
             // Based on the algorithm in "Matrix Computations" by Golum and Van Loan.
@@ -129,6 +137,10 @@ namespace g3
                 InitializeR(R);
             }
 
+            // [RMS] these were inside loop but they are constant!
+            double norm = BufferUtil.Dot(B, B);
+            double root1 = Math.Sqrt(norm);
+
             // The first iteration.
             Array.Copy(R, P, R.Length);
 
@@ -136,14 +148,16 @@ namespace g3
             PreconditionMultiplyF(R, Z);
 
             double rho0 = BufferUtil.Dot(Z, R);
+
+            // [RMS] If we were initialized w/ constraints already satisfied, 
+            //   then we are done! (happens for example in mesh deformations)
+            if (rho0 < MathUtil.ZeroTolerance * root1)
+                return true;
+
             double alpha = rho0 / BufferUtil.Dot(P, W);
             BufferUtil.MultiplyAdd(X, alpha, P);
             BufferUtil.MultiplyAdd(R, -alpha, W);
             double rho1 = BufferUtil.Dot(Z, R);
-
-            // [RMS] these were inside loop but they are constant!
-            double norm = BufferUtil.Dot(B, B);
-            double root1 = Math.Sqrt(norm);
 
             // The remaining iterations.
             int iter = 0;
@@ -167,7 +181,8 @@ namespace g3
             }
 
 
-            System.Console.WriteLine("{0} iterations", iter);
+            //System.Console.WriteLine("{0} iterations", iter);
+            Iterations = iter;
             return iter < MaxIterations;
         }
 
