@@ -101,9 +101,10 @@ namespace g3
 
         public void Multiply(double[] X, double[] Result)
         {
-            Array.Clear(Result, 0, Result.Length);
+            //Array.Clear(Result, 0, Result.Length);
             for (int i = 0; i < X.Length; ++i)
-                Result[i] += d[i] * X[i];
+                //Result[i] += d[i] * X[i];
+                Result[i] = d[i] * X[i];
         }
     }
 
