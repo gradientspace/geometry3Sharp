@@ -210,9 +210,8 @@ namespace g3
 
         public bool Contains(Vector3f v)
         {
-            return (Min.x <= v.x) && (Min.y <= v.y)
-                && (Max.x >= v.x) && (Max.y >= v.y)
-                && (Max.z >= v.z) && (Max.z >= v.z);
+            return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
+                && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
         }
         public bool Intersects(AxisAlignedBox3f box)
         {

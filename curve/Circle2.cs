@@ -91,12 +91,15 @@ namespace g3
 
         public double Circumference {
 			get { return MathUtil.TwoPI * Radius; }
+            set { Radius = value / MathUtil.TwoPI; }
 		}
         public double Diameter {
 			get { return 2 * Radius; }
+            set { Radius = value / 2; }
 		}
         public double Area {
             get { return Math.PI * Radius * Radius; }
+            set { Radius = Math.Sqrt(value / Math.PI); }
         }
 
 

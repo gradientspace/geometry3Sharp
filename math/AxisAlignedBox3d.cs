@@ -115,6 +115,16 @@ namespace g3
         }
 
 
+        // See Box3.Corner for details on which corner is which
+        public Vector3d Corner(int i)
+        {
+            double x = (  ((i&1) != 0) ^ ((i&2) != 0) ) ? (Max.x) : (Min.x);
+            double y = ( (i / 2) % 2 == 0 ) ? (Min.y) : (Max.y);
+            double z = (i < 4) ? (Min.z) : (Max.z);
+            return new Vector3d(x, y, z);
+        }
+
+
         // TODO
         ////! 0 == bottom-left, 1 = bottom-right, 2 == top-right, 3 == top-left
         //public Vector3d GetCorner(int i) {
@@ -167,9 +177,8 @@ namespace g3
 
 
         public bool Contains(Vector3d v) {
-            return (Min.x <= v.x) && (Min.y <= v.y) 
-                && (Max.x >= v.x) && (Max.y >= v.y)
-                && (Max.z >= v.z) && (Max.z >= v.z);
+            return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
+                && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
         }
         public bool Intersects(AxisAlignedBox3d box) {
             return !((box.Max.x <= Min.x) || (box.Min.x >= Max.x) 

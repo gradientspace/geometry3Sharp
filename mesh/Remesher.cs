@@ -88,11 +88,12 @@ namespace g3 {
         // glboal mesh info that, if known, lets us avoid work in remesh
         bool MeshIsClosed = false;
 
-
-        // we can vastly speed things up if we precompute some invariants. 
-        // You need to re-run this if you are changing the mesh externally
-        // between remesh passes, otherwise you will get weird results.
-        // But you will probably still come out ahead, computation-time-wise
+        /// <summary>
+        /// we can vastly speed things up if we precompute some invariants. 
+        /// You need to re-run this if you are changing the mesh externally
+        /// between remesh passes, otherwise you will get weird results.
+        /// But you will probably still come out ahead, computation-time-wise
+        /// </summary>
         public void Precompute()
         {
             // if we know mesh is closed, we can skip is-boundary checks, which makes
@@ -108,8 +109,24 @@ namespace g3 {
 
 
 
+        /// <summary>
+        /// Number of edges that were modified in previous Remesh pass.
+        /// If this number gets small relative to edge count, you have probably converged (ish)
+        /// </summary>
+        public int ModifiedEdgesLastPass = 0;
 
+
+        /// <summary>
+        /// Linear edge-refinement pass, followed by smoothing and projection
+        /// - Edges are processed in prime-modulo-order to break symmetry
+        /// - smoothing is done in parallel if EnableParallelSmooth = true
+        /// - Projection pass if ProjectionMode == AfterRefinement
+        /// - number of modified edges returned in ModifiedEdgesLastPass
+        /// </summary>
 		public void BasicRemeshPass() {
+            if (mesh.TriangleCount == 0)    // badness if we don't catch this...
+                return;
+
             begin_pass();
 
             // Iterate over all edges in the mesh at start of pass.
@@ -127,11 +144,12 @@ namespace g3 {
 			int nMaxEdgeID = mesh.MaxEdgeID;
             int nPrime = 31337;     // any prime will do...
             int eid = 0;
+            ModifiedEdgesLastPass = 0;
             do {
                 if (mesh.IsEdge(eid)) {
-                    /*ProcessResult result = */
-                    ProcessEdge(eid);
-                    // do what with result??
+                    ProcessResult result = ProcessEdge(eid);
+                    if (result == ProcessResult.Ok_Collapsed || result == ProcessResult.Ok_Flipped || result == ProcessResult.Ok_Split)
+                        ModifiedEdgesLastPass++;
                 }
                 eid = (eid + nPrime) % nMaxEdgeID;
             } while (eid != 0);
@@ -376,7 +394,7 @@ namespace g3 {
         {
             collapse_to = -1;
             if (constraints == null)
-                return false;
+                return true;
             bool bVtx = can_collapse_vtx(eid, a, b, out collapse_to);
             if (bVtx == false)
                 return false;
@@ -523,6 +541,7 @@ namespace g3 {
                     return;
 
                 Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
+                Debug.Assert(vSmoothed.IsFinite);     // this will really catch a lot of bugs...
 
                 // project onto either vtx constraint target, or surface target
                 if (vc.Target != null) {

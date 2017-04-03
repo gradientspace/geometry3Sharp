@@ -56,22 +56,22 @@ namespace g3
         // conversion operators
         public static implicit operator Ray3d(Ray3f v)
         {
-            return new Ray3d(v.Origin, v.Direction);
+            return new Ray3d(v.Origin, ((Vector3d)v.Direction).Normalized );
         }
         public static explicit operator Ray3f(Ray3d v)
         {
-            return new Ray3f((Vector3f)v.Origin, (Vector3f)v.Direction);
+            return new Ray3f((Vector3f)v.Origin, ((Vector3f)v.Direction).Normalized );
         }
 
 
 #if G3_USING_UNITY
         public static implicit operator Ray3d(UnityEngine.Ray r)
         {
-            return new Ray3d(r.origin, r.direction);
+            return new Ray3d(r.origin, ((Vector3d)r.direction).Normalized);
         }
         public static explicit operator Ray(Ray3d r)
         {
-            return new Ray((Vector3)r.Origin, (Vector3)r.Direction);
+            return new Ray((Vector3)r.Origin, ((Vector3)r.Direction).normalized);
         }
 #endif
 

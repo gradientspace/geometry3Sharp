@@ -8,7 +8,12 @@ namespace g3
     {
         public List<DMesh3> Meshes;
         public List<GenericMaterial> Materials;
+
+		// this is a map from index into Meshes to index into Materials (-1 if no material)
+		//  (so, currently we can only have 1 material per mesh!)
         public List<int> MaterialAssignment;
+
+        public List<Dictionary<string, object> > Metadata;
 
         int nActiveMesh;
 
@@ -17,6 +22,7 @@ namespace g3
             Meshes = new List<DMesh3>();
             Materials = new List<GenericMaterial>();
             MaterialAssignment = new List<int>();
+            Metadata = new List<Dictionary<string, object>>();
             nActiveMesh = -1;
         }
 
@@ -26,6 +32,7 @@ namespace g3
 			DMesh3 m = new DMesh3(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
             Meshes.Add(m);
             MaterialAssignment.Add(-1);     // no material is known
+            Metadata.Add(new Dictionary<string, object>());
             nActiveMesh = index;
             return index;
         }
@@ -57,6 +64,11 @@ namespace g3
             return Meshes[nActiveMesh].AppendVertex(info);
         }
 
+        public bool SupportsMetaData { get { return true; } }
+        public void AppendMetaData(string identifier, object data)
+        {
+            Metadata[nActiveMesh].Add(identifier, data);
+        }
 
 
         // just store GenericMaterial object, we can't use it here

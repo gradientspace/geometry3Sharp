@@ -71,6 +71,12 @@ namespace g3
 			get { return Math.Abs( (x * x + y * y) - 1) < MathUtil.ZeroTolerance; }
 		}
 
+        public bool IsFinite
+        {
+            get { double f = x + y; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
+        }
+
+
 
         public double Dot(Vector2d v2)
         {
@@ -164,7 +170,10 @@ namespace g3
         {
             return new Vector2d(v.x / f, v.y / f);
         }
-
+        public static Vector2d operator /(double f, Vector2d v)
+        {
+            return new Vector2d(f / v.x, f / v.y);
+        }
 
 
         public static bool operator ==(Vector2d a, Vector2d b)
@@ -212,6 +221,13 @@ namespace g3
         {
             return Math.Round(x, nDigits) == Math.Round(v2.x, nDigits) &&
                    Math.Round(y, nDigits) == Math.Round(v2.y, nDigits);
+        }
+
+
+        public static Vector2d Lerp(Vector2d a, Vector2d b, double t)
+        {
+            double s = 1 - t;
+            return new Vector2d(s * a.x + t * b.x, s * a.y + t * b.y);
         }
 
 

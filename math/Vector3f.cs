@@ -26,6 +26,7 @@ namespace g3
 
         static public readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
         static public readonly Vector3f One = new Vector3f(1.0f, 1.0f, 1.0f);
+        static public readonly Vector3f Invalid = new Vector3f(float.MaxValue, float.MaxValue, float.MaxValue);
         static public readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
         static public readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);
         static public readonly Vector3f AxisZ = new Vector3f(0.0f, 0.0f, 1.0f);
@@ -34,6 +35,19 @@ namespace g3
         {
             get { return (key == 0) ? x : (key == 1) ? y : z; }
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
+        }
+
+        public Vector2f xy {
+            get { return new Vector2f(x, y); }
+            set { x = xy.x; y = xy.y; }
+        }
+        public Vector2f xz {
+            get { return new Vector2f(x, z); }
+            set { x = xy.x; z = xy.y; }
+        }
+        public Vector2f yz {
+            get { return new Vector2f(y, z); }
+            set { y = xy.x; z = xy.y; }
         }
 
         public float LengthSquared
@@ -75,6 +89,14 @@ namespace g3
             }
         }
 
+		public bool IsNormalized {
+			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerancef; }
+		}
+
+        public bool IsFinite
+        {
+            get { float f = x + y + z; return float.IsNaN(f) == false && float.IsInfinity(f) == false; }
+        }
 
         public float Dot(Vector3f v2)
         {
@@ -168,7 +190,10 @@ namespace g3
         {
             return new Vector3f(v.x /f, v.y /f, v.z /f);
         }
-
+        public static Vector3f operator /(float f, Vector3f v)
+        {
+            return new Vector3f(f / v.x, f / v.y, f / v.z);
+        }
 
         public static Vector3f operator *(Vector3f a, Vector3f b)
         {

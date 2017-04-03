@@ -12,6 +12,8 @@ namespace g3
 				vSum += mesh.GetVertex(nbr);
 				nCount++;
 			}
+            if (nCount == 0)
+                return mesh.GetVertex(vID);
 			double m = 1.0 / nCount;
 			vSum.x *= m; vSum.y *= m; vSum.z *= m;
 			return vSum;

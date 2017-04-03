@@ -63,17 +63,15 @@ namespace g3
 
         public static bool FindClosestRayIntersection(ICurve c, double segRadius, Ray3d ray, out double rayT)
         {
-            if (c.Closed)
-                throw new InvalidOperationException("CurveUtils.FindClosestRayIntersection doesn't support closed curves yet");
-
             rayT = double.MaxValue;
             int nNearSegment = -1;
             //double fNearSegT = 0.0;
 
             int N = c.VertexCount;
-            for (int i = 0; i < N-1; ++i) {
+            int iStop = (c.Closed) ? N : N - 1;
+            for (int i = 0; i < iStop; ++i) {
                 DistRay3Segment3 dist = new DistRay3Segment3(ray,
-                    new Segment3d(c.GetVertex(i), c.GetVertex(i + 1)));
+                    new Segment3d(c.GetVertex(i), c.GetVertex( (i + 1) % N )));
 
                 // raycast to line bounding-sphere first (is this going ot be faster??)
                 double fSphereHitT;

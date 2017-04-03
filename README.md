@@ -2,7 +2,9 @@
 
 Open-Source (Boost-license) C# library for geometric computing. 
 
-geometry3Sharp only uses C# language features available in .NET 3.5, so it works with the Mono C# runtime used in Unity 5.x. Currently there is a small amount of unsafe code, however this code is only used in the OBJ reader and a few fast-buffer-copy routines, which can be deleted if you need a safe version (eg for Unity web player).
+geometry3Sharp only uses C# language features available in .NET 3.5, so it works with the Mono C# runtime used in Unity 5.x (*NOTE: you must configure Unity for this to work, see note at bottom of this file*). 
+
+Currently there is a small amount of unsafe code, however this code is only used in the OBJ reader and a few fast-buffer-copy routines, which can be deleted if you need a safe version (eg for Unity web player).
 
 Some portions of the code are ported from the WildMagic5 C++ library, developed by David Eberly at [Geometric Tools](https://www.geometrictools.com/). WildMagic5 is distributed under the Boost license as well, available [here](https://www.geometrictools.com/Downloads/Downloads.html). Any errors in code marked as ported from WildMagic5 are most certainly ours!
 
@@ -19,7 +21,11 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 - **VectorArray2/VectorArray3**: wrapper around regular array providing N-element access
     - eg operator[] gets/sets Vector3d for VectorArray3d, internally is double[3*count]
 
-- **Units**: enums & conversions
+- **Units**: enums, conversions, string representations
+
+- **gParallel**: multi-threading utilities, including parallel *ForEach* that works w/ .Net 3.5
+
+- **gSerialization**: binary serialization of core types (vectors, frames, polygons, DMesh3)
 
 # Math
 
@@ -42,6 +48,10 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 - **Integrate1d**: Romberg integration, Gaussian quadrature with legendre polynomials, trapezoid rule
 - **Interval1d**: 1D interval class/intersection/etc
+
+- basic arbitrary-size **DenseMatrix**, **DiagonalMatrix**, **SymmetricSparseMatrix**
+- **SparseSymmetricCG** conjugate-gradient matrix solver
+
 
 # Queries
 
@@ -79,10 +89,9 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - add/remove vertices
     - manifold-preserving Split/Flip/Collapse operators
     
-- **DMeshAABBTree**: mesh axis-aligned bounding box tree
-	- bottom-up construction using mesh topology to accelerate leaf node layer
-	- generic traversal interface
-	- Queries for NearestTriangle, (more to come)
+- **DSubmesh3**: sub-region of a DMesh3
+    - creates a new DMesh3 that is a subset of triangles of input DMesh3
+    - keeps track of index map relationships, region border information
 
 - **Remesher**: edge split/flip/collapse + vtx smooth remeshing
 	- entire mesh can be constrained to lie on an IProjectionTarget (eg for reprojection onto initial surface)
@@ -91,16 +100,70 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 		- vertices can be pinned to fixed positions
 		- vertices can be constrained to an IProjectionTarget - eg 3D polylines, smooth curves, surfaces, etc
 
+- **RegionRemesher**: applies *Remesher* to sub-region of a *DMesh3*, via *DSubmesh3*
+    - boundary of sub-region automatically preserved
+    - *BackPropropagate()* function integrates submesh back into input mesh
+    
+- Mesh manipulation/query utilities
+    - **MeshEditor**: low-level mesh editing operations
+        - operations check that they can be applied and most will back themselves out if operation fails
+        - *RemoveTriangles*, *AddTriangleFan*, *Stitch Loops*
+        - *ReinsertSubmesh* can re-insert modified submesh via *DSubmesh3*
+    - **MeshVertexSelection**: create/manipulate set of vertices. grow by one-rings, tris-to-verts, etc
+    - **MeshFaceSelection**: similiar. *LocalOptimize()* 'cleans up' irregular selection boundaries.
+    - **MeshTransforms**: mesh Translate/Rotate/Scale, map to/from *Frame3*, convert Y/Z up, Left/Right-handedness
+    - **MeshMeasurements**: mesh volume, center of mass, inertia tensor, centroid
+    - **MeshWeights**: vertex one-ring operations based on different weighting schemes
+        - *OneRingCentroid*, *CotanCentroid*, *VoronoiArea*, *MeanValueCentroid*, 
+    - **MeshBoundaryLoops**: find set of closed boundary edge loops in DMesh3, output as **EdgeLoop** objects
+	- will find smallest loops in cases where boundary has "bowtie" vertices
+    - **FaceGroupUtil**: utility functions for manipulating mesh face/triangle groups
+    - **MeshUtil**: utility functions for mesh operations
+
+- **MeshDecomposition**: breaks large mesh up into smaller submeshes of maximum size, eg for use in rendering or parallel computation
+    - produces *Component* objects that can track associations
+    - client provides *IMeshComponentManager* implementation that implements desired submesh functionality
+    - currently only supports decomposition via a linear axis sorting
+
 - various mesh generators
-    - open & closed cylinders, disc, punctured disc, with start/end angles
+    - most mesh generators support generating shared or not-shared vertices along sharp edges, UV seams, etc
+    - some support generating sections of shape (eg wedge-shaped portion of cylinder)
+    - **TrivialBox3Generator**
+    - **OpenCylinderGenerator**, **CappedCylinderGenerator**, **ConeGenerator**  (support start/end angles)
+    - **TrivialDiscGenerator**, **PuncturedDiscGenerator**, **TrivialRectGenerator**
     - **VerticalGeneralizedCylinderGenerator**
     - **TubeGenerator**: polygon swept along polyline
-    - trivial plane
     - **Curve3Axis3RevolveGenerator**: 3D polyline revolved around 3D axis
     - **Curve3Curve3RevolveGenerator**: 3D polyline revolved around 3D polyline (!)
     
-- OBJ reader/writer 
-    - reader supports OBJ materials and texture maps (paths, you sort out loading images yourself)
+- Mesh Format I/O
+    - format-agnostic **StandardMeshReader** and **StandardMeshWriter**
+        - can register additional format handlers beyond supported defaults
+        - constructs mesh via generic interface, **SimpleMeshBuilder** and **DMesh3Builder** provided
+    - readers & writers configurable via **ReadOptions** and **WriteOptions**
+    - **OBJReader/Writer** - supports vertex colors extension, read/write face groups, UVs, OBJ .mtl files
+        - stores texture map paths but you have to load images yourself
+        - currently **cannot** produce meshes with multiple UVs per vertex (not supported in DMesh3), vertices will be duplicated along UV seams
+    - **STLReader/Writer**: STL format, basic vertex welding to reconstruct topology
+    - **OFFReader/Writer**: OFF file format
+
+
+
+# Spatial Data Structures
+
+    
+- **DMeshAABBTree**: triangle mesh axis-aligned bounding box tree
+	- bottom-up construction using mesh topology to accelerate leaf node layer
+	- generic traversal interface
+	- Queries for NearestTriangle, FindNearestHitTriangle (raycast), (more to come)
+
+
+# Mesh Operations
+
+- **LaplacianMeshDeformer**: basic laplacian mesh deformation, currently only symmetrized uniform weights, conjugate-gradient solve
+- **MeshExtrusion**: duplicate existing boundary edge loop, offset to new position, stitch together with original
+- **MeshIterativeSmooth**: standard iterative vertex-laplacian smoothing with uniform, cotan, mean-value weights
+- **SimpleHoleFiller**: topological filling of an open boundary edge loop. No attempt to preserve shape whatsoever!
 
 
 # 2D Curves

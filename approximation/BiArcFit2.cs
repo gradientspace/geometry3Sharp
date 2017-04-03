@@ -5,6 +5,10 @@ using System.Text;
 
 namespace g3
 {
+	//
+	// 2D Biarc fitting ported from http://www.ryanjuckett.com/programming/biarc-interpolation/
+	//
+	//
     public class BiArcFit2
     {
         public Vector2d Point1;
@@ -24,30 +28,52 @@ namespace g3
         public Segment2d Segment1;
         public Segment2d Segment2;
 
+		// these are the computed d1 and d2 parameters. By default you will,
+		// get d1==d2, unless you specify d1 in the second constructor
+		public double FitD1;
+		public double FitD2;
 
-        // currently fit is computed in constructor
+
+        // compute standard biarc fit with d1==d2
         public BiArcFit2(Vector2d point1, Vector2d tangent1, Vector2d point2, Vector2d tangent2)
         {
             Point1 = point1; Tangent1 = tangent1;
             Point2 = point2; Tangent2 = tangent2;
             Fit();
-
-            if (arc1.IsSegment) {
-                Arc1IsSegment = true;
-                Segment1 = new Segment2d(arc1.P0, arc1.P1);
-            } else {
-                Arc1IsSegment = false;
-                Arc1 = get_arc(0);
-            }
-
-            if (arc2.IsSegment) {
-                Arc2IsSegment = true;
-                Segment2 = new Segment2d(arc2.P0, arc2.P1);
-            } else {
-                Arc2IsSegment = false;
-                Arc2 = get_arc(1);
-            }
+			set_output();
         }
+
+		// advanced biarc fit with specified d1. Note that d1 can technically be any value, but
+		// outside of some range you will get nonsense (like 2 full circles, etc). A reasonable
+		// strategy is to compute the default fit first (d1==d2), then it seems like d1 can safely be in
+		// the range [0,2*first_d1]. This will vary the length of the two arcs, and for some d1 you
+		// will almost always get a better fit.
+		public BiArcFit2(Vector2d point1, Vector2d tangent1, Vector2d point2, Vector2d tangent2, double d1)
+		{
+			Point1 = point1; Tangent1 = tangent1;
+			Point2 = point2; Tangent2 = tangent2;
+			Fit(d1);
+			set_output();
+		}
+
+
+		void set_output() {
+			if (arc1.IsSegment) {
+				Arc1IsSegment = true;
+				Segment1 = new Segment2d(arc1.P0, arc1.P1);
+			} else {
+				Arc1IsSegment = false;
+				Arc1 = get_arc(0);
+			}
+
+			if (arc2.IsSegment) {
+				Arc2IsSegment = true;
+				Segment2 = new Segment2d(arc2.P1, arc2.P0);
+			} else {
+				Arc2IsSegment = false;
+				Arc2 = get_arc(1);
+			}
+		}
 
 
 
@@ -70,10 +96,9 @@ namespace g3
 
         public List<IParametricCurve2d> Curves {
             get {
-                return new List<IParametricCurve2d>() {
-                    (Arc1IsSegment) ? (IParametricCurve2d)Segment1 : (IParametricCurve2d)Arc1,
-                    (Arc2IsSegment) ? (IParametricCurve2d)Segment2 : (IParametricCurve2d)Arc2
-                };
+				IParametricCurve2d c1 = (Arc1IsSegment) ? (IParametricCurve2d)Segment1 : (IParametricCurve2d)Arc1;
+				IParametricCurve2d c2 = (Arc2IsSegment) ? (IParametricCurve2d)Segment2 : (IParametricCurve2d)Arc2;
+				return new List<IParametricCurve2d>() { c1, c2 };
             }
         }
 
@@ -161,6 +186,8 @@ namespace g3
         //      then maybe we are safe. And we can always discard solutions where it is negative...
 
 
+		// solve biarc fit where the free parameter is automatically set so that
+		// d1=d2, which is basically the 'middle' case
         void Fit()
         {
             // get inputs
@@ -169,13 +196,6 @@ namespace g3
 
             Vector2d t1 = Tangent1;
             Vector2d t2 = Tangent2;
-
-            //double d1_min = -500;
-            //double d1_max = 500;
-            //double d1 = d1_min + (d1_max - d1_min) * ToNumber_Safe(document.getElementById('d1_frac').value) / 100.0;
-            //var d1_min = ToNumber_Safe(document.getElementById('d1_min').value);
-            //var d1_max = ToNumber_Safe(document.getElementById('d1_max').value);
-            //var d1 = d1_min + (d1_max - d1_min) * ToNumber_Safe(document.getElementById('d1_frac').value) / 100.0;
 
             // fit biarc
             Vector2d v = p2 - p1;
@@ -196,6 +216,7 @@ namespace g3
                 //Vector2d joint = p1 + 0.5 * v;
 
                 // d1 = d2 = infinity here...
+				FitD1 = FitD2 = double.PositiveInfinity;
 
                 // draw arcs
                 double angle = Math.Atan2(v.y, v.x);
@@ -221,6 +242,7 @@ namespace g3
                     double discriminant = vDotT*vDotT + denominator * vMagSqr;
                     d1 = (Math.Sqrt(discriminant) - vDotT) / denominator;
                 }
+				FitD1 = FitD2 = d1;
 
                 Vector2d joint = p1 + p2 + d1 * (t1 - t2);
                 joint *= 0.5;
@@ -231,6 +253,70 @@ namespace g3
             }
 
         }
+
+
+
+		// This is a variant of Fit() where the d1 value is specified.
+		// Note: has not been tested extensively, particularly the special case
+		// where one of the arcs beomes a semi-circle...
+		void Fit(double d1) {
+			
+			Vector2d p1 = Point1;
+			Vector2d p2 = Point2;
+
+			Vector2d t1 = Tangent1;
+			Vector2d t2 = Tangent2;
+
+			// fit biarc
+			Vector2d v = p2 - p1;
+			double vMagSqr = v.LengthSquared;
+
+			// set d1 equal to d2
+			Vector2d t = t1 + t2;
+			double tMagSqr = t.LengthSquared;
+
+			double vDotT1 = v.Dot(t1);
+
+			double vDotT2 =  v.Dot(t2);
+			double t1DotT2 = t1.Dot(t2);
+			double denominator = (vDotT2 - d1*(t1DotT2 - 1.0));
+
+			if ( MathUtil.EpsilonEqual(denominator, 0.0, MathUtil.ZeroTolerancef) ) {
+				// the second arc is a semicircle
+
+				FitD1 = d1;
+				FitD2 = double.PositiveInfinity;
+
+				Vector2d joint = p1 + d1*t1;
+				joint += (vDotT2 - d1*t1DotT2) * t2;
+
+				// construct arcs
+				// [TODO] this might not be right for semi-circle...
+				SetArcFromEdge(0, p1, t1, joint, true);
+				SetArcFromEdge(1, p2, t2, joint, false);
+
+			} else {
+				double d2 = (0.5*vMagSqr - d1*vDotT1) / denominator;
+				double invLen = 1.0 / (d1 + d2);
+
+				Vector2d joint = (d1*d2) * (t1 - t2);
+				joint += d1*p2;
+				joint += d2*p1;
+				joint *= invLen;
+
+				FitD1 = d1;
+				FitD2 = d2;
+
+				// draw arcs
+				SetArcFromEdge(0, p1, t1, joint, true);
+				SetArcFromEdge(1, p2, t2, joint, false);
+			}
+
+
+		}
+
+
+
 
 
 

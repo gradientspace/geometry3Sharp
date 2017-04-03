@@ -9,6 +9,8 @@ namespace g3
 	// and -MAX_REAL are allowed, and degenerate intervals are allowed:
 	// u0 = u1 or v0 = v1.
 	//
+    // [TODO] could this be struct? is not used in contexts where we necessarily need a new object...
+    //
 	public class Intersector1 
 	{
 		// intervals to intersect

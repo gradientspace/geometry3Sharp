@@ -20,7 +20,7 @@ namespace g3
 
 
         // connect to this to get warning messages
-		public event ErrorEventHandler warningEvent;
+		public event ParsingMessagesHandler warningEvent;
 
 
         //int nWarningLevel = 0;      // 0 == no diagnostics, 1 == basic, 2 == crazy
@@ -256,8 +256,8 @@ namespace g3
                 sMessage += " (additional message surpressed)";
 
             var e = warningEvent;
-            if ( e != null ) 
-                e(this, new ErrorEventArgs(new Exception(sMessage)));
+            if (e != null)
+                e(sMessage, null);
         }
 
     }

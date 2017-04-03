@@ -6,8 +6,12 @@ using System.IO;
 
 namespace g3
 {
-    public class StandardMeshWriter
+    public class StandardMeshWriter : IDisposable
     {
+        public void Dispose()
+        {
+        }
+
 
         static public IOWriteResult WriteFile(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
@@ -26,6 +30,8 @@ namespace g3
                 writeFunc = Write_OBJ;
             else if (sExtension.Equals(".stl", StringComparison.OrdinalIgnoreCase))
                 writeFunc = Write_STL;
+            else if (sExtension.Equals(".off", StringComparison.OrdinalIgnoreCase))
+                writeFunc = Write_OFF;
 
             if (writeFunc == null)
                 return new IOWriteResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
@@ -52,6 +58,18 @@ namespace g3
             return result;
         }
 
+
+        IOWriteResult Write_OFF(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            StreamWriter w = new StreamWriter(sFilename);
+            if (w.BaseStream == null)
+                return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
+
+            OFFWriter writer = new OFFWriter();
+            var result = writer.Write(w, vMeshes, options);
+            w.Close();
+            return result;
+        }
 
 
         IOWriteResult Write_STL(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)

@@ -5,6 +5,13 @@ using System.Text;
 
 namespace g3
 {
+
+    //
+    // [RMS] AAAAHHHH usage of Blocks vs iCurBlock is not consistent!!
+    //   - Should be supporting Capacity vs Size...
+    //   - this[] operator does not check bounds, so it can write to any valid Block
+    //   - some fns discard Blocks beyond iCurBlock
+    //   - wtf...
     public class DVector<T>
     {
         List<T[]> Blocks;
@@ -32,6 +39,12 @@ namespace g3
             }
         }
 
+        public DVector(T[] data)
+        {
+            nBlockSize = 2048;
+            Initialize(data);
+        }
+
         public DVector(IEnumerable<T> init)
         {
             nBlockSize = 2048;
@@ -44,9 +57,18 @@ namespace g3
                 Add(v);
         }
 
-        public int Length
-        {
-            get { return (Blocks.Count - 1) * nBlockSize + iCurBlockUsed;  }
+
+
+        //public int Capacity {
+        //    get { return Blocks.Count * nBlockSize;  }
+        //}
+
+        public int Length {
+            get { return iCurBlock * nBlockSize + iCurBlockUsed;  }
+        }
+
+        public int BlockCount {
+            get { return nBlockSize; }
         }
 
         public int size {
@@ -100,6 +122,8 @@ namespace g3
             {
                 iCurBlock--;
                 iCurBlockUsed = nBlockSize;
+
+                // remove block ??
             }
         }
 
@@ -184,12 +208,15 @@ namespace g3
             for (int k = 0; k < nLen; ++k)
                 data[k] = this[k];
         }
-        public T[] GetBuffer()
+        public T[] GetBuffer()      // todo: deprecate this...
         {
             T[] data = new T[this.Length];
             for (int k = 0; k < this.Length; ++k)
                 data[k] = this[k];
             return data;
+        }
+        public T[] ToArray() {
+            return GetBuffer();
         }
 
         // warning: this may be quite slow!
@@ -215,6 +242,30 @@ namespace g3
             }
             Buffer.BlockCopy(Blocks[N-1], 0, buffer, i, iCurBlockUsed * n);
             return buffer;
+        }
+
+
+
+        public void Initialize(T[] data)
+        {
+            int blocks = data.Length / nBlockSize;
+            Blocks = new List<T[]>();
+            int ai = 0;
+            for (int i = 0; i < blocks; ++i) {
+                T[] block = new T[nBlockSize];
+                Array.Copy(data, ai, block, 0, nBlockSize);
+                Blocks.Add(block);
+                ai += nBlockSize;
+            }
+            iCurBlockUsed = data.Length - ai;
+            if (iCurBlockUsed != 0) {
+                T[] last = new T[nBlockSize];
+                Array.Copy(data, ai, last, 0, iCurBlockUsed);
+                Blocks.Add(last);
+            } else {
+                iCurBlockUsed = nBlockSize;
+            }
+            iCurBlock = Blocks.Count - 1;
         }
 
 
@@ -258,6 +309,20 @@ namespace g3
             }
             System.Runtime.InteropServices.Marshal.Copy(v.Blocks[N - 1], 0, pCur, v.iCurBlockUsed);
         }
+
+
+
+        // block iterator
+        public struct DBlock
+        {
+            public T[] data;
+            public int usedCount;
+        }
+		public IEnumerable< DBlock > BlockIterator() {
+            for (int i = 0; i < iCurBlock; ++i)
+                yield return new DBlock() { data = Blocks[i], usedCount = nBlockSize };
+            yield return new DBlock() { data = Blocks[iCurBlock], usedCount = iCurBlockUsed };
+		}
 
     }
 }

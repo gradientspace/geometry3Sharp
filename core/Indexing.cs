@@ -98,10 +98,55 @@ namespace g3
 
 
 
+	// basic interface that allows mapping an index to another index
+	public interface IIndexMap
+	{
+		int this[int index] { get; }
+	}
+
+
+	// i = i index map
+	public class IdentityIndexMap : IIndexMap
+	{
+		public int this[int index] {
+			get { return index; }
+		}
+	}
+
+
+	// i = i + constant index map
+	public class ShiftIndexMap : IIndexMap
+	{
+		public int Shift;
+
+		public ShiftIndexMap(int n) {
+			Shift = n;
+		}
+
+		public int this[int index] {
+			get { return index + Shift; }
+		}
+	}
+
+
+	// i = constant index map
+	public class ConstantIndexMap : IIndexMap
+	{
+		public int Constant;
+
+		public ConstantIndexMap(int c) {
+			Constant = c;
+		}
+
+		public int this[int index] {
+			get { return Constant; }
+		}
+	}
+
 
 
     // dense or sparse index map
-    public class IndexMap
+	public class IndexMap : IIndexMap
     {
         // this is returned if sparse map doesn't contain value
         public readonly int InvalidIndex = int.MinValue;

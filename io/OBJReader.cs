@@ -6,6 +6,27 @@ using System.IO;
 
 namespace g3
 {
+
+	/// <summary>
+	/// gradientspace OBJ mesh format parser
+	/// 
+	/// Basic structure is:
+	///   1) parse OBJ into internal data structures that represent OBJ exactly
+	///   2) convert to mesh objects based on options/etc
+	/// 
+	/// [TODO] major current limitation is that we do not support multiple UVs per-vertex
+	///   (this is a limitation of DMesh3). Similarly no multiple normals per-vertex. So,
+	///   in the current code, such vertices are duplicated. See append_vertex() and use
+	///   of Index3i triplet (vi,ni,ui) to represent vertex in BuildMeshes_X() functions
+	/// 
+	/// [TODO] only a single material can be assigned to a mesh, this is a current limitation
+	///   of DMesh3Builder. So, in this case we are splitting the input mesh by material, IE
+	///   multiple meshes are returned for a single input mesh, each with one material.
+	/// 
+	/// 
+	/// </summary>
+
+
     internal unsafe struct Triangle
     {
         public const int InvalidMaterialID = -1;
@@ -92,7 +113,7 @@ namespace g3
 		public List<string> MTLFileSearchPaths { get; set; } 
 
         // connect to this to get warning messages
-		public event ErrorEventHandler warningEvent;
+		public event ParsingMessagesHandler warningEvent;
 
 
 
@@ -144,16 +165,11 @@ namespace g3
 
 
 
-        struct vtx_key
+		int append_vertex(IMeshBuilder builder, Index3i vertIdx, bool bHaveNormals, bool bHaveColors, bool bHaveUVs )
         {
-            public int vi, ni, ci, ui;
-        }
-
-        int append_vertex(IMeshBuilder builder, vtx_key vk, bool bHaveNormals, bool bHaveColors, bool bHaveUVs )
-        {
-            int vi = 3 * vk.vi;
-            if ( vk.vi < 0 || vk.vi >= vPositions.Length/3 ) {
-                emit_warning("[OBJReader] append_vertex() referencing invalid vertex " + vk.vi.ToString());
+            int vi = 3 * vertIdx.a;
+            if ( vertIdx.a < 0 || vertIdx.a >= vPositions.Length/3 ) {
+                emit_warning("[OBJReader] append_vertex() referencing invalid vertex " + vertIdx.a.ToString());
                 return -1;
             }
 
@@ -165,17 +181,16 @@ namespace g3
             vinfo.v = new Vector3d(vPositions[vi], vPositions[vi + 1], vPositions[vi + 2]);
             if ( bHaveNormals ) {
                 vinfo.bHaveN = true;
-                int ni = 3 * vk.ni;
+                int ni = 3 * vertIdx.b;
                 vinfo.n = new Vector3f(vNormals[ni], vNormals[ni + 1], vNormals[ni + 2]);
             }
             if ( bHaveColors ) {
                 vinfo.bHaveC = true;
-                int ci = 3 * vk.ci;
-                vinfo.c = new Vector3f(vColors[ci], vColors[ci + 1], vColors[ci + 2]);
+                vinfo.c = new Vector3f(vColors[vi], vColors[vi + 1], vColors[vi + 2]);
             }
             if ( bHaveUVs ) {
                 vinfo.bHaveUV = true;
-                int ui = 2 * vk.ui;
+                int ui = 2 * vertIdx.c;
                 vinfo.uv = new Vector2f(vUVs[ui], vUVs[ui + 1]);
             }
 
@@ -225,7 +240,7 @@ namespace g3
 
             int meshID = builder.AppendNewMesh(bHaveNormals, bHaveColors, bHaveUVs, false);
             for (int k = 0; k < nVertices; ++k) {
-                vtx_key vk = new vtx_key() { vi = k, ci = k, ni = k, ui = k } ;
+				Index3i vk = new Index3i(k,k,k);
                 mapV[k] = append_vertex(builder, vk, bHaveNormals, bHaveColors, bHaveUVs);
             }
 
@@ -270,20 +285,24 @@ namespace g3
                     matID = builder.BuildMaterial(useMat);
                 }
                 bool bMatHaveUVs = (material_id == Triangle.InvalidMaterialID) ? false : bHaveUVs;
-                int meshID = builder.AppendNewMesh(bHaveNormals, bHaveColors, bMatHaveUVs, false);
 
-                Dictionary<vtx_key, int> mapV = new Dictionary<vtx_key, int>();
+				// don't append mesh until we actually see triangles
+				int meshID = -1;
+
+                Dictionary<Index3i, int> mapV = new Dictionary<Index3i, int>();
 
                 for ( int k = 0; k < vTriangles.Length; ++k ) {
+
                     Triangle t = vTriangles[k];
                     if (t.nMaterialID == material_id) {
+
+						if ( meshID == -1 )
+							meshID = builder.AppendNewMesh(bHaveNormals, bHaveColors, bMatHaveUVs, false);
+						
                         Triangle t2 = new Triangle();
                         for (int j = 0; j < 3; ++j) {
-                            vtx_key vk = new vtx_key();
-                            vk.vi = t.vIndices[j] - 1;
-                            vk.ni = t.vNormals[j] - 1;
-                            vk.ui = t.vUVs[j] - 1;
-                            vk.ci = vk.vi;
+                            Index3i vk = new Index3i(
+								t.vIndices[j] - 1, t.vNormals[j] - 1, t.vUVs[j] - 1 );
 
                             int use_vtx = -1;
                             if (mapV.ContainsKey(vk) == false) {
@@ -400,13 +419,15 @@ namespace g3
                     } else if (tokens[0] == "mtllib" && options.ReadMaterials) {
                         if (MTLFileSearchPaths.Count == 0)
                             emit_warning("Materials requested but Material Search Paths not initialized!");
-                        string sFile = FindMTLFile(tokens[1]);
+						string sMTLPathString = (tokens.Length == 2) ? tokens[1] :
+							line.Substring( line.IndexOf(tokens[1]) );
+						string sFile = FindMTLFile(sMTLPathString);
                         if (sFile != null) {
                             IOReadResult result = ReadMaterials(sFile);
                             if (result.code != IOCode.Ok)
                                 emit_warning("error parsing " + sFile + " : " + result.message);
                         } else
-                            emit_warning("material file " + sFile + " could not be found in material search paths");
+							emit_warning("material file " + sMTLPathString + " could not be found in material search paths");
 
                     } else if (tokens[0] == "usemtl" && options.ReadMaterials) {
                         activeMaterial = find_material(tokens[1]);
@@ -611,26 +632,26 @@ namespace g3
                     if (curMaterial != null) curMaterial.Ni = Single.Parse(tokens[1]);
 
                 } else if (tokens[0] == "map_Ka") {
-                    if (curMaterial != null) curMaterial.map_Ka = tokens[1];
+					if (curMaterial != null) curMaterial.map_Ka = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "map_Kd") {
-                    if (curMaterial != null) curMaterial.map_Kd = tokens[1];
+					if (curMaterial != null) curMaterial.map_Kd = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "map_Ks") {
-                    if (curMaterial != null) curMaterial.map_Ks = tokens[1];
+					if (curMaterial != null) curMaterial.map_Ks = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "map_Ke") {
-                    if (curMaterial != null) curMaterial.map_Ke = tokens[1];
+					if (curMaterial != null) curMaterial.map_Ke = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "map_d") {
-                    if (curMaterial != null) curMaterial.map_d = tokens[1];
+					if (curMaterial != null) curMaterial.map_d = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "map_Ns") {
-                    if (curMaterial != null) curMaterial.map_Ns = tokens[1];
+					if (curMaterial != null) curMaterial.map_Ns = parse_mtl_path(line,tokens);
 
                 } else if (tokens[0] == "bump" || tokens[0] == "map_bump") {
-                    if (curMaterial != null) curMaterial.bump = tokens[1];
+					if (curMaterial != null) curMaterial.bump = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "disp") {
-                    if (curMaterial != null) curMaterial.disp = tokens[1];
+					if (curMaterial != null) curMaterial.disp = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "decal") {
-                    if (curMaterial != null) curMaterial.decal = tokens[1];
+					if (curMaterial != null) curMaterial.decal = parse_mtl_path(line,tokens);
                 } else if (tokens[0] == "refl") {
-                    if (curMaterial != null) curMaterial.refl = tokens[1];
+					if (curMaterial != null) curMaterial.refl = parse_mtl_path(line,tokens);
                 } else {
                     emit_warning("unknown material command " + tokens[0]);
                 }
@@ -643,6 +664,13 @@ namespace g3
             return new IOReadResult(IOCode.Ok, "ok");
 		}
 
+
+		private string parse_mtl_path(string line, string[] tokens) {
+			if ( tokens.Length == 2 )
+				return tokens[1];
+			else
+				return line.Substring( line.IndexOf(tokens[1]) );
+		}
 
         private Vector3f parse_mtl_color(string[] tokens)
         {
@@ -693,7 +721,7 @@ namespace g3
 
             var e = warningEvent;
             if ( e != null ) 
-                e(this, new ErrorEventArgs(new Exception(sMessage)));
+                e(sMessage, null);
         }
 
 

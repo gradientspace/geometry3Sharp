@@ -29,6 +29,7 @@ namespace g3
 		int id_generator = 1;
 
 		public abstract class Element {
+			public IParametricCurve2d source;
 			public int ID = 0;
 
 			public abstract IEnumerable<Segment2d> SegmentItr();
@@ -37,7 +38,6 @@ namespace g3
 
 		public class SmoothCurveElement : Element 
 		{
-			public IParametricCurve2d source;
 			public PolyLine2d polyLine;
 
 			public override IEnumerable<Segment2d> SegmentItr() {
@@ -50,7 +50,6 @@ namespace g3
 
 		public class SmoothLoopElement : Element 
 		{
-			public IParametricCurve2d source;
 			public Polygon2d polygon;
 
 			public override IEnumerable<Segment2d> SegmentItr() {
@@ -176,6 +175,34 @@ namespace g3
 
 
 
+		public void SplitAllLoops() {
+			List<Element> vRemove = new List<Element>();
+			List<IParametricCurve2d> vAdd = new List<IParametricCurve2d>();
+
+			foreach ( SmoothLoopElement loop in LoopsItr() ) {
+				if ( loop.source is IMultiCurve2d ) {
+					vRemove.Add(loop);
+					find_sub_elements(loop.source as IMultiCurve2d, vAdd);
+				}
+			}
+
+			foreach ( var e in vRemove )
+				Remove(e);
+			foreach ( var c in vAdd )
+				Add(c);
+		}
+		private void find_sub_elements(IMultiCurve2d multicurve, List<IParametricCurve2d> vAdd) {
+			foreach ( IParametricCurve2d curve in multicurve.Curves ) {
+				if ( curve is IMultiCurve2d ) {
+					find_sub_elements(curve as IMultiCurve2d, vAdd);
+				} else {
+					vAdd.Add(curve);
+				}
+			}
+		}
+
+
+
 
 		public bool JoinElements(ComplexEndpoint2d a, ComplexEndpoint2d b) {
 			if (a.element == b.element)
@@ -260,7 +287,42 @@ namespace g3
         {
             public List<GeneralPolygon2d> Polygons;
             public List<PlanarSolid2d> Solids;
+
+
+            public AxisAlignedBox2d Bounds {
+                get {
+                    AxisAlignedBox2d bounds = AxisAlignedBox2d.Empty;
+                    foreach (GeneralPolygon2d p in Polygons)
+                        bounds.Contain(p.Bounds);
+                    return bounds;
+                }
+            }
+
+
+            public double Area {
+                get {
+                    double area = 0;
+                    foreach (GeneralPolygon2d p in Polygons)
+                        area += p.Area;
+                    return area;
+                }
+            }
+
+
+            public double HolesArea {
+                get {
+                    double area = 0;
+                    foreach (GeneralPolygon2d p in Polygons) {
+                        foreach ( Polygon2d h in p.Holes )
+                            area += Math.Abs(h.SignedArea);
+                    }
+                    return area;
+                }
+            }
         }
+
+
+
 
         // Finds set of "solid" regions - eg boundary loops with interior holes.
         // Result has outer loops being clockwise, and holes counter-clockwise
@@ -438,7 +500,7 @@ namespace g3
         public int CountType(Type t)
         {
             int count = 0;
-            foreach (SmoothLoopElement loop in LoopsItr()) {
+			foreach (Element loop in vElements) {
                 if (loop.source.GetType() == t)
                     count++;
                 if (loop.source is IMultiCurve2d)

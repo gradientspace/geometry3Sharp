@@ -24,6 +24,11 @@ namespace g3
             rotation = Quaternionf.Identity;
             this.origin = origin;
         }
+        public Frame3f(Vector3d origin)
+        {
+            rotation = Quaternionf.Identity;
+            this.origin = (Vector3f)origin;
+        }
 
         public Frame3f(Vector3f origin, Vector3f setZ)
         {
@@ -46,6 +51,13 @@ namespace g3
         {
             rotation = orientation;
             this.origin = origin;
+        }
+
+        public Frame3f(Vector3f origin, Vector3f x, Vector3f y, Vector3f z)
+        {
+            this.origin = origin;
+            Matrix3f m = new Matrix3f(x, y, z, false);
+            this.rotation = m.ToQuaternion();
         }
 
 
@@ -99,10 +111,24 @@ namespace g3
         {
             return new Frame3f(this.origin + fDistance * this.GetAxis(nAxis), this.rotation);
         }
+
+        public void Scale(float f)
+        {
+            origin *= f;
+        }
+        public void Scale(Vector3f scale)
+        {
+            origin *= scale;
+        }
         public Frame3f Scaled(float f)
         {
             return new Frame3f(f * this.origin, this.rotation);
         }
+        public Frame3f Scaled(Vector3f scale)
+        {
+            return new Frame3f(scale * this.origin, this.rotation);
+        }
+
         public void Rotate(Quaternionf q)
         {
             Debug.Assert(rotation.w != 0);      // catch un-initialized quaternions
@@ -117,6 +143,16 @@ namespace g3
         {
             Debug.Assert(rotation.w != 0);
             return this.Rotated(new Quaternionf(GetAxis(nAxis), fAngle));
+        }
+
+        /// <summary>
+        /// this rotates the frame around its own axes, rather than around the world axes,
+        /// which is what Rotate() does. So, RotateAroundAxis(AxisAngleD(Z,180)) is equivalent
+        /// to Rotate(AxisAngleD(My_AxisZ,180)). 
+        /// </summary>
+        public void RotateAroundAxes(Quaternionf q)
+        {
+            rotation = rotation * q;
         }
 
         public void RotateAround(Vector3f point, Quaternionf q)
@@ -175,13 +211,28 @@ namespace g3
             v = Quaternionf.Inverse(this.rotation) * v;
             return v;
         }
+        public Vector3d ToFrameP(Vector3d v)
+        {
+            v = v - this.origin;
+            v = Quaternionf.Inverse(this.rotation) * v;
+            return v;
+        }
         public Vector3f FromFrameP(Vector3f v)
+        {
+            return this.rotation * v + this.origin;
+        }
+        public Vector3d FromFrameP(Vector3d v)
         {
             return this.rotation * v + this.origin;
         }
 
 
+
         public Vector3f ToFrameV(Vector3f v)
+        {
+            return Quaternionf.Inverse(this.rotation) * v;
+        }
+        public Vector3d ToFrameV(Vector3d v)
         {
             return Quaternionf.Inverse(this.rotation) * v;
         }
@@ -189,6 +240,12 @@ namespace g3
         {
             return this.rotation * v;
         }
+        public Vector3d FromFrameV(Vector3d v)
+        {
+            return this.rotation * v;
+        }
+
+
 
         public Quaternionf ToFrame(Quaternionf q)
         {
@@ -215,12 +272,20 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Compute intersection of ray with plane passing through frame origin, normal
+        /// to the specified axis. 
+        /// If the ray is parallel to the plane, no intersection can be found, and
+        /// we return Vector3f.Invalid
+        /// </summary>
         public Vector3f RayPlaneIntersection(Vector3f ray_origin, Vector3f ray_direction, int nAxisAsNormal)
         {
             Vector3f N = GetAxis(nAxisAsNormal);
             float d = -Vector3f.Dot(Origin, N);
-            float t = -(Vector3f.Dot(ray_origin, N) + d) / (Vector3f.Dot(ray_direction, N));
+            float div = Vector3f.Dot(ray_direction, N);
+            if (MathUtil.EpsilonEqual(div, 0, MathUtil.ZeroTolerancef))
+                return Vector3f.Invalid;
+            float t = -(Vector3f.Dot(ray_origin, N) + d) / div;
             return ray_origin + t * ray_direction;
         }
 

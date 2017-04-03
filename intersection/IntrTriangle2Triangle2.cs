@@ -3,7 +3,8 @@
 namespace g3 
 {
 	// ported from WildMagic5 
-	public class IntrTriangleTriangle2
+    // [TODO] Vector2d 6-tuple, to avoid internal arrays
+	public class IntrTriangle2Triangle2
 	{
 		Triangle2d triangle0;
 		public Triangle2d Triangle0
@@ -32,7 +33,7 @@ namespace g3
 		// however only the first Quantity vertices will be valid
 		public Vector2d[] Points;
 
-		public IntrTriangleTriangle2(Triangle2d t0, Triangle2d t1)
+		public IntrTriangle2Triangle2(Triangle2d t0, Triangle2d t1)
 		{
 			triangle0 = t0;
 			triangle1 = t1;
@@ -76,7 +77,7 @@ namespace g3
 
 
 
-		public IntrTriangleTriangle2 Compute()
+		public IntrTriangle2Triangle2 Compute()
 		{
 			Find();
 			return this;

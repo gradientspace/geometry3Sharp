@@ -4,7 +4,7 @@
 namespace g3
 {
 
-    public class MathUtil
+    public static class MathUtil
     {
 
         public const double Deg2Rad = (Math.PI / 180.0);
@@ -22,6 +22,14 @@ namespace g3
 
         public const float ZeroTolerancef = 1e-06f;
         public const float Epsilonf = 1.192092896e-07F;
+
+
+        public static bool IsFinite(double d) {
+            return double.IsInfinity(d) == false && double.IsNaN(d) == false;
+        }
+        public static bool IsFinite(float d) {
+            return float.IsInfinity(d) == false && float.IsNaN(d) == false;
+        }
 
 
         public static bool EpsilonEqual(double a, double b, double epsilon = MathUtil.Epsilon) {
@@ -119,6 +127,25 @@ namespace g3
             while (val < 0)
                 val += mod;
             return val % mod;
+        }
+
+
+        // compute min and max of a,b,c with max 3 comparisons (sometimes 2)
+        public static void MinMax(double a, double b, double c, out double min, out double max)
+        {
+            if ( a < b ) {
+                if ( a < c ) {
+                    min = a; max = Math.Max(b, c);
+                } else {
+                    min = c; max = b;
+                }
+            } else {
+                if ( a > c ) {
+                    max = a; min = Math.Min(b, c);
+                } else {
+                    min = b; max = c;
+                }
+            }
         }
 
 
@@ -332,7 +359,7 @@ namespace g3
 		//            <0 for P2 right of the line
 		public static double IsLeft( Vector2d P0, Vector2d P1, Vector2d P2 )
 		{
-			return ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y) );
+			return Math.Sign( ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y) ) );
 		}
 
 

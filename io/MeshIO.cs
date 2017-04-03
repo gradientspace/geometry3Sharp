@@ -13,6 +13,7 @@ namespace g3
 
         FileAccessError = 1,
         UnknownFormatError = 2,
+        FormatNotSupportedError = 3,
 
         // read errors
         FileParsingError = 100,
@@ -28,6 +29,8 @@ namespace g3
         ComputingInWorkerThread = 1000
     }
 
+
+
     public class ReadOptions
     {
 		public bool ReadMaterials;
@@ -36,6 +39,10 @@ namespace g3
         {
 			ReadMaterials = false;
         }
+
+        public static readonly ReadOptions Defaults = new ReadOptions() {
+            ReadMaterials = false
+        };
     }
 
     public struct IOReadResult
@@ -43,7 +50,9 @@ namespace g3
         public IOCode code { get; set; }
         public string message { get; set; }
         public IOReadResult(IOCode r, string s) { code = r; message = s; if (message == "") message = "(no message)"; }
-    }
+
+		public static readonly IOReadResult Ok = new IOReadResult(IOCode.Ok, "");	
+	}
 
 
 
@@ -60,28 +69,40 @@ namespace g3
         public IOCode code { get; set; }
         public string message { get; set; }
         public IOWriteResult( IOCode r, string s ) { code = r;  message = s; if (message == "") message = "(no message)"; }
+
+		public static readonly IOWriteResult Ok = new IOWriteResult(IOCode.Ok, "");
     }
 
     public struct WriteOptions
     {
-        public bool bWriteBinary;        
+		public bool bWriteBinary;        	// write binary format if supported (STL)
 
-        public bool bPerVertexNormals;
-        public bool bPerVertexColors;
-        public bool bWriteGroups;
+		public bool bPerVertexNormals;		// write per-vertex normals (OBJ)
+		public bool bPerVertexColors;		// write per-vertex colors (OBJ)
+		public bool bPerVertexUVs;			// write per-vertex UVs
+											// can be overridden by per-mesh UVs in WriteMesh
+		public bool bWriteGroups;			// write face groups (OBJ)
 
-        public bool bCombineMeshes;     // some STL readers do not handle multiple solids...
+        public bool bCombineMeshes;     	// combine all input meshes into a single output mesh
+											// some STL readers do not handle multiple solids...
 
-        public int RealPrecisionDigits;
+		public int RealPrecisionDigits;		// number of digits of float precision (after decimal)
 
-        public Action<int, int> ProgressFunc;
+		public bool bWriteMaterials;		// for OBJ, indicates that .mtl file should be written
+		public string MaterialFilePath;		// only used if bWriteMaterialFile = true
+
+        public Action<int, int> ProgressFunc;	// progress monitoring callback
+
+        public Func<string> AsciiHeaderFunc;    // if you define this, returned string will be written as header start of ascii formats
 
         public static readonly WriteOptions Defaults = new WriteOptions() {
             bWriteBinary = false,
             bPerVertexNormals = false,
             bPerVertexColors = false,
             bWriteGroups = false,
+            bPerVertexUVs = false,
             bCombineMeshes = false,
+			bWriteMaterials = false,
             ProgressFunc = null,
 
             RealPrecisionDigits = 15       // double
@@ -93,10 +114,20 @@ namespace g3
     public struct WriteMesh
     {
         public IMesh Mesh;
-        public string Name;        // supported by some formats
+        public string Name;         // supported by some formats
+
+		public List<GenericMaterial> Materials;		// set of materials (possibly) used in this mesh
+		public IIndexMap TriToMaterialMap;			// triangle index -> Materials list index
+
+		public DenseUVMesh UVs;  // separate UV layer (just one for now)
+								 // assumption is that # of triangles in this UV mesh is same as in Mesh
 
         public WriteMesh(IMesh mesh, string name = "") {
-            Mesh = mesh; Name = name;
+            Mesh = mesh;
+            Name = name;
+            UVs = null;
+			Materials = null;
+			TriToMaterialMap = null;
         }
     }
 

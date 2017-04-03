@@ -45,6 +45,8 @@ namespace g3 {
 		}
 
 		public static readonly Box3d Empty = new Box3d(Vector3d.Zero);
+        public static readonly Box3d UnitZeroCentered = new Box3d(Vector3d.Zero, 0.5 * Vector3d.One);
+        public static readonly Box3d UnitPositive = new Box3d(0.5 * Vector3d.One, 0.5 * Vector3d.One);
 
 
 		public Vector3d Axis(int i)

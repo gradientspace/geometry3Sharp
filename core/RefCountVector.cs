@@ -32,6 +32,10 @@ namespace g3
             used_count = copy.used_count;
         }
 
+        public DVector<short> RawRefCounts {
+            get { return ref_counts; }
+        }
+
         public bool empty {
             get { return used_count == 0; }
         }
@@ -93,11 +97,31 @@ namespace g3
         }
 
 
+        // [RMS] really should not use this!!
+        public void set_Unsafe(int index, short count)
+        {
+            ref_counts[index] = count;
+        }
+
         // todo:
         //   insert
         //   remove
         //   clear
 
+
+        public void rebuild_free_list()
+        {
+            free_indices = new DVector<int>();
+            used_count = 0;
+
+            int N = ref_counts.Length;
+            for ( int i = 0; i < N; ++i ) {
+                if (ref_counts[i] > 0)
+                    used_count++;
+                else
+                    free_indices.Add(i);
+            }
+        }
 
 
 

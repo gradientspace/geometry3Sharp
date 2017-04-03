@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace g3
 {
@@ -22,8 +23,10 @@ namespace g3
         {
             public Vector3d Position;
             public double Weight;
+            public bool PostFix;
         }
         Dictionary<int, SoftConstraintV> SoftConstraints = new Dictionary<int, SoftConstraintV>();
+        bool HavePostFixedConstraints = false;
 
 
         // needs to be updated after constraints
@@ -44,15 +47,21 @@ namespace g3
         }
 
 
-        public void SetConstraint(int vID, Vector3d targetPos, double weight)
+        public void SetConstraint(int vID, Vector3d targetPos, double weight, bool bForceToFixedPos = false)
         {
-            SoftConstraints[vID] = new SoftConstraintV() { Position = targetPos, Weight = weight };
+            SoftConstraints[vID] = new SoftConstraintV() { Position = targetPos, Weight = weight, PostFix = bForceToFixedPos };
+            HavePostFixedConstraints = HavePostFixedConstraints || bForceToFixedPos;
             need_solve_update = true;
+        }
+
+        public bool IsConstrained(int vID) {
+            return SoftConstraints.ContainsKey(vID);
         }
 
         public void ClearConstraints()
         {
             SoftConstraints.Clear();
+            HavePostFixedConstraints = false;
             need_solve_update = true;
         }
 
@@ -153,9 +162,13 @@ namespace g3
             }
 
             // update basic preconditioner
+            // [RMS] currently not using this...it actually seems to make things
+            //   worse!! 
             for ( int i = 0; i < N; i++ ) {
-                double diag_value = M[i, i] + WeightsM[i, i];
-                Preconditioner.Set(i, i, 1.0 / diag_value);
+                //double diag_value = M[i, i] + WeightsM[i, i];
+                double diag_value = M[i, i];
+                //Preconditioner.Set(i, i, 1.0 / diag_value);
+                Preconditioner.Set(i, i, diag_value);
             }
 
             need_solve_update = false;
@@ -194,6 +207,8 @@ namespace g3
             bool[] ok = new bool[3];
             int[] indices = new int[3] { 0, 1, 2 };
 
+            // preconditioned solve is slower =\
+            //Action<int> SolveF = (i) => {  ok[i] = solvers[i].SolvePreconditioned(); };
             Action<int> SolveF = (i) => {  ok[i] = solvers[i].Solve(); };
             gParallel.ForEach(indices, SolveF);
 
@@ -204,6 +219,17 @@ namespace g3
                 int vid = ToMeshV[i];
                 Result[vid] = new Vector3d(Sx[i], Sy[i], Sz[i]);
             }
+
+            // apply post-fixed constraints
+            if (HavePostFixedConstraints) {
+                foreach (var constraint in SoftConstraints) {
+                    if (constraint.Value.PostFix) {
+                        int vid = constraint.Key;
+                        Result[vid] = constraint.Value.Position;
+                    }
+                }
+            }
+
             return true;
         }
 

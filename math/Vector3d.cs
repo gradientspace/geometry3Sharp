@@ -32,6 +32,18 @@ namespace g3
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
         }
 
+        public Vector2d xy {
+            get { return new Vector2d(x, y); }
+            set { x = xy.x; y = xy.y; }
+        }
+        public Vector2d xz {
+            get { return new Vector2d(x, z); }
+            set { x = xy.x; z = xy.y; }
+        }
+        public Vector2d yz {
+            get { return new Vector2d(y, z); }
+            set { y = xy.x; z = xy.y; }
+        }
 
         public double LengthSquared
         {
@@ -77,6 +89,11 @@ namespace g3
 		public bool IsNormalized {
 			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerance; }
 		}
+
+        public bool IsFinite
+        {
+            get { double f = x + y + z; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
+        }
 
         public double Dot(Vector3d v2)
         {
@@ -173,7 +190,10 @@ namespace g3
         {
             return new Vector3d(v.x / f, v.y / f, v.z / f);
         }
-
+        public static Vector3d operator /(double f, Vector3d v)
+        {
+            return new Vector3d(f / v.x, f / v.y, f / v.z);
+        }
 
         public static Vector3d operator *(Vector3d a, Vector3d b)
         {

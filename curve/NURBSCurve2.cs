@@ -422,7 +422,8 @@ namespace g3
         }
 
 
-
+		// returned list is set of unique knot values in range [0,1], ie
+		// with no duplicates at repeated knots
 		public List<double> GetParamIntervals() {
 			List<double> l = new List<double>();
 			l.Add(0);
@@ -436,5 +437,34 @@ namespace g3
 			return l;
 		}
 
+
+		// similar to GetParamIntervals, but leaves out knots of
+		// multiplicity 1, where curve would be continuous. Idea is to
+		// get "smooth" intervals, for sampling/etc, because some real-world
+		// curves have crazy #'s of knots/CVs.
+		// [TODO] knot multiplicity does not mean non-smoothness. EG Bezier represnted
+		// as b-spline has count=3 at each CV but can still be C^2. Really should be
+		// checking incoming/outgoing tangents at repeated CVs...
+		public List<double> GetContinuousParamIntervals() {
+			List<double> l = new List<double>();
+			//l.Add(0);
+			double cur_knot = -1;
+			int cur_knot_count = 0;
+			for ( int i = 0; i < mBasis.KnotCount; ++i ) {
+				double k = mBasis.GetKnot(i);
+				if ( k == cur_knot ) {
+					cur_knot_count++;
+				} else {
+					if ( cur_knot_count > 1 )
+						l.Add(cur_knot);
+					cur_knot = k;
+					cur_knot_count = 1;
+				}
+
+			}
+			if ( l.Last() != 1.0 )
+				l.Add(1.0);
+			return l;
+		}
     }
 }

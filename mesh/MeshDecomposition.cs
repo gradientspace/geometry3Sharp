@@ -126,9 +126,18 @@ namespace g3
                     tri_order[i++] = ti;
             }
 
+            // precompute triangle centroids - wildly expensive to
+            // do it inline in sort (!)  I guess O(N) vs O(N log N)
+            Vector3d[] centroids = new Vector3d[mesh.MaxTriangleID];
+            gParallel.ForEach(mesh.TriangleIndices(), (ti) => {
+                if (mesh.IsTriangle(ti))
+                    centroids[ti] = mesh.GetTriCentroid(ti);
+            });
+
+
             Array.Sort(tri_order, (t0, t1) => {
-                double f0 = mesh.GetTriCentroid(t0).x;
-                double f1 = mesh.GetTriCentroid(t1).x;
+                double f0 = centroids[t0].x;
+                double f1 = centroids[t1].x;
                 return (f0 == f1) ? 0 : (f0 < f1) ? -1 : 1;
             });
 
