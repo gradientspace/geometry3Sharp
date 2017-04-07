@@ -95,6 +95,13 @@ namespace g3
             get { double f = x + y + z; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
         }
 
+        public void Round(int nDecimals) {
+            x = Math.Round(x, nDecimals);
+            y = Math.Round(y, nDecimals);
+            z = Math.Round(z, nDecimals);
+        }
+
+
         public double Dot(Vector3d v2)
         {
             return x * v2.x + y * v2.y + z * v2.z;
