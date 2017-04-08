@@ -204,6 +204,15 @@ namespace g3
         }
 
 
+        public float DistanceToPlane(Vector3f p, int nNormal)
+        {
+            return Math.Abs((p - origin).Dot(GetAxis(nNormal)));
+        }
+        public float DistanceToPlaneSigned(Vector3f p, int nNormal)
+        {
+            return Math.Abs((p - origin).Dot(GetAxis(nNormal)));
+        }
+
 
         public Vector3f ToFrameP(Vector3f v)
         {

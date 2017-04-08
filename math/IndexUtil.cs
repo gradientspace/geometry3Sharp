@@ -112,5 +112,30 @@ namespace g3
             return false;
         }
 
+
+
+        /// <summary>
+        /// Filter out invalid entries in indices[] list. Will return indices itself if 
+        /// none invalid, and bForceCopy == false
+        /// </summary>
+        public static int[] FilterValid(int[] indices, Func<int, bool> FilterF, bool bForceCopy = false )
+        {
+            int nValid = 0;
+            for ( int i = 0; i < indices.Length; ++i ) {
+                if (FilterF(indices[i]))
+                    ++nValid;
+            }
+            if (nValid == indices.Length && bForceCopy == false)
+                return indices;
+            int[] valid = new int[nValid];
+            int vi = 0;
+            for ( int i = 0; i < indices.Length; ++i ) {
+                if (FilterF(indices[i]))
+                    valid[vi++] = indices[i];
+            }
+            return valid;
+        }
+
+
     }
 }

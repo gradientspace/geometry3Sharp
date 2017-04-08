@@ -174,6 +174,15 @@ namespace g3
             b.Normalize();
             return Vector3f.AngleD(a, b);
         }
+        public static double PlaneAngleD(Vector3d a, Vector3d b, int nPlaneNormalIdx = 1)
+        {
+            a[nPlaneNormalIdx] = b[nPlaneNormalIdx] = 0.0;
+            a.Normalize();
+            b.Normalize();
+            return Vector3d.AngleD(a, b);
+        }
+
+
         public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, int nPlaneNormalIdx = 1)
         {
             vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0f;
@@ -183,6 +192,16 @@ namespace g3
             float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
             return fAngle;
         }
+        public static double PlaneAngleSignedD(Vector3d vFrom, Vector3d vTo, int nPlaneNormalIdx = 1)
+        {
+            vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0;
+            vFrom.Normalize();
+            vTo.Normalize();
+            double fSign = Math.Sign(vFrom.Cross(vTo)[nPlaneNormalIdx]);
+            double fAngle = fSign * Vector3d.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+
         public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, Vector3f planeN)
         {
             vFrom = vFrom - Vector3f.Dot(vFrom, planeN) * planeN;
@@ -192,6 +211,17 @@ namespace g3
             Vector3f c = Vector3f.Cross(vFrom, vTo);
             float fSign = Math.Sign(Vector3f.Dot(c, planeN));
             float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+        public static double PlaneAngleSignedD(Vector3d vFrom, Vector3d vTo, Vector3d planeN)
+        {
+            vFrom = vFrom - Vector3d.Dot(vFrom, planeN) * planeN;
+            vTo = vTo - Vector3d.Dot(vTo, planeN) * planeN;
+            vFrom.Normalize();
+            vTo.Normalize();
+            Vector3d c = Vector3d.Cross(vFrom, vTo);
+            double fSign = Math.Sign(Vector3d.Dot(c, planeN));
+            double fAngle = fSign * Vector3d.AngleD(vFrom, vTo);
             return fAngle;
         }
 

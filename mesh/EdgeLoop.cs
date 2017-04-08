@@ -18,6 +18,17 @@ namespace g3
         public int[] BowtieVertices;
 
 
+        public int VertexCount {
+            get { return Vertices.Length; }
+        }
+        public int EdgeCount {
+            get { return Edges.Length; }
+        }
+
+        public Vector3d GetVertex(int i) {
+            return Mesh.GetVertex(Vertices[i]);
+        }
+
 
         public AxisAlignedBox3d GetBounds()
         {
