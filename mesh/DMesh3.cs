@@ -118,6 +118,14 @@ namespace g3
 
         int max_group_id = 0;
 
+
+        /// <summary>
+        /// Support attaching arbitrary data to mesh. 
+        /// Note that metadata is currently **NOT** copied when copying a mesh.
+        /// </summary>
+        Dictionary<string, object> Metadata = null;
+
+
         public DMesh3(bool bWantNormals = true, bool bWantColors = false, bool bWantUVs = false, bool bWantTriGroups = false)
         {
             vertices = new DVector<double>();
@@ -1475,6 +1483,43 @@ namespace g3
         }
         public bool IsCompactV {
             get { return vertices_refcount.is_dense; }
+        }
+
+
+
+
+
+        // Metadata support
+
+        public bool HasMetadata {
+            get { return Metadata != null && Metadata.Keys.Count > 0; }
+        }
+        public void AttachMetadata(string key, object o)
+        {
+            if (Metadata == null)
+                Metadata = new Dictionary<string, object>();
+            Metadata.Add(key, o);
+        }
+        public object FindMetadata(string key)
+        {
+            if (Metadata == null)
+                return null;
+            object o = null;
+            bool bFound = Metadata.TryGetValue(key, out o);
+            return (bFound) ? o : null;
+        }
+        public bool RemoveMetadata(string key)
+        {
+            if (Metadata == null)
+                return false;
+            return Metadata.Remove(key);
+        }
+        public void ClearMetadata()
+        {
+            if (Metadata != null) {
+                Metadata.Clear();
+                Metadata = null;
+            }
         }
 
 
