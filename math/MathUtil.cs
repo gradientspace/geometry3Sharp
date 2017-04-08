@@ -394,5 +394,12 @@ namespace g3
 
 
 
+
+        static readonly int[] powers_of_10 = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
+        public static int PowerOf10(int n) {
+            return powers_of_10[n];
+        }
+
+
     }
 }

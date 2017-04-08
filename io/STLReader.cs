@@ -8,13 +8,13 @@ using System.Threading;
 
 namespace g3
 {
-    class STLReader : IMeshReader
+    public class STLReader : IMeshReader
     {
 
         public enum Strategy
         {
-            NoProcessing,
-            IdenticalVertexWeld
+            NoProcessing = 0,
+            IdenticalVertexWeld = 1
         }
         public Strategy RebuildStrategy = Strategy.IdenticalVertexWeld;
 
@@ -25,6 +25,18 @@ namespace g3
 
         //int nWarningLevel = 0;      // 0 == no diagnostics, 1 == basic, 2 == crazy
         Dictionary<string, int> warningCount = new Dictionary<string, int>();
+
+
+
+        public const string StrategyFlag = "-stl-weld-strategy";
+        void ParseArguments(CommandArgumentSet args)
+        {
+            if ( args.Integers.ContainsKey(StrategyFlag) ) {
+                RebuildStrategy = (Strategy)args.Integers[StrategyFlag];
+            }
+        }
+
+
 
 
         protected class STLSolid
@@ -57,6 +69,9 @@ namespace g3
 
         public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
         {
+            if ( options.CustomFlags != null )
+                ParseArguments(options.CustomFlags);
+
             /*byte[] header = */reader.ReadBytes(80);
             int totalTris = reader.ReadInt32();
 
@@ -97,6 +112,9 @@ namespace g3
 
         public IOReadResult Read(TextReader reader, ReadOptions options, IMeshBuilder builder)
         {
+            if ( options.CustomFlags != null )
+                ParseArguments(options.CustomFlags);
+
             // format is just this, with facet repeated N times:
             //solid "stl_ascii"
             //  facet normal 0.722390830517 -0.572606861591 0.387650430202

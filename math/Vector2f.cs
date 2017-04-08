@@ -79,6 +79,11 @@ namespace g3
             get { float f = x + y; return float.IsNaN(f) == false && float.IsInfinity(f) == false; }
         }
 
+        public void Round(int nDecimals) {
+            x = (float)Math.Round(x, nDecimals);
+            y = (float)Math.Round(y, nDecimals);
+        }
+
         public float Dot(Vector2f v2)
         {
             return x * v2.x + y * v2.y;
