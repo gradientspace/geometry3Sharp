@@ -179,5 +179,17 @@ namespace g3
         }
 
 
+
+        /// <summary>
+        /// return trune if CheckF returns true for all members of indices list
+        /// </summary>
+        public static bool IndicesCheck(int[] indices, Func<int, bool> CheckF)
+        {
+            for ( int i = 0; i < indices.Length; ++i ) {
+                if (CheckF(indices[i]) == false)
+                    return false;
+            }
+            return true;
+        }
     }
 }
