@@ -120,6 +120,36 @@ namespace g3
 
 
 
+         // clamps theta to angle interval [min,max]. should work for any theta,
+        // regardless of cycles, however min & max values should be in range
+        // [-2_PI,2_PI] and min < max
+        public static double ClampAngleRad(double theta, double min, double max)
+        {
+            // convert interval to center/extent - [c-e,c+e]
+            double c = (min+max)*0.5;
+            double e = max-c;
+
+            // get rid of extra rotations
+            theta = theta % TwoPI;
+
+            // shift to origin, then convert theta to +- 180
+            theta -= c;
+            if ( theta < -Math.PI )
+                theta += TwoPI;
+            else if ( theta > Math.PI )
+                theta -= TwoPI;
+
+            // clamp to extent
+            if ( theta < -e )
+                theta = -e;
+            else if ( theta > e )
+                theta = e;
+
+            // shift back
+            return theta + c;
+        }
+
+
 
         // for ((i++) % N)-type loops, but where we might be using (i--)
         public static int WrapSignedIndex(int val, int mod)
