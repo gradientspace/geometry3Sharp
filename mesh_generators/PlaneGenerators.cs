@@ -168,7 +168,7 @@ namespace g3
                 double tx = (v.x - c.x) / Width;
                 double ty = (v.y - c.y) / Height;
                 uv[k] = new Vector2f( (1 - tx) * uvleft + (tx) * uvright, 
-                                      (1 - tx) * uvbottom + (tx) * uvtop);
+                                      (1 - ty) * uvbottom + (ty) * uvtop);
             }
 
         }
