@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public class MeshConnectedComponents
+    public class MeshConnectedComponents : IEnumerable<MeshConnectedComponents.Component>
     {
         public DMesh3 Mesh;
 
@@ -26,7 +26,6 @@ namespace g3
         public List<Component> Components;
 
 
-
         public MeshConnectedComponents(DMesh3 mesh)
         {
             Mesh = mesh;
@@ -37,6 +36,14 @@ namespace g3
         public int Count
         {
             get { return Components.Count; }
+        }
+
+
+        public IEnumerator<Component> GetEnumerator() {
+            return Components.GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator() {
+            return Components.GetEnumerator();
         }
 
 

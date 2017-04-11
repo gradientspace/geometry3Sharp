@@ -210,5 +210,26 @@ namespace g3
         }
 
 
+
+        public static AxisAlignedBox3d BoundsT(IMesh mesh, int [] triangleIndices, Func<Vector3d, Vector3d> TransformF = null )
+        {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            if (TransformF == null) {
+                foreach ( int tid in triangleIndices ) {
+                    Index3i tri = mesh.GetTriangle(tid);
+                    for (int j = 0; j < 3; ++j)
+                        bounds.Contain(mesh.GetVertex(tri[j]));
+                }
+            } else {
+                foreach ( int tid in triangleIndices ) {
+                    Index3i tri = mesh.GetTriangle(tid);
+                    for (int j = 0; j < 3; ++j)
+                        bounds.Contain( TransformF(mesh.GetVertex(tri[j])) );
+                }
+            }
+            return bounds;
+        }
+
+
     }
 }
