@@ -76,5 +76,24 @@ namespace g3
                 return dPerim;
             }
         }
+
+
+        /// <summary>
+        /// Resample parametric solid into polygonal solid
+        /// </summary>
+        public GeneralPolygon2d Convert(double fSpacingLength, double fSpacingT, double fDeviationTolerance)
+        {
+            GeneralPolygon2d poly = new GeneralPolygon2d();
+            poly.Outer = new Polygon2d(
+                CurveSampler2.AutoSample(this.outer, fSpacingLength, fSpacingT));
+            poly.Outer.Simplify(0, fDeviationTolerance);
+            foreach (var hole in this.Holes) {
+                Polygon2d holePoly = new Polygon2d(
+                    CurveSampler2.AutoSample(hole, fSpacingLength, fSpacingT));
+                holePoly.Simplify(0, fDeviationTolerance);
+                poly.AddHole(holePoly, false);
+            }
+            return poly;
+        }
 	}
 }

@@ -33,7 +33,11 @@ namespace g3
             BaseMesh = mesh;
             compute(subTriangles, subTriangles.Length);
         }
-
+        public DSubmesh3(DMesh3 mesh, IEnumerable<int> subTriangles, int nTriEstimate = 0)
+        {
+            BaseMesh = mesh;
+            compute(subTriangles, nTriEstimate);
+        }
 
         // [RMS] wtf? what is this for? commenting out for now...
         //public int MapVertexToSubmesh(Index2i v) {
@@ -60,10 +64,10 @@ namespace g3
         public void ComputeBoundaryInfo(int[] subTriangles) {
             ComputeBoundaryInfo(subTriangles, subTriangles.Length);
         }
-        public void ComputeBoundaryInfo(IEnumerable<int> triangles, int tri_count)
+        public void ComputeBoundaryInfo(IEnumerable<int> triangles, int tri_count_est)
         {
             // set of base-mesh triangles that are in submesh
-            IndexFlagSet sub_tris = new IndexFlagSet(BaseMesh.MaxTriangleID, tri_count);
+            IndexFlagSet sub_tris = new IndexFlagSet(BaseMesh.MaxTriangleID, tri_count_est);
             foreach (int ti in triangles)
                 sub_tris[ti] = true;
 
@@ -99,10 +103,10 @@ namespace g3
 
 
 
-
-        void compute(IEnumerable<int> triangles, int tri_count )
+        // [RMS] estimate can be zero
+        void compute(IEnumerable<int> triangles, int tri_count_est )
         {
-            int est_verts = tri_count / 2;
+            int est_verts = tri_count_est / 2;
 
             SubMesh = new DMesh3( BaseMesh.Components & WantComponents );
 
@@ -111,6 +115,8 @@ namespace g3
             SubToBaseV = new DVector<int>();
 
             foreach ( int ti in triangles ) {
+                if ( ! BaseMesh.IsTriangle(ti) )
+                    throw new Exception("DSubmesh3.compute: triangle " + ti + " does not exist in BaseMesh!");
                 Index3i base_t = BaseMesh.GetTriangle(ti);
                 Index3i new_t = Index3i.Zero;
                 int gid = BaseMesh.GetTriangleGroup(ti);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace g3 
 {
@@ -71,6 +72,11 @@ namespace g3
 		}
 
 
+        public int ElementCount
+        {
+            get { return vElements.Count; }
+        }
+
 		public void Add(IParametricCurve2d curve) {
 			if ( curve.IsClosed ) {
 				SmoothLoopElement e = new SmoothLoopElement();
@@ -134,6 +140,11 @@ namespace g3
 		}
 
 
+		public IEnumerable<Element> ElementsItr() {
+			foreach ( Element e in vElements ) {
+                yield return e;
+			}
+		}
 		public IEnumerable<SmoothLoopElement> LoopsItr() {
 			foreach ( Element e in vElements ) {
 				if ( e is SmoothLoopElement )
@@ -283,7 +294,7 @@ namespace g3
 
 
 
-        public struct SolidRegionInfo
+        public class SolidRegionInfo
         {
             public List<GeneralPolygon2d> Polygons;
             public List<PlanarSolid2d> Solids;
@@ -328,22 +339,22 @@ namespace g3
         // Result has outer loops being clockwise, and holes counter-clockwise
 		public SolidRegionInfo FindSolidRegions(double fSimplifyDeviationTol = 0.1, bool bWantCurveSolids = true) 
 		{
-			List<SmoothLoopElement> valid = new List<SmoothLoopElement>(LoopsItr());
-			int N = valid.Count;
+			List<SmoothLoopElement> validLoops = new List<SmoothLoopElement>(LoopsItr());
+			int N = validLoops.Count;
 
 			// precompute bounding boxes
 			int maxid = 0;
-			foreach ( var v in valid )
+			foreach ( var v in validLoops )
 				maxid = Math.Max(maxid, v.ID+1);
 			AxisAlignedBox2d[] bounds = new AxisAlignedBox2d[maxid];
-			foreach ( var v in valid )
+			foreach ( var v in validLoops )
 				bounds[v.ID] = v.Bounds();
 
 			// copy polygons, simplify if desired
 			double fClusterTol = 0.0;		// don't do simple clustering, can lose corners
 			double fDeviationTol = fSimplifyDeviationTol;
 			Polygon2d[] polygons = new Polygon2d[maxid];
-			foreach ( var v in valid ) {
+			foreach ( var v in validLoops ) {
 				Polygon2d p = new Polygon2d(v.polygon);
 				if ( fClusterTol > 0 || fDeviationTol > 0 )
 					p.Simplify(fClusterTol, fDeviationTol);
@@ -351,23 +362,24 @@ namespace g3
 			}
 
 			// sort by bbox containment to speed up testing (does it??)
-			valid.Sort((x, y) => {
+			validLoops.Sort((x, y) => {
 				return bounds[x.ID].Contains( bounds[y.ID] ) ? -1 : 1; 
 			});
 
             // containment sets
 			bool[] bIsContained = new bool[N];
 			Dictionary<int, List<int>> ContainSets = new Dictionary<int, List<int>>();
+            Dictionary<int, List<int>> ContainedParents = new Dictionary<int, List<int>>();
 
             // construct containment sets
 			for ( int i = 0; i < N; ++i ) {
-				SmoothLoopElement loopi = valid[i];
+				SmoothLoopElement loopi = validLoops[i];
 				Polygon2d polyi = polygons[loopi.ID];
 
 				for ( int j = 0; j < N; ++j ) {
 					if ( i == j )
 						continue;
-					SmoothLoopElement loopj = valid[j];
+					SmoothLoopElement loopj = validLoops[j];
 					Polygon2d polyj = polygons[loopj.ID];
 
 					// cannot be contained if bounds are not contained
@@ -381,65 +393,39 @@ namespace g3
 							ContainSets.Add(i, new List<int>() );
 						ContainSets[i].Add(j);
 						bIsContained[j] = true;
+
+                        if (ContainedParents.ContainsKey(j) == false)
+                            ContainedParents.Add(j, new List<int>());
+                        ContainedParents[j].Add(i);
 					}
-	
+
 				}
 			}
 
 			List<GeneralPolygon2d> polysolids = new List<GeneralPolygon2d>();
             List<PlanarSolid2d> solids = new List<PlanarSolid2d>();
-			List<SmoothLoopElement> used = new List<SmoothLoopElement>();
+			HashSet<SmoothLoopElement> used = new HashSet<SmoothLoopElement>();
 
-            // extract solids from containment relationships
-            foreach ( var i in ContainSets.Keys ) {
-                SmoothLoopElement outer_element = valid[i];
-                used.Add(outer_element);
-                if ( bIsContained[i] )
-					throw new Exception("PlanarComplex.FindSolidRegions: multiply-nested regions not supported!");
+            Dictionary<SmoothLoopElement, int> LoopToOuterIndex = new Dictionary<SmoothLoopElement, int>();
 
-				Polygon2d outer_poly = polygons[outer_element.ID];
-                IParametricCurve2d outer_loop = (bWantCurveSolids) ? outer_element.source.Clone() : null;
-                if (outer_poly.IsClockwise == false) {
-                    outer_poly.Reverse();
-                    if ( bWantCurveSolids )
-                        outer_loop.Reverse();
-                }
+            List<int> ParentsToProcess = new List<int>();
 
-				GeneralPolygon2d g = new GeneralPolygon2d();
-				g.Outer = outer_poly;
-                PlanarSolid2d s = new PlanarSolid2d();
-                if (bWantCurveSolids) 
-                    s.SetOuter(outer_loop, true);
 
-				foreach ( int hi in ContainSets[i] ) {
-					SmoothLoopElement he = valid[hi];
-					used.Add(he);
-					Polygon2d hole_poly = polygons[he.ID];
-                    IParametricCurve2d hole_loop = (bWantCurveSolids) ? he.source.Clone() : null;
-                    if (hole_poly.IsClockwise) {
-                        hole_poly.Reverse();
-                        if ( bWantCurveSolids )
-                            hole_loop.Reverse();
-                    }
+            // The following is a lot of code but it is very similar, just not clear how
+            // to refactor out the common functionality
+            //   1) we find all the top-level uncontained polys and add them to the final polys list
+            //   2a) for any poly contained in those parent-polys, that is not also contained in anything else,
+            //       add as hole to that poly
+            //   2b) remove all those used parents & holes from consideration
+            //   2c) now find all the "new" top-level polys
+            //   3) repeat 2a-c until done all polys
+            //   4) any remaining polys must be interior solids w/ no holes
+            //          **or** weird leftovers like intersecting polys...
 
-                    try {
-                        g.AddHole(hole_poly);
-                        if ( hole_loop != null )
-                            s.AddHole(hole_loop);
-                    } catch {
-                        // don't add this hole - must intersect or something
-                        // We should have caught this earlier!
-                    }
-				}
-
-				polysolids.Add(g);
-                if ( bWantCurveSolids )
-                    solids.Add(s);
-			}
-
+            // add all top-level uncontained polys
             for (int i = 0; i < N; ++i) {
-                SmoothLoopElement loopi = valid[i];
-                if (used.Contains(loopi))
+                SmoothLoopElement loopi = validLoops[i];
+                if (bIsContained[i])
                     continue;
 
 				Polygon2d outer_poly = polygons[loopi.ID];
@@ -456,10 +442,144 @@ namespace g3
                 if ( bWantCurveSolids )
                     s.SetOuter(outer_loop, true);
 
+                int idx = polysolids.Count;
+                LoopToOuterIndex[loopi] = idx;
+                used.Add(loopi);
+
+                if (ContainSets.ContainsKey(i))
+                    ParentsToProcess.Add(i);
+
                 polysolids.Add(g);
                 if ( bWantCurveSolids )
                     solids.Add(s);
             }
+
+
+            // keep iterating until we processed all parent loops
+            while (ParentsToProcess.Count > 0 ) {
+
+                List<int> ContainersToRemove = new List<int>();
+
+                // now for all top-level polys that contain children, add those children
+                // as long as they do not have multiple contain-parents
+                foreach ( int i in ParentsToProcess ) {
+                    SmoothLoopElement parentloop = validLoops[i];
+                    int outer_idx = LoopToOuterIndex[parentloop];
+
+                    List<int> children = ContainSets[i];
+                    foreach ( int childj in children ) {
+                        SmoothLoopElement childLoop = validLoops[childj];
+                        Debug.Assert(used.Contains(childLoop) == false);
+
+                        // skip multiply-contained children
+                        List<int> parents = ContainedParents[childj];
+                        if (parents.Count > 1)
+                            continue;
+
+					    Polygon2d hole_poly = polygons[childLoop.ID];
+                        IParametricCurve2d hole_loop = (bWantCurveSolids) ? childLoop.source.Clone() : null;
+                        if (hole_poly.IsClockwise) {
+                            hole_poly.Reverse();
+                            if ( bWantCurveSolids )
+                                hole_loop.Reverse();
+                        }
+
+                        try {
+                            polysolids[outer_idx].AddHole(hole_poly);
+                            if ( hole_loop != null )
+                                solids[outer_idx].AddHole(hole_loop);
+                        } catch {
+                            // don't add this hole - must intersect or something?
+                            // We should have caught this earlier!
+                        }
+
+					    used.Add(childLoop);
+                        if (ContainSets.ContainsKey(childj))
+                            ContainersToRemove.Add(childj);
+                    }
+                    ContainersToRemove.Add(i);
+                }
+
+                // remove all containers that are no longer valid
+                foreach (int ci in ContainersToRemove) {
+                    ContainSets.Remove(ci);
+
+                    // have to remove from each ContainedParents list
+                    List<int> keys = new List<int>(ContainedParents.Keys);
+                    foreach  (int j in keys) {
+                        if (ContainedParents[j].Contains(ci))
+                            ContainedParents[j].Remove(ci);
+                    }
+                }
+
+                ParentsToProcess.Clear();
+
+
+                // ok now find next-level uncontained parents...
+                for (int i = 0; i < N; ++i) {
+                    SmoothLoopElement loopi = validLoops[i];
+                    if (used.Contains(loopi))
+                        continue;
+                    if (ContainSets.ContainsKey(i) == false)
+                        continue;
+                    List<int> parents = ContainedParents[i];
+                    if (parents.Count > 0)
+                        continue;
+
+                    Polygon2d outer_poly = polygons[loopi.ID];
+                    IParametricCurve2d outer_loop = (bWantCurveSolids) ? loopi.source.Clone() : null;
+                    if (outer_poly.IsClockwise == false) {
+                        outer_poly.Reverse();
+                        if (bWantCurveSolids)
+                            outer_loop.Reverse();
+                    }
+
+                    GeneralPolygon2d g = new GeneralPolygon2d();
+                    g.Outer = outer_poly;
+                    PlanarSolid2d s = new PlanarSolid2d();
+                    if (bWantCurveSolids)
+                        s.SetOuter(outer_loop, true);
+
+                    int idx = polysolids.Count;
+                    LoopToOuterIndex[loopi] = idx;
+                    used.Add(loopi);
+
+                    if (ContainSets.ContainsKey(i))
+                        ParentsToProcess.Add(i);
+
+                    polysolids.Add(g);
+                    if (bWantCurveSolids)
+                        solids.Add(s);
+                }
+            }
+
+
+            // any remaining loops must be top-level
+            for (int i = 0; i < N; ++i) {
+                SmoothLoopElement loopi = validLoops[i];
+                if (used.Contains(loopi))
+                    continue;
+
+                Polygon2d outer_poly = polygons[loopi.ID];
+                IParametricCurve2d outer_loop = (bWantCurveSolids) ? loopi.source.Clone() : null;
+                if (outer_poly.IsClockwise == false) {
+                    outer_poly.Reverse();
+                    if (bWantCurveSolids)
+                        outer_loop.Reverse();
+                }
+
+                GeneralPolygon2d g = new GeneralPolygon2d();
+                g.Outer = outer_poly;
+                PlanarSolid2d s = new PlanarSolid2d();
+                if (bWantCurveSolids)
+                    s.SetOuter(outer_loop, true);
+
+                polysolids.Add(g);
+                if (bWantCurveSolids)
+                    solids.Add(s);
+            }
+
+
 
             return new SolidRegionInfo() {
                 Polygons = polysolids,
@@ -477,13 +597,11 @@ namespace g3
 			List<SmoothCurveElement> Curves = new List<SmoothCurveElement>(CurvesItr());
 
             AxisAlignedBox2d bounds = Bounds();
-            System.Console.WriteLine("  Bounding Box: " + bounds);
-
-			System.Console.WriteLine("  Closed Loops: " + Loops.Count.ToString());
-			System.Console.WriteLine("  Open Curves: " + Curves.Count.ToString());
+            System.Console.WriteLine("  Bounding Box  w: {0} h: {1}  range {2} ", bounds.Width, bounds.Height, bounds);
 
 			List<ComplexEndpoint2d> vEndpoints = new List<ComplexEndpoint2d>(EndpointsItr());
-			System.Console.WriteLine("  Open Endpoints: " + vEndpoints.Count.ToString());
+            System.Console.WriteLine("  Closed Loops {0}  Open Curves {1}   Open Endpoints {2}",
+                Loops.Count, Curves.Count, vEndpoints.Count);
 
             int nSegments = CountType( typeof(Segment2d) );
             int nArcs = CountType(typeof(Arc2d));
@@ -492,10 +610,9 @@ namespace g3
             int nEllipses = CountType(typeof(Ellipse2d));
             int nEllipseArcs = CountType(typeof(EllipseArc2d));
             int nSeqs = CountType(typeof(ParametricCurveSequence2));
-            System.Console.WriteLine("  Type Counts: ");
+            System.Console.WriteLine("  [Type Counts]   // {0} multi-curves", nSeqs);
             System.Console.WriteLine("    segments {0,4}  arcs     {1,4}  circles      {2,4}", nSegments, nArcs, nCircles);
             System.Console.WriteLine("    nurbs    {0,4}  ellipses {1,4}  ellipse-arcs {2,4}", nNURBS, nEllipses, nEllipseArcs);
-            System.Console.WriteLine("    multi    {0,4}  ", nSeqs);
 		}
         public int CountType(Type t)
         {

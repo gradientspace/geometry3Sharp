@@ -28,6 +28,11 @@ namespace g3
         public Colorf(Colorf copy, float newAlpha) { r = copy.r; g = copy.g; b = copy.b; a = newAlpha; }
 
 
+        public Colorf Clone(float fAlphaMultiply = 1.0f) {
+            return new Colorf(r, g, b, a * fAlphaMultiply);
+        }
+
+
         public float this[int key]
         {
             get { if (key == 0) return r; else if (key == 1) return g; else if (key == 2) return b; else return a; }

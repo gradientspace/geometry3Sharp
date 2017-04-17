@@ -112,6 +112,9 @@ namespace g3
             bool bOK = editor.ReinsertSubmesh(Region, ref new_tris, out mapV);
             cur_base_tris = new_tris;
 
+            // assert that new triangles are all valid (goes wrong sometimes??)
+            Debug.Assert(IndexUtil.IndicesCheck(cur_base_tris, BaseMesh.IsTriangle));
+
             return bOK;
         }
 

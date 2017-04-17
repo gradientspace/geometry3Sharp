@@ -34,6 +34,9 @@ namespace g3
             get { return Center + Extent * Direction; }
             set { update_from_endpoints(P0, value); }
         }
+        public double Length {
+            get { return 2 * Extent; }
+        }
 
 		// parameter is signed distance from center in direction
 		public Vector2d PointAt(double d) {
@@ -140,6 +143,9 @@ namespace g3
         {
             get { return Center + Extent * Direction; }
             set { update_from_endpoints(P0, value); }
+        }
+        public float Length {
+            get { return 2 * Extent; }
         }
 
 

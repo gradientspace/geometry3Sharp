@@ -242,10 +242,11 @@ namespace g3
 
 
 
-        public bool AppendMesh(IMesh appendMesh)
+        public bool AppendMesh(IMesh appendMesh, int appendGID = -1)
         {
             int[] mapV = new int[appendMesh.MaxVertexID];
             foreach (int vid in appendMesh.VertexIndices() ) {
+                
                 NewVertexInfo vinfo = appendMesh.GetVertexAll(vid);
                 int newvid = Mesh.AppendVertex(vinfo);
                 mapV[vid] = newvid;
@@ -257,6 +258,8 @@ namespace g3
                 t.b = mapV[t.b];
                 t.c = mapV[t.c];
                 int gid = appendMesh.GetTriangleGroup(tid);
+                if (appendGID >= 0)
+                    gid = appendGID;
                 Mesh.AppendTriangle(t, gid);
             }
 

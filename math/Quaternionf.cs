@@ -231,7 +231,11 @@ namespace g3
         public static Quaternionf FromTo(Vector3f vFrom, Vector3f vTo) {
             return new Quaternionf(vFrom, vTo);
         }
-
+        public static Quaternionf FromToConstrained(Vector3f vFrom, Vector3f vTo, Vector3f vAround)
+        {
+            float fAngle = MathUtil.PlaneAngleSignedD(vFrom, vTo, vAround);
+            return Quaternionf.AxisAngleD(vAround, fAngle);
+        }
 
 
         public void SetToSlerp(Quaternionf p, Quaternionf q, float t)

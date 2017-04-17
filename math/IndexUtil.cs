@@ -112,5 +112,84 @@ namespace g3
             return false;
         }
 
+
+        public static void cycle_indices_minfirst(ref Index3i tri)
+        {
+            if (tri.b < tri.a && tri.b < tri.c) {
+                int a = tri.a, b = tri.b, c = tri.c;
+                tri.a = b;
+                tri.b = c;
+                tri.c = a;
+            } else if (tri.c < tri.a && tri.c < tri.b) {
+                int a = tri.a, b = tri.b, c = tri.c;
+                tri.a = c;
+                tri.b = a;
+                tri.c = b;
+            }
+        }
+
+
+        public static void sort_indices(ref Index3i tri)
+        {
+            // possibly this can be re-ordered to have fewer tests? ...
+            if ( tri.a < tri.b && tri.a < tri.c ) {
+                if (tri.b > tri.c) {
+                    int b = tri.b; tri.b = tri.c; tri.c = b;
+                }
+            } else if ( tri.b < tri.a && tri.b < tri.c ) {
+                if ( tri.a < tri.c ) {
+                    int b = tri.b; tri.b = tri.a; tri.a = b;
+                } else {
+                    int a = tri.a, b = tri.b, c = tri.c;
+                    tri.a = b; tri.b = c; tri.c = a;
+                }
+            } else if ( tri.c < tri.a && tri.c < tri.b ) {
+                if ( tri.b < tri.a ) {
+                    int c = tri.c; tri.c = tri.a; tri.a = c;
+                } else {
+                    int a = tri.a, b = tri.b, c = tri.c;
+                    tri.a = c; tri.b = a; tri.c = b;
+                }
+            }
+        }
+
+
+
+
+        /// <summary>
+        /// Filter out invalid entries in indices[] list. Will return indices itself if 
+        /// none invalid, and bForceCopy == false
+        /// </summary>
+        public static int[] FilterValid(int[] indices, Func<int, bool> FilterF, bool bForceCopy = false )
+        {
+            int nValid = 0;
+            for ( int i = 0; i < indices.Length; ++i ) {
+                if (FilterF(indices[i]))
+                    ++nValid;
+            }
+            if (nValid == indices.Length && bForceCopy == false)
+                return indices;
+            int[] valid = new int[nValid];
+            int vi = 0;
+            for ( int i = 0; i < indices.Length; ++i ) {
+                if (FilterF(indices[i]))
+                    valid[vi++] = indices[i];
+            }
+            return valid;
+        }
+
+
+
+        /// <summary>
+        /// return trune if CheckF returns true for all members of indices list
+        /// </summary>
+        public static bool IndicesCheck(int[] indices, Func<int, bool> CheckF)
+        {
+            for ( int i = 0; i < indices.Length; ++i ) {
+                if (CheckF(indices[i]) == false)
+                    return false;
+            }
+            return true;
+        }
     }
 }

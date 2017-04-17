@@ -35,6 +35,10 @@ namespace g3
     {
 		public bool ReadMaterials;
 
+        // format readers will inevitably have their own settings, we
+        // can use this to pass arguments to them
+        public CommandArgumentSet CustomFlags = new CommandArgumentSet();
+
         public ReadOptions()
         {
 			ReadMaterials = false;

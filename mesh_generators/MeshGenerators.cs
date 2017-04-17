@@ -107,6 +107,44 @@ namespace g3
             triangles.Set(tri_counter++, v0, v2, v3, bCycle);
         }
 
+
+        // append "disc" verts/tris between vEnd1 and vEnd2
+        protected void append_2d_disc_segment(int iCenter, int iEnd1, int iEnd2, int nSteps,bool bCycle, ref int vtx_counter, ref int tri_counter, int groupid = -1)
+        {
+            Vector3d c = vertices[iCenter];
+            Vector3d e0 = vertices[iEnd1];
+            Vector3d e1 = vertices[iEnd2];
+            Vector3d v0 = (e0 - c);
+            double r0 = v0.Normalize();
+            double tStart = Math.Atan2(v0.z, v0.x);
+            Vector3d v1 = (e1 - c);
+            double r1 = v1.Normalize();
+            double tEnd = Math.Atan2(v1.z, v1.x);
+
+            // fix angles to handle sign. **THIS ONLY WORKS IF WE ARE GOING CCW!!**
+            if (tStart < 0)
+                tStart += MathUtil.TwoPI;
+            if (tEnd < 0)
+                tEnd += MathUtil.TwoPI;
+            if (tEnd < tStart)
+                tEnd += MathUtil.TwoPI;
+
+            int iPrev = iEnd1;
+            for ( int i = 0; i < nSteps; ++i ) {
+                double t = (double)(i+1) / (double)(nSteps + 1);
+                double angle = (1 - t) * tStart + (t) * tEnd;
+                Vector3d pos = c + new Vector3d(r0 * Math.Cos(angle), 0, r1 * Math.Sin(angle));
+                vertices.Set(vtx_counter, pos.x, pos.y, pos.z);
+                if (groupid >= 0)
+                    groups[tri_counter] = groupid;
+                triangles.Set(tri_counter++, iCenter, iPrev, vtx_counter, bCycle);
+                iPrev = vtx_counter++;
+            }
+            if (groupid >= 0)
+                groups[tri_counter] = groupid;
+            triangles.Set(tri_counter++, iCenter, iPrev, iEnd2, bCycle);
+        }
+
         protected Vector3f estimate_normal(int v0, int v1, int v2)
         {
             Vector3d a = vertices[v0];

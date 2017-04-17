@@ -95,7 +95,7 @@ namespace g3
 
                 string solid_name = string.Format("mesh_{0}", mi);
                 if (options.bCombineMeshes == false) {
-                    if (vMeshes[mi].Name.Length > 0)
+                    if (vMeshes[mi].Name != null && vMeshes[mi].Name.Length > 0)
                         solid_name = vMeshes[mi].Name;
                     writer.WriteLine("solid \"{0}\"", solid_name);
                 }

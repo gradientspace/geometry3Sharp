@@ -120,6 +120,36 @@ namespace g3
 
 
 
+         // clamps theta to angle interval [min,max]. should work for any theta,
+        // regardless of cycles, however min & max values should be in range
+        // [-2_PI,2_PI] and min < max
+        public static double ClampAngleRad(double theta, double min, double max)
+        {
+            // convert interval to center/extent - [c-e,c+e]
+            double c = (min+max)*0.5;
+            double e = max-c;
+
+            // get rid of extra rotations
+            theta = theta % TwoPI;
+
+            // shift to origin, then convert theta to +- 180
+            theta -= c;
+            if ( theta < -Math.PI )
+                theta += TwoPI;
+            else if ( theta > Math.PI )
+                theta -= TwoPI;
+
+            // clamp to extent
+            if ( theta < -e )
+                theta = -e;
+            else if ( theta > e )
+                theta = e;
+
+            // shift back
+            return theta + c;
+        }
+
+
 
         // for ((i++) % N)-type loops, but where we might be using (i--)
         public static int WrapSignedIndex(int val, int mod)
@@ -174,6 +204,15 @@ namespace g3
             b.Normalize();
             return Vector3f.AngleD(a, b);
         }
+        public static double PlaneAngleD(Vector3d a, Vector3d b, int nPlaneNormalIdx = 1)
+        {
+            a[nPlaneNormalIdx] = b[nPlaneNormalIdx] = 0.0;
+            a.Normalize();
+            b.Normalize();
+            return Vector3d.AngleD(a, b);
+        }
+
+
         public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, int nPlaneNormalIdx = 1)
         {
             vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0f;
@@ -183,6 +222,16 @@ namespace g3
             float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
             return fAngle;
         }
+        public static double PlaneAngleSignedD(Vector3d vFrom, Vector3d vTo, int nPlaneNormalIdx = 1)
+        {
+            vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0;
+            vFrom.Normalize();
+            vTo.Normalize();
+            double fSign = Math.Sign(vFrom.Cross(vTo)[nPlaneNormalIdx]);
+            double fAngle = fSign * Vector3d.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+
         public static float PlaneAngleSignedD(Vector3f vFrom, Vector3f vTo, Vector3f planeN)
         {
             vFrom = vFrom - Vector3f.Dot(vFrom, planeN) * planeN;
@@ -192,6 +241,17 @@ namespace g3
             Vector3f c = Vector3f.Cross(vFrom, vTo);
             float fSign = Math.Sign(Vector3f.Dot(c, planeN));
             float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
+            return fAngle;
+        }
+        public static double PlaneAngleSignedD(Vector3d vFrom, Vector3d vTo, Vector3d planeN)
+        {
+            vFrom = vFrom - Vector3d.Dot(vFrom, planeN) * planeN;
+            vTo = vTo - Vector3d.Dot(vTo, planeN) * planeN;
+            vFrom.Normalize();
+            vTo.Normalize();
+            Vector3d c = Vector3d.Cross(vFrom, vTo);
+            double fSign = Math.Sign(Vector3d.Dot(c, planeN));
+            double fAngle = fSign * Vector3d.AngleD(vFrom, vTo);
             return fAngle;
         }
 
@@ -362,6 +422,13 @@ namespace g3
 			return Math.Sign( ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y) ) );
 		}
 
+
+
+
+        static readonly int[] powers_of_10 = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
+        public static int PowerOf10(int n) {
+            return powers_of_10[n];
+        }
 
 
     }

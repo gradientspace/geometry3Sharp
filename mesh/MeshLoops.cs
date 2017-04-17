@@ -19,12 +19,32 @@ namespace g3
             Compute();
         }
 
+        public int Count {
+            get { return Loops.Count; }
+        }
+
+        public EdgeLoop this[int index] {
+            get { return Loops[index]; }
+        }
 
         public IEnumerator<EdgeLoop> GetEnumerator() {
             return Loops.GetEnumerator();
         }
         IEnumerator IEnumerable.GetEnumerator() {
             return Loops.GetEnumerator();
+        }
+
+
+
+        public int MaxVerticesLoopIndex {
+            get {
+                int j = 0;
+                for (int i = 1; i < Loops.Count; ++i) {
+                    if (Loops[i].Vertices.Length > Loops[j].Vertices.Length)
+                        j = i;
+                }
+                return j;
+            }
         }
 
 
