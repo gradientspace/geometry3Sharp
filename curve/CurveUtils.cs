@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,7 +44,7 @@ namespace g3
 
 
 
-        public static int FindNearestIndex(ICurve c, Vector3d v)
+        public static int FindNearestIndex(ISampledCurve3d c, Vector3d v)
         {
             int iNearest = -1;
             double dNear = Double.MaxValue;
@@ -61,7 +61,7 @@ namespace g3
 
 
 
-        public static bool FindClosestRayIntersection(ICurve c, double segRadius, Ray3d ray, out double rayT)
+        public static bool FindClosestRayIntersection(ISampledCurve3d c, double segRadius, Ray3d ray, out double rayT)
         {
             rayT = double.MaxValue;
             int nNearSegment = -1;

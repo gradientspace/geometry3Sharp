@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +11,7 @@ namespace g3
         double[] lengths;
 
         // will return null if no edges need to be split!
-        public List<Vector3d> SplitResample(ICurve curve, double fMaxEdgeLen)
+        public List<Vector3d> SplitResample(ISampledCurve3d curve, double fMaxEdgeLen)
         {
             double fMaxSqr = fMaxEdgeLen * fMaxEdgeLen;
 
@@ -55,7 +55,7 @@ namespace g3
 
 
         // will return null if no edges need to be split!
-        public List<Vector3d> SplitCollapseResample(ICurve curve, double fMaxEdgeLen, double fMinEdgeLen)
+        public List<Vector3d> SplitCollapseResample(ISampledCurve3d curve, double fMaxEdgeLen, double fMinEdgeLen)
         {
             double fMaxSqr = fMaxEdgeLen * fMaxEdgeLen;
             double fMinSqr = fMinEdgeLen * fMinEdgeLen;

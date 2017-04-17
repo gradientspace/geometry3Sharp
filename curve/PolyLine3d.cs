@@ -2,53 +2,52 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace g3
 {
-	public class PolyLine2d : IEnumerable<Vector2d>
+	public class PolyLine3d : IEnumerable<Vector3d>
 	{
-		protected List<Vector2d> vertices;
+		protected List<Vector3d> vertices;
 		public int Timestamp;
 
-		public PolyLine2d() {
-			vertices = new List<Vector2d>();
+		public PolyLine3d() {
+			vertices = new List<Vector3d>();
 			Timestamp = 0;
 		}
 
-		public PolyLine2d(PolyLine2d copy)
+		public PolyLine3d(PolyLine3d copy)
 		{
-			vertices = new List<Vector2d>(copy.vertices);
+			vertices = new List<Vector3d>(copy.vertices);
 			Timestamp = 0;
 		}
 
-		public PolyLine2d(Vector2d[] v)
+		public PolyLine3d(Vector3d[] v)
 		{
-			vertices = new List<Vector2d>(v);
+			vertices = new List<Vector3d>(v);
 			Timestamp = 0;
 		}
-		public PolyLine2d(VectorArray2d v)
+		public PolyLine3d(VectorArray3d v)
 		{
-			vertices = new List<Vector2d>(v.AsVector2d());
+			vertices = new List<Vector3d>(v.AsVector3d());
 			Timestamp = 0;
 		}
 
 
-		public Vector2d this[int key]
+		public Vector3d this[int key]
 		{
 			get { return vertices[key]; }
 			set { vertices[key] = value; Timestamp++; }
 		}
 
-		public Vector2d Start {
+		public Vector3d Start {
 			get { return vertices[0]; }
 		}
-		public Vector2d End {
+		public Vector3d End {
 			get { return vertices[vertices.Count-1]; }
 		}
 
 
-		public ReadOnlyCollection<Vector2d> Vertices {
+		public ReadOnlyCollection<Vector3d> Vertices {
 			get { return vertices.AsReadOnly(); }
 		}
 
@@ -57,14 +56,14 @@ namespace g3
 			get { return vertices.Count; }
 		}
 
-		public void AppendVertex(Vector2d v)
+		public void AppendVertex(Vector3d v)
 		{
 			vertices.Add(v);
 			Timestamp++; 
 		}
 
 
-		public Vector2d GetTangent(int i)
+		public Vector3d GetTangent(int i)
 		{
 			if (i == 0)
 				return (vertices[1] - vertices[0]).Normalized;
@@ -75,22 +74,22 @@ namespace g3
 		}
 
 
-		public AxisAlignedBox2d GetBounds() {
+		public AxisAlignedBox3d GetBounds() {
 			if ( vertices.Count == 0 )
-				return AxisAlignedBox2d.Empty;
-			AxisAlignedBox2d box = new AxisAlignedBox2d(vertices[0]);
+				return AxisAlignedBox3d.Empty;
+			AxisAlignedBox3d box = new AxisAlignedBox3d(vertices[0]);
 			for ( int i = 1; i < vertices.Count; ++i )
 				box.Contain(vertices[i]);
 			return box;
 		}
 
 
-		public IEnumerable<Segment2d> SegmentItr() {
+		public IEnumerable<Segment3d> SegmentItr() {
 			for ( int i = 0; i < vertices.Count-1; ++i )
-				yield return new Segment2d( vertices[i], vertices[i+1] );
+				yield return new Segment3d( vertices[i], vertices[i+1] );
 		}
 
-		public IEnumerator<Vector2d> GetEnumerator() {
+		public IEnumerator<Vector3d> GetEnumerator() {
 			return vertices.GetEnumerator();
 		}
 		IEnumerator IEnumerable.GetEnumerator() {

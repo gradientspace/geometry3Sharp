@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace g3
 {
-    public class DCurve3 : ICurve
+    public class DCurve3 : ISampledCurve3d
     {
         // [TODO] use dvector? or double-indirection indexing?
         //   question is how to insert efficiently...

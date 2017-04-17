@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public struct Segment3d
+	public struct Segment3d : IParametricCurve3d
     {
         // Center-direction-extent representation.
         // Extent is half length of segment
@@ -91,6 +91,37 @@ namespace g3
         {
             return new Segment3f((Vector3f)v.Center, (Vector3f)v.Direction, (float)v.Extent);
         }
+
+
+		// IParametricCurve3d interface
+
+		public bool IsClosed { get { return false; } }
+
+		public double ParamLength { get { return 1.0f; } }
+
+		// t in range[0,1] spans arc
+		public Vector3d SampleT(double t) {
+			return Center + (2 * t - 1) * Extent * Direction;
+		}
+
+		public Vector3d TangentT(double t) {
+			return Direction;
+		}
+
+		public bool HasArcLength { get { return true; } }
+		public double ArcLength { get { return 2*Extent; } }
+
+		public Vector3d SampleArcLength(double a) {
+			return P0 + a * Direction;
+		}
+
+		public void Reverse() {
+			update_from_endpoints(P1,P0);
+		}
+
+		public IParametricCurve3d Clone() {
+			return new Segment3d(this.Center, this.Direction, this.Extent);
+		}
 
 
     }

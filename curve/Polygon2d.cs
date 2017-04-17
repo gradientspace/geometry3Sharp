@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Text;
 
 namespace g3
 {
-    public class Polygon2d
+	public class Polygon2d : IEnumerable<Vector2d>
     {
         protected List<Vector2d> vertices;
 		public int Timestamp;
@@ -92,7 +93,16 @@ namespace g3
 				yield return new Segment2d( vertices[i], vertices[ (i+1) % vertices.Count ] );
 		}
 
-
+		public IEnumerator<Vector2d> GetEnumerator() {
+			for ( int i = 0; i < vertices.Count; ++i )
+				yield return vertices[i];
+			yield return vertices[0];
+		}
+		IEnumerator IEnumerable.GetEnumerator() {
+			for ( int i = 0; i < vertices.Count; ++i )
+				yield return vertices[i];
+			yield return vertices[0];
+		}
 
 
 

@@ -38,6 +38,10 @@ namespace g3
         {
             get { return b-a; }
         }
+		public bool IsConstant
+		{
+			get { return b == a; }
+		}
 
         public double Center {
             get { return (b + a) * 0.5; }

@@ -219,6 +219,7 @@
     <Compile Include="spatial\SpatialInterfaces.cs" />
     <Compile Include="io\MeshIOUtil.cs" />
     <Compile Include="curve\CurveUtils2.cs" />
+    <Compile Include="curve\PolyLine3d.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

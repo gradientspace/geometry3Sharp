@@ -6,7 +6,29 @@ using System.Text;
 
 namespace g3
 {
-    public interface ICurve
+
+	public interface IParametricCurve3d
+	{
+		bool IsClosed {get;}
+
+		// can call SampleT in range [0,ParamLength]
+		double ParamLength {get;}
+		Vector3d SampleT(double t);
+		Vector3d TangentT(double t);        // returns normalized vector
+
+		bool HasArcLength {get;}
+		double ArcLength {get;}
+		Vector3d SampleArcLength(double a);
+
+		void Reverse();
+
+		IParametricCurve3d Clone();		
+	}
+
+
+
+
+    public interface ISampledCurve3d
     {
         int VertexCount { get; }
         bool Closed { get; }
@@ -15,6 +37,7 @@ namespace g3
 
         IEnumerable<Vector3d> Vertices { get; }
     }
+
 
 
 
