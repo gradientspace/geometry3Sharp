@@ -53,7 +53,13 @@ namespace g3
     {
         public IOCode code { get; set; }
         public string message { get; set; }
-        public IOReadResult(IOCode r, string s) { code = r; message = s; if (message == "") message = "(no message)"; }
+        public IOReadResult(IOCode r, string s) : this()
+        {
+            code = r;
+            message = s;
+            if (message == "")
+                message = "(no message)";
+        }
 
 		public static readonly IOReadResult Ok = new IOReadResult(IOCode.Ok, "");	
 	}
@@ -72,7 +78,13 @@ namespace g3
     {
         public IOCode code { get; set; }
         public string message { get; set; }
-        public IOWriteResult( IOCode r, string s ) { code = r;  message = s; if (message == "") message = "(no message)"; }
+        public IOWriteResult( IOCode r, string s ) : this()
+        {
+            code = r;
+            message = s;
+            if (message == "")
+                message = "(no message)";
+        }
 
 		public static readonly IOWriteResult Ok = new IOWriteResult(IOCode.Ok, "");
     }
