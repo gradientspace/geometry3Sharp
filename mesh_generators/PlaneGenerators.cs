@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -75,13 +76,26 @@ namespace g3
 
 
 
-   // generate a two-triangle rect, centered at origin
+    // Generate a rounded rect centered at origin.
+    // Force individual corners to be sharp using the SharpCorners flags field.
     public class RoundRectGenerator : MeshGenerator
     {
         public float Width = 1.0f;
         public float Height = 1.0f;
         public float Radius = 0.1f;
         public int CornerSteps = 4;
+
+
+        [Flags]
+        public enum Corner
+        {
+            BottomLeft = 1,
+            BottomRight = 2,
+            TopRight = 4,
+            TopLeft = 8
+        }
+        public Corner SharpCorners = 0;
+
 
         public enum UVModes
         {
@@ -96,10 +110,21 @@ namespace g3
 
         override public void Generate()
         {
-            vertices = new VectorArray3d(12 + 4*CornerSteps);
+            int corner_v = 0, corner_t = 0;
+            for (int k = 0; k < 4; ++k) {
+                if (((int)SharpCorners & (1 << k)) != 0) {
+                    corner_v += 1;
+                    corner_t += 2;
+                } else {
+                    corner_v += CornerSteps;
+                    corner_t += (CornerSteps + 1);
+                }
+            }
+
+            vertices = new VectorArray3d(12 + corner_v);
             uv = new VectorArray2f(vertices.Count);
             normals = new VectorArray3f(vertices.Count);
-            triangles = new IndexArray3i(10 + 4*(CornerSteps+1));
+            triangles = new IndexArray3i(10 + corner_t);
 
             float innerW = Width - 2 * Radius;
             float innerH = Height - 2 * Radius;
@@ -133,8 +158,14 @@ namespace g3
 
             int vi = 12;
             for ( int j = 0; j < 4; ++j ) {
-                append_2d_disc_segment(corner_spans[3 * j], corner_spans[3 * j + 1], corner_spans[3 * j + 2], CornerSteps,
-                    cycle, ref vi, ref ti);
+                bool sharp = ((int)SharpCorners & (1 << j)) > 0;
+                if (sharp) {
+                    append_2d_disc_segment(corner_spans[3 * j], corner_spans[3 * j + 1], corner_spans[3 * j + 2], 1,
+                        cycle, ref vi, ref ti, -1, MathUtil.SqrtTwo * Radius);
+                } else {
+                    append_2d_disc_segment(corner_spans[3 * j], corner_spans[3 * j + 1], corner_spans[3 * j + 2], CornerSteps,
+                        cycle, ref vi, ref ti);
+                }
             }
 
 
@@ -172,6 +203,53 @@ namespace g3
             }
 
         }
+
+
+
+        static readonly float[] signx = new float[] { 1, 1, -1, -1 };
+        static readonly float[] signy = new float[] { -1, 1, 1, -1 };
+        static readonly float[] startangle = new float[] { 270, 0, 90, 180 };
+        static readonly float[] endangle = new float[] { 360, 90, 180, 270 };
+
+        /// <summary>
+        /// This is a utility function that returns the set of border points, which
+        /// is useful when we use a roundrect as a UI element and want the border
+        /// </summary>
+        public Vector3d[] GetBorderLoop()
+        {
+            int corner_v = 0;
+            for (int k = 0; k < 4; ++k) {
+                if (((int)SharpCorners & (1 << k)) != 0)
+                    corner_v += 1;
+                else 
+                    corner_v += CornerSteps;
+            }
+
+            float innerW = Width - 2 * Radius;
+            float innerH = Height - 2 * Radius;
+
+            Vector3d[] vertices = new Vector3d[4 + corner_v];
+            int vi = 0;
+
+            for ( int i = 0; i < 4; ++i ) { 
+                vertices[vi++] = new Vector3d(signx[i] * Width / 2, 0, signy[i] * Height / 2);
+
+                bool sharp = ((int)SharpCorners & (1 << i)) > 0;
+                Arc2d arc = new Arc2d( new Vector2d(signx[i] * innerW, signy[i] * innerH), 
+                    (sharp) ? MathUtil.SqrtTwo * Radius : Radius,
+                    startangle[i], endangle[i]);
+                int use_steps = (sharp) ? 1 : CornerSteps;
+                for (int k = 0; k < use_steps; ++k) {
+                    double t = (double)(i + 1) / (double)(use_steps + 1);
+                    Vector2d pos = arc.SampleT(t);
+                    vertices[vi++] = new Vector3d(pos.x, 0, pos.y);
+                }
+            }
+
+            return vertices;
+        }
+
+
     }
 
 }

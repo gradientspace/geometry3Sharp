@@ -109,16 +109,20 @@ namespace g3
 
 
         // append "disc" verts/tris between vEnd1 and vEnd2
-        protected void append_2d_disc_segment(int iCenter, int iEnd1, int iEnd2, int nSteps,bool bCycle, ref int vtx_counter, ref int tri_counter, int groupid = -1)
+        protected void append_2d_disc_segment(int iCenter, int iEnd1, int iEnd2, int nSteps,bool bCycle, ref int vtx_counter, ref int tri_counter, int groupid = -1, double force_r = 0)
         {
             Vector3d c = vertices[iCenter];
             Vector3d e0 = vertices[iEnd1];
             Vector3d e1 = vertices[iEnd2];
             Vector3d v0 = (e0 - c);
             double r0 = v0.Normalize();
+            if (force_r > 0)
+                r0 = force_r;
             double tStart = Math.Atan2(v0.z, v0.x);
             Vector3d v1 = (e1 - c);
             double r1 = v1.Normalize();
+            if (force_r > 0)
+                r1 = force_r;
             double tEnd = Math.Atan2(v1.z, v1.x);
 
             // fix angles to handle sign. **THIS ONLY WORKS IF WE ARE GOING CCW!!**
