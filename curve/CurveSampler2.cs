@@ -35,6 +35,17 @@ namespace g3 {
 		}
 
 
+		public static VectorArray2d SampleTRange(IParametricCurve2d curve, int N, double t0, double t1)
+		{
+			VectorArray2d vec = new VectorArray2d(N);
+			for ( int i = 0; i < N; ++i ) {
+				double alpha = (double)i / (double)(N-1);
+                double t = (1 - alpha) * t0 + alpha * t1;
+				vec[i] = curve.SampleT(t);
+			}
+			return vec;
+		}
+
 
 		public static VectorArray2d SampleT(IParametricCurve2d curve, double fSpacing)
 		{

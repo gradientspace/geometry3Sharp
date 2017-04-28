@@ -85,6 +85,20 @@ namespace g3
 		}
 
 
+
+        public double DistanceSquared(Vector2d point)
+        {
+            double fNearestSqr = Double.MaxValue;
+            for ( int i = 0; i < vertices.Count-1; ++i ) {
+                Segment2d seg = new Segment2d(vertices[i], vertices[i + 1]);
+                double d = seg.DistanceSquared(point);
+                if (d < fNearestSqr)
+                    fNearestSqr = d;
+            }
+            return fNearestSqr;
+        }
+
+
 		public IEnumerable<Segment2d> SegmentItr() {
 			for ( int i = 0; i < vertices.Count-1; ++i )
 				yield return new Segment2d( vertices[i], vertices[i+1] );
