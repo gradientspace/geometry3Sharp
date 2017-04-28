@@ -16,6 +16,16 @@ namespace g3
 		}
 
 
+        public double Curvature
+        {
+            get { return 1.0 / Radius; }
+        }
+        public double SignedCurvature
+        {
+            get { return (IsReversed) ? (-1.0 / Radius) : (1.0 / Radius); }
+        }
+
+
 		public bool IsClosed {
 			get { return true; }
 		}
