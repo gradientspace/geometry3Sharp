@@ -68,6 +68,17 @@ namespace g3
         }
 
 
+        public double HoleArea
+        {
+            get {
+                double dArea = 0;
+                foreach (var h in Holes)
+                    dArea += Math.Abs(h.SignedArea);
+                return dArea;
+            }
+        }
+
+
         public double Perimeter
         {
             get {
