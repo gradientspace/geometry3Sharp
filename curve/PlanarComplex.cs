@@ -171,6 +171,10 @@ namespace g3
 		}
 
 
+        /// <summary>
+        /// iterate through "leaf" curves, ie all the IParametricCurve2D's 
+        /// embedded in loops that do not contain any child curves
+        /// </summary>
         public IEnumerable<IParametricCurve2d> LoopLeafComponentsItr()
         {
             foreach ( Element e in vElements ) {
