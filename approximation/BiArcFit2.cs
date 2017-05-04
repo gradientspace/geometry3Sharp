@@ -102,6 +102,17 @@ namespace g3
             }
         }
 
+        public IParametricCurve2d Curve1 {
+            get {
+                return (Arc1IsSegment) ? (IParametricCurve2d)Segment1 : (IParametricCurve2d)Arc1;
+            }
+        }
+        public IParametricCurve2d Curve2 {
+            get {
+                return (Arc2IsSegment) ? (IParametricCurve2d)Segment2 : (IParametricCurve2d)Arc2;
+            }
+        }
+
 
 
         struct Arc

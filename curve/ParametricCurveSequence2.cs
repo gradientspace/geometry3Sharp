@@ -14,8 +14,9 @@ namespace g3
 			curves = new List<IParametricCurve2d>();
 		}
 
-		public ParametricCurveSequence2(IEnumerable<IParametricCurve2d> curvesIn) { 
+		public ParametricCurveSequence2(IEnumerable<IParametricCurve2d> curvesIn, bool isClosed = false) { 
 			curves = new List<IParametricCurve2d>(curvesIn);
+            closed = true;
 		}
 
 		public int Count {

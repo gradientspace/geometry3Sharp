@@ -50,5 +50,16 @@ namespace g3
                 yield return c;
         }
 
+
+        public static List<IParametricCurve2d> Flatten(List<IParametricCurve2d> curves)
+        {
+            List<IParametricCurve2d> l = new List<IParametricCurve2d>();
+            foreach ( IParametricCurve2d sourceC in curves) {
+                foreach (var c in LeafCurvesIteration(sourceC))
+                    l.Add(c);
+            }
+            return l;
+        }
+
 	}
 }
