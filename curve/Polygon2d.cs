@@ -135,6 +135,33 @@ namespace g3
         }
 
 
+
+        public void NeighboursP(int iVertex, ref Vector2d p0, ref Vector2d p1)
+        {
+            int N = vertices.Count;
+            p0 = vertices[(iVertex == 0) ? N - 1 : iVertex - 1];
+            p1 = vertices[(iVertex + 1) % N];
+        }
+        public void NeighboursV(int iVertex, ref Vector2d v0, ref Vector2d v1, bool bNormalize = false)
+        {
+            int N = vertices.Count;
+            v0 = vertices[(iVertex == 0) ? N - 1 : iVertex - 1] - vertices[iVertex];
+            v1 = vertices[(iVertex + 1) % N] - vertices[iVertex];
+            if ( bNormalize ) {
+                v0.Normalize();
+                v1.Normalize();
+            }
+        }
+
+        public double OpeningAngleDeg(int iVertex)
+        {
+            Vector2d e0 = Vector2d.Zero, e1 = Vector2d.Zero;
+            NeighboursV(iVertex, ref e0, ref e1, true);
+            return Vector2d.AngleD(e0, e1);
+        }
+
+
+
 		public bool Contains( Vector2d vTest )
 		{
 			int nWindingNumber = 0;   // winding number counter

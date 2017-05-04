@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+
 namespace g3 
 {
 	public static class CurveUtils2 
@@ -32,6 +34,21 @@ namespace g3
 			return Math.Sqrt(min_dist);
 		}
 
+
+        /// <summary>
+        /// if the children of C are a tree, iterate through all the leaves
+        /// </summary>
+        public static IEnumerable<IParametricCurve2d> LeafCurvesIteration(IParametricCurve2d c)
+        {
+            if (c is IMultiCurve2d) {
+                var multiC = c as IMultiCurve2d;
+                foreach ( IParametricCurve2d c2 in multiC.Curves ) {
+                    foreach (var c3 in LeafCurvesIteration(c2))
+                        yield return c3;
+                }
+            } else
+                yield return c;
+        }
 
 	}
 }

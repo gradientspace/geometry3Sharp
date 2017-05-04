@@ -33,6 +33,16 @@ namespace g3
 			public IParametricCurve2d source;
 			public int ID = 0;
 
+            Colorf color = Colorf.Black;
+            bool has_set_color = false;
+            public Colorf Color {
+                get { return color; }
+                set { color = value; has_set_color = true; }
+            }
+            public bool HasSetColor {
+                get { return has_set_color; }
+            }
+
 			public abstract IEnumerable<Segment2d> SegmentItr();
 			public abstract AxisAlignedBox2d Bounds();
 		}
@@ -77,19 +87,21 @@ namespace g3
             get { return vElements.Count; }
         }
 
-		public void Add(IParametricCurve2d curve) {
+		public Element Add(IParametricCurve2d curve) {
 			if ( curve.IsClosed ) {
 				SmoothLoopElement e = new SmoothLoopElement();
 				e.ID = id_generator++;
 				e.source = curve;
 				UpdateSampling(e);
 				vElements.Add(e);
+                return e;
 			} else {
 				SmoothCurveElement e = new SmoothCurveElement();
 				e.ID = id_generator++;
 				e.source = curve;
 				UpdateSampling(e);
 				vElements.Add(e);
+                return e;
 			}
 		}
 
@@ -157,6 +169,21 @@ namespace g3
 					yield return e as SmoothCurveElement;
 			}
 		}
+
+
+        public IEnumerable<IParametricCurve2d> LoopLeafComponentsItr()
+        {
+            foreach ( Element e in vElements ) {
+                if ( e is SmoothLoopElement ) {
+                    IParametricCurve2d source = e.source;
+                    if (source is IMultiCurve2d) {
+                        foreach (var c in CurveUtils2.LeafCurvesIteration(source) )
+                            yield return c;
+                    } else
+                        yield return source;
+                }
+            }
+        }
 
 		// iterate through endpoints of open curves
 		public IEnumerable<ComplexEndpoint2d> EndpointsItr() {
