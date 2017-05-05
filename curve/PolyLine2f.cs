@@ -7,7 +7,7 @@ namespace g3
 	/// <summary>
 	/// Summary description for PolyLine.
 	/// </summary>
-	public class PolyLine
+	public class DPolyLine2f
 	{
 		public struct Edge {
 			public int v1;
@@ -27,13 +27,13 @@ namespace g3
         List<Vertex> m_vertices;
         List<Edge> m_edges;
 
-		public PolyLine()
+		public DPolyLine2f()
 		{
 			m_vertices = new List<Vertex>();
 			m_edges = new List<Edge>();
 		}
 
-		public PolyLine( PolyLine copy ) {
+		public DPolyLine2f( DPolyLine2f copy ) {
 			m_vertices = new List<Vertex>( copy.m_vertices );
             m_edges = new List<Edge>( copy.m_edges );
 		}

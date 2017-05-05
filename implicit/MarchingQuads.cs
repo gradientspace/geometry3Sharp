@@ -9,7 +9,7 @@ namespace g3
 	/// </summary>
 	public class MarchingQuads
 	{
-		PolyLine m_stroke;
+		DPolyLine2f m_stroke;
 
 		AxisAlignedBox2f m_bounds;
 		float m_fXShift;
@@ -73,7 +73,7 @@ namespace g3
 
 
 		public MarchingQuads(int nSubdivisions, AxisAlignedBox2f bounds, float fIsoValue) {
-			m_stroke = new PolyLine();
+			m_stroke = new DPolyLine2f();
 			m_bounds = new AxisAlignedBox2f();
 			
 			m_nCells = nSubdivisions;
@@ -100,7 +100,7 @@ namespace g3
 			set { SetBounds(value); }
 		}
 
-		public PolyLine Stroke {
+		public DPolyLine2f Stroke {
 			get { return m_stroke; }
 		}
 
