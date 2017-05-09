@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -72,13 +73,20 @@ namespace g3
 
             int nT = mesh.MaxTriangleID;
 
-            // by eulers formula we generally have NT =~ 2*NV, so
-            // as long as we stay within bounds for T we are probably ok
-            // (Although if mesh is all disconnected triangles, we're fucked...)
-            int[] cur_subt = new int[MaxComponentSize];
-            int[] cur_subv = new int[MaxComponentSize];
-            int subti = 0;
-            int subi = 1;
+            // depending on the mesh, either the vertex count or triangle count
+            // could hit the upper bound first. For connected meshes we have
+            // NT =~ 2*NV by eulers formula, but eg for a pathological triangle
+            // soup mesh, we might have NV = 3*NT
+
+            int[] cur_subt = new int[MaxComponentSize];     // accumulated tris for this component
+            int subti = 0;                                  // index into cur_subt
+            int subi = 1;                                   // component index
+
+            // also need to make sure we don't get too many verts. To do this
+            // we have to keep count of how many unique verts we have accumulated.
+            int[] cur_subv = new int[MaxComponentSize];          // temp buffer in add_component
+            BitArray vert_bits = new BitArray(mesh.MaxVertexID); // which verts have we seen for this component
+            int subvcount = 0;                                   // accumulated vert count for this component
 
 
             Action add_component = () => {
@@ -93,6 +101,8 @@ namespace g3
                 subti = 0;
                 Array.Clear(mapToCur, mapRange.a, mapRange.b - mapRange.a + 1);
                 Array.Clear(cur_subv, 0, max_subv);
+                subvcount = 0;
+                vert_bits.SetAll(false);
             };
 
 
@@ -103,10 +113,16 @@ namespace g3
             for (int ii = 0; ii < tri_count; ++ii) {
                 int ti = tri_order[ii];
 
+                Index3i tri = mesh.GetTriangle(ti);
+                if (vert_bits[tri.a] == false) { vert_bits[tri.a] = true; subvcount++; }
+                if (vert_bits[tri.b] == false) { vert_bits[tri.b] = true; subvcount++; }
+                if (vert_bits[tri.c] == false) { vert_bits[tri.c] = true; subvcount++; }
+
                 cur_subt[subti++] = ti;
 
-                if (subti == MaxComponentSize)
+                if (subti == MaxComponentSize || subvcount > MaxComponentSize-3 ) {
                     add_component();
+                }
             }
             if (subti > 0 )
                 add_component();
