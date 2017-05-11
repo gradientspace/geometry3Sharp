@@ -30,7 +30,7 @@ namespace g3
 
         // parallel for-each that will work on .net 3.5 (maybe?)
         // adapted from https://www.microsoft.com/en-us/download/details.aspx?id=19222
-        public static void for_each<T>( IEnumerable<T> source, Action<T> body )
+        static void for_each<T>( IEnumerable<T> source, Action<T> body )
         {
             int numProcs = Environment.ProcessorCount;
             int remainingWorkItems = numProcs;
