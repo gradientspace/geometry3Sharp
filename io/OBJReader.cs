@@ -30,15 +30,19 @@ namespace g3
     internal unsafe struct Triangle
     {
         public const int InvalidMaterialID = -1;
+        public const int InvalidGroupID = -1;
 
+        // [TODO] replace with Index3i, get rid of unsafe
         public fixed int vIndices[3];
         public fixed int vNormals[3];
         public fixed int vUVs[3];
         public int nMaterialID;
+        public int nGroupID;
 
         public void clear()
         {
             nMaterialID = InvalidMaterialID;
+            nGroupID = InvalidGroupID;
             fixed (int* v = this.vIndices) { v[0] = -1; v[1] = -1; v[2] = -1; }
             fixed (int* n = this.vNormals) { n[0] = -1; n[1] = -1; n[2] = -1; }
             fixed (int* u = this.vUVs) { u[0] = -1; u[1] = -1; u[2] = -1; }
@@ -96,6 +100,9 @@ namespace g3
         bool m_bOBJHasPerVertexColors;
         int m_nUVComponents;
 
+        bool m_bOBJHasTriangleGroups;
+        int m_nSetInvalidGroupsTo;
+
         private string[] splitDoubleSlash;
         private char[] splitSlash;
 
@@ -116,9 +123,11 @@ namespace g3
 		public event ParsingMessagesHandler warningEvent;
 
 
-
         public bool HasPerVertexColors { get { return m_bOBJHasPerVertexColors; } }
         public int UVDimension{ get { return m_nUVComponents; } }
+
+        public bool HasTriangleGroups { get { return m_bOBJHasTriangleGroups; } }
+
 
         // if this is true, means during parsing we found vertices of faces that
         //  had different indices for vtx/normal/uv
@@ -210,7 +219,9 @@ namespace g3
                     t.vIndices[0], t.vIndices[1], t.vIndices[2], v0, v1, v2));
                 return -1;
             }
-            return builder.AppendTriangle(v0, v1, v2);
+            int gid = (vTriangles[nTri].nGroupID == Triangle.InvalidGroupID) ? 
+                m_nSetInvalidGroupsTo : vTriangles[nTri].nGroupID;
+            return builder.AppendTriangle(v0, v1, v2, gid);
         }
         unsafe int append_triangle(IMeshBuilder builder, Triangle t)
         {
@@ -219,7 +230,9 @@ namespace g3
                     t.vIndices[0], t.vIndices[1], t.vIndices[2]));
                 return -1;
             }
-            return builder.AppendTriangle(t.vIndices[0], t.vIndices[1], t.vIndices[2]);
+            int gid = (t.nGroupID == Triangle.InvalidGroupID) ? 
+                m_nSetInvalidGroupsTo : t.nGroupID;
+            return builder.AppendTriangle(t.vIndices[0], t.vIndices[1], t.vIndices[2], gid);
         }
 
 
@@ -238,7 +251,7 @@ namespace g3
             int nVertices = vPositions.Length / 3;
             int[] mapV = new int[nVertices];
 
-            int meshID = builder.AppendNewMesh(bHaveNormals, bHaveColors, bHaveUVs, false);
+            int meshID = builder.AppendNewMesh(bHaveNormals, bHaveColors, bHaveUVs, m_bOBJHasTriangleGroups);
             for (int k = 0; k < nVertices; ++k) {
 				Index3i vk = new Index3i(k,k,k);
                 mapV[k] = append_vertex(builder, vk, bHaveNormals, bHaveColors, bHaveUVs);
@@ -340,6 +353,10 @@ namespace g3
             int nMaxUVLength = 0;
             OBJMaterial activeMaterial = null;
 
+            Dictionary<string, int> GroupNames = new Dictionary<string, int>();
+            int nGroupCounter = 0;
+            int nActiveGroup = Triangle.InvalidGroupID;
+
             int nLines = 0;
             while (reader.Peek() >= 0) {
 
@@ -401,20 +418,32 @@ namespace g3
                             Triangle tri = new Triangle();
                             parse_triangle(tokens, ref tri);
 
+                            tri.nGroupID = nActiveGroup;
+
                             if (activeMaterial != null) {
                                 tri.nMaterialID = activeMaterial.id;
                                 UsedMaterials[activeMaterial.id] = activeMaterial.name;
                             }
+
                             vTriangles.Add(tri);
                             if (tri.is_complex())
                                 HasComplexVertices = true;
+
                         } else {
-                            append_face(tokens, activeMaterial);
+                            append_face(tokens, activeMaterial, nActiveGroup);
                         }
 
                     } else if (tokens[0][0] == 'g') {
+                        string sGroupName = (tokens.Length == 2) ? tokens[1] : line.Substring( line.IndexOf(tokens[1]) );
+                        if ( GroupNames.ContainsKey(sGroupName) ) {
+                            nActiveGroup = GroupNames[sGroupName];
+                        } else {
+                            nActiveGroup = nGroupCounter;
+                            GroupNames[sGroupName] = nGroupCounter++;
+                        }
 
                     } else if (tokens[0][0] == 'o') {
+                        // TODO multi-object support
 
                     } else if (tokens[0] == "mtllib" && options.ReadMaterials) {
                         if (MTLFileSearchPaths.Count == 0)
@@ -441,6 +470,8 @@ namespace g3
             }
 
             m_bOBJHasPerVertexColors = bVerticesHaveColors;
+            m_bOBJHasTriangleGroups = (nActiveGroup != Triangle.InvalidGroupID);
+            m_nSetInvalidGroupsTo = nGroupCounter++;
             m_nUVComponents = nMaxUVLength;
 
             return new IOReadResult(IOCode.Ok, "");
@@ -469,7 +500,7 @@ namespace g3
             return vi;
         }
 
-        private unsafe void append_face(string[] tokens, OBJMaterial activeMaterial)
+        private unsafe void append_face(string[] tokens, OBJMaterial activeMaterial, int nActiveGroup)
         {
             int nMode = 0;
             if (tokens[1].IndexOf("//") != -1)
@@ -514,6 +545,7 @@ namespace g3
                         t.nMaterialID = activeMaterial.id;
                         UsedMaterials[activeMaterial.id] = activeMaterial.name;
                     }
+                    t.nGroupID = nActiveGroup;
                     vTriangles.Add(t);
                     if (t.is_complex())
                         HasComplexVertices = true;
