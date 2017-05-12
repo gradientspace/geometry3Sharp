@@ -48,7 +48,9 @@ namespace g3
             return BaseToSubV[base_vID];
         }
         public int MapVertexToBaseMesh(int sub_vID) {
-            return SubToBaseV[sub_vID];
+            if (sub_vID < SubToBaseV.Length)
+                return SubToBaseV[sub_vID];
+            return DMesh3.InvalidID;
         }
 
         public Index2i MapVerticesToSubmesh(Index2i v) {

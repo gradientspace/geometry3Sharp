@@ -70,12 +70,15 @@ namespace g3
                 if (Region.SubMesh.vertex_is_boundary(edgev.a) && Region.SubMesh.vertex_is_boundary(edgev.b)) {
                     // ok, we have an internal edge where both verts are on the boundary
                     // now check if it is an edge in the base mesh
-                    int base_a = Region.SubToBaseV[edgev.a];
-                    int base_b = Region.SubToBaseV[edgev.b];
-                    Debug.Assert(Region.BaseMesh.IsVertex(base_a) && Region.BaseMesh.IsVertex(base_b));
-                    int base_eid = Region.BaseMesh.FindEdge(base_a, base_b);
-                    if ( base_eid != DMesh3.InvalidID )
-                        split_edges.Add(eid);
+                    int base_a = Region.MapVertexToBaseMesh(edgev.a);
+                    int base_b = Region.MapVertexToBaseMesh(edgev.b);
+                    if (base_a != DMesh3.InvalidID && base_b != DMesh3.InvalidID) {
+                        // both vertices in base mesh...right?
+                        Debug.Assert(Region.BaseMesh.IsVertex(base_a) && Region.BaseMesh.IsVertex(base_b));
+                        int base_eid = Region.BaseMesh.FindEdge(base_a, base_b);
+                        if (base_eid != DMesh3.InvalidID)
+                            split_edges.Add(eid);
+                    }
                 }
             }
 
