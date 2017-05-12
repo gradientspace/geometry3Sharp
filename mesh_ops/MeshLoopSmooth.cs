@@ -12,7 +12,7 @@ namespace g3
         public int Rounds = 10;
 
         // reproject smoothed position to new location
-        public Func<Vector3d, Vector3f, int, Vector3d> ProjectF;
+        public Func<Vector3d, int, Vector3d> ProjectF;
 
 
         Vector3d[] SmoothedPostions;
@@ -58,7 +58,12 @@ namespace g3
                 // bake
                 for (int i = 0; i < NV; ++i) {
                     int vid = Loop.Vertices[(i + 1) % NV];
-                    Mesh.SetVertex(vid, SmoothedPostions[i]);
+                    Vector3d pos = SmoothedPostions[i];
+
+                    if (ProjectF != null)
+                        pos = ProjectF(pos, vid);
+
+                    Mesh.SetVertex(vid, pos);
                 }
             }
 

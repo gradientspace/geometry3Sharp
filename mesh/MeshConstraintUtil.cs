@@ -65,6 +65,32 @@ namespace g3
 
 
 
+        // for all mesh boundary edges, disable flip/split/collapse
+        // for all mesh boundary vertices, pin in current position
+        public static void FixAllGroupBoundaryEdges(MeshConstraints cons, DMesh3 mesh, bool bPinVertices)
+        {
+            int NE = mesh.MaxEdgeID;
+            for ( int ei = 0; ei < NE; ++ei ) {
+                if ( mesh.IsEdge(ei) && mesh.IsGroupBoundaryEdge(ei) ) {
+                    cons.SetOrUpdateEdgeConstraint(ei, EdgeConstraint.FullyConstrained);
+
+                    if (bPinVertices) {
+                        Index2i ev = mesh.GetEdgeV(ei);
+                        cons.SetOrUpdateVertexConstraint(ev.a, VertexConstraint.Pinned);
+                        cons.SetOrUpdateVertexConstraint(ev.b, VertexConstraint.Pinned);
+                    }
+                }
+            }
+        }
+        public static void FixAllGroupBoundaryEdges(Remesher r, bool bPinVertices)
+        {
+            if (r.Constraints == null)
+                r.SetExternalConstraints(new MeshConstraints());
+            FixAllGroupBoundaryEdges(r.Constraints, r.Mesh, bPinVertices);
+        }
+
+
+
         // for all vertices in loopV, constrain to target
         // for all edges in loopV, disable flips and constrain to target
         public static void ConstrainVtxLoopTo(MeshConstraints cons, DMesh3 mesh, int[] loopV, IProjectionTarget target)

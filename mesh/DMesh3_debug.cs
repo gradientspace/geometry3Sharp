@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace g3
@@ -6,6 +7,11 @@ namespace g3
     public partial class DMesh3
     {
 
+        [Conditional("DEBUG")]
+        public void debug_check_is_vertex(int v) {
+            if (!IsVertex(v))
+                throw new Exception("DMesh3.debug_is_vertex - not a vertex!");
+        }
 
 
 		public void debug_print_vertex(int v) {

@@ -998,6 +998,8 @@ namespace g3
 
         // linear search through edges of vA
         public int FindEdge(int vA, int vB) {
+            debug_check_is_vertex(vA);
+            debug_check_is_vertex(vB);
             return find_edge(vA, vB);
         }
 
