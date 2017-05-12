@@ -283,11 +283,11 @@ namespace g3
 
 
         // return true if we clipped something
-        public bool ClipFins()
+        public bool ClipFins(bool bClipLoners)
         {
             temp.Clear();
             foreach (int tid in Selected) {
-                if (is_fin(tid))
+                if (is_fin(tid, bClipLoners))
                     temp.Add(tid);
             }
             if (temp.Count == 0)
@@ -299,7 +299,7 @@ namespace g3
 
 
         // return true if we filled any ears.
-        public bool FillEars()
+        public bool FillEars(bool bFillTinyHoles)
         {
             // [TODO] not efficient! checks each nbr 3 times !! ugh!!
             temp.Clear();
@@ -309,7 +309,7 @@ namespace g3
                     int nbr_t = nbr_tris[j];
                     if (IsSelected(nbr_t))
                         continue;
-                    if (is_ear(nbr_t))
+                    if (is_ear(nbr_t, bFillTinyHoles))
                         temp.Add(nbr_t);
                 }
             }
@@ -321,15 +321,15 @@ namespace g3
         }
 
         // returns true if selection was modified
-        public bool LocalOptimize(bool bClipFins, bool bFillEars)
+        public bool LocalOptimize(bool bClipFins, bool bFillEars, bool bFillTinyHoles = true, bool bClipLoners = true)
         {
             bool bModified = false;
             bool done = false;
             while ( ! done ) {
                 done = true;
-                if (bClipFins && ClipFins())
+                if (bClipFins && ClipFins(bClipLoners))
                     done = false;
-                if (bFillEars && FillEars())
+                if (bFillEars && FillEars(bFillTinyHoles))
                     done = false;
                 if (done == false)
                     bModified = true;
@@ -358,7 +358,7 @@ namespace g3
                     nbr_out++;
             }
         }
-        private bool is_ear(int tid)
+        private bool is_ear(int tid, bool include_tiny_holes)
         {
             if (IsSelected(tid) == true)
                 return false;
@@ -369,16 +369,20 @@ namespace g3
             } else if (nbr_in == 2) {
                 if (bdry_e == 1 || nbr_out == 1)
                     return true;        // unselected w/ 2 selected nbrs
+
+            } else if ( include_tiny_holes && nbr_in == 3 ) {
+                return true;
             }
             return false;
         }
-        private bool is_fin(int tid)
+        private bool is_fin(int tid, bool include_loners)
         {
             if (IsSelected(tid) == false)
                 return false;
             int nbr_in, nbr_out, bdry_e;
             count_nbrs(tid, out nbr_in, out nbr_out, out bdry_e);
-            return (nbr_in == 1 && nbr_out == 2);
+            return (nbr_in == 1 && nbr_out == 2) ||
+                (include_loners == true && nbr_in == 0 && nbr_out == 3);
         }
 
 
