@@ -123,5 +123,26 @@ namespace g3
 
 
 
+
+
+        public static RegionRemesher QuickRemesh(DMesh3 mesh, int[] tris, 
+            double minEdgeLen, double maxEdgeLen, double smoothSpeed, 
+            int rounds, 
+            IProjectionTarget target)
+        {
+            RegionRemesher remesh = new RegionRemesher(mesh, tris);
+            if ( target != null )
+                remesh.SetProjectionTarget(target);
+            remesh.MinEdgeLength = minEdgeLen;
+            remesh.MaxEdgeLength = maxEdgeLen;
+            remesh.SmoothSpeedT = smoothSpeed;
+            for (int k = 0; k < rounds; ++k) {
+                remesh.BasicRemeshPass();
+            }
+            remesh.BackPropropagate();
+            return remesh;
+        }
+
+
     }
 }
