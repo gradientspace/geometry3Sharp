@@ -12,13 +12,13 @@ namespace g3
         public DMesh3 Mesh;
 
         HashSet<int> Selected;
-        //List<int> temp;
+        List<int> temp;
 
         public MeshVertexSelection(DMesh3 mesh)
         {
             Mesh = mesh;
             Selected = new HashSet<int>();
-            //temp = new List<int>();
+            temp = new List<int>();
         }
 
 
@@ -91,7 +91,10 @@ namespace g3
             for ( int i = 0; i < vertices.Length; ++i ) 
                 remove(vertices[i]);
         }
-
+        public void Deselect(IEnumerable<int> vertices) {
+            foreach ( int vid in vertices )
+                remove(vid);
+        }
 
         public int[] ToArray()
         {
@@ -104,6 +107,32 @@ namespace g3
         }
 
        
+
+
+        /// <summary>
+        /// Add all one-ring neighbours of current selection to set.
+        /// On a large mesh this is quite expensive as we don't know the boundary,
+        /// so we have to iterate over all triangles.
+        /// 
+        /// Return false from FilterF to prevent vertices from being included.
+        /// </summary>
+        public void ExpandToOneRingNeighbours(Func<int, bool> FilterF = null)
+        {
+            temp.Clear();
+
+            foreach ( int vid in Selected ) {
+                foreach (int nbr_vid in Mesh.VtxVerticesItr(vid)) {
+                    if (FilterF != null && FilterF(nbr_vid) == false)
+                        continue;
+                    if (IsSelected(nbr_vid) == false)
+                        temp.Add(nbr_vid);
+                }
+            }
+
+            for (int i = 0; i < temp.Count; ++i)
+                add(temp[i]);
+        }
+
 
     }
 }
