@@ -72,11 +72,13 @@ namespace g3
             get { return Result == IntersectionResult.Intersects && Type == IntersectionType.Point; }
         }
 
+		// these values are all on segment 1, unlike many other tests!!
+
 		public Vector2d Point0;
 		public Vector2d Point1;     // only set if Quantity == 2, ie segment overlap
 
 		public double Parameter0;
-		public double Parameter1;
+		public double Parameter1;     // only set if Quantity == 2, ie segment overlap
 
 		public IntrSegment2Segment2(Segment2d seg1, Segment2d seg2)
 		{

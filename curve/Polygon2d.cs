@@ -341,13 +341,13 @@ namespace g3
 
 
 
-        static public Polygon2d MakeCircle(float fRadius, int nSteps)
+        static public Polygon2d MakeCircle(double fRadius, int nSteps, double angleShiftRad = 0)
         {
             VectorArray2d vertices = new VectorArray2d(nSteps);
 
             for ( int i = 0; i < nSteps; ++i ) {
                 double t = (double)i / (double)nSteps;
-                double a = MathUtil.TwoPI * t;
+                double a = MathUtil.TwoPI * t + angleShiftRad;
                 vertices.Set(i, fRadius * Math.Cos(a), fRadius * Math.Sin(a));
             }
 

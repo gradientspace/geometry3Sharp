@@ -38,6 +38,10 @@ namespace g3
             get { return 2 * Extent; }
         }
 
+		public Vector2d Endpoint(int i) {
+			return (i == 0) ? (Center - Extent * Direction) : (Center + Extent * Direction);
+		}
+
 		// parameter is signed distance from center in direction
 		public Vector2d PointAt(double d) {
 			return Center + d * Direction;
