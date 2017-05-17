@@ -224,6 +224,7 @@
     <Compile Include="io\MeshIOUtil.cs" />
     <Compile Include="curve\CurveUtils2.cs" />
     <Compile Include="curve\PolyLine3d.cs" />
+    <Compile Include="spatial\SegmentSet2d.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
