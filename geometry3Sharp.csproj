@@ -51,10 +51,8 @@
     <Compile Include="core\DVector.cs" />
     <Compile Include="core\FileSystemUtils.cs" />
     <Compile Include="core\gParallel.cs" />
-    <Compile Include="core\HashUtil.cs" />
     <Compile Include="core\HBitArray.cs" />
     <Compile Include="core\Indexing.cs" />
-    <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\Snapping.cs" />
     <Compile Include="core\Units.cs" />

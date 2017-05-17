@@ -23,6 +23,10 @@ namespace g3
 		static public readonly Interval1d Infinite = new Interval1d(-double.MaxValue, double.MaxValue);
 
 
+		public static Interval1d Unsorted(double x, double y) {
+			return (x < y) ? new Interval1d(x, y) : new Interval1d(y, x);
+		}
+
         public double this[int key]
         {
             get { return (key == 0) ? a : b; }

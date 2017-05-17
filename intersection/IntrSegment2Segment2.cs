@@ -72,10 +72,11 @@ namespace g3
             get { return Result == IntersectionResult.Intersects && Type == IntersectionType.Point; }
         }
 
-
 		public Vector2d Point0;
-		public Vector2d Point1;		// only set if Quantity == 2, ie segment overlap
+		public Vector2d Point1;     // only set if Quantity == 2, ie segment overlap
 
+		public double Parameter0;
+		public double Parameter1;
 
 		public IntrSegment2Segment2(Segment2d seg1, Segment2d seg2)
 		{
@@ -115,6 +116,7 @@ namespace g3
 				{
 					Quantity = 1;
 					Point0 = segment1.Center + s[0]*segment1.Direction;
+					Parameter0 = s[0];
 				}
 				else
 				{
@@ -134,16 +136,19 @@ namespace g3
 				Quantity = calc.NumIntersections;
 				if (Quantity == 2) {
 					Type = IntersectionType.Segment;
+					Parameter0 = calc.GetIntersection(0);
 					Point0 = segment1.Center +
-						calc.GetIntersection(0)*segment1.Direction;
+						Parameter0*segment1.Direction;
+					Parameter1 = calc.GetIntersection(1);					
 					Point1 = segment1.Center +
-						calc.GetIntersection(1)*segment1.Direction;
+						Parameter1*segment1.Direction;
 				}
 				else if (Quantity == 1)
 				{
 					Type = IntersectionType.Point;
+					Parameter0 = calc.GetIntersection(0);
 					Point0 = segment1.Center +
-						calc.GetIntersection(0)*segment1.Direction;
+						Parameter0*segment1.Direction;
 				} else {
 					Type = IntersectionType.Empty;
 				}

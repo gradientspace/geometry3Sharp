@@ -74,6 +74,13 @@ namespace g3
             get { return Math.Max(Width, Height); }
         }
 
+		/// <summary>
+		/// returns absolute value of largest min/max x/y coordinate (ie max axis distance to origin)
+		/// </summary>
+		public double MaxUnsignedCoordinate {
+			get { return Math.Max(Math.Max(Math.Abs(Min.x), Math.Abs(Max.x)), Math.Max(Math.Abs(Min.y), Math.Abs(Max.y))); }
+		}
+
         public Vector2d Diagonal
         {
             get { return new Vector2d(Max.x - Min.x, Max.y - Min.y); }

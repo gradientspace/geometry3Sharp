@@ -22,6 +22,13 @@ namespace g3
 			Timestamp = 0;
 		}
 
+		public PolyLine2d(Polygon2d copy)
+		{
+			vertices = new List<Vector2d>(copy);
+			vertices.Add(copy.Start);  // duplicate start vert
+			Timestamp = 0;
+		}
+
 		public PolyLine2d(Vector2d[] v)
 		{
 			vertices = new List<Vector2d>(v);
