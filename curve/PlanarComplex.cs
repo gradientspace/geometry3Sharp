@@ -106,6 +106,16 @@ namespace g3
 		}
 
 
+		public Element AddPolygon(Polygon2d poly) {
+			SmoothLoopElement e = new SmoothLoopElement();
+			e.ID = id_generator++;
+			e.source = null;
+			e.polygon = poly;
+			vElements.Add(e);
+			return e;			
+		}
+
+
         public void Remove(Element e)
         {
             vElements.Remove(e);
