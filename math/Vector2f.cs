@@ -182,6 +182,14 @@ namespace g3
             return new Vector2f(f / v.x, f / v.y);
         }
 
+		public static Vector2f operator *(Vector2f a, Vector2f b)
+		{
+			return new Vector2f(a.x * b.x, a.y * b.y);
+		}
+		public static Vector2f operator /(Vector2f a, Vector2f b)
+		{
+			return new Vector2f(a.x / b.x, a.y / b.y);
+		}
 
 
         public static bool operator ==(Vector2f a, Vector2f b)

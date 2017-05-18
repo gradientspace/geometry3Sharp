@@ -182,6 +182,16 @@ namespace g3
         }
 
 
+		public static Vector2d operator *(Vector2d a, Vector2d b)
+		{
+			return new Vector2d(a.x * b.x, a.y * b.y);
+		}
+		public static Vector2d operator /(Vector2d a, Vector2d b)
+		{
+			return new Vector2d(a.x / b.x, a.y / b.y);
+		}
+
+
         public static bool operator ==(Vector2d a, Vector2d b)
         {
             return (a.x == b.x && a.y == b.y);

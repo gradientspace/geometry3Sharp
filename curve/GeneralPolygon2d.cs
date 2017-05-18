@@ -14,6 +14,14 @@ namespace g3
 
 		public GeneralPolygon2d() {
 		}
+		public GeneralPolygon2d(GeneralPolygon2d copy)
+		{
+			outer = new Polygon2d(copy.outer);
+			bOuterIsCW = copy.bOuterIsCW;
+			holes = new List<Polygon2d>(copy.holes);
+			foreach (var hole in copy.holes)
+				holes.Add(new Polygon2d(hole));
+		}
 
 
 		public Polygon2d Outer {
@@ -99,5 +107,18 @@ namespace g3
                 return box;
             }
         }
+
+
+		public void Translate(Vector2d translate) {
+			outer.Translate(translate);
+			foreach (var h in holes)
+				h.Translate(translate);
+		}
+
+		public void Scale(Vector2d scale, Vector2d origin) {
+			outer.Scale(scale, origin);
+			foreach (var h in holes)
+				h.Scale(scale, origin);
+		}
 	}
 }

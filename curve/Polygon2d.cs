@@ -244,6 +244,18 @@ namespace g3
 
 
 
+		public void Translate(Vector2d translate) {
+			int N = vertices.Count;
+			for (int i = 0; i < N; ++i)
+				vertices[i] += translate;
+		}
+
+		public void Scale(Vector2d scale, Vector2d origin) {
+			int N = vertices.Count;
+			for (int i = 0; i < N; ++i)
+				vertices[i] = scale * (vertices[i] - origin) + origin;
+		}
+
 
 
 		// Polygon simplification
