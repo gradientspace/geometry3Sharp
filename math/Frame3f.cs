@@ -208,13 +208,13 @@ namespace g3
         {
             return Math.Abs((p - origin).Dot(GetAxis(nNormal)));
         }
-        public float DistanceToPlaneSigned(Vector3f p, int nNormal)
-        {
-            return Math.Abs((p - origin).Dot(GetAxis(nNormal)));
-        }
+		public float DistanceToPlaneSigned(Vector3f p, int nNormal)
+		{
+			return (p - origin).Dot(GetAxis(nNormal));
+		}
 
 
-        public Vector3f ToFrameP(Vector3f v)
+		public Vector3f ToFrameP(Vector3f v)
         {
             v = v - this.origin;
             v = Quaternionf.Inverse(this.rotation) * v;
