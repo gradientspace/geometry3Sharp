@@ -1,22 +1,36 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Diagnostics;
 
 namespace g3
 {
+	public class MeshBoundaryLoopsException : Exception
+	{
+		public MeshBoundaryLoopsException(string message) : base(message) {}
+		public bool UnclosedLoop = false;
+		public bool BowtieFailure = false;
+	}
 
-
-
+	/// <summary>
+	/// Extract boundary EdgeLoops from Mesh.
+	/// </summary>
     public class MeshBoundaryLoops : IEnumerable<EdgeLoop>
     {
         public DMesh3 Mesh;
         public List<EdgeLoop> Loops;
 
-        public MeshBoundaryLoops(DMesh3 mesh)
+
+		// if enabled, only edges where this returns true are considered
+		public Func<int, bool> EdgeFilterF = null;
+
+
+        public MeshBoundaryLoops(DMesh3 mesh, bool bAutoCompute = true)
         {
             this.Mesh = mesh;
-            Compute();
+			if (bAutoCompute)
+           		Compute();
         }
 
         public int Count {
@@ -48,12 +62,16 @@ namespace g3
         }
 
 
-
-        // This algorithm assumes that triangles are oriented consistently, 
-        // so boundary-loop can be followed
-        public bool Compute()
+		/// <summary>
+		/// Find the set of boundary EdgeLoops. Note that if we encounter topological
+		/// issues, we will throw MeshBoundaryLoopsException w/ more info (if possible)
+		/// </summary>
+		public bool Compute()
         {
-            Loops = new List<EdgeLoop>();
+			// This algorithm assumes that triangles are oriented consistently, 
+			// so closed boundary-loop can be followed by walking edges in-order
+
+			Loops = new List<EdgeLoop>();
 
             int NE = Mesh.MaxEdgeID;
 
@@ -79,6 +97,11 @@ namespace g3
                 if (Mesh.edge_is_boundary(eid) == false)
                     continue;
 
+				if (EdgeFilterF != null && EdgeFilterF(eid) == false) {
+					used_edge[eid] = true;
+					continue;
+				}
+
                 // ok this is start of a boundary chain
                 int eStart = eid;
                 used_edge[eStart] = true;
@@ -96,31 +119,51 @@ namespace g3
                     int e0 = -1, e1 = 1;
                     int bdry_nbrs = Mesh.VtxBoundaryEdges(cure_b, ref e0, ref e1);
 
-                    if (bdry_nbrs < 2)
-                        throw new Exception("MeshBoundaryLoops.Compute: found broken neighbourhood at vertex " + cure_b);
+					// have to filter this list, if we are filtering. this is ugly.
+					if (EdgeFilterF != null) {
+						if ( bdry_nbrs > 2 ) {
+							if (bdry_nbrs >= all_e.Length)
+								all_e = new int[bdry_nbrs];	
+							// we may repreat this below...irritating...
+							int num_be = Mesh.VtxAllBoundaryEdges(cure_b, all_e);
+							num_be = BufferUtil.CountValid(all_e, EdgeFilterF, num_be);
+						} else {
+							if (EdgeFilterF(e0) == false) bdry_nbrs--;
+							if (EdgeFilterF(e1) == false) bdry_nbrs--;
+						}
+					}
+
+
+					if (bdry_nbrs < 2)
+						throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: found broken neighbourhood at vertex " + cure_b) { UnclosedLoop = true };
 
                     int eNext = -1;
                     if (bdry_nbrs > 2) {
-                        // found "bowtie" vertex...things just got complicated!
+						// found "bowtie" vertex...things just got complicated!
 
-                        if (cure_b == loop_verts[0]) {
-                            // The "end" of the current edge is the same as the start vertex.
-                            // This means we can close the loop here. Might as well!
-                            eNext = -2;   // sentinel value used below
+						if (cure_b == loop_verts[0]) {
+							// The "end" of the current edge is the same as the start vertex.
+							// This means we can close the loop here. Might as well!
+							eNext = -2;   // sentinel value used below
 
-                        } else {
-                            // try to find an unused outgoing edge that is oriented properly.
-                            // This could create sub-loops, we will handle those later
-                            if (bdry_nbrs >= all_e.Length)
-                                all_e = new int[bdry_nbrs];
-                            int num_be = Mesh.VtxAllBoundaryEdges(cure_b, all_e);
-                            Debug.Assert(num_be == bdry_nbrs);
+						} else {
+							// try to find an unused outgoing edge that is oriented properly.
+							// This could create sub-loops, we will handle those later
+							if (bdry_nbrs >= all_e.Length)
+								all_e = new int[bdry_nbrs];
+							int num_be = Mesh.VtxAllBoundaryEdges(cure_b, all_e);
 
-                            // Try to pick the best "turn left" vertex.
-                            eNext = find_left_turn_edge(eCur, cure_b, all_e, num_be, used_edge);
+							if (EdgeFilterF != null) {
+								num_be = BufferUtil.FilterInPlace(all_e, EdgeFilterF, num_be);
+							}
 
-                            if (eNext == -1)
-                                throw new Exception("MeshBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b);
+							Debug.Assert(num_be == bdry_nbrs);
+
+							// Try to pick the best "turn left" vertex.
+							eNext = find_left_turn_edge(eCur, cure_b, all_e, num_be, used_edge);
+
+							if (eNext == -1)
+								throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b) { BowtieFailure = true };
                         }
 
                         if ( bowties.Contains(cure_b) == false )
