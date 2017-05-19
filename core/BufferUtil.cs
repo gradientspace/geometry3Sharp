@@ -109,4 +109,31 @@ namespace g3
 		}
 
     }
+
+
+
+
+    // utility class for porting C++ code that uses this kind of idiom:
+    //    T * ptr = &array[i];
+    //    ptr[k] = value
+    public struct ArrayAlias<T>
+    {
+        public T[] Source;
+        public int Index;
+
+        public ArrayAlias(T[] source, int i)
+        {
+            Source = source;
+            this.Index = i;
+        }
+
+        public T this[int i]
+        {
+            get { return Source[Index + i]; }
+            set { Source[Index + i] = value; }
+        }
+
+    }
+
+
 }
