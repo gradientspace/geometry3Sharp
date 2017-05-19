@@ -14,6 +14,10 @@ namespace g3
 
 		public GeneralPolygon2d() {
 		}
+		public GeneralPolygon2d(Polygon2d outer)
+		{
+			Outer = outer;
+		}
 		public GeneralPolygon2d(GeneralPolygon2d copy)
 		{
 			outer = new Polygon2d(copy.outer);
