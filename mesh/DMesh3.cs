@@ -1008,9 +1008,10 @@ namespace g3
             return find_edge_from_tri(vA, vB, t);
         }
 
-		// [RMS] this does more work than necessary, see 
+		// [RMS] this does more work than necessary, see (??? comment never finished...)
         public Index2i GetEdgeOpposingV(int eID)
         {
+			// ** it is important that verts returned maintain [c,d] order!!
 			int i = 4*eID;
             int a = edges[i], b = edges[i + 1];
             int t0 = edges[i + 2], t1 = edges[i + 3];

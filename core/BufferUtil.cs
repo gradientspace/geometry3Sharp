@@ -64,5 +64,49 @@ namespace g3
             return sum;
         }
 
+		/// <summary>
+		/// Count number of elements in array (or up to max_i) that pass FilterF test
+		/// </summary>
+		static public int CountValid<T>(T[] data, Func<T, bool> FilterF, int max_i = -1) {
+			int n = (max_i == -1) ? data.Length : max_i;
+			int valid = 0;
+			for (int i = 0; i < n; ++i) {
+				if (FilterF(data[i]))
+					valid++;
+			}
+			return valid;
+		}
+
+		/// <summary>
+		/// shifts elements of array (or up to max_i) that pass FilterF to front of list,
+		/// and returns number that passed
+		/// </summary>
+		static public int FilterInPlace<T>(T[] data, Func<T,bool> FilterF, int max_i = -1) {
+			int N = (max_i == -1) ? data.Length : max_i;
+			int k = 0;
+			for (int i = 0; i < N; ++i) {
+				if (FilterF(data[i]))
+					data[k++] = data[i];
+			}
+			return k;
+		}
+
+		/// <summary>
+		/// return a new array containing only elements (or up to max_i) that pass FilterF test
+		/// </summary>
+		static public T[] Filter<T>(T[] data, Func<T, bool> FilterF, int max_i = -1) {
+			int n = (max_i == -1) ? data.Length : max_i;
+			int valid = CountValid(data, FilterF);
+			if (valid == 0)
+				return null;
+			T[] result = new T[valid];
+			int k = 0;
+			for (int i = 0; i < n; ++i) {
+				if (FilterF(data[i]))
+					result[k++] = data[i];
+			}
+			return result;
+		}
+
     }
 }
