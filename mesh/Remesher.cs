@@ -345,7 +345,7 @@ namespace g3 {
             bool bPositionFixed = false;
             if (constraints != null && constraints.HasEdgeConstraint(edgeID)) {
                 // inherit edge constraint
-                constraints.SetOrUpdateEdgeConstraint(splitInfo.eNew, constraints.GetEdgeConstraint(edgeID));
+                constraints.SetOrUpdateEdgeConstraint(splitInfo.eNewBN, constraints.GetEdgeConstraint(edgeID));
 
                 // [RMS] update vertex constraints. Note that there is some ambiguity here.
                 //   Both verts being constrained doesn't inherently mean that the edge is on

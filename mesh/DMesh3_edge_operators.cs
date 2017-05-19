@@ -164,7 +164,9 @@ namespace g3
 		public struct EdgeSplitInfo {
 			public bool bIsBoundary;
 			public int vNew;
-            public int eNew;        // new edge [vNew,vB]
+			public int eNewBN;      // new edge [vNew,vB] (original was AB)
+			public int eNewCN;      // new edge [vNew,vC] (C is "first" other vtx in ring)
+			public int eNewDN;		// new edge [vNew,vD] (D is "second" other, which doesn't exist on bdry)
 		}
 		public MeshResult SplitEdge(int vA, int vB, out EdgeSplitInfo split)
 		{
@@ -232,7 +234,9 @@ namespace g3
 
 				split.bIsBoundary = true;
 				split.vNew = f;
-                split.eNew = efb;
+                split.eNewBN = efb;
+				split.eNewCN = efc;
+				split.eNewDN = InvalidID;
 
 				updateTimeStamp(true);
 				return MeshResult.Ok;
@@ -294,7 +298,9 @@ namespace g3
 
 				split.bIsBoundary = false;
 				split.vNew = f;
-                split.eNew = efb;
+                split.eNewBN = efb;
+				split.eNewCN = efc;
+				split.eNewDN = edf;
 
 				updateTimeStamp(true);
 				return MeshResult.Ok;
