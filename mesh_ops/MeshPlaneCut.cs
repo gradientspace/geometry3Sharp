@@ -6,7 +6,8 @@ namespace g3
 {
 
 	/// <summary>
-	/// Cut the Mesh with the Plane. If possible, returns boundary loop(s) along cut
+	/// Cut the Mesh with the Plane. The *positive* side, ie (p-o).n > 0, is removed.
+    /// If possible, returns boundary loop(s) along cut
 	/// (this will fail if cut intersected with holes in mesh).
 	/// Also FillHoles() for a topological fill. Or use CutLoops and fill yourself.
 	/// 
