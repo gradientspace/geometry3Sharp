@@ -225,6 +225,8 @@
     <Compile Include="curve\CurveUtils2.cs" />
     <Compile Include="curve\PolyLine3d.cs" />
     <Compile Include="spatial\SegmentSet2d.cs" />
+    <Compile Include="mesh_ops\MeshPlaneCut.cs" />
+    <Compile Include="mesh\EdgeSpan.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
