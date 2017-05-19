@@ -152,8 +152,8 @@ namespace g3
             int NV = vertex_loop.Length;
             int[] edges = new int[NV];
             for ( int i = 0; i < NV; ++i ) {
-                int v0 = i;
-                int v1 = (i + 1) % NV;
+                int v0 = vertex_loop[i];
+                int v1 = vertex_loop[(i + 1) % NV];
                 edges[i] = mesh.FindEdge(v0, v1);
             }
             return edges;
