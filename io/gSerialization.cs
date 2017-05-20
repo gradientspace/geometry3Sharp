@@ -149,6 +149,27 @@ namespace g3
 
 
 
+		public static void Store(PolyLine2d polyline, BinaryWriter writer)
+		{
+			writer.Write(polyline.VertexCount);
+			for (int i = 0; i < polyline.VertexCount; ++i) {
+				writer.Write(polyline[i].x);
+				writer.Write(polyline[i].y);
+			}
+		}
+
+		public static void Restore(PolyLine2d polyline, BinaryReader reader)
+		{
+			int count = reader.ReadInt32();
+			for (int i = 0; i < count; ++i) {
+				double x = reader.ReadDouble();
+				double y = reader.ReadDouble();
+				polyline.AppendVertex(new Vector2d(x, y));
+			}
+		}
+
+
+
         public static void Store(Polygon2d polygon, BinaryWriter writer)
         {
             writer.Write(polygon.VertexCount);

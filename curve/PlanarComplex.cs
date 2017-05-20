@@ -632,6 +632,62 @@ namespace g3
 
 
 
+		public class OpenCurvesInfo
+		{
+			public List<PolyLine2d> Polylines;
+			public List<IParametricCurve2d> Curves;
+
+
+			public AxisAlignedBox2d Bounds {
+				get {
+					AxisAlignedBox2d bounds = AxisAlignedBox2d.Empty;
+					foreach (PolyLine2d p in Polylines)
+						bounds.Contain(p.GetBounds());
+					return bounds;
+				}
+			}
+		}
+		// returns set of open curves (ie non-solids)
+		public OpenCurvesInfo FindOpenCurves(double fSimplifyDeviationTol = 0.1)
+		{
+			List<SmoothCurveElement> curveElems = new List<SmoothCurveElement>(CurvesItr());
+			int N = curveElems.Count;
+
+			int maxid = 0;
+			foreach (var v in curveElems)
+				maxid = Math.Max(maxid, v.ID + 1);
+
+			// copy polygons, simplify if desired
+			double fClusterTol = 0.0;       // don't do simple clustering, can lose corners
+			double fDeviationTol = fSimplifyDeviationTol;
+			PolyLine2d[] polylines = new PolyLine2d[maxid];
+			IParametricCurve2d[] curves = new IParametricCurve2d[maxid];
+			foreach (var v in curveElems) {
+				PolyLine2d p = new PolyLine2d(v.polyLine);
+				if (fClusterTol > 0 || fDeviationTol > 0)
+					p.Simplify(fClusterTol, fDeviationTol);
+				polylines[v.ID] = p;
+				curves[v.ID] = v.source;
+			}
+
+			OpenCurvesInfo ci = new OpenCurvesInfo() {
+				Polylines = new List<PolyLine2d>(),
+				Curves = new List<IParametricCurve2d>()
+			};
+
+			for (int i = 0; i < polylines.Length; ++i ) {
+				if ( polylines[i] != null && polylines[i].VertexCount > 0 ) {
+					ci.Polylines.Add(polylines[i]);
+					ci.Curves.Add(curves[i]);
+				}
+			}
+
+			return ci;
+		}
+
+
+
+
 		public void PrintStats(string label = "") {
 			System.Console.WriteLine("PlanarComplex Stats {0}", label);
 			List<SmoothLoopElement> Loops = new List<SmoothLoopElement>(LoopsItr());
