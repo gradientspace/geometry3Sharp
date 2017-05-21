@@ -70,6 +70,19 @@ namespace g3
 			Timestamp++; 
 		}
 
+		public void AppendVertices(IEnumerable<Vector2d> v) 
+		{
+			vertices.AddRange(v);
+			Timestamp++;
+		}
+
+
+		public void Reverse()
+		{
+			vertices.Reverse();
+			Timestamp++;
+		}
+
 
 		public Vector2d GetTangent(int i)
 		{
@@ -118,6 +131,16 @@ namespace g3
 			return vertices.GetEnumerator();
 		}
 
+
+		public double Length {
+			get {
+				double fLength = 0;
+				int N = vertices.Count;
+				for (int i = 0; i < N-1; ++i)
+					fLength += vertices[i].Distance(vertices[i + 1]);
+				return fLength;
+			}
+		}
 
 
 
