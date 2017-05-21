@@ -64,13 +64,13 @@ namespace g3
 			get { return vertices.Count; }
 		}
 
-		public void AppendVertex(Vector2d v)
+		public virtual void AppendVertex(Vector2d v)
 		{
 			vertices.Add(v);
 			Timestamp++; 
 		}
 
-		public void AppendVertices(IEnumerable<Vector2d> v) 
+		public virtual void AppendVertices(IEnumerable<Vector2d> v) 
 		{
 			vertices.AddRange(v);
 			Timestamp++;
