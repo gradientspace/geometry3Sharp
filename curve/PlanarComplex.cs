@@ -632,6 +632,65 @@ namespace g3
 
 
 
+		public class ClosedLoopsInfo
+		{
+			public List<Polygon2d> Polygons;
+			public List<IParametricCurve2d> Loops;
+
+
+			public AxisAlignedBox2d Bounds {
+				get {
+					AxisAlignedBox2d bounds = AxisAlignedBox2d.Empty;
+					foreach (Polygon2d p in Polygons)
+						bounds.Contain(p.GetBounds());
+					return bounds;
+				}
+			}
+		}
+		// returns set of closed loops (not necessarily solids)
+		public ClosedLoopsInfo FindClosedLoops(double fSimplifyDeviationTol = 0.1)
+		{
+			List<SmoothLoopElement> loopElems = new List<SmoothLoopElement>(LoopsItr());
+			int N = loopElems.Count;
+
+			int maxid = 0;
+			foreach (var v in loopElems)
+				maxid = Math.Max(maxid, v.ID + 1);
+
+			// copy polygons, simplify if desired
+			double fClusterTol = 0.0;       // don't do simple clustering, can lose corners
+			double fDeviationTol = fSimplifyDeviationTol;
+			Polygon2d[] polygons = new Polygon2d[maxid];
+			IParametricCurve2d[] curves = new IParametricCurve2d[maxid];
+			foreach (var v in loopElems) {
+				Polygon2d p = new Polygon2d(v.polygon);
+				if (fClusterTol > 0 || fDeviationTol > 0)
+					p.Simplify(fClusterTol, fDeviationTol);
+				polygons[v.ID] = p;
+				curves[v.ID] = v.source;
+			}
+
+			ClosedLoopsInfo ci = new ClosedLoopsInfo() {
+				Polygons = new List<Polygon2d>(),
+				Loops = new List<IParametricCurve2d>()
+			};
+
+			for (int i = 0; i < polygons.Length; ++i ) {
+				if ( polygons[i] != null && polygons[i].VertexCount > 0 ) {
+					ci.Polygons.Add(polygons[i]);
+					ci.Loops.Add(curves[i]);
+				}
+			}
+
+			return ci;
+		}
+
+
+
+
+
+
+
 		public class OpenCurvesInfo
 		{
 			public List<PolyLine2d> Polylines;
