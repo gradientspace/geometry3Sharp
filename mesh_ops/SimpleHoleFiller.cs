@@ -40,9 +40,12 @@ namespace g3
             // this just needs one triangle
             if ( Loop.Vertices.Length == 3 ) {
                 Index3i tri = new Index3i(Loop.Vertices[0], Loop.Vertices[2], Loop.Vertices[1]);
-                if (Mesh.AppendTriangle(tri, group_id) != DMesh3.InvalidID)
-                    return true;
-                return false;
+                int new_tid = Mesh.AppendTriangle(tri, group_id);
+                if (new_tid == DMesh3.InvalidID)
+                    return false;
+                NewTriangles = new int[1] { new_tid };
+                NewVertex = DMesh3.InvalidID;
+                return true;
             }
 
             // [TODO] 4-case? could check nbr normals to figure out best internal edge...

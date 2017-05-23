@@ -76,6 +76,7 @@ namespace g3
             NoSorting = 0,
             Increasing = 1
         }
+        public const int NO_CONVERGENCE = int.MaxValue;
         public int Solve(double [] input, SortType eSort)
         {
             int sortType = (int)eSort;
@@ -116,7 +117,7 @@ namespace g3
                     // Process the lower-right-most unreduced tridiagonal block.
                     DoQRImplicitShift(imin, imax);
                 }
-                return int.MaxValue;
+                return NO_CONVERGENCE;
             } else {
                 return 0;
             }
