@@ -50,7 +50,13 @@ namespace g3
 				box.Contain( PositionF(t) );
 			return box;
 		}
-
+		public static AxisAlignedBox3f Bounds<T>(IEnumerable<T> values, Func<T, Vector3f> PositionF)
+		{
+			AxisAlignedBox3f box = AxisAlignedBox3f.Empty;
+			foreach ( T t in values )
+				box.Contain( PositionF(t) );
+			return box;
+		}
 
 
         // Modes: 0: centroids, 1: any vertex, 2: 2 vertices, 3: all vertices
