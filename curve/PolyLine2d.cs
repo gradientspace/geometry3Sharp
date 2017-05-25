@@ -77,7 +77,7 @@ namespace g3
 		}
 
 
-		public void Reverse()
+		public virtual void Reverse()
 		{
 			vertices.Reverse();
 			Timestamp++;
@@ -189,7 +189,7 @@ namespace g3
 
 
 
-		public void Simplify(double clusterTol = 0.0001,
+		public virtual void Simplify(double clusterTol = 0.0001,
 							  double lineDeviationTol = 0.01,
 							  bool bSimplifyStraightLines = true)
 		{
