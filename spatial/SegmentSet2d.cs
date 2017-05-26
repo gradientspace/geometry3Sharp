@@ -50,7 +50,13 @@ namespace g3
 		{
 			int N = Segments.Count;
 			for (int i = 0; i < N; ++i) {
-				IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, Segments[i]);
+
+				// want to make sure we do not miss any hits, even if it means
+				// we get duplicates...
+				IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, Segments[i]) {
+					IntervalThreshold = MathUtil.ZeroTolerance
+				};
+
 				if (intr.Find()) {
 					if (bOnlySimple && intr.IsSimpleIntersection == false)
 						continue;

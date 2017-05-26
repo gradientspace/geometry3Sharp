@@ -124,5 +124,19 @@ namespace g3
 			foreach (var h in holes)
 				h.Scale(scale, origin);
 		}
+
+
+		public bool Contains(Vector2d vTest)
+		{
+			if (outer.Contains(vTest) == false)
+				return false;
+			foreach (var h in holes) {
+				if (h.Contains(vTest))
+					return false;
+			}
+			return true;
+		}
+
+
 	}
 }
