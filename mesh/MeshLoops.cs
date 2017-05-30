@@ -324,7 +324,7 @@ namespace g3
                     }
                 }
                 if (bv_shortest == -1) {
-                    throw new Exception("extract_subloops: argh");
+                    throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: Cannot find a valid simple loop");
                 }
                 if (bv != bv_shortest) {
                     bv = bv_shortest;
