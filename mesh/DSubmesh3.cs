@@ -25,7 +25,7 @@ namespace g3
         // boundary info
         public IndexHashSet BaseBorderE;        // list of internal border edge indices on base mesh
         public IndexHashSet BaseBoundaryE;      // list of mesh-boundary edges on base mesh that are in submesh
-        public IndexHashSet BaseBorderV;        // list of border vertex indices on base mesh
+        public IndexHashSet BaseBorderV;        // list of border vertex indices on base mesh (ie verts of BaseBorderE)
 
 
         public DSubmesh3(DMesh3 mesh, int[] subTriangles)
@@ -87,13 +87,11 @@ namespace g3
                 for ( int j = 0; j < 3; ++j ) {
                     int eid = tedges[j];
                     Index2i tris = BaseMesh.GetEdgeT(eid);
-                    if (tris.b == DMesh3.InvalidID || sub_tris[tris.a] != sub_tris[tris.b]) {
+                    if ( tris.b == DMesh3.InvalidID ) {     // this is a boundary edge
+                        BaseBoundaryE[eid] = true;
 
-                        if (tris.b == DMesh3.InvalidID)
-                            BaseBoundaryE[eid] = true;
-                        else
-                            BaseBorderE[eid] = true;
-
+                    } else if (sub_tris[tris.a] != sub_tris[tris.b]) {  // this is a border edge
+                        BaseBorderE[eid] = true;
                         Index2i ve = BaseMesh.GetEdgeV(eid);
                         BaseBorderV[ve.a] = true;
                         BaseBorderV[ve.b] = true;
