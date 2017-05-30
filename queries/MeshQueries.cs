@@ -205,6 +205,23 @@ namespace g3
 
 
         // brute force search for nearest triangle to point
+        public static int FindNearestVertex_LinearSearch(DMesh3 mesh, Vector3d p)
+        {
+            int vNearest = DMesh3.InvalidID;
+            double fNearestSqr = double.MaxValue;
+            foreach ( int vid in mesh.VertexIndices() ) {
+                double distSqr = mesh.GetVertex(vid).DistanceSquared(p);
+                if (distSqr < fNearestSqr) {
+                    fNearestSqr = distSqr;
+                    vNearest = vid;
+                }
+            }
+            return vNearest;
+        }
+
+
+
+        // brute force search for nearest triangle to point
         public static int FindNearestTriangle_LinearSearch(DMesh3 mesh, Vector3d p)
         {
             int tNearest = DMesh3.InvalidID;
@@ -218,7 +235,6 @@ namespace g3
             }
             return tNearest;
         }
-
 
         public static int FindHitTriangle_LinearSearch(DMesh3 mesh, Ray3d ray)
         {

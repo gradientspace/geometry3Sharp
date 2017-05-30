@@ -179,6 +179,24 @@ namespace g3
             StandardMeshWriter.WriteFile(sPath, new List<WriteMesh>() { new WriteMesh(mesh) }, options);
         }
 
+        public static void WriteDebugMeshAndMarkers(IMesh mesh, List<Vector3d> Markers, string sPath)
+        {
+            WriteOptions options = WriteOptions.Defaults;
+            options.bWriteGroups = true;
+            List<WriteMesh> meshes = new List<WriteMesh>() { new WriteMesh(mesh) };
+            double size = BoundsUtil.Bounds(mesh).Diagonal.Length * 0.01f;
+            foreach ( Vector3d v in Markers ) {
+                TrivialBox3Generator boxgen = new TrivialBox3Generator();
+                boxgen.Box = new Box3d(v, size * Vector3d.One);
+                boxgen.Generate();
+                DMesh3 m = new DMesh3();
+                boxgen.MakeMesh(m);
+                meshes.Add(new WriteMesh(m));
+            }
+
+            StandardMeshWriter.WriteFile(sPath, meshes, options);
+        }
+
 
     }
 
