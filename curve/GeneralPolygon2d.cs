@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace g3 
 {
-	public class GeneralPolygon2d 
+	public class GeneralPolygon2d : IDuplicatable<GeneralPolygon2d>
 	{
 		Polygon2d outer;
 		bool bOuterIsCW;
@@ -25,6 +25,10 @@ namespace g3
 			holes = new List<Polygon2d>(copy.holes);
 			foreach (var hole in copy.holes)
 				holes.Add(new Polygon2d(hole));
+		}
+
+		public virtual GeneralPolygon2d Duplicate() {
+			return new GeneralPolygon2d(this);
 		}
 
 

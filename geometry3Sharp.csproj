@@ -230,6 +230,8 @@
     <Compile Include="spatial\SegmentSet2d.cs" />
     <Compile Include="mesh_ops\MeshPlaneCut.cs" />
     <Compile Include="mesh\EdgeSpan.cs" />
+    <Compile Include="core\DeepCopy.cs" />
+    <Compile Include="core\g3Interfaces.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

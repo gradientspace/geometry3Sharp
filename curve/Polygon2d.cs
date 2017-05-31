@@ -7,7 +7,7 @@ using System.Text;
 
 namespace g3
 {
-	public class Polygon2d : IEnumerable<Vector2d>
+	public class Polygon2d : IEnumerable<Vector2d>, IDuplicatable<Polygon2d>
     {
         protected List<Vector2d> vertices;
 		public int Timestamp;
@@ -33,6 +33,13 @@ namespace g3
             vertices = new List<Vector2d>(v.AsVector2d());
 			Timestamp = 0;
         }
+
+		public virtual Polygon2d Duplicate() {
+			Polygon2d p = new Polygon2d(this);
+			p.Timestamp = this.Timestamp;
+			return p;
+		}
+
 
 		public Vector2d this[int key]
 		{
