@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics;
 
 namespace g3
@@ -12,6 +10,7 @@ namespace g3
 
         // info that is fixed based on mesh
         SymmetricSparseMatrix M;
+        PackedSparseMatrix PackedM;
         int N;
         int[] ToMeshV, ToIndex;
         double[] Px, Py, Pz;
@@ -117,8 +116,13 @@ namespace g3
             }
 
             // transpose(L) * L, but matrix is symmetric...
-            if ( UseSoftConstraintNormalEquations )
-                M = M.Multiply(M);
+            if (UseSoftConstraintNormalEquations) {
+                //M = M.Multiply(M);
+                M = M.Square();        // only works if M is symmetric
+            }
+
+            // construct packed version of M matrix
+            PackedM = new PackedSparseMatrix(M);
 
             // compute laplacian vectors of initial mesh positions
             MLx = new double[N];
@@ -208,11 +212,12 @@ namespace g3
             Array.Copy(Py, Sy, N);
             Array.Copy(Pz, Sz, N);
 
-
             Action<double[], double[]> CombinedMultiply = (X, B) => {
-                M.Multiply(X, B);
+                // packed multiply is 3-4x faster...
+                //M.Multiply(X, B);
+                PackedM.Multiply(X, B);
                 for (int i = 0; i < N; ++i)
-                    B[i] += WeightsM[i, i] * X[i];
+                    B[i] += WeightsM.D[i] * X[i];
             };
 
             SparseSymmetricCG SolverX = new SparseSymmetricCG() { B = Bx, X = Sx,

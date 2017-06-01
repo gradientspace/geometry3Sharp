@@ -158,6 +158,7 @@
     <Compile Include="solvers\DenseMatrix.cs" />
     <Compile Include="solvers\DenseVector.cs" />
     <Compile Include="solvers\IMatrix.cs" />
+    <Compile Include="solvers\PackedSparseMatrix.cs" />
     <Compile Include="solvers\SingularValueDecomposition.cs" />
     <Compile Include="solvers\SparseMatrix.cs" />
     <Compile Include="solvers\SparseSymmetricCG.cs" />
