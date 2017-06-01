@@ -143,6 +143,25 @@ namespace g3
 
 
 
+        public void SelectGroup(int gid)
+        {
+            int NT = Mesh.MaxVertexID;
+            for (int tid = 0; tid < NT; ++tid) {
+                if (Mesh.IsTriangle(tid) && Mesh.GetTriangleGroup(tid) == gid)
+                    add(tid);
+            }
+        }
+        public void DeselectGroup(int gid)
+        {
+            // cannot just iterate over selected tris because remove() will change them...
+            int NT = Mesh.MaxVertexID;
+            for (int tid = 0; tid < NT; ++tid) {
+                if (Mesh.IsTriangle(tid) && Mesh.GetTriangleGroup(tid) == gid)
+                    remove(tid);
+            }
+        }
+
+
         public int[] ToArray()
         {
             int nTris = Selected.Count;

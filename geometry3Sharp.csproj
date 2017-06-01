@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="approximation\BiArcFit2.cs" />
+    <Compile Include="approximation\GaussPointsFit3.cs" />
+    <Compile Include="approximation\OrthogonalPlaneFit3.cs" />
     <Compile Include="color\Colorb.cs" />
     <Compile Include="color\Colorf.cs" />
     <Compile Include="color\ColorHSV.cs" />

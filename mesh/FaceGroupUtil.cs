@@ -14,6 +14,16 @@ namespace g3
                 mesh.SetTriangleGroup(tid, to);
         }
 
+
+        public static void SetGroupID(DMesh3 mesh, IEnumerable<int> triangles, int to)
+        {
+            if (mesh.HasTriangleGroups == false)
+                return;
+            foreach (int tid in triangles)
+                mesh.SetTriangleGroup(tid, to);
+        }
+
+
         public static void SetGroupToGroup(DMesh3 mesh, int from, int to)
         {
             if (mesh.HasTriangleGroups == false)

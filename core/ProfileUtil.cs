@@ -11,12 +11,15 @@ namespace g3
     {
         public Stopwatch Watch;
         public string Label;
+        public TimeSpan Accumulated;
+
         public BlockTimer(string label, bool bStart)
         {
             Label = label;
             Watch = new Stopwatch();
             if (bStart)
                 Watch.Start();
+            Accumulated = TimeSpan.Zero;
         }
         public virtual void Start()
         {
@@ -25,6 +28,11 @@ namespace g3
         public virtual void Stop()
         {
             Watch.Stop();
+        }
+        public virtual void Accumulate()
+        {
+            Watch.Stop();
+            Accumulated += Watch.Elapsed;
         }
         public virtual void Reset()
         {
@@ -62,18 +70,38 @@ namespace g3
             Timers[label].Stop();
         }
 
+        public void StopAndAccumulate(string label)
+        {
+            Timers[label].Accumulate();
+        }
+
         public void Reset(string label)
         {
             Timers[label].Reset();
         }
 
+        public void ResetAccumulated(string label)
+        {
+            Timers[label].Accumulated = TimeSpan.Zero;
+        }
+
+        public void ResetAllAccumulated(string label)
+        {
+            foreach (BlockTimer t in Timers.Values)
+                t.Accumulated = TimeSpan.Zero;
+        }
+
+
         public string Elapsed(string label)
         {
             return Timers[label].ToString();
         }
+        public string Accumulated(string label)
+        {
+            return string.Format("{0:fffffff}", Timers[label].Accumulated);
+        }
 
-
-        public string AllTimes(string prefix)
+        public string AllTicks(string prefix = "Times:")
         {
             StringBuilder b = new StringBuilder();
             b.Append(prefix + " ");
@@ -82,6 +110,40 @@ namespace g3
             }
             return b.ToString();
         }
+
+        public string AllAccumulatedTicks(string prefix = "Times:")
+        {
+            StringBuilder b = new StringBuilder();
+            b.Append(prefix + " ");
+            foreach ( string label in Order ) {
+                b.Append(label + ": " + Accumulated(label) + " ");
+            }
+            return b.ToString();
+        }
+
+
+
+        public string AllTimes(string prefix = "Times:", string separator = " ")
+        {
+            StringBuilder b = new StringBuilder();
+            b.Append(prefix + " ");
+            foreach ( string label in Order ) {
+                b.Append(label + ": " + Timers[label].Watch.Elapsed.ToString(@"ss\.fffff") + separator);
+            }
+            return b.ToString();
+        }
+
+        public string AllAccumulatedTimes(string prefix = "Times:", string separator = " ")
+        {
+            StringBuilder b = new StringBuilder();
+            b.Append(prefix + " ");
+            foreach ( string label in Order ) {
+                b.Append(label + ": " + Timers[label].Accumulated.ToString(@"ss\.fffff") + separator);
+            }
+            return b.ToString();
+        }
+
+
 
         public void Dispose()
         {
