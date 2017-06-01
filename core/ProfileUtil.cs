@@ -128,7 +128,7 @@ namespace g3
             StringBuilder b = new StringBuilder();
             b.Append(prefix + " ");
             foreach ( string label in Order ) {
-                b.Append(label + ": " + Timers[label].Watch.Elapsed.ToString(@"ss\.fffff") + separator);
+                b.Append(label + ": " + string.Format("{0:ss}.{0:ffffff}", Timers[label].Watch.Elapsed) + separator);
             }
             return b.ToString();
         }
@@ -138,7 +138,7 @@ namespace g3
             StringBuilder b = new StringBuilder();
             b.Append(prefix + " ");
             foreach ( string label in Order ) {
-                b.Append(label + ": " + Timers[label].Accumulated.ToString(@"ss\.fffff") + separator);
+                b.Append(label + ": " + string.Format("{0:ss}.{0:ffffff}", Timers[label].Accumulated) + separator);
             }
             return b.ToString();
         }
