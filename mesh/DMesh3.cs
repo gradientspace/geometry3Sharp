@@ -1367,7 +1367,7 @@ namespace g3
         }
 
 
-        // returns true if vertex has more than two tri groups in its tri nbrhood
+        // returns true if vertex has more than one tri groups in its tri nbrhood
         public bool IsGroupBoundaryVertex(int vID)
         {
             if (IsVertex(vID) == false)
@@ -1394,6 +1394,37 @@ namespace g3
             }
             return false;
         }
+
+
+
+        // returns true if more than two group border edges meet at vertex
+        public bool IsGroupJunctionVertex(int vID)
+        {
+            if (IsVertex(vID) == false)
+                throw new Exception("DMesh3.IsGroupBoundaryVertex: " + vID + " is not a valid vertex");
+            if (triangle_groups == null)
+                return false;
+			List<int> vedges = vertex_edges[vID];
+            Index2i groups = Index2i.Max;
+            foreach (int eID in vedges) {
+                Index2i et = new Index2i(edges[4 * eID + 2], edges[4 * eID + 3]);
+                for (int k = 0; k < 2; ++k) {
+                    if (et[k] == InvalidID)
+                        continue;
+                    int g0 = triangle_groups[et[k]];
+                    if (g0 != groups.a && g0 != groups.b) {
+                        if (groups.a != Index2i.Max.a && groups.b != Index2i.Max.b)
+                            return true;
+                        if (groups.a == Index2i.Max.a)
+                            groups.a = g0;
+                        else
+                            groups.b = g0;
+                    }
+                }
+            }
+            return false;
+        }
+
 
 
 

@@ -69,6 +69,17 @@ namespace g3
         }
 
 
+        public static IEnumerable<int> GroupJunctionVertices(DMesh3 mesh)
+        {
+            int N = mesh.MaxVertexID;
+            for ( int i = 0; i < N; ++i ) {
+                if ( mesh.IsVertex(i) ) {
+                    if (mesh.IsGroupJunctionVertex(i))
+                        yield return i;
+                }
+            }
+        }
+
 
         public static IEnumerable<int> BoundaryEdges(DMesh3 mesh)
         {
