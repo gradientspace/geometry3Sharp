@@ -111,6 +111,12 @@ namespace g3
             }
 
         }
+        public static void ConstrainVtxLoopTo(Remesher r, int[] loopV, IProjectionTarget target)
+        {
+            if (r.Constraints == null)
+                r.SetExternalConstraints(new MeshConstraints());
+            ConstrainVtxLoopTo(r.Constraints, r.Mesh, loopV, target);
+        }
 
     }
 }

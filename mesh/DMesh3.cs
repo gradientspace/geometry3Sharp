@@ -674,6 +674,16 @@ namespace g3
                 new Index2i(edges[4 * eID + 2], edges[4 * eID + 3]) : InvalidEdge;
         }
 
+        /// <summary>
+        /// return [v0,v1,t0,t1], or Index4i.Max if eid is invalid
+        /// </summary>
+        public Index4i GetEdge(int eID)
+        {
+            int i = 4 * eID;
+            return edges_refcount.isValid(eID) ?
+                new Index4i(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]) : Index4i.Max;
+        }
+
 		public bool GetEdge(int eID, ref int a, ref int b, ref int t0, ref int t1) {
 			if ( edges_refcount.isValid(eID) == false )
 				return false;
