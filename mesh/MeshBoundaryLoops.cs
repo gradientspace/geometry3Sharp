@@ -49,7 +49,9 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Index of Loop with largest vertex count
+        /// </summary>
         public int MaxVerticesLoopIndex {
             get {
                 int j = 0;
@@ -94,7 +96,7 @@ namespace g3
                     continue;
                 if ( used_edge[eid] == true )
                     continue;
-                if (Mesh.edge_is_boundary(eid) == false)
+                if (Mesh.IsBoundaryEdge(eid) == false)
                     continue;
 
 				if (EdgeFilterF != null && EdgeFilterF(eid) == false) {

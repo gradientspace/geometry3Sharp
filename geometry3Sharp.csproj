@@ -138,7 +138,7 @@
     <Compile Include="mesh_ops\LaplacianMeshDeformer.cs" />
     <Compile Include="mesh\MeshConstraints.cs" />
     <Compile Include="mesh_generators\MeshGenerators.cs" />
-    <Compile Include="mesh\MeshLoops.cs" />
+    <Compile Include="mesh\MeshBoundaryLoops.cs" />
     <Compile Include="mesh\MeshMeasurements.cs" />
     <Compile Include="mesh\MeshTransforms.cs" />
     <Compile Include="mesh_generators\PlaneGenerators.cs" />
