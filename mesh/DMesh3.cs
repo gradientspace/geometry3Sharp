@@ -218,7 +218,7 @@ namespace g3
                 t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
                 AppendTriangle(t, g);
-                max_group_id = Math.Max(max_group_id, g);
+                max_group_id = Math.Max(max_group_id, g+1);
             }
         }
 
@@ -288,7 +288,7 @@ namespace g3
                 //t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
                 AppendTriangle(t, g);
-                max_group_id = Math.Max(max_group_id, g);
+                max_group_id = Math.Max(max_group_id, g+1);
             }
         }
 
@@ -319,6 +319,8 @@ namespace g3
 		public int EdgeCount {
 			get { return edges_refcount.count; }
 		}
+
+        // these values are (max_used+1), ie so an iteration should be < MaxTriangleID, not <=
 		public int MaxVertexID {
 			get { return vertices_refcount.max_index; }
 		}
@@ -544,7 +546,7 @@ namespace g3
 		public void SetTriangleGroup(int tid, int group_id) {
 			if ( triangle_groups != null && triangles_refcount.isValid(tid) ) {
                 triangle_groups[tid] = group_id;
-                max_group_id = Math.Max(max_group_id, group_id);
+                max_group_id = Math.Max(max_group_id, group_id+1);
                 updateTimeStamp(false);
 			}
 		}
@@ -842,7 +844,7 @@ namespace g3
             triangles.insert(tv[0], i);
             if (triangle_groups != null) {
                 triangle_groups.insert(gid, tid);
-                max_group_id = Math.Max(max_group_id, gid);
+                max_group_id = Math.Max(max_group_id, gid+1);
             }
 
             // increment ref counts and update/create edges
