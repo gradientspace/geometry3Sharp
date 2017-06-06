@@ -171,11 +171,8 @@ namespace g3
 
 			Loops = new List<EdgeLoop>();
 
-            int NE = Mesh.MaxEdgeID;
-
             // Temporary memory used to indicate when we have "used" an edge.
-            BitArray used_edge = new BitArray(NE);
-            used_edge.SetAll(false);
+            IndexFlagSet used_edge = new IndexFlagSet(Mesh.MaxEdgeID, edges.Count);
 
             // current loop is stored here, cleared after each loop extracted
             List<int> loop_edges = new List<int>();     // [RMS] not sure we need this...
@@ -317,7 +314,7 @@ namespace g3
         // If the loops are all sane, then we will get the smallest loops by "turning left" at bowtie_v.
         // So, we compute the tangent plane at bowtie_v, and then the signed angle for each
         // viable edge in this plane. 
-        int find_left_turn_edge(int incoming_e, int bowtie_v, int[] bdry_edges, int bdry_edges_count, BitArray used_edges  )
+        int find_left_turn_edge(int incoming_e, int bowtie_v, int[] bdry_edges, int bdry_edges_count, IndexFlagSet used_edges  )
         {
             // compute normal and edge [a,bowtie]
             Vector3d n = get_vtx_normal(bowtie_v);

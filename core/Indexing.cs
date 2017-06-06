@@ -55,6 +55,7 @@ namespace g3
     {
         BitArray bits;
         HashSet<int> hash;
+        int count;      // only tracked for bitset
 
 
         public IndexFlagSet(bool bForceSparse, int MaxIndex = -1)
@@ -64,6 +65,7 @@ namespace g3
             } else {
                 bits = new BitArray(MaxIndex);
             }
+            count = 0;
         }
 
         public IndexFlagSet(int MaxIndex, int SubsetCountEst)
@@ -76,18 +78,37 @@ namespace g3
                 bits = new BitArray(MaxIndex);
             } else 
                 hash = new HashSet<int>();
+            count = 0;
         }
 
+        /// <summary>
+        /// checks if value i is true
+        /// </summary>
         public bool Contains(int i)
         {
             return this[i] == true;
         }
 
+        /// <summary>
+        /// sets value i to true
+        /// </summary>
         public void Add(int i)
         {
             this[i] = true;
         }
 
+        /// <summary>
+        /// Returns number of true values in set
+        /// </summary>
+        public int Count
+        {
+            get {
+                if (bits != null)
+                    return count;
+                else
+                    return hash.Count;
+            }
+        }
 
         public bool this[int key]
         {
@@ -96,7 +117,13 @@ namespace g3
             }
             set {
                 if (bits != null) {
-                    bits[key] = value;
+                    if (bits[key] != value) {
+                        bits[key] = value;
+                        if (value == false)
+                            count--;
+                        else
+                            count++;
+                    }
                 } else {
                     if (value == true)
                         hash.Add(key);
