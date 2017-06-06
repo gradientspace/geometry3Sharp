@@ -46,11 +46,12 @@ namespace g3
 
 
 
-
-    // This class provides a similar interface to BitArray, but can optionally
-    // use a HashSet (or perhaps some other DS) if the fraction of the index space 
-    // required is small
-    public class IndexFlagSet
+    /// <summary>
+    /// This class provides a similar interface to BitArray, but can optionally
+    /// use a HashSet (or perhaps some other DS) if the fraction of the index space 
+    /// required is small
+    /// </summary>
+    public class IndexFlagSet : IEnumerable<int>
     {
         BitArray bits;
         HashSet<int> hash;
@@ -77,6 +78,17 @@ namespace g3
                 hash = new HashSet<int>();
         }
 
+        public bool Contains(int i)
+        {
+            return this[i] == true;
+        }
+
+        public void Add(int i)
+        {
+            this[i] = true;
+        }
+
+
         public bool this[int key]
         {
             get {
@@ -93,6 +105,26 @@ namespace g3
                 }
             }
         }
+
+        /// <summary>
+        /// enumerate over indices w/ value = true
+        /// </summary>
+        public IEnumerator<int> GetEnumerator() {
+            if ( bits != null ) {
+                for (int i = 0; i < bits.Length; ++i) {
+                    if (bits[i])
+                        yield return i;
+                }
+            } else {
+                foreach (int i in hash)
+                    yield return i;
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() {
+            return this.GetEnumerator();
+        }
+
+
 
     }
 
