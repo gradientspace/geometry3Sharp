@@ -45,7 +45,7 @@ namespace g3
             for (int round = 0; round < num_rounds; ++round) {
 
                 // compute
-                for (int i = 0; i < NV; ++i) {
+                gParallel.ForEach(Interval1i.Range(NV), (i) => {
                     int vid = Loop.Vertices[(i + 1) % NV];
                     Vector3d prev = Mesh.GetVertex(Loop.Vertices[i]);
                     Vector3d cur = Mesh.GetVertex(vid);
@@ -53,10 +53,10 @@ namespace g3
 
                     Vector3d centroid = (prev + next) * 0.5;
                     SmoothedPostions[i] = (1 - a) * cur + (a) * centroid;
-                }
+                });
 
                 // bake
-                for (int i = 0; i < NV; ++i) {
+                gParallel.ForEach(Interval1i.Range(NV), (i) => {
                     int vid = Loop.Vertices[(i + 1) % NV];
                     Vector3d pos = SmoothedPostions[i];
 
@@ -64,7 +64,7 @@ namespace g3
                         pos = ProjectF(pos, vid);
 
                     Mesh.SetVertex(vid, pos);
-                }
+                });
             }
 
             return true;
