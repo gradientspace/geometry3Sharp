@@ -16,27 +16,37 @@ namespace g3
         public DMesh3 Mesh;
         public List<EdgeLoop> Loops;
 
-
-		// if enabled, only edges where this returns true are considered
-		public Func<int, bool> EdgeFilterF = null;
-
-
-        /// <summary>
-        /// Return true if input triangle id is "in" set.
-        /// Default is to return true if group id != 0
-        /// </summary>
-        Func<int, bool> TriangleSetF = null;
+        // list of included triangles and edges
+        IndexFlagSet triangles;
+        IndexFlagSet edges;
 
 
-        public MeshRegionBoundaryLoops(DMesh3 mesh, bool bAutoCompute = true)
+        public MeshRegionBoundaryLoops(DMesh3 mesh, int[] RegionTris, bool bAutoCompute = true)
         {
             this.Mesh = mesh;
 
-            if (Mesh.HasTriangleGroups == false)
-                throw new Exception("MeshRegionBoundaryLoops: Default constructor requires that Mesh has groups!");
-            TriangleSetF = (tid) => {
-                return Mesh.GetTriangleGroup(tid) != 0;
-            };
+            // make flag set for included triangles
+            triangles = new IndexFlagSet(mesh.MaxTriangleID, RegionTris.Length);
+            for (int i = 0; i < RegionTris.Length; ++i) 
+                triangles[RegionTris[i]] = true;
+
+            // make flag set for included edges
+            // NOTE: this currently processes non-boundary-edges twice. Could
+            // avoid w/ another IndexFlagSet, but the check is inexpensive...
+            edges = new IndexFlagSet(mesh.MaxEdgeID, RegionTris.Length);
+            for (int i = 0; i < RegionTris.Length; ++i) {
+                int tid = RegionTris[i];
+                Index3i te = Mesh.GetTriEdges(tid);
+                for (int j = 0; j < 3; ++j) {
+                    int eid = te[j];
+                    if (!edges.Contains(eid)) {
+                        Index2i et = mesh.GetEdgeT(eid);
+                        if (et.b == DMesh3.InvalidID || triangles[et.a] != triangles[et.b])
+                            edges.Add(eid);
+                    }
+                }
+            }
+
 
 			if (bAutoCompute)
            		Compute();
@@ -74,18 +84,19 @@ namespace g3
 
 
 
-        bool edge_is_boundary(int eid, bool bIncludeMeshBoundary = true)
+        bool edge_is_boundary(int eid)
         {
-            Index2i et = Mesh.GetEdgeT(eid);
-            return (bIncludeMeshBoundary && et.b == DMesh3.InvalidID) || (TriangleSetF(et.a) != TriangleSetF(et.b));
+            return edges.Contains(eid);
         }
 
         // returns true for both internal and mesh boundary edges
         // tid_in and tid_out are triangles 'in' and 'out' of set, respectively
         bool edge_is_boundary(int eid, ref int tid_in, ref int tid_out)
         {
-            tid_in = tid_out = DMesh3.InvalidID;
+            if (edges.Contains(eid) == false)
+                return false;
 
+            tid_in = tid_out = DMesh3.InvalidID;
             Index2i et = Mesh.GetEdgeT(eid);
             if ( et.b == DMesh3.InvalidID ) {       // boundary edge!
                 tid_in = et.a;
@@ -93,8 +104,8 @@ namespace g3
                 return true;
             }
 
-            bool in0 = TriangleSetF(et.a);
-            bool in1 = TriangleSetF(et.b);
+            bool in0 = triangles[et.a];
+            bool in1 = triangles[et.b];
             if ( in0 != in1 ) {
                 tid_in = (in0) ? et.a : et.b;
                 tid_out = (in0) ? et.b : et.a;
@@ -176,19 +187,13 @@ namespace g3
             int[] all_e = new int[16];
 
             // process all edges of mesh
-            for ( int eid = 0; eid < NE; ++eid ) {
-                if (!Mesh.IsEdge(eid))
-                    continue;
+            foreach ( int eid in edges ) { 
+
                 if ( used_edge[eid] == true )
                     continue;
 
-                if ( edge_is_boundary(eid, false) == false )
+                if ( edge_is_boundary(eid) == false )
                     continue;
-
-				if (EdgeFilterF != null && EdgeFilterF(eid) == false) {
-					used_edge[eid] = true;
-					continue;
-				}
 
                 // ok this is start of a boundary chain
                 int eStart = eid;
@@ -212,23 +217,8 @@ namespace g3
                     int e0 = -1, e1 = 1;
                     int bdry_nbrs = vertex_boundary_edges(cure_b, ref e0, ref e1);
 
-					// have to filter this list, if we are filtering. this is ugly.
-					if (EdgeFilterF != null) {
-						if ( bdry_nbrs > 2 ) {
-							if (bdry_nbrs >= all_e.Length)
-								all_e = new int[bdry_nbrs];	
-							// we may repreat this below...irritating...
-							int num_be = all_vertex_boundary_edges(cure_b, all_e);
-							num_be = BufferUtil.CountValid(all_e, EdgeFilterF, num_be);
-						} else {
-							if (EdgeFilterF(e0) == false) bdry_nbrs--;
-							if (EdgeFilterF(e1) == false) bdry_nbrs--;
-						}
-					}
-
-
 					if (bdry_nbrs < 2)
-						throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: found broken neighbourhood at vertex " + cure_b) { UnclosedLoop = true };
+						throw new MeshBoundaryLoopsException("MeshRegionBoundaryLoops.Compute: found broken neighbourhood at vertex " + cure_b) { UnclosedLoop = true };
 
                     int eNext = -1;
                     if (bdry_nbrs > 2) {
@@ -246,17 +236,13 @@ namespace g3
 								all_e = new int[bdry_nbrs];
 							int num_be = all_vertex_boundary_edges(cure_b, all_e);
 
-							if (EdgeFilterF != null) {
-								num_be = BufferUtil.FilterInPlace(all_e, EdgeFilterF, num_be);
-							}
-
 							Debug.Assert(num_be == bdry_nbrs);
 
 							// Try to pick the best "turn left" vertex.
 							eNext = find_left_turn_edge(eCur, cure_b, all_e, num_be, used_edge);
 
 							if (eNext == -1)
-								throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b) { BowtieFailure = true };
+								throw new MeshBoundaryLoopsException("MeshRegionBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b) { BowtieFailure = true };
                         }
 
                         if ( bowties.Contains(cure_b) == false )
@@ -322,14 +308,15 @@ namespace g3
 
 
 
+        //
+        // [TODO] for internal vertices, there is no ambiguity in which is the left-turn edge,
+        //   we should be using 'closest' left-neighbour edge.
+        //
         // ok, bdry_edges[0...bdry_edges_count] contains the boundary edges coming out of bowtie_v.
         // We want to pick the best one to continue the loop that came in to bowtie_v on incoming_e.
         // If the loops are all sane, then we will get the smallest loops by "turning left" at bowtie_v.
         // So, we compute the tangent plane at bowtie_v, and then the signed angle for each
         // viable edge in this plane. 
-        //
-        // [TODO] handle degenerate edges. what do we do then? Currently will only chose
-        //  degenerate edge if there are no other options (I think...)
         int find_left_turn_edge(int incoming_e, int bowtie_v, int[] bdry_edges, int bdry_edges_count, BitArray used_edges  )
         {
             // compute normal and edge [a,bowtie]
@@ -424,7 +411,7 @@ namespace g3
                     }
                 }
                 if (bv_shortest == -1) {
-                    throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: Cannot find a valid simple loop");
+                    throw new MeshBoundaryLoopsException("MeshRegionBoundaryLoops.Compute: Cannot find a valid simple loop");
                 }
                 if (bv != bv_shortest) {
                     bv = bv_shortest;
