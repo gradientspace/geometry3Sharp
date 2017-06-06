@@ -49,7 +49,7 @@ namespace g3
             for (int i = 0; i < NV-1; ++i ) {
                 int eid = Mesh.FindEdge(Vertices[i], Vertices[i + 1]);
                 Debug.Assert(eid != DMesh3.InvalidID);
-                if (Mesh.edge_is_boundary(eid))
+                if (Mesh.IsBoundaryEdge(eid))
                     return false;
             }
             return true;
@@ -62,7 +62,7 @@ namespace g3
             for (int i = 0; i < NV-1; ++i ) {
                 int eid = Mesh.FindEdge(Vertices[i], Vertices[i + 1]);
                 Debug.Assert(eid != DMesh3.InvalidID);
-                if (Mesh.edge_is_boundary(eid) == false)
+                if (Mesh.IsBoundaryEdge(eid) == false)
                     return false;
             }
             return true;

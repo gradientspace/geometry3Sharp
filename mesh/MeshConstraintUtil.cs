@@ -14,7 +14,7 @@ namespace g3
         {
             int NE = mesh.MaxEdgeID;
             for ( int ei = 0; ei < NE; ++ei ) {
-                if ( mesh.IsEdge(ei) && mesh.edge_is_boundary(ei) ) {
+                if ( mesh.IsEdge(ei) && mesh.IsBoundaryEdge(ei) ) {
                     cons.SetOrUpdateEdgeConstraint(ei, EdgeConstraint.FullyConstrained);
 
                     Index2i ev = mesh.GetEdgeV(ei);
@@ -33,7 +33,7 @@ namespace g3
 
             int NE = mesh.MaxEdgeID;
             for ( int ei = 0; ei < NE; ++ei ) {
-                if ( mesh.IsEdge(ei) && mesh.edge_is_boundary(ei) ) {
+                if ( mesh.IsEdge(ei) && mesh.IsBoundaryEdge(ei) ) {
                     cons.SetOrUpdateEdgeConstraint(ei, edgeCons);
 
                     Index2i ev = mesh.GetEdgeV(ei);
@@ -54,7 +54,7 @@ namespace g3
                 Index2i sub_ev = sub.MapVerticesToSubmesh(base_ev);
                 int sub_eid = sub.SubMesh.FindEdge(sub_ev.a, sub_ev.b);
                 Debug.Assert(sub_eid != DMesh3.InvalidID);
-                Debug.Assert(sub.SubMesh.edge_is_boundary(sub_eid));
+                Debug.Assert(sub.SubMesh.IsBoundaryEdge(sub_eid));
             
                 cons.SetOrUpdateEdgeConstraint(sub_eid, EdgeConstraint.FullyConstrained);
                 cons.SetOrUpdateVertexConstraint(sub_ev.a, VertexConstraint.Pinned);

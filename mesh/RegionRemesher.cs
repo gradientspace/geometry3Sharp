@@ -64,7 +64,7 @@ namespace g3
             for ( int eid = 0; eid < NE; ++eid ) {
                 if (Region.SubMesh.IsEdge(eid) == false)
                     continue;
-                if (Region.SubMesh.edge_is_boundary(eid))
+                if (Region.SubMesh.IsBoundaryEdge(eid))
                     continue;
                 Index2i edgev = Region.SubMesh.GetEdgeV(eid);
                 if (Region.SubMesh.vertex_is_boundary(edgev.a) && Region.SubMesh.vertex_is_boundary(edgev.b)) {

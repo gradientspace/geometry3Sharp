@@ -64,7 +64,7 @@ namespace g3
 
             int i = 0;
             for ( i = 0; i < N; ++i ) {
-                if (Mesh.edge_is_boundary(edge_loop[i]) == false)
+                if (Mesh.IsBoundaryEdge(edge_loop[i]) == false)
                     goto operation_failed;
 
                 Index2i ev = Mesh.GetOrientedBoundaryEdgeV(edge_loop[i]);
