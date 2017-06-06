@@ -54,6 +54,7 @@ namespace g3
         }
 
         static public readonly EdgeConstraint Unconstrained = new EdgeConstraint() { refineFlags = 0 };
+        static public readonly EdgeConstraint NoFlips = new EdgeConstraint() { refineFlags = EdgeRefineFlags.NoFlip };
         static public readonly EdgeConstraint FullyConstrained = new EdgeConstraint() { refineFlags = EdgeRefineFlags.FullyConstrained };
     }
 
