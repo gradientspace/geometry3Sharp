@@ -57,20 +57,18 @@ namespace g3
         }
 
 
-        // dictionary pairs are [group_id, tri_count] 
-        public static Dictionary<int, int> CountAllGroups(DMesh3 mesh)
+
+        // returned pairs are [group_id, tri_count] 
+        public static SparseList<int> CountAllGroups(DMesh3 mesh)
         {
-            Dictionary<int, int> GroupCounts = new Dictionary<int, int>();
+            SparseList<int> GroupCounts = new SparseList<int>(mesh.MaxGroupID, 0, 0);
 
             if (mesh.HasTriangleGroups) {
                 int NT = mesh.MaxTriangleID;
                 for (int tid = 0; tid < NT; ++tid) {
                     if (mesh.IsTriangle(tid)) {
                         int gid = mesh.GetTriangleGroup(tid);
-                        if (GroupCounts.ContainsKey(gid) == false)
-                            GroupCounts[gid] = 1;
-                        else
-                            GroupCounts[gid]++;
+                        GroupCounts[gid] = GroupCounts[gid] + 1;
                     }
                 }
             }
@@ -80,16 +78,20 @@ namespace g3
 
         // Returns array of triangle lists (stored as arrays)
         // This requires 2 passes over mesh, but each pass is linear
-        public static int[][] FindTriangleSetsByGroup(DMesh3 mesh)
+        public static int[][] FindTriangleSetsByGroup(DMesh3 mesh, int ignoreGID = int.MinValue)
         {
             if (!mesh.HasTriangleGroups)
                 return new int[0][];
 
             // find # of groups and triangle count for each
-            Dictionary<int, int> counts = CountAllGroups(mesh);
-            List<int> GroupIDs = new List<int>(counts.Keys);
+            SparseList<int> counts = CountAllGroups(mesh);
+            List<int> GroupIDs = new List<int>();
+            foreach ( var idxval in counts.Values() ) {
+                if (idxval.Key != ignoreGID && idxval.Value > 0)
+                    GroupIDs.Add(idxval.Key);
+            }
             GroupIDs.Sort();        // might as well sort ascending...
-            Dictionary<int, int> groupMap = new Dictionary<int, int>();
+            SparseList<int> groupMap = new SparseList<int>(mesh.MaxGroupID, GroupIDs.Count, -1);
 
             // allocate sets
             int[][] sets = new int[GroupIDs.Count][];
@@ -107,8 +109,10 @@ namespace g3
                 if (mesh.IsTriangle(tid)) {
                     int gid = mesh.GetTriangleGroup(tid);
                     int i = groupMap[gid];
-                    int k = counters[i]++;
-                    sets[i][k] = tid;
+                    if (i >= 0) {
+                        int k = counters[i]++;
+                        sets[i][k] = tid;
+                    }
                 }
             }
 
