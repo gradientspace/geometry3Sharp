@@ -6,29 +6,48 @@ using System.Diagnostics;
 
 namespace g3
 {
-	public class MeshBoundaryLoopsException : Exception
-	{
-		public MeshBoundaryLoopsException(string message) : base(message) {}
-		public bool UnclosedLoop = false;
-		public bool BowtieFailure = false;
-	}
+
 
 	/// <summary>
-	/// Extract boundary EdgeLoops from Mesh.
+	/// Extract boundary EdgeLoops for subregions of Mesh
 	/// </summary>
-    public class MeshBoundaryLoops : IEnumerable<EdgeLoop>
+    public class MeshRegionBoundaryLoops : IEnumerable<EdgeLoop>
     {
         public DMesh3 Mesh;
         public List<EdgeLoop> Loops;
 
+        // list of included triangles and edges
+        IndexFlagSet triangles;
+        IndexFlagSet edges;
 
-		// if enabled, only edges where this returns true are considered
-		public Func<int, bool> EdgeFilterF = null;
 
-
-        public MeshBoundaryLoops(DMesh3 mesh, bool bAutoCompute = true)
+        public MeshRegionBoundaryLoops(DMesh3 mesh, int[] RegionTris, bool bAutoCompute = true)
         {
             this.Mesh = mesh;
+
+            // make flag set for included triangles
+            triangles = new IndexFlagSet(mesh.MaxTriangleID, RegionTris.Length);
+            for (int i = 0; i < RegionTris.Length; ++i) 
+                triangles[RegionTris[i]] = true;
+
+            // make flag set for included edges
+            // NOTE: this currently processes non-boundary-edges twice. Could
+            // avoid w/ another IndexFlagSet, but the check is inexpensive...
+            edges = new IndexFlagSet(mesh.MaxEdgeID, RegionTris.Length);
+            for (int i = 0; i < RegionTris.Length; ++i) {
+                int tid = RegionTris[i];
+                Index3i te = Mesh.GetTriEdges(tid);
+                for (int j = 0; j < 3; ++j) {
+                    int eid = te[j];
+                    if (!edges.Contains(eid)) {
+                        Index2i et = mesh.GetEdgeT(eid);
+                        if (et.b == DMesh3.InvalidID || triangles[et.a] != triangles[et.b])
+                            edges.Add(eid);
+                    }
+                }
+            }
+
+
 			if (bAutoCompute)
            		Compute();
         }
@@ -49,7 +68,9 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Index of Loop with largest vertex count
+        /// </summary>
         public int MaxVerticesLoopIndex {
             get {
                 int j = 0;
@@ -62,8 +83,85 @@ namespace g3
         }
 
 
+
+        bool edge_is_boundary(int eid)
+        {
+            return edges.Contains(eid);
+        }
+
+        // returns true for both internal and mesh boundary edges
+        // tid_in and tid_out are triangles 'in' and 'out' of set, respectively
+        bool edge_is_boundary(int eid, ref int tid_in, ref int tid_out)
+        {
+            if (edges.Contains(eid) == false)
+                return false;
+
+            tid_in = tid_out = DMesh3.InvalidID;
+            Index2i et = Mesh.GetEdgeT(eid);
+            if ( et.b == DMesh3.InvalidID ) {       // boundary edge!
+                tid_in = et.a;
+                tid_out = et.b;
+                return true;
+            }
+
+            bool in0 = triangles[et.a];
+            bool in1 = triangles[et.b];
+            if ( in0 != in1 ) {
+                tid_in = (in0) ? et.a : et.b;
+                tid_out = (in0) ? et.b : et.a;
+                return true;
+            }
+            return false;
+        }
+
+
+        // return same indices as GetEdgeV, but oriented based on attached triangle
+        Index2i get_oriented_edgev(int eID, int tid_in, int tid_out)
+        {
+            Index2i edgev = Mesh.GetEdgeV(eID);
+            int a = edgev.a, b = edgev.b;
+            Index3i tri = Mesh.GetTriangle(tid_in);
+            int ai = IndexUtil.find_edge_index_in_tri(a, b, ref tri);
+            return new Index2i(tri[ai], tri[(ai + 1) % 3]);
+        }
+
+
+
+        // returns first two boundary edges, and count of total boundary edges
+        public int vertex_boundary_edges(int vID, ref int e0, ref int e1)
+        {
+            int count = 0;
+            foreach (int eid in Mesh.VtxEdgesItr(vID)) {
+                if (edge_is_boundary(eid)) {
+                    if (count == 0)
+                        e0 = eid;
+                    else if (count == 1)
+                        e1 = eid;
+                    count++;
+                }
+            }
+            return count;
+        }
+
+
+        // e needs to be large enough (ie call VtxBoundaryEdges, or as large as max one-ring)
+        // returns count, ie number of elements of e that were filled
+        public int all_vertex_boundary_edges(int vID, int[] e)
+        {
+            int count = 0;
+            foreach (int eid in Mesh.VtxEdgesItr(vID)) {
+                if (edge_is_boundary(eid))
+                    e[count++] = eid;
+            }
+            return count;
+        }
+
+
+
+
+
 		/// <summary>
-		/// Find the set of boundary EdgeLoops. Note that if we encounter topological
+		/// Find the set of EdgeLoops bounding 'in' triangles. Note that if we encounter topological
 		/// issues, we will throw MeshBoundaryLoopsException w/ more info (if possible)
 		/// </summary>
 		public bool Compute()
@@ -73,11 +171,8 @@ namespace g3
 
 			Loops = new List<EdgeLoop>();
 
-            int NE = Mesh.MaxEdgeID;
-
             // Temporary memory used to indicate when we have "used" an edge.
-            BitArray used_edge = new BitArray(NE);
-            used_edge.SetAll(false);
+            IndexFlagSet used_edge = new IndexFlagSet(Mesh.MaxEdgeID, edges.Count);
 
             // current loop is stored here, cleared after each loop extracted
             List<int> loop_edges = new List<int>();     // [RMS] not sure we need this...
@@ -89,18 +184,13 @@ namespace g3
             int[] all_e = new int[16];
 
             // process all edges of mesh
-            for ( int eid = 0; eid < NE; ++eid ) {
-                if (!Mesh.IsEdge(eid))
-                    continue;
+            foreach ( int eid in edges ) { 
+
                 if ( used_edge[eid] == true )
                     continue;
-                if (Mesh.edge_is_boundary(eid) == false)
-                    continue;
 
-				if (EdgeFilterF != null && EdgeFilterF(eid) == false) {
-					used_edge[eid] = true;
-					continue;
-				}
+                if ( edge_is_boundary(eid) == false )
+                    continue;
 
                 // ok this is start of a boundary chain
                 int eStart = eid;
@@ -112,30 +202,20 @@ namespace g3
                 // follow the chain in order of oriented edges
                 bool bClosed = false;
                 while ( ! bClosed ) {
-                    Index2i ev = Mesh.GetOrientedBoundaryEdgeV(eCur);
+
+                    // [TODO] can do this more efficienty?
+                    int tid_in = DMesh3.InvalidID, tid_out = DMesh3.InvalidID;
+                    edge_is_boundary(eCur, ref tid_in, ref tid_out);
+
+                    Index2i ev = get_oriented_edgev(eCur, tid_in, tid_out);
                     int cure_a = ev.a, cure_b = ev.b;
                     loop_verts.Add(cure_a);
 
                     int e0 = -1, e1 = 1;
-                    int bdry_nbrs = Mesh.VtxBoundaryEdges(cure_b, ref e0, ref e1);
-
-					// have to filter this list, if we are filtering. this is ugly.
-					if (EdgeFilterF != null) {
-						if ( bdry_nbrs > 2 ) {
-							if (bdry_nbrs >= all_e.Length)
-								all_e = new int[bdry_nbrs];	
-							// we may repreat this below...irritating...
-							int num_be = Mesh.VtxAllBoundaryEdges(cure_b, all_e);
-							num_be = BufferUtil.CountValid(all_e, EdgeFilterF, num_be);
-						} else {
-							if (EdgeFilterF(e0) == false) bdry_nbrs--;
-							if (EdgeFilterF(e1) == false) bdry_nbrs--;
-						}
-					}
-
+                    int bdry_nbrs = vertex_boundary_edges(cure_b, ref e0, ref e1);
 
 					if (bdry_nbrs < 2)
-						throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: found broken neighbourhood at vertex " + cure_b) { UnclosedLoop = true };
+						throw new MeshBoundaryLoopsException("MeshRegionBoundaryLoops.Compute: found broken neighbourhood at vertex " + cure_b) { UnclosedLoop = true };
 
                     int eNext = -1;
                     if (bdry_nbrs > 2) {
@@ -151,11 +231,7 @@ namespace g3
 							// This could create sub-loops, we will handle those later
 							if (bdry_nbrs >= all_e.Length)
 								all_e = new int[bdry_nbrs];
-							int num_be = Mesh.VtxAllBoundaryEdges(cure_b, all_e);
-
-							if (EdgeFilterF != null) {
-								num_be = BufferUtil.FilterInPlace(all_e, EdgeFilterF, num_be);
-							}
+							int num_be = all_vertex_boundary_edges(cure_b, all_e);
 
 							Debug.Assert(num_be == bdry_nbrs);
 
@@ -163,7 +239,7 @@ namespace g3
 							eNext = find_left_turn_edge(eCur, cure_b, all_e, num_be, used_edge);
 
 							if (eNext == -1)
-								throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b) { BowtieFailure = true };
+								throw new MeshBoundaryLoopsException("MeshRegionBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b) { BowtieFailure = true };
                         }
 
                         if ( bowties.Contains(cure_b) == false )
@@ -229,15 +305,16 @@ namespace g3
 
 
 
+        //
+        // [TODO] for internal vertices, there is no ambiguity in which is the left-turn edge,
+        //   we should be using 'closest' left-neighbour edge.
+        //
         // ok, bdry_edges[0...bdry_edges_count] contains the boundary edges coming out of bowtie_v.
         // We want to pick the best one to continue the loop that came in to bowtie_v on incoming_e.
         // If the loops are all sane, then we will get the smallest loops by "turning left" at bowtie_v.
         // So, we compute the tangent plane at bowtie_v, and then the signed angle for each
         // viable edge in this plane. 
-        //
-        // [TODO] handle degenerate edges. what do we do then? Currently will only chose
-        //  degenerate edge if there are no other options (I think...)
-        int find_left_turn_edge(int incoming_e, int bowtie_v, int[] bdry_edges, int bdry_edges_count, BitArray used_edges  )
+        int find_left_turn_edge(int incoming_e, int bowtie_v, int[] bdry_edges, int bdry_edges_count, IndexFlagSet used_edges  )
         {
             // compute normal and edge [a,bowtie]
             Vector3d n = get_vtx_normal(bowtie_v);
@@ -252,7 +329,14 @@ namespace g3
                 int bdry_eid = bdry_edges[i];
                 if ( used_edges[bdry_eid] == true )
                     continue;       // this edge is already used
-                Index2i bdry_ev = Mesh.GetOrientedBoundaryEdgeV(bdry_eid);
+
+
+                // [TODO] can do this more efficienty?
+                int tid_in = DMesh3.InvalidID, tid_out = DMesh3.InvalidID;
+                edge_is_boundary(bdry_eid, ref tid_in, ref tid_out);
+                Index2i bdry_ev = get_oriented_edgev(bdry_eid, tid_in, tid_out);
+                //Index2i bdry_ev = Mesh.GetOrientedBoundaryEdgeV(bdry_eid);
+
                 if (bdry_ev.a != bowtie_v)
                     continue;       // have to be able to chain to end of current edge, orientation-wise
 
@@ -324,7 +408,7 @@ namespace g3
                     }
                 }
                 if (bv_shortest == -1) {
-                    throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: Cannot find a valid simple loop");
+                    throw new MeshBoundaryLoopsException("MeshRegionBoundaryLoops.Compute: Cannot find a valid simple loop");
                 }
                 if (bv != bv_shortest) {
                     bv = bv_shortest;

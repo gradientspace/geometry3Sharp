@@ -59,6 +59,7 @@
     <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\Snapping.cs" />
+    <Compile Include="core\SparseList.cs" />
     <Compile Include="core\Units.cs" />
     <Compile Include="core\DVectorArray.cs" />
     <Compile Include="core\VectorArray.cs" />
@@ -110,6 +111,7 @@
     <Compile Include="mesh\DSubmesh3.cs" />
     <Compile Include="mesh\EdgeLoop.cs" />
     <Compile Include="mesh\FaceGroupUtil.cs" />
+    <Compile Include="mesh\MeshRegionBoundaryLoops.cs" />
     <Compile Include="mesh\MeshConnectedComponents.cs" />
     <Compile Include="mesh\MeshConstraintUtil.cs" />
     <Compile Include="mesh\MeshDecomposition.cs" />
@@ -138,7 +140,7 @@
     <Compile Include="mesh_ops\LaplacianMeshDeformer.cs" />
     <Compile Include="mesh\MeshConstraints.cs" />
     <Compile Include="mesh_generators\MeshGenerators.cs" />
-    <Compile Include="mesh\MeshLoops.cs" />
+    <Compile Include="mesh\MeshBoundaryLoops.cs" />
     <Compile Include="mesh\MeshMeasurements.cs" />
     <Compile Include="mesh\MeshTransforms.cs" />
     <Compile Include="mesh_generators\PlaneGenerators.cs" />

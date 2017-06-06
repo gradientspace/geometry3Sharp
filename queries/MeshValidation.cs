@@ -58,7 +58,7 @@ namespace g3
                 if (eid == DMesh3.InvalidID)
                     return ValidationStatus.VerticesNotConnectedByEdge;
 
-                if (mesh.edge_is_boundary(eid) == false)
+                if (mesh.IsBoundaryEdge(eid) == false)
                     return ValidationStatus.NotBoundaryEdge;
 
                 Index2i ev = mesh.GetOrientedBoundaryEdgeV(eid);

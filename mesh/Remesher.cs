@@ -100,7 +100,7 @@ namespace g3 {
             // the flip-valence tests much faster!
             MeshIsClosed = true;
             foreach (int eid in mesh.EdgeIndices()) {
-                if (mesh.edge_is_boundary(eid)) {
+                if (mesh.IsBoundaryEdge(eid)) {
                     MeshIsClosed = false;
                     break;
                 }
