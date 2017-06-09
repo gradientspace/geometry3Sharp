@@ -348,6 +348,24 @@ namespace g3
         }
 
 
+        public bool Contains(int val)
+        {
+            return a == val || b == val || c == val || d == val;
+        }
+
+        public void Sort()
+        {
+            int tmp;   // if we use 2 temp ints, we can swap in a different order where some test pairs
+                       // could be done simultaneously, but no idea if compiler would optimize that anyway...
+            if (d < c) { tmp = d; d = c; c = tmp; }
+            if (c < b) { tmp = c; c = b; b = tmp; }
+            if (b < a) { tmp = b; b = a; a = tmp; }   // now a is smallest value
+            if (b > c) { tmp = c; c = b; b = tmp; }
+            if (c > d) { tmp = d; d = c; c = tmp; }   // now d is largest value
+            if (b > c) { tmp = c; c = b; b = tmp; }   // bow b,c are sorted
+        }
+
+
         public static Index4i operator -(Index4i v)
         {
             return new Index4i(-v.a, -v.b, -v.c, -v.d);

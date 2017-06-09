@@ -93,7 +93,11 @@ namespace g3
 
 
 
-
+        /// <summary>
+        /// Trivial back-and-forth stitch between two vertex loops with same length. 
+        /// Loops must have appropriate orientation (which is...??)
+        /// [TODO] check and fail on bad orientation
+        /// </summary>
         public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1)
         {
             int N = vloop1.Length;
@@ -138,6 +142,59 @@ namespace g3
 
 
 
+
+        /// <summary>
+        /// Trivial back-and-forth stitch between two vertex spans with same length. 
+        /// vertex ordering must reslut in appropriate orientation (which is...??)
+        /// [TODO] check and fail on bad orientation
+        /// </summary>
+        public virtual int[] StitchSpan(int[] vspan1, int[] vspan2, int group_id = -1)
+        {
+            int N = vspan1.Length;
+            if (N != vspan2.Length)
+                throw new Exception("MeshEditor.StitchSpan: spans are not the same length!!");
+            N--;
+
+            int[] new_tris = new int[N * 2];
+
+            int i = 0;
+            for ( ; i < N; ++i ) {
+                int a = vspan1[i];
+                int b = vspan1[i + 1];
+                int c = vspan2[i];
+                int d = vspan2[i + 1];
+
+                Index3i t1 = new Index3i(b, a, d);
+                Index3i t2 = new Index3i(a, c, d);
+
+                int tid1 = Mesh.AppendTriangle(t1, group_id);
+                int tid2 = Mesh.AppendTriangle(t2, group_id);
+
+                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                    goto operation_failed;
+
+                new_tris[2 * i] = tid1;
+                new_tris[2 * i + 1] = tid2;
+            }
+
+            return new_tris;
+
+
+            operation_failed:
+                // remove what we added so far
+                if (i > 0) {
+                    if (remove_triangles(new_tris, 2*(i-1)) == false)
+                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                }
+                return null;
+        }
+
+
+
+
+
+
+
         // [TODO] cannot back-out this operation right now
         //
         // Remove list of triangles. Values of triangles[] set to InvalidID are ignored.
@@ -155,7 +212,40 @@ namespace g3
             return bAllOK;
         }
 
+        // [TODO] cannot back-out this operation right now
+        //
+        // Remove list of triangles. Values of triangles[] set to InvalidID are ignored.
+        public bool RemoveTriangles(IEnumerable<int> triangles, bool bRemoveIsolatedVerts)
+        {
+            bool bAllOK = true;
+            foreach ( int tid in triangles ) {
+                if (! Mesh.IsTriangle(tid) ) {
+                    bAllOK = false;
+                    continue;
+                }
+                MeshResult result = Mesh.RemoveTriangle(tid, bRemoveIsolatedVerts, false);
+                if (result != MeshResult.Ok)
+                    bAllOK = false;
+            }
+            return bAllOK;
+        }
 
+        // [TODO] cannot back-out this operation right now
+        //
+        // Remove all triangles identified by selectorF returning true
+        public bool RemoveTriangles(Func<int,bool> selectorF, bool bRemoveIsolatedVerts)
+        {
+            bool bAllOK = true;
+            int NT = Mesh.MaxTriangleID;
+            for ( int ti = 0; ti < NT; ++ti ) {
+                if (Mesh.IsTriangle(ti) == false || selectorF(ti) == false)
+                    continue;
+                MeshResult result = Mesh.RemoveTriangle(ti, bRemoveIsolatedVerts, false);
+                if (result != MeshResult.Ok)
+                    bAllOK = false;
+            }
+            return bAllOK;
+        }
 
 
 

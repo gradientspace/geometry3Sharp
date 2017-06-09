@@ -1413,7 +1413,7 @@ namespace g3
         public bool IsGroupJunctionVertex(int vID)
         {
             if (IsVertex(vID) == false)
-                throw new Exception("DMesh3.IsGroupBoundaryVertex: " + vID + " is not a valid vertex");
+                throw new Exception("DMesh3.IsGroupJunctionVertex: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
                 return false;
 			List<int> vedges = vertex_edges[vID];
@@ -1438,6 +1438,74 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// returns up to 4 group IDs at input vid. Returns false if > 4 encountered
+        /// </summary>
+        public bool GetVertexGroups(int vID, out Index4i groups)
+        {
+            groups = Index4i.Max;
+            int ng = 0;
+
+            if (IsVertex(vID) == false)
+                throw new Exception("DMesh3.GetVertexGroups: " + vID + " is not a valid vertex");
+            if (triangle_groups == null)
+                return false;
+			List<int> vedges = vertex_edges[vID];
+            int ne = vedges.Count;
+            for ( int ei = 0; ei < ne; ++ei ) {
+                int eID = vedges[ei];
+                int et0 = edges[4 * eID + 2];
+                int g0 = triangle_groups[et0];
+                if ( groups.Contains(g0) == false )
+                    groups[ng++] = g0;
+                if (ng == 4)
+                    return false;
+                int et1 = edges[4 * eID + 3];
+                if ( et1 != InvalidID ) {
+                    int g1 = triangle_groups[et1];
+                    if (groups.Contains(g1) == false)
+                        groups[ng++] = g1;
+                    if (ng == 4)
+                        return false;
+                }
+            }
+            return true;
+        }
+
+
+
+        /// <summary>
+        /// returns up to 4 group IDs at input vid. Returns false if > 4 encountered
+        /// </summary>
+        public bool GetAllVertexGroups(int vID, ref List<int> groups)
+        {
+            if (IsVertex(vID) == false)
+                throw new Exception("DMesh3.GetAllVertexGroups: " + vID + " is not a valid vertex");
+            if (triangle_groups == null)
+                return false;
+			List<int> vedges = vertex_edges[vID];
+            int ne = vedges.Count;
+            for ( int ei = 0; ei < ne; ++ei ) {
+                int eID = vedges[ei];
+                int et0 = edges[4 * eID + 2];
+                int g0 = triangle_groups[et0];
+                if (groups.Contains(g0) == false)
+                    groups.Add(g0);
+                int et1 = edges[4 * eID + 3];
+                if ( et1 != InvalidID ) {
+                    int g1 = triangle_groups[et1];
+                    if (groups.Contains(g1) == false)
+                        groups.Add(g1);
+                }
+            }
+            return true;
+        }
+        public List<int> GetAllVertexGroups(int vID) {
+            List<int> result = new List<int>();
+            GetAllVertexGroups(vID, ref result);
+            return result;
+        }
+
 
 
         /// <summary>
@@ -1450,8 +1518,9 @@ namespace g3
                 List<int> edges = vertex_edges[vID];
                 if (!(nTris == GetVtxEdges(vID).Count || nTris == GetVtxEdges(vID).Count - 1))
                     return true;
-            }
-            return false;
+                return false;
+            } else
+                throw new Exception("DMesh3.IsBowtieVertex: " + vID + " is not a valid vertex");
         }
 
 

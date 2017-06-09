@@ -64,6 +64,21 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// find pair (loop_index,in_loop_index) of vertex vID in EdgeLoops, or Index2i.Max if not found
+        /// </summary>
+        public Index2i FindVertexIndex(int vID)
+        {
+            int N = Loops.Count;
+            for (int li = 0; li < N; ++li) {
+                int idx = Loops[li].FindVertexIndex(vID);
+                if (idx >= 0)
+                    return new Index2i(li, idx);
+            }
+            return Index2i.Max;
+        }
+
+
 		/// <summary>
 		/// Find the set of boundary EdgeLoops. Note that if we encounter topological
 		/// issues, we will throw MeshBoundaryLoopsException w/ more info (if possible)

@@ -111,6 +111,7 @@
     <Compile Include="mesh\DSubmesh3.cs" />
     <Compile Include="mesh\EdgeLoop.cs" />
     <Compile Include="mesh\FaceGroupUtil.cs" />
+    <Compile Include="mesh\MeshIndexUtil.cs" />
     <Compile Include="mesh\MeshRegionBoundaryLoops.cs" />
     <Compile Include="mesh\MeshConnectedComponents.cs" />
     <Compile Include="mesh\MeshConstraintUtil.cs" />

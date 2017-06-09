@@ -134,5 +134,13 @@ namespace g3
         }
 
 
+        // [TODO] should do this more efficiently, like MeshFaceSelection
+        public void ExpandToOneRingNeighbours(int nRings, Func<int, bool> FilterF = null)
+        {
+            for (int k = 0; k < nRings; ++k)
+                ExpandToOneRingNeighbours(FilterF);
+        }
+
+
     }
 }

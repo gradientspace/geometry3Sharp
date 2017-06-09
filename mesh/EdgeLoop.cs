@@ -7,15 +7,40 @@ namespace g3
     public class EdgeLoop
     {
         public DMesh3 Mesh;
-        public EdgeLoop(DMesh3 mesh)
-        {
-            Mesh = mesh;
-        }
 
         public int[] Vertices;
         public int[] Edges;
 
-        public int[] BowtieVertices;
+        public int[] BowtieVertices;        // this may not be initialized!
+
+
+        public EdgeLoop(DMesh3 mesh)
+        {
+            Mesh = mesh;
+        }
+        public EdgeLoop(DMesh3 mesh, int[] vertices, int[] edges, bool bCopyArrays)
+        {
+            Mesh = mesh;
+            if ( bCopyArrays ) {
+                Vertices = new int[vertices.Length];
+                Array.Copy(vertices, Vertices, Vertices.Length);
+                Edges = new int[edges.Length];
+                Array.Copy(edges, Edges, Edges.Length);
+            } else {
+                Vertices = vertices;
+                Edges = edges;
+            }
+        }
+        public EdgeLoop(EdgeLoop copy)
+        {
+            Mesh = copy.Mesh;
+            Vertices = new int[copy.Vertices.Length];
+            Array.Copy(copy.Vertices, Vertices, Vertices.Length);
+            Edges = new int[copy.Edges.Length];
+            Array.Copy(copy.Edges, Edges, Edges.Length);
+            BowtieVertices = new int[copy.BowtieVertices.Length];
+            Array.Copy(copy.BowtieVertices, BowtieVertices, BowtieVertices.Length);
+        }
 
 
         public int VertexCount {
@@ -62,6 +87,20 @@ namespace g3
                     return false;
             }
             return true;
+        }
+
+
+        /// <summary>
+        /// find index of vertex vID in Vertices list, or -1 if not found
+        /// </summary>
+        public int FindVertexIndex(int vID)
+        {
+            int N = Vertices.Length;
+            for (int i = 0; i < N; ++i) {
+                if (Vertices[i] == vID)
+                    return i;
+            }
+            return -1;
         }
 
 
@@ -140,6 +179,26 @@ namespace g3
             }
 
             return true;
+        }
+
+
+
+        /// <summary>
+        /// stores vertices [starti, starti+1, ... starti+count-1] in span, and returns span, or null if invalid range
+        /// </summary>
+        public int[] GetVertexSpan(int starti, int count, int[] span, bool reverse = false)
+        {
+            int N = Vertices.Length;
+            if (starti < 0 || starti >= N || count > N - 1)
+                return null;
+            if (reverse) {
+                for (int k = 0; k < count; ++k)
+                    span[count-k-1] = Vertices[(starti + k) % N];
+            } else {
+                for (int k = 0; k < count; ++k)
+                    span[k] = Vertices[(starti + k) % N];
+            }
+            return span;
         }
 
 
