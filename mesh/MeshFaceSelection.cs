@@ -104,12 +104,29 @@ namespace g3
                     add(triangles[i]);
             }
         }
+        public void Select(List<int> triangles)
+        {
+            for ( int i = 0; i < triangles.Count; ++i ) {
+                if (Mesh.IsTriangle(triangles[i]))
+                    add(triangles[i]);
+            }
+        }
         public void Select(IEnumerable<int> triangles)
         {
             foreach ( int tID in triangles ) { 
                 if (Mesh.IsTriangle(tID))
                     add(tID);
             }
+        }
+        public void Select(Func<int,bool> selectF)
+        {
+            temp.Clear();
+            int NT = Mesh.MaxTriangleID;
+            for (int tID = 0; tID < NT; ++tID) { 
+                if (Mesh.IsTriangle(tID) && selectF(tID) )
+                    temp.Add(tID);
+            }
+            Select(temp);
         }
 
         public void SelectVertexOneRings(int[] vertices)
@@ -148,6 +165,14 @@ namespace g3
             int NT = Mesh.MaxTriangleID;
             for (int tid = 0; tid < NT; ++tid) {
                 if (Mesh.IsTriangle(tid) && Mesh.GetTriangleGroup(tid) == gid)
+                    add(tid);
+            }
+        }
+        public void SelectGroupInverse(int gid)
+        {
+            int NT = Mesh.MaxTriangleID;
+            for (int tid = 0; tid < NT; ++tid) {
+                if (Mesh.IsTriangle(tid) && Mesh.GetTriangleGroup(tid) != gid)
                     add(tid);
             }
         }
