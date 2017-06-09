@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 
 namespace g3
@@ -9,6 +10,9 @@ namespace g3
     {
         public DMesh3 BaseMesh;
         public DSubmesh3 Region;
+
+        // this is only valid after BackPropagate() call!! maps submeshverts to base mesh
+        public IndexMap ReinsertSubToBaseMapV;
 
         // By default is initialized w/ all boundary constraints
         // You can add more, but don't screw up!
@@ -24,6 +28,22 @@ namespace g3
             base.mesh = Region.SubMesh;
 
             cur_base_tris = (int[])regionTris.Clone();
+
+            // constrain region-boundary edges
+            bdry_constraints = new MeshConstraints();
+            MeshConstraintUtil.FixSubmeshBoundaryEdges(bdry_constraints, Region);
+            SetExternalConstraints(bdry_constraints);
+        }
+
+        public RegionRemesher(DMesh3 mesh, IEnumerable<int> regionTris)
+        {
+            BaseMesh = mesh;
+            Region = new DSubmesh3(mesh, regionTris);
+            int count = regionTris.Count();
+            Region.ComputeBoundaryInfo(regionTris, count);
+            base.mesh = Region.SubMesh;
+
+            cur_base_tris = regionTris.ToArray();
 
             // constrain region-boundary edges
             bdry_constraints = new MeshConstraints();
@@ -90,6 +110,14 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// set group ID for entire submesh
+        /// </summary>
+        public void SetSubmeshGroupID(int gid)
+        {
+            FaceGroupUtil.SetGroupID(Region.SubMesh, gid);
+        }
+
 
         // Remove the original submesh region and merge in the remeshed version.
         // You can call this multiple times as the base-triangle-set is updated.
@@ -111,8 +139,8 @@ namespace g3
 
             // insert new submesh
             int[] new_tris = new int[Region.SubMesh.TriangleCount];
-            IndexMap mapV;
-            bool bOK = editor.ReinsertSubmesh(Region, ref new_tris, out mapV);
+            ReinsertSubToBaseMapV = null;
+            bool bOK = editor.ReinsertSubmesh(Region, ref new_tris, out ReinsertSubToBaseMapV);
             cur_base_tris = new_tris;
 
             // assert that new triangles are all valid (goes wrong sometimes??)
