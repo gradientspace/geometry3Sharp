@@ -25,6 +25,8 @@ namespace g3 {
 		};
 		public SmoothTypes SmoothType = SmoothTypes.Uniform;
 
+        // this overrides default smoothing if provided
+        public Func<DMesh3, int, double, Vector3d> CustomSmoothF;
 
         // other options
 
@@ -32,6 +34,8 @@ namespace g3 {
         // we treat them as not fixed and allow collapse
         public bool AllowCollapseFixedVertsWithSameSetID = true;
 
+        // [RMS] this is a debugging aid, will break to debugger if these edges are touched, in debug builds
+        public List<int> DebugEdges = new List<int>();
 
         // if Target is set, we can project onto it in different ways
         enum TargetProjectionMode
@@ -94,7 +98,7 @@ namespace g3 {
         /// between remesh passes, otherwise you will get weird results.
         /// But you will probably still come out ahead, computation-time-wise
         /// </summary>
-        public void Precompute()
+        public virtual void Precompute()
         {
             // if we know mesh is closed, we can skip is-boundary checks, which makes
             // the flip-valence tests much faster!
@@ -116,6 +120,9 @@ namespace g3 {
         public int ModifiedEdgesLastPass = 0;
 
 
+
+
+
         /// <summary>
         /// Linear edge-refinement pass, followed by smoothing and projection
         /// - Edges are processed in prime-modulo-order to break symmetry
@@ -123,7 +130,7 @@ namespace g3 {
         /// - Projection pass if ProjectionMode == AfterRefinement
         /// - number of modified edges returned in ModifiedEdgesLastPass
         /// </summary>
-		public void BasicRemeshPass() {
+		public virtual void BasicRemeshPass() {
             if (mesh.TriangleCount == 0)    // badness if we don't catch this...
                 return;
 
@@ -134,25 +141,19 @@ namespace g3 {
             // However, some old eid's may also be re-used, so we will touch
             // some new edges. Can't see how we could efficiently prevent this.
             //
-            // We are using a modulo-index loop to break symmetry/pathological conditions. 
-            // For example in a highly tessellated minimal cylinder, if the top/bottom loops have
-            // sequential edge IDs, and all edges are < min edge length, then we can easily end
-            // up successively collapsing each tiny edge, and eroding away the entire mesh!
-            // By using modulo-index loop we jump around and hence this is unlikely to happen.
-            //
             begin_ops();
-			int nMaxEdgeID = mesh.MaxEdgeID;
-            int nPrime = 31337;     // any prime will do...
-            int eid = 0;
+
+            int cur_eid = start_edges();
+            bool done = false;
             ModifiedEdgesLastPass = 0;
             do {
-                if (mesh.IsEdge(eid)) {
-                    ProcessResult result = ProcessEdge(eid);
+                if (mesh.IsEdge(cur_eid)) {
+                    ProcessResult result = ProcessEdge(cur_eid);
                     if (result == ProcessResult.Ok_Collapsed || result == ProcessResult.Ok_Flipped || result == ProcessResult.Ok_Split)
                         ModifiedEdgesLastPass++;
                 }
-                eid = (eid + nPrime) % nMaxEdgeID;
-            } while (eid != 0);
+                cur_eid = next_edge(cur_eid, out done);
+            } while (done == false);
             end_ops();
 
             begin_smooth();
@@ -174,10 +175,60 @@ namespace g3 {
 
 
 
+        // subclasses can override these to implement custom behavior...
+
+        protected virtual void OnEdgeSplit(int edgeID, int va, int vb, DMesh3.EdgeSplitInfo splitInfo)
+        {
+            // this is for subclasses...
+        }
+
+        protected virtual void OnEdgeCollapse(int edgeID, int va, int vb, DMesh3.EdgeCollapseInfo collapseInfo)
+        {
+            // this is for subclasses...
+        }
 
 
 
-		enum ProcessResult {
+
+        // start_edges() and next_edge() control the iteration over edges that will be refined.
+        // Default here is to iterate over entire mesh.
+        // Subclasses can override these two functions to restrict the affected edges (eg EdgeLoopRemesher)
+
+
+        // We are using a modulo-index loop to break symmetry/pathological conditions. 
+        // For example in a highly tessellated minimal cylinder, if the top/bottom loops have
+        // sequential edge IDs, and all edges are < min edge length, then we can easily end
+        // up successively collapsing each tiny edge, and eroding away the entire mesh!
+        // By using modulo-index loop we jump around and hence this is unlikely to happen.
+        const int nPrime = 31337;     // any prime will do...
+        int nMaxEdgeID;
+        protected virtual int start_edges()
+        {
+            nMaxEdgeID = mesh.MaxEdgeID;
+            return 0;
+        }
+
+        protected virtual int next_edge(int cur_eid, out bool bDone)
+        {
+            int new_eid = (cur_eid + nPrime) % nMaxEdgeID;
+            bDone = (new_eid == 0);
+            return new_eid;
+        }
+
+
+        protected virtual IEnumerable<int> smooth_vertices()
+        {
+            return mesh.VertexIndices();
+        }
+        protected virtual IEnumerable<int> project_vertices()
+        {
+            return mesh.VertexIndices();
+        }
+
+
+
+
+		protected enum ProcessResult {
 			Ok_Collapsed,
 			Ok_Flipped,
 			Ok_Split,
@@ -187,8 +238,10 @@ namespace g3 {
 			Failed_NotAnEdge
 		};
 
-		ProcessResult ProcessEdge(int edgeID) 
+		protected virtual ProcessResult ProcessEdge(int edgeID) 
 		{
+            RuntimeDebugCheck(edgeID);
+
             EdgeConstraint constraint =
                 (constraints == null) ? EdgeConstraint.Unconstrained : constraints.GetEdgeConstraint(edgeID);
             if (constraint.NoModifications)
@@ -256,6 +309,7 @@ namespace g3 {
                             constraints.ClearEdgeConstraint(collapseInfo.eRemoved1);
                         constraints.ClearVertexConstraint(iCollapse);
                     }
+                    OnEdgeCollapse(edgeID, iKeep, iCollapse, collapseInfo);
                     DoDebugChecks();
 
 					return ProcessResult.Ok_Collapsed;
@@ -319,6 +373,7 @@ namespace g3 {
 				MeshResult result = mesh.SplitEdge(edgeID, out splitInfo);
 				if ( result == MeshResult.Ok ) {
                     update_after_split(edgeID, a, b, splitInfo);
+                    OnEdgeSplit(edgeID, a, b, splitInfo);
                     DoDebugChecks();
 					return ProcessResult.Ok_Split;
 				} else
@@ -382,6 +437,8 @@ namespace g3 {
                 project_vertex(splitInfo.vNew, target);
             }
         }
+
+
 
 
 
@@ -530,36 +587,56 @@ namespace g3 {
 
 		void FullSmoothPass_InPlace(bool bParallel) {
             Func<DMesh3, int, double, Vector3d> smoothFunc = MeshUtil.UniformSmooth;
-            if (SmoothType == SmoothTypes.MeanValue)
-                smoothFunc = MeshUtil.MeanValueSmooth;
-            else if (SmoothType == SmoothTypes.Cotan)
-                smoothFunc = MeshUtil.CotanSmooth;
+            if (CustomSmoothF != null) {
+                smoothFunc = CustomSmoothF;
+            } else {
+                if (SmoothType == SmoothTypes.MeanValue)
+                    smoothFunc = MeshUtil.MeanValueSmooth;
+                else if (SmoothType == SmoothTypes.Cotan)
+                    smoothFunc = MeshUtil.CotanSmooth;
+            }
 
             Action<int> smooth = (vID) => {
-                VertexConstraint vc = get_vertex_constraint(vID);
-                if (vc.Fixed)
-                    return;
-
-                Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
-                Debug.Assert(vSmoothed.IsFinite);     // this will really catch a lot of bugs...
-
-                // project onto either vtx constraint target, or surface target
-                if (vc.Target != null) {
-                    vSmoothed = vc.Target.Project(vSmoothed, vID);
-                } else if (EnableInlineProjection && target != null) {
-                    vSmoothed = target.Project(vSmoothed, vID);
-                }
-
-                mesh.SetVertex(vID, vSmoothed);
+                bool bModified = false;
+                Vector3d vSmoothed = ComputeSmoothedVertexPos(vID, smoothFunc, out bModified);
+                if ( bModified )
+                    mesh.SetVertex(vID, vSmoothed);
             };
 
             if (bParallel) {
-                gParallel.ForEach<int>(mesh.VertexIndices(), smooth);
+                gParallel.ForEach<int>(smooth_vertices(), smooth);
             } else {
-                foreach ( int vID in mesh.VertexIndices() )
+                foreach ( int vID in smooth_vertices() )
                     smooth(vID);
             }
 		}
+
+        /// <summary>
+        /// This computes smoothed positions w/ proper constraints/etc.
+        /// Does not modify mesh.
+        /// </summary>
+        protected virtual Vector3d ComputeSmoothedVertexPos(int vID, Func<DMesh3, int, double, Vector3d> smoothFunc, out bool bModified)
+        {
+            bModified = false;
+            VertexConstraint vc = get_vertex_constraint(vID);
+            if (vc.Fixed)
+                return Mesh.GetVertex(vID);
+
+            Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
+            Debug.Assert(vSmoothed.IsFinite);     // this will really catch a lot of bugs...
+
+            // project onto either vtx constraint target, or surface target
+            if (vc.Target != null) {
+                vSmoothed = vc.Target.Project(vSmoothed, vID);
+            } else if (EnableInlineProjection && target != null) {
+                vSmoothed = target.Project(vSmoothed, vID);
+            }
+
+            bModified = true;
+            return vSmoothed;
+        }
+
+
 
 
 
@@ -574,12 +651,18 @@ namespace g3 {
                 mesh.SetVertex(vID, projected);
             };
 
-            gParallel.ForEach<int>(mesh.VertexIndices(), project);
+            gParallel.ForEach<int>(project_vertices(), project);
         }
 
 
 
 
+        [Conditional("DEBUG")] 
+        void RuntimeDebugCheck(int eid)
+        {
+            if (DebugEdges.Contains(eid))
+                System.Diagnostics.Debugger.Break();
+        }
 
 
         public bool ENABLE_DEBUG_CHECKS = false;
@@ -630,7 +713,7 @@ namespace g3 {
         int COUNT_SPLITS, COUNT_COLLAPSES, COUNT_FLIPS;
         Stopwatch AllOpsW, SmoothW, ProjectW, FlipW, SplitW, CollapseW;
 
-        void begin_pass() {
+        protected virtual void begin_pass() {
             if ( ENABLE_PROFILING ) {
                 COUNT_SPLITS = COUNT_COLLAPSES = COUNT_FLIPS = 0;
                 AllOpsW = new Stopwatch();
@@ -642,7 +725,7 @@ namespace g3 {
             }
         }
 
-        void end_pass() {
+        protected virtual void end_pass() {
             if ( ENABLE_PROFILING ) {
                 System.Console.WriteLine(string.Format(
                     "RemeshPass: T {0} V {1} splits {2} flips {3} collapses {4}", mesh.TriangleCount, mesh.VertexCount, COUNT_SPLITS, COUNT_FLIPS, COUNT_COLLAPSES
@@ -656,41 +739,41 @@ namespace g3 {
             }
         }
 
-        void begin_ops() {
+        protected virtual void begin_ops() {
             if ( ENABLE_PROFILING ) AllOpsW.Start();
         }
-        void end_ops() {
+        protected virtual void end_ops() {
             if ( ENABLE_PROFILING ) AllOpsW.Stop();
         }
-        void begin_smooth() {
+        protected virtual void begin_smooth() {
             if ( ENABLE_PROFILING ) SmoothW.Start();
         }
-        void end_smooth() {
+        protected virtual void end_smooth() {
             if ( ENABLE_PROFILING ) SmoothW.Stop();
         }
-        void begin_project() {
+        protected virtual void begin_project() {
             if ( ENABLE_PROFILING ) ProjectW.Start();
         }
-        void end_project() {
+        protected virtual void end_project() {
             if ( ENABLE_PROFILING ) ProjectW.Stop();
         }
 
-        void begin_collapse() {
+        protected virtual void begin_collapse() {
             if ( ENABLE_PROFILING ) CollapseW.Start();
         }
-        void end_collapse() {
+        protected virtual void end_collapse() {
             if ( ENABLE_PROFILING ) CollapseW.Stop();
         }
-        void begin_flip() {
+        protected virtual void begin_flip() {
             if ( ENABLE_PROFILING ) FlipW.Start();
         }
-        void end_flip() {
+        protected virtual void end_flip() {
             if ( ENABLE_PROFILING ) FlipW.Stop();
         }
-        void begin_split() {
+        protected virtual void begin_split() {
             if ( ENABLE_PROFILING ) SplitW.Start();
         }
-        void end_split() {
+        protected virtual void end_split() {
             if ( ENABLE_PROFILING ) SplitW.Stop();
         }
 
