@@ -145,7 +145,7 @@ namespace g3
 
         public void SelectGroup(int gid)
         {
-            int NT = Mesh.MaxVertexID;
+            int NT = Mesh.MaxTriangleID;
             for (int tid = 0; tid < NT; ++tid) {
                 if (Mesh.IsTriangle(tid) && Mesh.GetTriangleGroup(tid) == gid)
                     add(tid);
@@ -154,7 +154,7 @@ namespace g3
         public void DeselectGroup(int gid)
         {
             // cannot just iterate over selected tris because remove() will change them...
-            int NT = Mesh.MaxVertexID;
+            int NT = Mesh.MaxTriangleID;
             for (int tid = 0; tid < NT; ++tid) {
                 if (Mesh.IsTriangle(tid) && Mesh.GetTriangleGroup(tid) == gid)
                     remove(tid);
