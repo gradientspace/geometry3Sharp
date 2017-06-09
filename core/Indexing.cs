@@ -225,6 +225,13 @@ namespace g3
             this.MaxIndex = MaxIndex;
         }
 
+        public IndexMap(int[] use_dense_map, int MaxIndex = -1)
+        {
+            dense_map = use_dense_map;
+            this.MaxIndex = MaxIndex;
+        }
+
+
         public IndexMap(int MaxIndex, int SubsetCountEst)
         {
             bool bSmall = MaxIndex < 32000;        // if buffer is less than 128k, just use dense map

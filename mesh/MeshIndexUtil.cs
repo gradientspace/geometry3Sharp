@@ -13,7 +13,7 @@ namespace g3
         /// <summary>
         /// given list of edges of MeshA, and vertex map from A to B, map to list of edges on B
         /// </summary>
-        public static List<int> MapEdgesViaVertexMap(IndexMap AtoBV, DMesh3 MeshA, DMesh3 MeshB, List<int> edges)
+        public static List<int> MapEdgesViaVertexMap(IIndexMap AtoBV, DMesh3 MeshA, DMesh3 MeshB, List<int> edges)
         {
             int N = edges.Count;
             List<int> result = new List<int>(N);

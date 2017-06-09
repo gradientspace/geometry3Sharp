@@ -180,11 +180,16 @@ namespace g3
         }
 
 
-        public void CompactCopy(DMesh3 copy, bool bNormals = true, bool bColors = true, bool bUVs = true)
+        public struct CompactInfo
+        {
+            public IIndexMap MapV;
+        }
+        public CompactInfo CompactCopy(DMesh3 copy, bool bNormals = true, bool bColors = true, bool bUVs = true)
         {
             if ( copy.IsCompact ) {
                 Copy(copy, bNormals, bColors, bUVs);
-                return;
+                CompactInfo ci = new CompactInfo() { MapV = new IdentityIndexMap() };
+                return ci;
             }
 
             vertices = new DVector<double>();
@@ -220,6 +225,10 @@ namespace g3
                 AppendTriangle(t, g);
                 max_group_id = Math.Max(max_group_id, g+1);
             }
+
+            return new CompactInfo() {
+                MapV = new IndexMap(mapV, this.MaxVertexID)
+            };
         }
 
 
