@@ -23,17 +23,22 @@ namespace g3
                                                 // Currently only used as information, we do not explicitly
                                                 // project edges onto targets (must also set VertexConstraint)
 
+        public int TrackingSetID;               // not actually a constraint, but allows is to find descendents
+                                                // of an constraind input edge
+
 
         public EdgeConstraint(EdgeRefineFlags rflags)
         {
             refineFlags = rflags;
             Target = null;
+            TrackingSetID = -1;
         }
 
         public EdgeConstraint(EdgeRefineFlags rflags, IProjectionTarget target)
         {
             refineFlags = rflags;
             Target = target;
+            TrackingSetID = -1;
         }
 
         public bool CanFlip {
@@ -100,6 +105,17 @@ namespace g3
 
         Dictionary<int, EdgeConstraint> Edges = new Dictionary<int, EdgeConstraint>();
 
+        int set_id_counter;         // use this to allocate FixedSetIDs
+
+        public MeshConstraints()
+        {
+            set_id_counter = 0;
+        }
+
+        public int AllocateSetID() {
+            return set_id_counter++;
+        }
+
         public bool HasEdgeConstraint(int eid)
         {
             return Edges.ContainsKey(eid);
@@ -121,6 +137,16 @@ namespace g3
         public void ClearEdgeConstraint(int eid)
         {
             Edges.Remove(eid);
+        }
+
+        public List<int> FindConstrainedEdgesBySetID(int setID)
+        {
+            List<int> result = new List<int>();
+            foreach ( var pair in Edges ) {
+                if (pair.Value.TrackingSetID == setID)
+                    result.Add(pair.Key);
+            }
+            return result;
         }
 
 
