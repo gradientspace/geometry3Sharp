@@ -28,6 +28,20 @@ namespace g3 {
         // this overrides default smoothing if provided
         public Func<DMesh3, int, double, Vector3d> CustomSmoothF;
 
+        
+        // Sometimes we need to have very granular control over what happens to
+        // specific vertices. This function allows client to specify such behavior.
+        // Somewhat redundant w/ VertexConstraints, but simpler to code.
+        [Flags] public enum VertexControl
+        {
+            AllowAll = 0,
+            NoSmooth = 1,
+            NoProject = 2,
+            NoMovement = NoSmooth | NoProject
+        }
+        public Func<int, VertexControl> VertexControlF;
+
+
         // other options
 
         // if true, then when two Fixed vertices have the same non-invalid SetID,
@@ -574,7 +588,8 @@ namespace g3 {
             }
             // no constraint applied, so if we have a target surface, project to that
             if ( EnableInlineProjection && target != null ) {
-                return target.Project(vNewPos, vid);
+                if (VertexControlF == null || (VertexControlF(vid) & VertexControl.NoProject) == 0)
+                    return target.Project(vNewPos, vid);
             }
             return vNewPos;
         }
@@ -618,18 +633,22 @@ namespace g3 {
         protected virtual Vector3d ComputeSmoothedVertexPos(int vID, Func<DMesh3, int, double, Vector3d> smoothFunc, out bool bModified)
         {
             bModified = false;
-            VertexConstraint vc = get_vertex_constraint(vID);
-            if (vc.Fixed)
+            VertexConstraint vConstraint = get_vertex_constraint(vID);
+            if (vConstraint.Fixed)
+                return Mesh.GetVertex(vID);
+            VertexControl vControl = (VertexControlF == null) ? VertexControl.AllowAll : VertexControlF(vID);
+            if ( (vControl & VertexControl.NoSmooth) != 0 )
                 return Mesh.GetVertex(vID);
 
             Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
             Debug.Assert(vSmoothed.IsFinite);     // this will really catch a lot of bugs...
 
             // project onto either vtx constraint target, or surface target
-            if (vc.Target != null) {
-                vSmoothed = vc.Target.Project(vSmoothed, vID);
+            if (vConstraint.Target != null) {
+                vSmoothed = vConstraint.Target.Project(vSmoothed, vID);
             } else if (EnableInlineProjection && target != null) {
-                vSmoothed = target.Project(vSmoothed, vID);
+                if ( (vControl & VertexControl.NoProject) == 0)
+                    vSmoothed = target.Project(vSmoothed, vID);
             }
 
             bModified = true;
@@ -645,6 +664,8 @@ namespace g3 {
         {
             Action<int> project = (vID) => {
                 if (vertex_is_constrained(vID))
+                    return;
+                if (VertexControlF != null && (VertexControlF(vID) & VertexControl.NoProject) != 0)
                     return;
                 Vector3d curpos = mesh.GetVertex(vID);
                 Vector3d projected = target.Project(curpos, vID);

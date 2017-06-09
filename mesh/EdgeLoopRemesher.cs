@@ -12,6 +12,8 @@ namespace g3
     /// 
     /// [TODO] avoid rebuild_edge_list(). requires handling various cases below...
     /// [TODO] Precompute() seems overly expensive...?
+    /// [TODO] local-smoothing impl is not very efficient. Should not be necessary to
+    ///    rebuild nbrhood each time if we are not changing it.
     /// </summary>
     public class EdgeLoopRemesher : Remesher
     {
@@ -156,7 +158,10 @@ namespace g3
 
         protected override IEnumerable<int> project_vertices()
         {
-            return CurrentLoopV;
+            if (LocalSmoothingRings > 0)
+                return smoothV;
+            else
+                return CurrentLoopV;
         }
 
 
