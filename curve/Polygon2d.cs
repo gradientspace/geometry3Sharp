@@ -250,6 +250,43 @@ namespace g3
 		}
 
 
+		public Segment2d Segment(int iSegment)
+		{
+			return new Segment2d(vertices[iSegment], vertices[(iSegment + 1) % vertices.Count]);
+		}
+
+		public Vector2d PointAt(int iSegment, double fSegT) {
+			Segment2d seg = new Segment2d(vertices[iSegment], vertices[(iSegment + 1) % vertices.Count]);
+			return seg.PointAt(fSegT);
+		}
+
+
+		public double DistanceSquared(Vector2d p, out int iNearSeg, out double fNearSegT) 
+		{
+			iNearSeg = -1;
+			fNearSegT = double.MaxValue;
+			double dist = double.MaxValue;
+			int N = vertices.Count;
+			for (int vi = 0; vi < N; ++vi) {
+				Segment2d seg = new Segment2d(vertices[vi], vertices[(vi + 1) % N]);
+				double t = (p - seg.Center).Dot(seg.Direction);
+				double d = double.MaxValue;
+				if (t >= seg.Extent)
+					d = seg.P1.DistanceSquared(p);
+				else if (t <= -seg.Extent)
+					d = seg.P0.DistanceSquared(p);
+				else
+					d = (seg.PointAt(t) - p).LengthSquared;	
+				if ( d < dist ) {
+					dist = d;
+					iNearSeg = vi;
+					fNearSegT = t;
+				}
+			}
+			return dist;
+		}
+
+
 
 		public void Translate(Vector2d translate) {
 			int N = vertices.Count;

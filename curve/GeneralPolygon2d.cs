@@ -142,5 +142,50 @@ namespace g3
 		}
 
 
+		public Vector2d PointAt(int iSegment, double fSegT, int iHoleIndex = -1)
+		{
+			if (iHoleIndex == -1)
+				return outer.PointAt(iSegment, fSegT);
+			return holes[iHoleIndex].PointAt(iSegment, fSegT);
+		}
+
+		public Segment2d Segment(int iSegment, int iHoleIndex = -1)
+		{
+			if (iHoleIndex == -1)
+				return outer.Segment(iSegment);
+			return holes[iHoleIndex].Segment(iSegment);			
+		}
+
+		// this should be more efficient when there are holes...
+		public double DistanceSquared(Vector2d p, out int iHoleIndex, out int iNearSeg, out double fNearSegT)
+		{
+			iNearSeg = iHoleIndex = -1;
+			fNearSegT = double.MaxValue;
+			double dist = outer.DistanceSquared(p, out iNearSeg, out fNearSegT);
+			for (int i = 0; i < Holes.Count; ++i ) {
+				int seg; double segt;
+				double holedist = Holes[i].DistanceSquared(p, out seg, out segt);
+				if (holedist < dist) {
+					dist = holedist;
+					iHoleIndex = i;
+					iNearSeg = seg;
+					fNearSegT = segt;
+				}
+			}
+			return dist;
+		}
+
+
+		public IEnumerable<Segment2d> AllSegmentsItr()
+		{
+			foreach (Segment2d seg in outer.SegmentItr())
+				yield return seg;
+			foreach ( var hole in holes ) {
+				foreach (Segment2d seg in hole.SegmentItr())
+					yield return seg;
+			}
+		}
+
+
 	}
 }
