@@ -240,6 +240,7 @@
     <Compile Include="mesh\EdgeSpan.cs" />
     <Compile Include="core\DeepCopy.cs" />
     <Compile Include="core\g3Interfaces.cs" />
+    <Compile Include="curve\DGraph2.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
