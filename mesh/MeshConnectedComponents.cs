@@ -38,6 +38,10 @@ namespace g3
             get { return Components.Count; }
         }
 
+        public Component this[int index] {
+            get { return Components[index]; }
+        }
+
 
         public IEnumerator<Component> GetEnumerator() {
             return Components.GetEnumerator();
