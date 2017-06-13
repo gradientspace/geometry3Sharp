@@ -114,16 +114,12 @@
     <Compile Include="mesh\FaceGroupOptimizer.cs" />
     <Compile Include="mesh\FaceGroupUtil.cs" />
     <Compile Include="mesh\MeshIndexUtil.cs" />
-    <Compile Include="mesh\MeshRegionBoundaryLoops.cs" />
-    <Compile Include="mesh\MeshConnectedComponents.cs" />
     <Compile Include="mesh\MeshConstraintUtil.cs" />
     <Compile Include="mesh\MeshDecomposition.cs" />
     <Compile Include="mesh\MeshEditor.cs" />
     <Compile Include="mesh\MeshIterators.cs" />
     <Compile Include="mesh\MeshNormals.cs" />
     <Compile Include="mesh\MeshUVSet.cs" />
-    <Compile Include="mesh\MeshVertexSelection.cs" />
-    <Compile Include="mesh\MeshFaceSelection.cs" />
     <Compile Include="mesh\RegionRemesher.cs" />
     <Compile Include="mesh_generators\ArrowGenerators.cs" />
     <Compile Include="mesh_generators\BoxGenerators.cs" />
@@ -143,7 +139,6 @@
     <Compile Include="mesh_ops\LaplacianMeshDeformer.cs" />
     <Compile Include="mesh\MeshConstraints.cs" />
     <Compile Include="mesh_generators\MeshGenerators.cs" />
-    <Compile Include="mesh\MeshBoundaryLoops.cs" />
     <Compile Include="mesh\MeshMeasurements.cs" />
     <Compile Include="mesh\MeshTransforms.cs" />
     <Compile Include="mesh_generators\PlaneGenerators.cs" />
@@ -152,6 +147,12 @@
     <Compile Include="mesh_ops\MeshIterativeSmooth.cs" />
     <Compile Include="mesh_ops\MeshLoopSmooth.cs" />
     <Compile Include="mesh_ops\SimpleHoleFiller.cs" />
+    <Compile Include="mesh_selection\MeshBoundaryLoops.cs" />
+    <Compile Include="mesh_selection\MeshConnectedComponents.cs" />
+    <Compile Include="mesh_selection\MeshFaceSelection.cs" />
+    <Compile Include="mesh_selection\MeshFacesFromLoop.cs" />
+    <Compile Include="mesh_selection\MeshRegionBoundaryLoops.cs" />
+    <Compile Include="mesh_selection\MeshVertexSelection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="mesh\SimpleMesh.cs" />
     <Compile Include="core\Util.cs" />
