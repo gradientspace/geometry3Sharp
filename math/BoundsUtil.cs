@@ -59,6 +59,17 @@ namespace g3
 		}
 
 
+        /// <summary>
+        /// compute axis-aligned bounds of set of points after transforming into frame f
+        /// </summary>
+        public static AxisAlignedBox3d BoundsInFrame(IEnumerable<Vector3d> values, Frame3f f) {
+			AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+			foreach ( Vector3d v in values )
+				box.Contain( f.ToFrameP(v) );
+			return box;
+        }        
+
+
         // Modes: 0: centroids, 1: any vertex, 2: 2 vertices, 3: all vertices
         // ContainF should return true if 3D position is in set (eg inside box, etc)
         // If mode = 0, will be called with (centroid, tri_idx)

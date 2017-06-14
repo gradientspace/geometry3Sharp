@@ -69,22 +69,34 @@ namespace g3
         public static void ToFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
+            bool bHasNormals = mesh.HasVertexNormals;
             for ( int vid = 0; vid < NV; ++vid ) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d v = mesh.GetVertex(vid);
                     Vector3d vf = f.ToFrameP((Vector3f)v);
                     mesh.SetVertex(vid, vf);
+                    if ( bHasNormals ) {
+                        Vector3f n = mesh.GetVertexNormal(vid);
+                        Vector3f nf = f.ToFrameV(n);
+                        mesh.SetVertexNormal(vid, nf);
+                    }
                 }
             }
         }
         public static void FromFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
+            bool bHasNormals = mesh.HasVertexNormals;
             for ( int vid = 0; vid < NV; ++vid ) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d vf = mesh.GetVertex(vid);
                     Vector3d v = f.FromFrameP((Vector3f)vf);
                     mesh.SetVertex(vid, v);
+                    if ( bHasNormals ) {
+                        Vector3f n = mesh.GetVertexNormal(vid);
+                        Vector3f nf = f.FromFrameV(n);
+                        mesh.SetVertexNormal(vid, nf);
+                    }
                 }
             }
         }
@@ -109,10 +121,15 @@ namespace g3
         public static void ConvertZUpToYUp(IDeformableMesh mesh)
         {
             int NV = mesh.MaxVertexID;
+            bool bHasNormals = mesh.HasVertexNormals;
             for ( int vid = 0; vid < NV; ++vid ) {
                 if ( mesh.IsVertex(vid) ) {
                     Vector3d v = mesh.GetVertex(vid);
                     mesh.SetVertex(vid, new Vector3d(v.x, v.z, -v.y));
+                    if ( bHasNormals ) {
+                        Vector3f n = mesh.GetVertexNormal(vid);
+                        mesh.SetVertexNormal(vid, new Vector3f(v.x, v.z, -v.y));
+                    }
                 }
             }
         }
@@ -136,10 +153,15 @@ namespace g3
         public static void ConvertYUpToZUp(IDeformableMesh mesh)
         {
             int NV = mesh.MaxVertexID;
+            bool bHasNormals = mesh.HasVertexNormals;
             for ( int vid = 0; vid < NV; ++vid ) {
                 if ( mesh.IsVertex(vid) ) {
                     Vector3d v = mesh.GetVertex(vid);
                     mesh.SetVertex(vid, new Vector3d(v.x, -v.z, v.y));
+                    if ( bHasNormals ) {
+                        Vector3f n = mesh.GetVertexNormal(vid);
+                        mesh.SetVertexNormal(vid, new Vector3f(v.x, -v.z, v.y));
+                    }
                 }
             }
         }
