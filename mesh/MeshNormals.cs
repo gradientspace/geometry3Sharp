@@ -43,6 +43,8 @@ namespace g3
         {
             if (SetMesh.MaxVertexID < Mesh.MaxVertexID)
                 throw new Exception("MeshNormals.Set: SetMesh does not have enough vertices!");
+            if (!SetMesh.HasVertexNormals)
+                SetMesh.EnableVertexNormals(Vector3f.AxisY);
             int NV = Mesh.MaxVertexID;
             for ( int vi = 0; vi < NV; ++vi ) {
                 if ( Mesh.IsVertex(vi) && SetMesh.IsVertex(vi) ) {
