@@ -128,7 +128,7 @@ namespace g3
                     mesh.SetVertex(vid, new Vector3d(v.x, v.z, -v.y));
                     if ( bHasNormals ) {
                         Vector3f n = mesh.GetVertexNormal(vid);
-                        mesh.SetVertexNormal(vid, new Vector3f(v.x, v.z, -v.y));
+                        mesh.SetVertexNormal(vid, new Vector3f(n.x, n.z, -n.y));
                     }
                 }
             }
@@ -160,7 +160,7 @@ namespace g3
                     mesh.SetVertex(vid, new Vector3d(v.x, -v.z, v.y));
                     if ( bHasNormals ) {
                         Vector3f n = mesh.GetVertexNormal(vid);
-                        mesh.SetVertexNormal(vid, new Vector3f(v.x, -v.z, v.y));
+                        mesh.SetVertexNormal(vid, new Vector3f(n.x, -n.z, n.y));
                     }
                 }
             }
