@@ -23,6 +23,12 @@ namespace g3
                 }
             }
         }
+        public static void FixAllBoundaryEdges(Remesher r)
+        {
+            if (r.Constraints == null)
+                r.SetExternalConstraints(new MeshConstraints());
+            FixAllBoundaryEdges(r.Constraints, r.Mesh);
+        }
 
 
         // for all mesh boundary vertices, pin in current position, but allow collapses

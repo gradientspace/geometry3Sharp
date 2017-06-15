@@ -50,12 +50,14 @@
     <Compile Include="color\ColorHSV.cs" />
     <Compile Include="color\ColorMixer.cs" />
     <Compile Include="core\CommandArgumentSet.cs" />
+    <Compile Include="core\DijkstraGraphDistance.cs" />
     <Compile Include="core\DVector.cs" />
     <Compile Include="core\FileSystemUtils.cs" />
     <Compile Include="core\gParallel.cs" />
     <Compile Include="core\HashUtil.cs" />
     <Compile Include="core\HBitArray.cs" />
     <Compile Include="core\Indexing.cs" />
+    <Compile Include="core\priorityqueue\FastPriorityQueue.cs" />
     <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\Snapping.cs" />
@@ -249,6 +251,9 @@
   <ItemGroup>
     <None Include="LICENSE" />
     <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="core\priorityqueue\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
