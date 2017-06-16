@@ -84,6 +84,12 @@ namespace g3
 			return (next-prev).Normalized;
         }
 
+		public Vector2d GetNormal(int i)
+		{
+			return GetTangent(i).Perp;
+		}
+
+
 
 		public AxisAlignedBox2d GetBounds() {
 			if ( vertices.Count == 0 )
@@ -259,6 +265,17 @@ namespace g3
 			Segment2d seg = new Segment2d(vertices[iSegment], vertices[(iSegment + 1) % vertices.Count]);
 			return seg.PointAt(fSegT);
 		}
+
+		public Vector2d GetNormal(int iSeg, double segT)
+		{
+			Segment2d seg = new Segment2d(vertices[iSeg], vertices[(iSeg + 1) % vertices.Count]);
+			double t = ( (segT / seg.Extent) + 1.0) / 2.0;
+
+			Vector2d n0 = GetNormal(iSeg);
+			Vector2d n1 = GetNormal((iSeg + 1) % vertices.Count);
+			return (1.0 - t) * n0 + t * n1;
+		}
+
 
 
 		public double DistanceSquared(Vector2d p, out int iNearSeg, out double fNearSegT) 
