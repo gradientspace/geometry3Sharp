@@ -47,6 +47,7 @@ namespace g3
         public LaplacianMeshSmoother(DMesh3 mesh)
         {
             Mesh = mesh;
+            Util.gDevAssert(mesh.IsCompact);
         }
 
 
@@ -261,6 +262,19 @@ namespace g3
         }
 
 
+        public bool SolveAndUpdateMesh()
+        {
+            int N = Mesh.MaxVertexID;
+            Vector3d[] Result = new Vector3d[N];
+            if (!Solve(Result))
+                return false;
+            for (int i = 0; i < N; ++i ) {
+                if ( Mesh.IsVertex(i) ) {
+                    Mesh.SetVertex(i, Result[i]);
+                }
+            }
+            return true;
+        }
 
     }
 }

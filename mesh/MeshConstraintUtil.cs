@@ -124,5 +124,23 @@ namespace g3
             ConstrainVtxLoopTo(r.Constraints, r.Mesh, loopV, target);
         }
 
+
+
+        public static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
+            MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
+            foreach ( EdgeLoop loop in loops ) {
+                DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
+                DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
+                ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
+            }
+        }
+        public static void PreserveBoundaryLoops(Remesher r)
+        {
+            if (r.Constraints == null)
+                r.SetExternalConstraints(new MeshConstraints());
+            PreserveBoundaryLoops(r.Constraints, r.Mesh);
+        }
+
+
     }
 }

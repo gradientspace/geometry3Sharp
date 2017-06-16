@@ -5,12 +5,12 @@ using System.Text;
 
 namespace g3
 {
-    public class DCurveProjection : IProjectionTarget
+    public class DCurveProjectionTarget : IProjectionTarget
     {
         public DCurve3 Curve;
 
 
-        public DCurveProjection(DCurve3 curve)
+        public DCurveProjectionTarget(DCurve3 curve)
         {
             this.Curve = curve;
         }

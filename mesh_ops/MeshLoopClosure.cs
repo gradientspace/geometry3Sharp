@@ -111,7 +111,7 @@ namespace g3
             RegionRemesher r = new RegionRemesher(Mesh, new_roi);
 
             DCurve3 top_curve = MeshUtil.ExtractLoopV(Mesh, extrude.NewLoop.Vertices);
-            DCurveProjection curve_target = new DCurveProjection(top_curve);
+            DCurveProjectionTarget curve_target = new DCurveProjectionTarget(top_curve);
             int[] top_loop = (int[])extrude.NewLoop.Vertices.Clone();
             r.Region.MapVerticesToSubmesh(top_loop);
             MeshConstraintUtil.ConstrainVtxLoopTo(r.Constraints, r.Mesh, top_loop, curve_target);

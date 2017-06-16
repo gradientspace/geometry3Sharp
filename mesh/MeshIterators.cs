@@ -57,6 +57,19 @@ namespace g3
         }
 
 
+        public static IEnumerable<int> InteriorVertices(DMesh3 mesh)
+        {
+            int N = mesh.MaxVertexID;
+            for ( int i = 0; i < N; ++i ) {
+                if ( mesh.IsVertex(i) ) {
+                    if (mesh.IsBoundaryVertex(i) == false)
+                        yield return i;
+                }
+            }
+        }
+
+
+
         public static IEnumerable<int> GroupBoundaryVertices(DMesh3 mesh)
         {
             int N = mesh.MaxVertexID;
