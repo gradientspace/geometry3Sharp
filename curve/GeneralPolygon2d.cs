@@ -156,6 +156,13 @@ namespace g3
 			return holes[iHoleIndex].Segment(iSegment);			
 		}
 
+		public Vector2d GetNormal(int iSegment, double segT, int iHoleIndex = -1)
+		{
+			if (iHoleIndex == -1)
+				return outer.GetNormal(iSegment, segT);
+			return holes[iHoleIndex].GetNormal(iSegment, segT);
+		}
+
 		// this should be more efficient when there are holes...
 		public double DistanceSquared(Vector2d p, out int iHoleIndex, out int iNearSeg, out double fNearSegT)
 		{
@@ -186,6 +193,15 @@ namespace g3
 			}
 		}
 
+		public IEnumerable<Vector2d> AllVerticesItr()
+		{
+			foreach (Vector2d v in outer)
+				yield return v;
+			foreach (var hole in holes) {
+				foreach (Vector2d v in hole)
+					yield return v;
+			}
+		}
 
 	}
 }
