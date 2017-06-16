@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace g3
 {
@@ -191,5 +192,25 @@ namespace g3
             }
             return true;
         }
+
+
+
+        /// <summary>
+        /// Apply map to indices
+        /// </summary>
+        public static void Apply(List<int> indices, IIndexMap map)
+        {
+            int N = indices.Count;
+            for (int i = 0; i < N; ++i)
+                indices[i] = map[indices[i]];
+        }
+
+        public static void Apply(int[] indices, IIndexMap map)
+        {
+            int N = indices.Length;
+            for (int i = 0; i < N; ++i)
+                indices[i] = map[indices[i]];
+        }
+
     }
 }

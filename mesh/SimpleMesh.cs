@@ -87,6 +87,20 @@ namespace g3
 
 
 
+        public MeshComponents Components {
+            get {
+                MeshComponents c = 0;
+                if (Normals != null) c |= MeshComponents.VertexNormals;
+                if (Colors != null) c |= MeshComponents.VertexColors;
+                if (UVs != null) c |= MeshComponents.VertexUVs;
+                if (FaceGroups != null) c |= MeshComponents.FaceGroups;
+                return c;
+            }
+        }
+
+
+
+
         /*
          * Construction
          */

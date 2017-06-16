@@ -92,5 +92,20 @@ namespace g3
 			return iNearest;
 		}
 
+
+        public static Vector2d CentroidVtx(IEnumerable<Vector2d> vertices)
+        {
+            Vector2d c = Vector2d.Zero;
+            int count = 0;
+            foreach (Vector2d v in vertices) {
+                c += v;
+                count++;
+            }
+            if (count > 1)
+                c /= (double)count;
+            return c;
+        }
+
+
 	}
 }

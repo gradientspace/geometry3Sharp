@@ -331,10 +331,14 @@ namespace g3
 
 
 
-
         public bool AppendMesh(IMesh appendMesh, int appendGID = -1)
         {
-            int[] mapV = new int[appendMesh.MaxVertexID];
+            int[] mapV;
+            return AppendMesh(appendMesh, out mapV, appendGID);
+        }
+        public bool AppendMesh(IMesh appendMesh, out int[] mapV, int appendGID = -1)
+        {
+            mapV = new int[appendMesh.MaxVertexID];
             foreach (int vid in appendMesh.VertexIndices() ) {
                 
                 NewVertexInfo vinfo = appendMesh.GetVertexAll(vid);

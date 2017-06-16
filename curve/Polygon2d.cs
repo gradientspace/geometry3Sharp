@@ -305,6 +305,18 @@ namespace g3
 
 
 
+        public double AverageEdgeLength
+        {
+            get {
+                double avg = 0; int N = vertices.Count;
+                for (int i = 1; i < N; ++i)
+                    avg += vertices[i].Distance(vertices[i - 1]);
+                avg += vertices[N - 1].Distance(vertices[0]);
+                return avg / N;
+            }
+        }
+
+
 		public void Translate(Vector2d translate) {
 			int N = vertices.Count;
 			for (int i = 0; i < N; ++i)

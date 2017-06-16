@@ -23,6 +23,12 @@ namespace g3
                 }
             }
         }
+        public static void FixAllBoundaryEdges(Remesher r)
+        {
+            if (r.Constraints == null)
+                r.SetExternalConstraints(new MeshConstraints());
+            FixAllBoundaryEdges(r.Constraints, r.Mesh);
+        }
 
 
         // for all mesh boundary vertices, pin in current position, but allow collapses
@@ -117,6 +123,24 @@ namespace g3
                 r.SetExternalConstraints(new MeshConstraints());
             ConstrainVtxLoopTo(r.Constraints, r.Mesh, loopV, target);
         }
+
+
+
+        public static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
+            MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
+            foreach ( EdgeLoop loop in loops ) {
+                DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
+                DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
+                ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
+            }
+        }
+        public static void PreserveBoundaryLoops(Remesher r)
+        {
+            if (r.Constraints == null)
+                r.SetExternalConstraints(new MeshConstraints());
+            PreserveBoundaryLoops(r.Constraints, r.Mesh);
+        }
+
 
     }
 }

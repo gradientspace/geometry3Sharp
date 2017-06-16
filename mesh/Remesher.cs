@@ -99,6 +99,20 @@ namespace g3 {
             this.target = target;
         }
 
+        
+        /// <summary>
+        /// Set min/max edge-lengths to sane values for given target edge length
+        /// </summary>
+        public void SetTargetEdgeLength(double fLength)
+        {
+            // from Botsch paper
+            //MinEdgeLength = fLength * (4.0/5.0);
+            //MaxEdgeLength = fLength * (4.0/3.0);
+            // much nicer!! makes sense as when we split, edges are both > min !
+            MinEdgeLength = fLength * 0.66;
+            MaxEdgeLength = fLength * 1.33;
+        }
+
 
         public bool ENABLE_PROFILING = false;
 
