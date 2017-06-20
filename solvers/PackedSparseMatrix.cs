@@ -10,15 +10,15 @@ namespace g3
     /// </summary>
     public class PackedSparseMatrix
     {
-        struct nonzero
+        public struct nonzero
         {
             public int j;
             public double d;
         }
-        nonzero[][] Rows;
+        public nonzero[][] Rows;
 
-        int Columns;
-        bool Sorted;
+        public int Columns;
+        public bool Sorted;
 
         public PackedSparseMatrix(SymmetricSparseMatrix m, bool bTranspose = false)
         {

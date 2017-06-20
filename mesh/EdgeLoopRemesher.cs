@@ -17,6 +17,7 @@ namespace g3
     /// </summary>
     public class EdgeLoopRemesher : Remesher
     {
+        public EdgeLoop InputLoop;
         public EdgeLoop OutputLoop;
 
         /// <summary>
@@ -25,7 +26,6 @@ namespace g3
         /// </summary>
         public int LocalSmoothingRings = 0;
 
-        EdgeLoop InputLoop;
         List<int> CurrentLoopE;
         List<int> CurrentLoopV;
 

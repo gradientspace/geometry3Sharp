@@ -36,6 +36,13 @@ namespace g3
             this.origin = origin;
         }
 
+        public Frame3f(Vector3d origin, Vector3d setZ)
+        {
+            rotation = Quaternionf.FromTo(Vector3f.AxisZ, (Vector3f)setZ);
+            this.origin = (Vector3f)origin;
+        }
+        
+
         public Frame3f(Vector3f origin, Vector3f setAxis, int nAxis)
         {
             if (nAxis == 0)

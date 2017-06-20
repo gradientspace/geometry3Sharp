@@ -234,6 +234,15 @@ namespace g3
         }
 
 
+        public Vector3f NearestPoint(Vector3f v)
+        {
+            float x = (v.x < Min.x) ? Min.x : (v.x > Max.x ? Max.x : v.x);
+            float y = (v.y < Min.y) ? Min.y : (v.y > Max.y ? Max.y : v.y);
+            float z = (v.z < Min.z) ? Min.z : (v.z > Max.z ? Max.z : v.z);
+            return new Vector3f(x, y, z);
+        }
+
+
 
         //! relative translation
         public void Translate(Vector3f vTranslate)

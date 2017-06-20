@@ -74,12 +74,14 @@ namespace g3
                 this.vertices = vertices;
             else
                 this.vertices = new List<Vector3d>(vertices);
+            Timestamp++;
         }
 
         public void ClearVertices()
         {
             vertices = new List<Vector3d>();
             Closed = false;
+            Timestamp++;
         }
 
 
