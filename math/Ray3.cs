@@ -20,6 +20,13 @@ namespace g3
             this.Direction = direction;
         }
 
+        public Ray3d(Vector3f origin, Vector3f direction)
+        {
+            this.Origin = origin;
+            this.Direction = direction;
+            this.Direction.Normalize();     // float cast may not be normalized in double, is trouble in algorithms!
+        }
+
         // parameter is distance along ray
         public Vector3d PointAt(double d) {
             return Origin + d * Direction;
