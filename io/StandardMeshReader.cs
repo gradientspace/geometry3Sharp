@@ -186,7 +186,7 @@ namespace g3
             // detect binary STL
             FileStream stream = null;
             try {
-                stream = File.Open(sFilename, FileMode.Open);
+                stream = File.Open(sFilename, FileMode.Open, FileAccess.Read);
             } catch (Exception e) {
                 return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
             }
