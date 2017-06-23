@@ -27,6 +27,21 @@ namespace g3
 
 
 
+    public class PlaneProjectionTarget : IProjectionTarget
+    {
+        public Vector3d Origin;
+        public Vector3d Normal;
+
+        public Vector3d Project(Vector3d vPoint, int identifier = -1)
+        {
+            Vector3d d = vPoint - Origin;
+            return Origin + (d - d.Dot(Normal) * Normal);
+        }
+    }
+
+
+
+
     public class CircleProjectionTarget : IProjectionTarget
     {
         public Circle3d Circle;
