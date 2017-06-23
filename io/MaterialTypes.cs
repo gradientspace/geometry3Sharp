@@ -8,6 +8,7 @@ namespace g3
 
     public abstract class GenericMaterial
     {
+        public static readonly float Invalidf = float.MinValue;
         public static readonly Vector3f Invalid = new Vector3f(-1, -1, -1);
 
         public string name;
@@ -64,7 +65,7 @@ namespace g3
             name = "///INVALID_NAME";
             Ka = Kd = Ks = Ke = Tf = Invalid;
             illum = -1;
-			d = Ns = sharpness = Ni = Single.MinValue;
+			d = Ns = sharpness = Ni = Invalidf;
         }
 
         override public Vector3f DiffuseColor {
@@ -72,7 +73,7 @@ namespace g3
             set { Kd = value; }
         }
         override public float Alpha {
-            get { return (d == -1) ? 1.0f : d; }
+            get { return (d == Invalidf) ? 1.0f : d; }
             set { d = value; }
         }
 
