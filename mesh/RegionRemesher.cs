@@ -170,6 +170,22 @@ namespace g3
             remesh.BackPropropagate();
             return remesh;
         }
+        public static RegionRemesher QuickRemesh(DMesh3 mesh, int[] tris, 
+            double targetEdgeLen, double smoothSpeed, 
+            int rounds, 
+            IProjectionTarget target)
+        {
+            RegionRemesher remesh = new RegionRemesher(mesh, tris);
+            if ( target != null )
+                remesh.SetProjectionTarget(target);
+            remesh.SetTargetEdgeLength(targetEdgeLen);
+            remesh.SmoothSpeedT = smoothSpeed;
+            for (int k = 0; k < rounds; ++k) {
+                remesh.BasicRemeshPass();
+            }
+            remesh.BackPropropagate();
+            return remesh;
+        }
 
 
     }
