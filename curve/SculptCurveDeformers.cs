@@ -43,10 +43,10 @@ namespace g3
         }
 
 
-        protected Vector3d vPreviousPos;
+        protected Frame3f vPreviousPos;
 
 
-        public virtual void BeginDeformation(Vector3d vStartPos)
+        public virtual void BeginDeformation(Frame3f vStartPos)
         {
             vPreviousPos = vStartPos;
         }
@@ -57,7 +57,7 @@ namespace g3
             public double maxEdgeLenSqr;
             public double minEdgeLenSqr;
         }
-        public virtual DeformInfo UpdateDeformation(Vector3d vNextPos)
+        public virtual DeformInfo UpdateDeformation(Frame3f vNextPos)
         {
             DeformInfo result = Apply(vNextPos);
             vPreviousPos = vNextPos;
@@ -65,7 +65,7 @@ namespace g3
         }
 
 
-        public abstract DeformInfo Apply(Vector3d vNextPos);
+        public abstract DeformInfo Apply(Frame3f vNextPos);
 
 
 
@@ -100,7 +100,7 @@ namespace g3
         }
 
 
-        public override DeformInfo Apply(Vector3d vNextPos)
+        public override DeformInfo Apply(Frame3f vNextPos)
         {
             Interval1d edgeRangeSqr = Interval1d.Empty;
 
@@ -121,7 +121,7 @@ namespace g3
                 for (int i = 0; i < N; ++i) {
 
                     Vector3d v = Curve[i];
-                    double d2 = (v - vPreviousPos).LengthSquared;
+                    double d2 = (v - vPreviousPos.Origin).LengthSquared;
                     if (d2 < r2) {
                         double t = WeightFunc(Math.Sqrt(d2), Radius);
 
@@ -150,7 +150,7 @@ namespace g3
                     int iEnd = (Curve.Closed) ? N : N - 1;
                     for (int i = iStart; i < iEnd; ++i) {
                         Vector3d v = (ModifiedV[i]) ? NewV[i] : Curve[i];
-                        double d2 = (v - vPreviousPos).LengthSquared;
+                        double d2 = (v - vPreviousPos.Origin).LengthSquared;
                         if (ModifiedV[i] ||  d2 < r2) {         // always smooth any modified verts
                             double a = SmoothAlpha * WeightFunc(Math.Sqrt(d2), Radius);
 
@@ -209,16 +209,18 @@ namespace g3
 
 
         // returns max edge length of moved vertices, after deformation
-        public override DeformInfo Apply(Vector3d vNextPos)
+        public override DeformInfo Apply(Frame3f vNextPos)
         {
             // if we did not move brush far enough, don't do anything
-            Vector3d vDelta = (vNextPos - vPreviousPos);
+            Vector3d vDelta = (vNextPos.Origin - vPreviousPos.Origin);
             if (vDelta.Length < 0.0001f)
                 return new DeformInfo() { maxEdgeLenSqr = 0, minEdgeLenSqr = double.MaxValue };
 
             // otherwise apply base deformation
             DeformF = (idx, t) => {
-                return Curve[idx] + t * vDelta;
+                Vector3d v = vPreviousPos.ToFrameP(Curve[idx]);
+                Vector3d vNew = vNextPos.FromFrameP(v);
+                return Vector3d.Lerp(Curve[idx], vNew, t);
             };
             return base.Apply(vNextPos);
 
