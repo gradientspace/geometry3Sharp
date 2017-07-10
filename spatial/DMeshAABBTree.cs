@@ -20,6 +20,10 @@ namespace g3
         public DMesh3 Mesh { get { return mesh; } }
 
 
+        // if non-null, return false to ignore certain triangles
+        public Func<int, bool> TriangleFilterF = null;
+
+
         // Top-down build strategies will put at most this many triangles into a box.
         // Larger value == shallower trees, but leaves cost more to test
         public int TopDownLeafMaxTriCount = 4;
@@ -94,6 +98,8 @@ namespace g3
                 int num_tris = index_list[idx];
                 for (int i = 1; i <= num_tris; ++i) {
                     int ti = index_list[idx + i];
+                    if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                        continue;
                     double fTriDistSqr = MeshQueries.TriDistanceSqr(mesh, ti, p);
                     if ( fTriDistSqr < fNearestSqr ) {
                         fNearestSqr = fTriDistSqr;
@@ -160,6 +166,8 @@ namespace g3
                 int num_tris = index_list[idx];
                 for (int i = 1; i <= num_tris; ++i) {
                     int ti = index_list[idx + i];
+                    if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                        continue;
 
                     // [TODO] optimize this
                     mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
@@ -241,6 +249,8 @@ namespace g3
                 int num_tris = index_list[idx];
                 for (int i = 1; i <= num_tris; ++i) {
                     int ti = index_list[idx + i];
+                    if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                        continue;
 
                     // [TODO] optimize this
                     mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
@@ -324,6 +334,8 @@ namespace g3
                 int num_tris = index_list[idx];
                 for (int i = 1; i <= num_tris; ++i) {
                     int ti = index_list[idx + i];
+                    if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                        continue;
                     mesh.GetTriVertices(ti, ref box_tri.V0, ref box_tri.V1, ref box_tri.V2);
 
                     IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(triangle, box_tri);
@@ -386,6 +398,8 @@ namespace g3
                 // outer iteration is "other" tris that need to be transformed (more expensive)
                 for (int j = 1; j <= onum_tris; ++j) {
                     int tj = otherTree.index_list[odx + j];
+                    if (otherTree.TriangleFilterF != null && otherTree.TriangleFilterF(tj) == false)
+                        continue;
                     otherTree.mesh.GetTriVertices(tj, ref otri.V0, ref otri.V1, ref otri.V2);
                     if (TransformF != null) {
                         otri.V0 = TransformF(otri.V0);
@@ -397,6 +411,8 @@ namespace g3
                     // inner iteration over "our" triangles
                     for (int i = 1; i <= num_tris; ++i) {
                         int ti = index_list[idx + i];
+                        if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                            continue;
                         mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
                         intr.Triangle1 = tri;
                         if (intr.Test())
@@ -537,6 +553,8 @@ namespace g3
                 // outer iteration is "other" tris that need to be transformed (more expensive)
                 for (int j = 1; j <= onum_tris; ++j) {
                     int tj = otherTree.index_list[odx + j];
+                    if (otherTree.TriangleFilterF != null && otherTree.TriangleFilterF(tj) == false)
+                        continue;
                     otherTree.mesh.GetTriVertices(tj, ref otri.V0, ref otri.V1, ref otri.V2);
                     if (TransformF != null) {
                         otri.V0 = TransformF(otri.V0);
@@ -548,6 +566,8 @@ namespace g3
                     // inner iteration over "our" triangles
                     for (int i = 1; i <= num_tris; ++i) {
                         int ti = index_list[idx + i];
+                        if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                            continue;
                         mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
                         intr.Triangle1 = tri;
 
@@ -702,6 +722,8 @@ namespace g3
                 int n = index_list[idx];
                 for ( int i = 1; i <= n; ++i ) {
                     int ti = index_list[idx + i];
+                    if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                        continue;
                     traversal.NextTriangleF(ti);
                 }
             } else {
