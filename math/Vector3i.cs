@@ -4,6 +4,12 @@ using System.Text;
 
 namespace g3
 {
+    /// <summary>
+    /// 3D integer vector type. This is basically the same as Index3i but
+    /// with .x.y.z member names. This makes code far more readable in many places.
+    /// Unfortunately I can't see a way to do this w/o so much duplication...we could
+    /// have .x/.y/.z accessors but that is much less efficient...
+    /// </summary>
     public struct Vector3i : IComparable<Vector3i>, IEquatable<Vector3i>
     {
         public int x;
@@ -15,6 +21,7 @@ namespace g3
         public Vector3i(int[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; }
 
         static public readonly Vector3i Zero = new Vector3i(0, 0, 0);
+        static public readonly Vector3i One = new Vector3i(1, 1, 1);
         static public readonly Vector3i AxisX = new Vector3i(1, 0, 0);
         static public readonly Vector3i AxisY = new Vector3i(0, 1, 0);
         static public readonly Vector3i AxisZ = new Vector3i(0, 0, 1);
@@ -29,7 +36,78 @@ namespace g3
             get { return new int[] { x, y, z }; }
         }
 
+
+
+        public void Set(Vector3i o)
+        {
+            x = o.x; y = o.y; z = o.z;
+        }
+        public void Set(int fX, int fY, int fZ)
+        {
+            x = fX; y = fY; z = fZ;
+        }
+        public void Add(Vector3i o)
+        {
+            x += o.x; y += o.y; z += o.z;
+        }
+        public void Subtract(Vector3i o)
+        {
+            x -= o.x; y -= o.y; z -= o.z;
+        }
         public void Add(int s) { x += s;  y += s;  z += s; }
+
+
+
+        public static Vector3i operator -(Vector3i v)
+        {
+            return new Vector3i(-v.x, -v.y, -v.z);
+        }
+
+        public static Vector3i operator *(int f, Vector3i v)
+        {
+            return new Vector3i(f * v.x, f * v.y, f * v.z);
+        }
+        public static Vector3i operator *(Vector3i v, int f)
+        {
+            return new Vector3i(f * v.x, f * v.y, f * v.z);
+        }
+        public static Vector3i operator /(Vector3i v, int f)
+        {
+            return new Vector3i(v.x /f, v.y /f, v.z /f);
+        }
+        public static Vector3i operator /(int f, Vector3i v)
+        {
+            return new Vector3i(f / v.x, f / v.y, f / v.z);
+        }
+
+        public static Vector3i operator *(Vector3i a, Vector3i b)
+        {
+            return new Vector3i(a.x * b.x, a.y * b.y, a.z * b.z);
+        }
+        public static Vector3i operator /(Vector3i a, Vector3i b)
+        {
+            return new Vector3i(a.x / b.x, a.y / b.y, a.z / b.z);
+        }
+
+
+        public static Vector3i operator +(Vector3i v0, Vector3i v1)
+        {
+            return new Vector3i(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z);
+        }
+        public static Vector3i operator +(Vector3i v0, int f)
+        {
+            return new Vector3i(v0.x + f, v0.y + f, v0.z + f);
+        }
+
+        public static Vector3i operator -(Vector3i v0, Vector3i v1)
+        {
+            return new Vector3i(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z);
+        }
+        public static Vector3i operator -(Vector3i v0, int f)
+        {
+            return new Vector3i(v0.x - f, v0.y - f, v0.z - f);
+        }
+
 
 
 
@@ -76,6 +154,30 @@ namespace g3
 
         public override string ToString() {
             return string.Format("{0} {1} {2}", x, y, z);
+        }
+
+
+
+        // implicit cast between Index3i and Vector3i
+        public static implicit operator Vector3i(Index3i v) {
+            return new Vector3i(v.a, v.b, v.c);
+        }
+        public static implicit operator Index3i(Vector3i v) {
+            return new Index3i(v.x, v.y, v.z);
+        }
+
+        // explicit cast to double/float vector types
+        public static explicit operator Vector3i(Vector3f v) {
+            return new Vector3i((int)v.x, (int)v.y, (int)v.z);
+        }
+        public static explicit operator Vector3f(Vector3i v) {
+            return new Vector3f((float)v.x, (float)v.y, (float)v.z);
+        }
+        public static explicit operator Vector3i(Vector3d v) {
+            return new Vector3i((int)v.x, (int)v.y, (int)v.z);
+        }
+        public static explicit operator Vector3d(Vector3i v) {
+            return new Vector3d((double)v.x, (double)v.y, (double)v.z);
         }
 
     }

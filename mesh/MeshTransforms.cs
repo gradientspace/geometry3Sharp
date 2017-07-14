@@ -8,6 +8,9 @@ namespace g3
     public static class MeshTransforms
     {
 
+        public static void Translate(IDeformableMesh mesh, Vector3d v) {
+            Translate(mesh, v.x, v.y, v.z);
+        }
         public static void Translate(IDeformableMesh mesh, double tx, double ty, double tz)
         {
             int NV = mesh.MaxVertexID;

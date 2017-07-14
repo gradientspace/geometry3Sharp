@@ -143,6 +143,12 @@ namespace g3
         }
 
 
+        public static Colorf Lerp(Colorf a, Colorf b, float t) {
+            float s = 1 - t;
+            return new Colorf(s * a.r + t * b.r, s * a.g + t * b.g, s * a.b + t * b.b, s * a.a + t * b.a);
+        }
+
+
 
         public override string ToString()
         {

@@ -213,4 +213,38 @@ namespace g3
         }
 
     }
+
+
+
+
+
+    public static class gIndices
+    {
+        // Corner vertices of box faces  -  see Box.Corner for points associated w/ indexing
+        // Note that 
+        public static readonly int[,] BoxFaces = new int[6, 4] {
+            { 1, 0, 3, 2 },     // back, -z
+            { 4, 5, 6, 7 },     // front, +z
+            { 0, 4, 7, 3 },     // left, -x
+            { 5, 1, 2, 6 },     // right, +x,
+            { 0, 1, 5, 4 },     // bottom, -y
+            { 7, 6, 2, 3 }      // top, +y
+        };
+
+        // Box Face normal. Use Sign(BoxFaceNormals[i]) * Box.Axis( Abs(BoxFaceNormals[i])-1 )
+        //  (+1 is so we can have a sign on X)
+        public static readonly int[] BoxFaceNormals = new int[6] { -3, 3, -1, 1, -2, 2 }; 
+
+
+        // integer indices offsets in x/y/z directions, corresponds w/ BoxFaces directions
+        public static readonly Vector3i[] GridOffsets6 = new Vector3i[] {
+            new Vector3i( 0, 0,-1), new Vector3i( 0, 0, 1),
+            new Vector3i(-1, 0, 0), new Vector3i( 1, 0, 0),
+            new Vector3i( 0,-1, 0), new Vector3i( 0, 1, 0)
+        };
+
+    }
+
+
+
 }

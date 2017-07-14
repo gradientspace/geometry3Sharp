@@ -14,6 +14,13 @@ namespace g3
         public Index3i(int[] i2) { a = i2[0]; b = i2[1]; c = i2[2]; }
         public Index3i(Index3i copy) { a = copy.a; b = copy.b; c = copy.b; }
 
+        // reverse last two indices if cycle is true (useful for cw/ccw codes)
+        public Index3i(int ii, int jj, int kk, bool cycle) {
+            a = ii;
+            if (cycle) { b = kk; c = jj; }
+                  else { b = jj; c = kk; }
+        }
+
         static public readonly Index3i Zero = new Index3i(0, 0, 0);
         static public readonly Index3i One = new Index3i(1, 1, 1);
         static public readonly Index3i Max = new Index3i(int.MaxValue, int.MaxValue, int.MaxValue);
