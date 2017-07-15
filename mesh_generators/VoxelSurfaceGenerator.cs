@@ -21,16 +21,35 @@ namespace g3
 		// if set, we assign colors to each block
 		public Func<Vector3i, Colorf> ColorSourceF;
 
-        // result
-        public DMesh3 Mesh;
+		// if vert-count or tri-count gets higher than this value,
+		// we start a new mesh
+		public int MaxMeshElementCount = int.MaxValue;
 
+        // result
+		public List<DMesh3> Meshes;
+
+
+		DMesh3 cur_mesh;
+		void append_mesh() {
+			if (Meshes == null || Meshes.Count == 0) {
+				Meshes = new List<DMesh3>();
+			}
+			cur_mesh = new DMesh3(MeshComponents.VertexNormals);
+			if (ColorSourceF != null)
+				cur_mesh.EnableVertexColors(Colorf.White);
+			Meshes.Add(cur_mesh);
+		}
+		void check_counts_or_append(int newV, int newT) {
+			if (cur_mesh.MaxVertexID + newV < MaxMeshElementCount &&
+				cur_mesh.MaxTriangleID + newT < MaxMeshElementCount)
+				return;
+			append_mesh();
+		}
 
 
         public void Generate()
         {
-            Mesh = new DMesh3(MeshComponents.VertexNormals);
-			if (ColorSourceF != null)
-				Mesh.EnableVertexColors(Colorf.White);
+			append_mesh();
 
             AxisAlignedBox3i bounds = Voxels.GridBounds;
             bounds.Max -= Vector3i.One;
@@ -38,6 +57,7 @@ namespace g3
             int[] vertices = new int[4];
 
             foreach ( Vector3i nz in Voxels.NonZeros() ) {
+				check_counts_or_append(6, 2);
 
                 Box3d cube = Box3d.UnitZeroCentered;
                 cube.Center = (Vector3d)nz;
@@ -63,13 +83,13 @@ namespace g3
 					}
                     for ( int j = 0; j < 4; ++j ) {
                         vi.v = cube.Corner(gIndices.BoxFaces[fi, j]);
-                        vertices[j] = Mesh.AppendVertex(vi);
+						vertices[j] = cur_mesh.AppendVertex(vi);
                     }
 
                     Index3i t0 = new Index3i(vertices[0], vertices[1], vertices[2], Clockwise);
                     Index3i t1 = new Index3i(vertices[0], vertices[2], vertices[3], Clockwise);
-                    Mesh.AppendTriangle(t0);
-                    Mesh.AppendTriangle(t1);
+                    cur_mesh.AppendTriangle(t0);
+                    cur_mesh.AppendTriangle(t1);
                 }
 
             }
