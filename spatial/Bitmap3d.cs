@@ -104,5 +104,34 @@ namespace g3
 
 
 
+
+
+
+		/// <summary>
+		/// count 6-nbrs of each voxel, discard if count <= minNbrs
+		/// </summary>
+		public void Filter(int nMinNbrs) {
+			AxisAlignedBox3i bounds = GridBounds;
+			bounds.Max -= Vector3i.One;
+
+			for (int i = 0; i < Bits.Length; ++i ) {
+				if (Bits[i] == false)
+					continue;
+				Vector3i idx = ToIndex(i);
+				int nc = 0;
+				for (int k = 0; k < 6 && nc <= nMinNbrs; ++k) {
+					Vector3i nbr = idx + gIndices.GridOffsets6[k];
+					if (bounds.Contains(nbr) == false)
+						continue;
+					if (Get(nbr))
+						nc++;
+				}
+				if (nc <= nMinNbrs)
+					Bits[i] = false;
+			}
+		}
+
+
+
     }
 }

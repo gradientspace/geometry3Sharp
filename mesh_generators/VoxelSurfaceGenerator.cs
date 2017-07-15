@@ -18,6 +18,9 @@ namespace g3
         // "normal" meshes are counter-clockwise. Unity is CW though...
         public bool Clockwise = false;
 
+		// if set, we assign colors to each block
+		public Func<Vector3i, Colorf> ColorSourceF;
+
         // result
         public DMesh3 Mesh;
 
@@ -26,6 +29,8 @@ namespace g3
         public void Generate()
         {
             Mesh = new DMesh3(MeshComponents.VertexNormals);
+			if (ColorSourceF != null)
+				Mesh.EnableVertexColors(Colorf.White);
 
             AxisAlignedBox3i bounds = Voxels.GridBounds;
             bounds.Max -= Vector3i.One;
@@ -52,6 +57,10 @@ namespace g3
                     int ni = gIndices.BoxFaceNormals[fi];
                     Vector3f n = (Vector3f)(Math.Sign(ni) * cube.Axis(Math.Abs(ni) - 1));
                     NewVertexInfo vi = new NewVertexInfo(Vector3d.Zero, n);
+					if (ColorSourceF != null) {
+						vi.c = ColorSourceF(nz);
+						vi.bHaveC = true;
+					}
                     for ( int j = 0; j < 4; ++j ) {
                         vi.v = cube.Corner(gIndices.BoxFaces[fi, j]);
                         vertices[j] = Mesh.AppendVertex(vi);
