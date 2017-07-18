@@ -105,9 +105,14 @@ namespace g3
             Max.x -= fRadius; Max.y -= fRadius;
         }
         // values are all added
+        [System.Obsolete("This method name is confusing. Will remove in future. Use Add() instead")]
         public void Pad(double fPadLeft, double fPadRight, double fPadBottom, double fPadTop) {
             Min.x += fPadLeft; Min.y += fPadBottom;
             Max.x += fPadRight; Max.y += fPadTop;
+        }
+        public void Add(double left, double right, double bottom, double top) {
+            Min.x += left; Min.y += bottom;
+            Max.x += right; Max.y += top;
         }
 
         public enum ScaleMode {
