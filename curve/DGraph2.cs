@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Diagnostics;
 
 
@@ -218,6 +219,21 @@ namespace g3
 
 
 
+		public void AppendPolygon(IEnumerable<Vector2d> poly, int gid = -1) {
+			int first = -1;
+			int prev = -1;
+			foreach(Vector2d v in poly) {
+				int cur = AppendVertex(v);
+				if (prev == -1)
+					first = cur;
+				else
+					AppendEdge(prev, cur, gid);
+				prev = cur;
+			}
+			AppendEdge(prev, first, gid);
+		}
+
+
 
 
 
@@ -291,7 +307,7 @@ namespace g3
 		public MeshResult RemoveEdge(int eID, bool bRemoveIsolatedVertices)
 		{
 			if (!edges_refcount.isValid(eID)) {
-				Debug.Assert(false);
+				Util.gDevAssert(false);
 				return MeshResult.Failed_NotATriangle;
 			}
 
@@ -309,7 +325,7 @@ namespace g3
 				vertices_refcount.decrement(vid);
 				if (bRemoveIsolatedVertices && vertices_refcount.refCount(vid) == 1) {
 					vertices_refcount.decrement(vid);
-					Debug.Assert(vertices_refcount.isValid(vid) == false);
+					Util.gDevAssert(vertices_refcount.isValid(vid) == false);
 					vertex_edges[vid] = null;
 				}
 			}
@@ -384,6 +400,8 @@ namespace g3
 		}
 		public MeshResult CollapseEdge(int vKeep, int vRemove, out EdgeCollapseInfo collapse)
 		{
+			bool DiscardIsolatedVertices = true;
+
 			collapse = new EdgeCollapseInfo();
 			if (IsVertex(vKeep) == false || IsVertex(vRemove) == false)
 				return MeshResult.Failed_NotAnEdge;
@@ -405,7 +423,7 @@ namespace g3
 				foreach (int eax in edges_a) {
 					int o = edge_other_v(eax, a);
 					if (o != b && FindEdge(b,o) != InvalidID) {
-						RemoveEdge(eax, false);
+						RemoveEdge(eax, DiscardIsolatedVertices);
 						done = false;
 						break;
 					}
@@ -426,7 +444,11 @@ namespace g3
 			edges_refcount.decrement(eab);
 			vertices_refcount.decrement(b);
 			vertices_refcount.decrement(a);
-			Debug.Assert(!IsVertex(a));
+			if (DiscardIsolatedVertices) {
+				vertices_refcount.decrement(a); // second decrement discards isolated vtx
+				Util.gDevAssert(!IsVertex(a));
+				vertex_edges[a] = null;
+			}
 
 			edges_a.Clear();
 
