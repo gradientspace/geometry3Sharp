@@ -130,6 +130,15 @@ namespace g3
 		}
 
 
+        public void Reverse()
+        {
+            Outer.Reverse();
+            bOuterIsCW = Outer.IsClockwise;
+            foreach (var h in Holes)
+                h.Reverse();
+        }
+
+
 		public bool Contains(Vector2d vTest)
 		{
 			if (outer.Contains(vTest) == false)

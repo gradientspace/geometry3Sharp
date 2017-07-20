@@ -23,6 +23,12 @@ namespace g3
 			Timestamp = 0;
         }
 
+        public Polygon2d(IList<Vector2d> copy)
+        {
+            vertices = new List<Vector2d>(copy);
+			Timestamp = 0;
+        }
+
         public Polygon2d(Vector2d[] v)
         {
             vertices = new List<Vector2d>(v);
@@ -423,7 +429,15 @@ namespace g3
 
 
 
-
+        static public Polygon2d MakeRectangle(Vector2d center, double width, double height)
+        {
+            VectorArray2d vertices = new VectorArray2d(4);
+            vertices.Set(0, center.x - width / 2, center.y - height / 2);
+            vertices.Set(1, center.x + width / 2, center.y - height / 2);
+            vertices.Set(2, center.x + width / 2, center.y + height / 2);
+            vertices.Set(3, center.x - width / 2, center.y + height / 2);
+            return new Polygon2d(vertices);
+        }
 
 
         static public Polygon2d MakeCircle(double fRadius, int nSteps, double angleShiftRad = 0)

@@ -107,5 +107,37 @@ namespace g3
         }
 
 
+
+
+        public static void LaplacianSmooth(IList<Vector2d> vertices, double alpha, int iterations, bool is_loop, bool in_place = false)
+        {
+            int N = vertices.Count;
+            Vector2d[] temp = null;
+            if (in_place == false)
+                temp = new Vector2d[N];
+            IList<Vector2d> set = (in_place) ? vertices : temp;
+
+            double beta = 1.0 - alpha;
+            for (int ii = 0; ii < iterations; ++ii) {
+                if (is_loop) {
+                    for (int i = 0; i < N; ++i) {
+                        Vector2d c = (vertices[(i + N - 1) % N] + vertices[(i + 1) % N]) * 0.5;
+                        set[i] = beta * vertices[i] + alpha * c;
+                    }
+                } else {
+                    set[0] = vertices[0]; set[N - 1] = vertices[N - 1];
+                    for (int i = 1; i < N-1; ++i) {
+                        Vector2d c = (vertices[i-1] + vertices[i+1]) * 0.5;
+                        set[i] = beta * vertices[i] + alpha * c;
+                    }
+                }
+
+                if (in_place == false) {
+                    for (int i = 0; i < N; ++i)
+                        vertices[i] = set[i];
+                }
+            }
+        }
+
 	}
 }
