@@ -108,6 +108,153 @@ namespace g3
 			return result;
 		}
 
+
+
+
+        /// <summary>
+        /// convert input set into Vector3d.
+        /// Supports packed list of float/double tuples, list of Vector3f/Vector3d
+        /// </summary>
+        static public Vector3d[] ToVector3d<T>(IEnumerable<T> values) {
+            Vector3d[] result = null;
+
+            int N = values.Count();
+            int k = 0; int j = 0;
+
+            Type t = typeof(T);
+            if (t == typeof(float)) {
+                N /= 3;
+                result = new Vector3d[N];
+                IEnumerable<float> valuesf = values as IEnumerable<float>;
+                foreach (float f in valuesf) {
+                    result[k][j++] = f;
+                    if (j == 3) {
+                        j = 0; k++;
+                    }
+                }
+            } else if (t == typeof(double)) {
+                N /= 3;
+                result = new Vector3d[N];
+                IEnumerable<double> valuesd = values as IEnumerable<double>;
+                foreach (double f in valuesd) {
+                    result[k][j++] = f;
+                    if (j == 3) {
+                        j = 0; k++;
+                    }
+                }
+            } else if (t == typeof(Vector3f)) {
+                result = new Vector3d[N];
+                IEnumerable<Vector3f> valuesvf = values as IEnumerable<Vector3f>;
+                foreach (Vector3f v in valuesvf)
+                    result[k++] = v;
+
+            } else if (t == typeof(Vector3d)) {
+                result = new Vector3d[N];
+                IEnumerable<Vector3d> valuesvd = values as IEnumerable<Vector3d>;
+                foreach (Vector3d v in valuesvd)
+                    result[k++] = v;
+
+            } else
+                throw new NotSupportedException("ToVector3d: unknown type " + t.ToString());
+
+            return result;
+        }
+
+
+
+        /// <summary>
+        /// convert input set into Vector3f.
+        /// Supports packed list of float/double tuples, list of Vector3f/Vector3d
+        /// </summary>
+        static public Vector3f[] ToVector3f<T>(IEnumerable<T> values) {
+            Vector3f[] result = null;
+
+            int N = values.Count();
+            int k = 0; int j = 0;
+
+            Type t = typeof(T);
+            if ( t == typeof(float) ) {
+                N /= 3;
+                result = new Vector3f[N];
+                IEnumerable<float> valuesf = values as IEnumerable<float>;
+                foreach ( float f in valuesf ) {
+                    result[k][j++] = f;
+                    if ( j == 3 ) {
+                        j = 0; k++;
+                    }
+                }
+            } else if ( t == typeof(double) ) {
+                N /= 3;
+                result = new Vector3f[N];
+                IEnumerable<double> valuesd = values as IEnumerable<double>;
+                foreach ( double f in valuesd ) {
+                    result[k][j++] = (float)f;
+                    if ( j == 3 ) {
+                        j = 0; k++;
+                    }
+                }
+            } else if ( t == typeof(Vector3f) ) {
+                result = new Vector3f[N];
+                IEnumerable<Vector3f> valuesvf = values as IEnumerable<Vector3f>;
+                foreach (Vector3f v in valuesvf)
+                    result[k++] = v;
+
+            } else if ( t == typeof(Vector3d) ) {
+                result = new Vector3f[N];
+                IEnumerable<Vector3d> valuesvd = values as IEnumerable<Vector3d>;
+                foreach (Vector3d v in valuesvd)
+                    result[k++] = (Vector3f)v;
+
+            } else
+                throw new NotSupportedException("ToVector3d: unknown type " + t.ToString());
+
+            return result;
+        }
+
+
+
+
+        /// <summary>
+        /// convert input set into Index3i.
+        /// Supports packed list of int tuples, list of Vector3i/Index3i
+        /// </summary>
+        static public Index3i[] ToIndex3i<T>(IEnumerable<T> values) {
+            Index3i[] result = null;
+
+            int N = values.Count();
+            int k = 0; int j = 0;
+
+            Type t = typeof(T);
+            if (t == typeof(int)) {
+                N /= 3;
+                result = new Index3i[N];
+                IEnumerable<int> valuesi = values as IEnumerable<int>;
+                foreach (int i in valuesi) {
+                    result[k][j++] = i;
+                    if (j == 3) {
+                        j = 0; k++;
+                    }
+                }
+            } else if (t == typeof(Index3i)) {
+                result = new Index3i[N];
+                IEnumerable<Index3i> valuesvi = values as IEnumerable<Index3i>;
+                foreach (Index3i v in valuesvi)
+                    result[k++] = v;
+
+            } else if (t == typeof(Vector3i)) {
+                result = new Index3i[N];
+                IEnumerable<Vector3i> valuesvi = values as IEnumerable<Vector3i>;
+                foreach (Vector3i v in valuesvi)
+                    result[k++] = v;
+
+            } else
+                throw new NotSupportedException("ToVector3d: unknown type " + t.ToString());
+
+            return result;
+        }
+
+
+
     }
 
 
@@ -132,7 +279,6 @@ namespace g3
             get { return Source[Index + i]; }
             set { Source[Index + i] = value; }
         }
-
     }
 
 

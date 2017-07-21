@@ -130,7 +130,7 @@
     <Compile Include="mesh_generators\CylinderGenerators.cs" />
     <Compile Include="mesh_generators\DiscGenerators.cs" />
     <Compile Include="mesh\DMesh3.cs" />
-    <Compile Include="mesh\DMesh3Util.cs" />
+    <Compile Include="mesh\DMesh3Builder.cs" />
     <Compile Include="mesh\DMesh3_debug.cs" />
     <Compile Include="mesh\DMesh3_edge_operators.cs" />
     <Compile Include="mesh\IMesh.cs" />

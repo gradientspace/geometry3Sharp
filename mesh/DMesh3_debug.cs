@@ -41,6 +41,81 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Check if this m2 is the same as this mesh. By default only checks
+        /// vertices and triangles, turn on other parameters w/ flags
+        /// </summary>
+        public bool IsSameMesh(DMesh3 m2, bool bCheckEdges = false, 
+            bool bCheckNormals = false, bool bCheckColors = false, bool bCheckUVs = false,
+            bool bCheckGroups = false,
+            float Epsilon = MathUtil.Epsilonf )
+        {
+            if (VertexCount != m2.VertexCount)
+                return false;
+            if (TriangleCount != m2.TriangleCount)
+                return false;
+            foreach ( int vid in VertexIndices() ) {
+                if (m2.IsVertex(vid) == false || GetVertex(vid).EpsilonEqual(m2.GetVertex(vid), Epsilon) == false)
+                    return false;
+            }
+            foreach(int tid in TriangleIndices()) {
+                if (m2.IsTriangle(tid) == false || GetTriangle(tid).Equals(m2.GetTriangle(tid)) == false)
+                    return false;
+            }
+            if (bCheckEdges) {
+                if (EdgeCount != m2.EdgeCount)
+                    return false;
+                foreach (int eid in EdgeIndices()) {
+                    if (m2.IsEdge(eid) == false || GetEdge(eid).Equals(m2.GetEdge(eid)) == false)
+                        return false;
+                }
+            }
+            if (bCheckNormals) {
+                if (HasVertexNormals != m2.HasVertexNormals)
+                    return false;
+                if (HasVertexNormals) {
+                    foreach ( int vid in VertexIndices() ) {
+                        if (GetVertexNormal(vid).EpsilonEqual(m2.GetVertexNormal(vid), Epsilon) == false)
+                            return false;
+                    }
+                }
+            }
+            if (bCheckColors) {
+                if (HasVertexColors != m2.HasVertexColors)
+                    return false;
+                if (HasVertexColors) {
+                    foreach ( int vid in VertexIndices() ) {
+                        if (GetVertexColor(vid).EpsilonEqual(m2.GetVertexColor(vid), Epsilon) == false)
+                            return false;
+                    }
+                }
+            }
+            if (bCheckUVs) {
+                if (HasVertexUVs != m2.HasVertexUVs)
+                    return false;
+                if (HasVertexUVs) {
+                    foreach ( int vid in VertexIndices() ) {
+                        if (GetVertexUV(vid).EpsilonEqual(m2.GetVertexUV(vid), Epsilon) == false)
+                            return false;
+                    }
+                }
+            }
+            if (bCheckGroups) {
+                if (HasTriangleGroups != m2.HasTriangleGroups)
+                    return false;
+                if (HasTriangleGroups) {
+                    foreach ( int tid in TriangleIndices() ) {
+                        if (GetTriangleGroup(tid) != m2.GetTriangleGroup(tid))
+                            return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+
+
+
         public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }
 
         /// <summary>

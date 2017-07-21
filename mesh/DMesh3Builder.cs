@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 
 namespace g3
@@ -86,6 +87,58 @@ namespace g3
                 throw new ArgumentOutOfRangeException("[SimpleMeshBuilder::AssignMaterial] meshID or materialID are out-of-range");
             MaterialAssignment[meshID] = materialID;
         }
+
+
+
+
+
+        //
+        // DMesh3 construction utilities
+        //
+
+        /// <summary>
+        /// ultimate generic mesh-builder, pass it arrays of floats/doubles, or lists
+        /// of Vector3d, or anything in-between. Will figure out how to interpret
+        /// </summary>
+        public static DMesh3 Build<VType,TType,NType>(IEnumerable<VType> Vertices,  
+                                                      IEnumerable<TType> Triangles, 
+                                                      IEnumerable<NType> Normals = null,
+                                                      IEnumerable<int> TriGroups = null)
+        {
+            DMesh3 mesh = new DMesh3(Normals != null, false, false, TriGroups != null);
+
+            int NV = Vertices.Count();
+
+            Vector3d[] v = BufferUtil.ToVector3d(Vertices);
+            for (int i = 0; i < v.Length; ++i)
+                mesh.AppendVertex(v[i]);
+
+            if ( Normals != null ) {
+                Vector3f[] n = BufferUtil.ToVector3f(Normals);
+                if ( n.Length != v.Length )
+                    throw new Exception("DMesh3Builder.Build: incorrect number of normals provided");
+                for (int i = 0; i < n.Length; ++i)
+                    mesh.SetVertexNormal(i, n[i]);
+            }
+
+            Index3i[] t = BufferUtil.ToIndex3i(Triangles);
+            for (int i = 0; i < t.Length; ++i)
+                mesh.AppendTriangle(t[i]);
+
+            if ( TriGroups != null ) {
+                List<int> groups = new List<int>(TriGroups);
+                if (groups.Count != t.Length)
+                    throw new Exception("DMesh3Builder.Build: incorect number of triangle groups");
+                for (int i = 0; i < t.Length; ++i)
+                    mesh.SetTriangleGroup(i, groups[i]);
+            }
+
+            return mesh;
+        }
+
+         
+
+
     }
 
 
