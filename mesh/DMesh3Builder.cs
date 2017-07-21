@@ -107,8 +107,6 @@ namespace g3
         {
             DMesh3 mesh = new DMesh3(Normals != null, false, false, TriGroups != null);
 
-            int NV = Vertices.Count();
-
             Vector3d[] v = BufferUtil.ToVector3d(Vertices);
             for (int i = 0; i < v.Length; ++i)
                 mesh.AppendVertex(v[i]);
