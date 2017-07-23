@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 #if G3_USING_UNITY
 using UnityEngine;
@@ -264,6 +265,26 @@ namespace g3
             Max.y = fNewY + (Max.y - Min.y);
             Max.z = fNewZ + (Max.z - Min.z);
             Min.Set(fNewX, fNewY, fNewZ);
+        }
+
+
+
+
+        public IEnumerable<Vector3i> IndicesInclusive() {
+            for ( int zi = Min.z; zi <= Max.z; ++zi) {
+                for (int yi = Min.y; yi <= Max.y; ++yi) {
+                    for (int xi = Min.x; xi <= Max.x; ++xi)
+                        yield return new Vector3i(xi, yi, zi);
+                }
+            }
+        }
+        public IEnumerable<Vector3i> IndicesExclusive() {
+            for ( int zi = Min.z; zi < Max.z; ++zi) {
+                for (int yi = Min.y; yi < Max.y; ++yi) {
+                    for (int xi = Min.x; xi < Max.x; ++xi)
+                        yield return new Vector3i(xi, yi, zi);
+                }
+            }
         }
 
 

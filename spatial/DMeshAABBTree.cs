@@ -673,7 +673,11 @@ namespace g3
             //AxisAlignedBox3f bounds = get_box(root_index);
             //Vector3d outside = bounds.Center + 2 * bounds.Diagonal;
 
-            Vector3d rayDir = Vector3d.AxisX;
+            //Vector3d rayDir = Vector3d.AxisX;
+
+            // [RMS] this is just a random direction I picked...
+            Vector3d rayDir = new Vector3d(0.331960519038825,0.462531727525156,0.822111072077288);
+
             //Vector3d rayOrigin = p - 2 * bounds.Width * rayDir;
             Vector3d rayOrigin = p;
 

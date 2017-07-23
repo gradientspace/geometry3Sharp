@@ -75,6 +75,27 @@ namespace g3 {
 		}
 
 
+
+        public AxisAlignedBox3d ToAABB()
+        {
+            // [TODO] probably more efficient way to do this...at minimum can move center-shift
+            // to after the containments...
+ 			Vector3d extAxis0 = Extent.x*AxisX;
+			Vector3d extAxis1 = Extent.y*AxisY;
+			Vector3d extAxis2 = Extent.z*AxisZ;
+            AxisAlignedBox3d result = new AxisAlignedBox3d(Center - extAxis0 - extAxis1 - extAxis2);
+			result.Contain(Center + extAxis0 - extAxis1 - extAxis2);
+            result.Contain(Center + extAxis0 + extAxis1 - extAxis2);
+			result.Contain(Center - extAxis0 + extAxis1 - extAxis2);
+			result.Contain(Center - extAxis0 - extAxis1 + extAxis2);
+			result.Contain(Center + extAxis0 - extAxis1 + extAxis2);
+			result.Contain(Center + extAxis0 + extAxis1 + extAxis2);
+            result.Contain(Center - extAxis0 + extAxis1 + extAxis2);
+            return result;
+        }
+
+
+
         // corners [ (-x,-y), (x,-y), (x,y), (-x,y) ], -z, then +z
         //
         //   7---6     +z       or        3---2     -z
@@ -151,7 +172,19 @@ namespace g3 {
 			Center += v;
 		}
 
+        public void Scale(Vector3d s)
+        {
+            Center *= s;
+            Extent *= s;
+            AxisX *= s; AxisX.Normalize();
+            AxisY *= s; AxisY.Normalize();
+            AxisZ *= s; AxisZ.Normalize();
+        }
 
+        public void ScaleExtents(Vector3d s)
+        {
+            Extent *= s;
+        }
 
         public static implicit operator Box3d(Box3f v)
         {
@@ -246,6 +279,26 @@ namespace g3 {
 		}
 
 
+        public AxisAlignedBox3f ToAABB()
+        {
+            // [TODO] probably more efficient way to do this...at minimum can move center-shift
+            // to after the containments...
+ 			Vector3f extAxis0 = Extent.x*AxisX;
+			Vector3f extAxis1 = Extent.y*AxisY;
+			Vector3f extAxis2 = Extent.z*AxisZ;
+            AxisAlignedBox3f result = new AxisAlignedBox3f(Center - extAxis0 - extAxis1 - extAxis2);
+			result.Contain(Center + extAxis0 - extAxis1 - extAxis2);
+            result.Contain(Center + extAxis0 + extAxis1 - extAxis2);
+			result.Contain(Center - extAxis0 + extAxis1 - extAxis2);
+			result.Contain(Center - extAxis0 - extAxis1 + extAxis2);
+			result.Contain(Center + extAxis0 - extAxis1 + extAxis2);
+			result.Contain(Center + extAxis0 + extAxis1 + extAxis2);
+            result.Contain(Center - extAxis0 + extAxis1 + extAxis2);
+            return result;
+        }
+
+
+
 		// g3 extensions
 		public double MaxExtent {
 			get { return Math.Max(Extent.x, Math.Max(Extent.y, Extent.z) ); }
@@ -299,6 +352,20 @@ namespace g3 {
 		public void Translate( Vector3f v ) {
 			Center += v;
 		}
+
+        public void Scale(Vector3f s)
+        {
+            Center *= s;
+            Extent *= s;
+            AxisX *= s; AxisX.Normalize();
+            AxisY *= s; AxisY.Normalize();
+            AxisZ *= s; AxisZ.Normalize();
+        }
+
+        public void ScaleExtents(Vector3f s)
+        {
+            Extent *= s;
+        }
 
 	}
 

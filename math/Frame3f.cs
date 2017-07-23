@@ -288,6 +288,37 @@ namespace g3
         }
 
 
+
+        public Box3f ToFrame(Box3f box) {
+            box.Center = ToFrameP(box.Center);
+            box.AxisX = ToFrameV(box.AxisX);
+            box.AxisY = ToFrameV(box.AxisY);
+            box.AxisZ = ToFrameV(box.AxisZ);
+            return box;
+        }
+        public Box3f FromFrame(Box3f box) {
+            box.Center = FromFrameP(box.Center);
+            box.AxisX = FromFrameV(box.AxisX);
+            box.AxisY = FromFrameV(box.AxisY);
+            box.AxisZ = FromFrameV(box.AxisZ);
+            return box;
+        }
+        public Box3d ToFrame(Box3d box) {
+            box.Center = ToFrameP(box.Center);
+            box.AxisX = ToFrameV(box.AxisX);
+            box.AxisY = ToFrameV(box.AxisY);
+            box.AxisZ = ToFrameV(box.AxisZ);
+            return box;
+        }
+        public Box3d FromFrame(Box3d box) {
+            box.Center = FromFrameP(box.Center);
+            box.AxisX = FromFrameV(box.AxisX);
+            box.AxisY = FromFrameV(box.AxisY);
+            box.AxisZ = FromFrameV(box.AxisZ);
+            return box;
+        }
+
+
         /// <summary>
         /// Compute intersection of ray with plane passing through frame origin, normal
         /// to the specified axis. 
