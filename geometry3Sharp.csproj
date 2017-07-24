@@ -235,9 +235,12 @@
     <Compile Include="intersection\IntrSegment3Box3.cs" />
     <Compile Include="intersection\IntrRay3Box3.cs" />
     <Compile Include="shapes3\Circle3.cs" />
-    <Compile Include="spatial\Bitmap3d.cs" />
+    <Compile Include="spatial\BiGrid3.cs" />
+    <Compile Include="spatial\Bitmap3.cs" />
     <Compile Include="spatial\DCurveProjection.cs" />
     <Compile Include="spatial\DMeshAABBTree.cs" />
+    <Compile Include="spatial\DSparseGrid3.cs" />
+    <Compile Include="spatial\GridIndexing.cs" />
     <Compile Include="spatial\SpatialFunctions.cs" />
     <Compile Include="spatial\SpatialInterfaces.cs" />
     <Compile Include="io\MeshIOUtil.cs" />
