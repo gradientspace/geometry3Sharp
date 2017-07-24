@@ -16,14 +16,14 @@ namespace g3
 
 
 
-    public class Bitmap3d : IBinaryVoxelGrid
+    public class Bitmap3 : IBinaryVoxelGrid, IGridElement3
     {
         public BitArray Bits;
         public Vector3i Dimensions;
 
         int row_size, slab_size;
 
-        public Bitmap3d(Vector3i dims)
+        public Bitmap3(Vector3i dims)
         {
             int size = dims.x * dims.y * dims.z;
             Bits = new BitArray(size);
@@ -132,6 +132,16 @@ namespace g3
 		}
 
 
+
+
+        // IGridElement interface, creates a new object and potentially copies this one
+        public virtual IGridElement3 CreateNewGridElement(bool bCopy)
+        {
+            Bitmap3 copy = new Bitmap3(Dimensions);
+            if (bCopy)
+                throw new NotImplementedException();
+            return copy;
+        }
 
     }
 }
