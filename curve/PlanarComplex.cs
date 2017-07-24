@@ -180,6 +180,16 @@ namespace g3
 			}
 		}
 
+        public bool HasOpenCurves()
+        {
+            foreach (Element e in vElements) {
+                if (e is SmoothCurveElement)
+                    return true;
+            }
+            return false;
+        }
+            
+
 
         /// <summary>
         /// iterate through "leaf" curves, ie all the IParametricCurve2D's 
@@ -256,7 +266,7 @@ namespace g3
 
 
 
-		public bool JoinElements(ComplexEndpoint2d a, ComplexEndpoint2d b) {
+		public bool JoinElements(ComplexEndpoint2d a, ComplexEndpoint2d b, double loop_tolerance = MathUtil.ZeroTolerance) {
 			if (a.element == b.element)
 				throw new Exception("PlanarComplex.ChainElements: same curve!!");
 
@@ -287,7 +297,7 @@ namespace g3
 			if ( joined != null ) {
 				// check if we have closed a loop
 				double dDelta = ( joined.polyLine.Start - joined.polyLine.End ).Length;
-				if ( dDelta < MathUtil.ZeroTolerance ) {
+				if ( dDelta < loop_tolerance ) {
 
                     // should always be one of these since we constructed it in append()
                     if ( joined.source is ParametricCurveSequence2 ) {
@@ -309,6 +319,29 @@ namespace g3
 			return false;
 		}
 
+
+
+
+        public void ConvertToLoop(SmoothCurveElement curve, double tolerance = MathUtil.ZeroTolerance)
+        {
+			double dDelta = ( curve.polyLine.Start - curve.polyLine.End ).Length;
+			if ( dDelta < tolerance ) {
+
+                // should always be one of these since we constructed it in append()
+                if ( curve.source is ParametricCurveSequence2 ) {
+                    (curve.source as ParametricCurveSequence2).IsClosed = true;
+                } else {
+                    throw new Exception("PlanarComplex.ConvertToLoop: we have closed a loop but it is not a parametric seq??");
+                }
+
+				SmoothLoopElement loop = new SmoothLoopElement() {
+					ID = id_generator++, source = curve.source
+				};
+				vElements.Remove(curve);
+				vElements.Add(loop);
+				UpdateSampling(loop);
+			}
+        }
 
 
 
