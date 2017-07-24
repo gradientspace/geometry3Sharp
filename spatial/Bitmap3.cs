@@ -16,10 +16,14 @@ namespace g3
 
 
 
-    public class Bitmap3 : IBinaryVoxelGrid, IGridElement3
+    public class Bitmap3 : IBinaryVoxelGrid, IGridElement3, IFixedGrid3
     {
         public BitArray Bits;
-        public Vector3i Dimensions;
+
+        Vector3i dimensions;
+        public Vector3i Dimensions {
+            get { return dimensions; }
+        }
 
         int row_size, slab_size;
 
@@ -28,7 +32,7 @@ namespace g3
             int size = dims.x * dims.y * dims.z;
             Bits = new BitArray(size);
 
-            Dimensions = dims;
+            dimensions = dims;
             row_size = dims.x;
             slab_size = dims.x * dims.y;
         }

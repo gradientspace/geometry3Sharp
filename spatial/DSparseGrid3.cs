@@ -15,6 +15,15 @@ namespace g3
     }
 
 
+    /// <summary>
+    /// generic 3D grid interface for grids of fixed dimensions
+    /// </summary>
+    public interface IFixedGrid3
+    {
+        Vector3i Dimensions { get; }
+    }
+
+
 
     /// <summary>
     /// this type can be used in a SparseGrid. 
@@ -36,21 +45,21 @@ namespace g3
     /// This can be used to implement multi-grid schemes, eg for example the GridElement
     /// type could be Bitmap3 of a fixed dimension.
     /// </summary>
-    public class DSparseGrid3<T> : IGrid3 where T : class, IGridElement3
+    public class DSparseGrid3<ElemType> : IGrid3 where ElemType : class, IGridElement3
     {
-        T exemplar;
+        ElemType exemplar;
 
-        Dictionary<Vector3i, T> elements;
+        Dictionary<Vector3i, ElemType> elements;
         AxisAlignedBox3i bounds;
 
         /// <summary>
         /// Must provide a sample instance of the element type that we can Duplicate()
         /// to make additional copies. Should be no data in here
         /// </summary>
-        public DSparseGrid3(T toDuplicate)
+        public DSparseGrid3(ElemType toDuplicate)
         {
             this.exemplar = toDuplicate;
-            elements = new Dictionary<Vector3i, T>();
+            elements = new Dictionary<Vector3i, ElemType>();
             bounds = AxisAlignedBox3i.Empty;
         }
 
@@ -61,9 +70,9 @@ namespace g3
         }
 
 
-        public T Get(Vector3i index, bool allocateIfMissing = true)
+        public ElemType Get(Vector3i index, bool allocateIfMissing = true)
         {
-            T result;
+            ElemType result;
             bool found = elements.TryGetValue(index, out result);
             if (found)
                 return result;
@@ -122,7 +131,7 @@ namespace g3
                 yield return pair.Key;
         }
 
-        public IEnumerable<KeyValuePair<Vector3i,T>> Allocated()
+        public IEnumerable<KeyValuePair<Vector3i,ElemType>> Allocated()
         {
             return elements;
         }
@@ -131,9 +140,9 @@ namespace g3
 
 
 
-        T allocate(Vector3i index)
+        ElemType allocate(Vector3i index)
         {
-            T new_elem = exemplar.CreateNewGridElement(false) as T;
+            ElemType new_elem = exemplar.CreateNewGridElement(false) as ElemType;
             elements.Add(index, new_elem);
             bounds.Contain(index);
             return new_elem;
