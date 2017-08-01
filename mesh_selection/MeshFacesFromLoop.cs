@@ -51,6 +51,13 @@ namespace g3
             return selection;
         }
 
+        public IList<int> PathTriangles {
+            get { return PathT; }
+        }
+        public IList<int> InteriorTriangles {
+            get { return InteriorT; }
+        }
+
 
 
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace g3
 {
@@ -144,6 +145,15 @@ namespace g3
 
 
 
+
+
+        public static DMesh3 QuickSubmesh(DMesh3 mesh, int[] triangles) {
+            DSubmesh3 submesh = new DSubmesh3(mesh, triangles);
+            return submesh.SubMesh;
+        }
+        public static DMesh3 QuickSubmesh(DMesh3 mesh, IEnumerable<int> triangles) {
+            return QuickSubmesh(mesh, triangles.ToArray());
+        }
 
     }
 }
