@@ -93,5 +93,66 @@ namespace g3
             return (nNearSegment >= 0);
         }
 
+
+
+
+
+        /// <summary>
+        /// smooth set of vertices in-place (will not produce a symmetric result, but does not require extra buffer)
+        /// </summary>
+        public static void InPlaceSmooth(IList<Vector3d> vertices, double alpha, int nIterations, bool bClosed)
+        {
+            InPlaceSmooth(vertices, 0, vertices.Count, alpha, nIterations, bClosed);
+        }
+        /// <summary>
+        /// smooth set of vertices in-place (will not produce a symmetric result, but does not require extra buffer)
+        /// </summary>
+        public static void InPlaceSmooth(IList<Vector3d> vertices, int iStart, int iEnd, double alpha, int nIterations, bool bClosed)
+        {
+            int N = vertices.Count;
+            if ( bClosed ) {
+                for (int iter = 0; iter < nIterations; ++iter) {
+                    for (int ii = iStart; ii < iEnd; ++ii) {
+                        int i = (ii % N);
+                        int iPrev = (ii == 0) ? N - 1 : ii - 1;
+                        int iNext = (ii + 1) % N;
+                        Vector3d prev = vertices[iPrev], next = vertices[iNext];
+                        Vector3d c = (prev + next) * 0.5f;
+                        vertices[i] = (1 - alpha) * vertices[i] + (alpha) * c;
+                    }
+                }
+            } else {
+                for (int iter = 0; iter < nIterations; ++iter) {
+                    for (int i = iStart; i <= iEnd; ++i) {
+                        if (i == 0 || i >= N - 1)
+                            continue;
+                        Vector3d prev = vertices[i - 1], next = vertices[i + 1];
+                        Vector3d c = (prev + next) * 0.5f;
+                        vertices[i] = (1 - alpha) * vertices[i] + (alpha) * c;
+                    }
+                }
+            }
+        }
+
+
+
     }
+
+
+
+
+
+    /// <summary>
+    /// Simple sampled-curve wrapper type
+    /// </summary>
+    public class IWrappedCurve3d : ISampledCurve3d
+    {
+        public IList<Vector3d> VertexList;
+        public bool Closed { get; set; }
+
+        public int VertexCount { get { return VertexList.Count; } }
+        public Vector3d GetVertex(int i) { return VertexList[i]; }
+        public IEnumerable<Vector3d> Vertices { get { return VertexList; } }
+    }
+
 }

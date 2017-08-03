@@ -17,24 +17,30 @@ namespace g3
         {
             vertices = new List<Vector3d>();
             Closed = false;
-            Timestamp = 0;
+            Timestamp = 1;
         }
 
-        public DCurve3(List<Vector3d> vertices, bool bClosed, bool bTakeOwnership = false)
+        public DCurve3(List<Vector3d> verticesIn, bool bClosed, bool bTakeOwnership = false)
         {
             if (bTakeOwnership)
-                this.vertices = vertices;
+                this.vertices = verticesIn;
             else
-                vertices = new List<Vector3d>(vertices);
+                this.vertices = new List<Vector3d>(verticesIn);
             Closed = bClosed;
-            Timestamp = 0;
+            Timestamp = 1;
+        }
+        public DCurve3(IList<Vector3d> verticesIn, bool bClosed)
+        {
+            this.vertices = new List<Vector3d>(verticesIn);
+            Closed = bClosed;
+            Timestamp = 1;
         }
 
         public DCurve3(DCurve3 copy)
         {
             vertices = new List<Vector3d>(copy.vertices);
             Closed = copy.Closed;
-            Timestamp = 0;
+            Timestamp = 1;
         }
 
         public void AppendVertex(Vector3d v) {
