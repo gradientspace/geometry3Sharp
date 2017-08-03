@@ -5,6 +5,33 @@ using System.Text;
 
 namespace g3
 {
+
+    public class TransformedIntersectionTarget : IIntersectionTarget
+    {
+        DMeshIntersectionTarget BaseTarget = null;
+
+        public Func<Ray3d, Ray3d> MapToBaseF = null;
+        public Func<Vector3d, Vector3d> MapFromBasePosF = null;
+        public Func<Vector3d, Vector3d> MapFromBaseNormalF = null;
+
+
+        public bool HasNormal { get { return BaseTarget.HasNormal; } }
+        public bool RayIntersect(Ray3d ray, out Vector3d vHit, out Vector3d vHitNormal)
+        {
+            Ray3d baseRay = MapToBaseF(ray);
+            if ( BaseTarget.RayIntersect(baseRay, out vHit, out vHitNormal) ) {
+                vHit = MapFromBasePosF(vHit);
+                vHitNormal = MapFromBasePosF(vHitNormal);
+                return true;
+            }
+            return false;
+        }
+    }
+
+
+
+
+
     public class DMeshIntersectionTarget : IIntersectionTarget
     {
         public DMesh3 Mesh { get; set; }
