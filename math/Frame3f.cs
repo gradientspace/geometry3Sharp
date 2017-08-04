@@ -221,41 +221,48 @@ namespace g3
 		}
 
 
+        ///<summary> Map point *into* local coordinates of Frame </summary>
 		public Vector3f ToFrameP(Vector3f v)
         {
             v = v - this.origin;
             v = Quaternionf.Inverse(this.rotation) * v;
             return v;
         }
+        ///<summary> Map point *into* local coordinates of Frame </summary>
         public Vector3d ToFrameP(Vector3d v)
         {
             v = v - this.origin;
             v = Quaternionf.Inverse(this.rotation) * v;
             return v;
         }
+        /// <summary> Map point *from* local frame coordinates into "world" coordinates </summary>
         public Vector3f FromFrameP(Vector3f v)
         {
             return this.rotation * v + this.origin;
         }
+        /// <summary> Map point *from* local frame coordinates into "world" coordinates </summary>
         public Vector3d FromFrameP(Vector3d v)
         {
             return this.rotation * v + this.origin;
         }
 
 
-
+        ///<summary> Map vector *into* local coordinates of Frame </summary>
         public Vector3f ToFrameV(Vector3f v)
         {
             return Quaternionf.Inverse(this.rotation) * v;
         }
+        ///<summary> Map vector *into* local coordinates of Frame </summary>
         public Vector3d ToFrameV(Vector3d v)
         {
             return Quaternionf.Inverse(this.rotation) * v;
         }
+        /// <summary> Map vector *from* local frame coordinates into "world" coordinates </summary>
         public Vector3f FromFrameV(Vector3f v)
         {
             return this.rotation * v;
         }
+        /// <summary> Map vector *from* local frame coordinates into "world" coordinates </summary>
         public Vector3d FromFrameV(Vector3d v)
         {
             return this.rotation * v;
@@ -263,25 +270,35 @@ namespace g3
 
 
 
+        ///<summary> Map quaternion *into* local coordinates of Frame </summary>
         public Quaternionf ToFrame(Quaternionf q)
         {
             return Quaternionf.Inverse(this.rotation) * q;
         }
+        /// <summary> Map quaternion *from* local frame coordinates into "world" coordinates </summary>
         public Quaternionf FromFrame(Quaternionf q)
         {
             return this.rotation * q;
         }
 
 
+        ///<summary> Map ray *into* local coordinates of Frame </summary>
         public Ray3f ToFrame(Ray3f r)
         {
             return new Ray3f(ToFrameP(r.Origin), ToFrameV(r.Direction));
         }
+        /// <summary> Map ray *from* local frame coordinates into "world" coordinates </summary>
+        public Ray3f FromFrame(Ray3f r)
+        {
+            return new Ray3f(FromFrameP(r.Origin), FromFrameV(r.Direction));
+        }
 
+        ///<summary> Map frame *into* local coordinates of Frame </summary>
         public Frame3f ToFrame(Frame3f f)
         {
             return new Frame3f(ToFrameP(f.origin), ToFrame(f.rotation));
         }
+        /// <summary> Map frame *from* local frame coordinates into "world" coordinates </summary>
         public Frame3f FromFrame(Frame3f f)
         {
             return new Frame3f(FromFrameP(f.origin), FromFrame(f.rotation));

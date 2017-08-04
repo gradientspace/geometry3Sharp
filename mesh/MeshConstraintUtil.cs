@@ -99,13 +99,14 @@ namespace g3
 
         // for all vertices in loopV, constrain to target
         // for all edges in loopV, disable flips and constrain to target
-        public static void ConstrainVtxLoopTo(MeshConstraints cons, DMesh3 mesh, int[] loopV, IProjectionTarget target)
+        public static void ConstrainVtxLoopTo(MeshConstraints cons, DMesh3 mesh, int[] loopV, IProjectionTarget target, int setID = -1)
         {
             VertexConstraint vc = new VertexConstraint(target);
             for (int i = 0; i < loopV.Length; ++i)
                 cons.SetOrUpdateVertexConstraint(loopV[i], vc);
 
             EdgeConstraint ec = new EdgeConstraint(EdgeRefineFlags.NoFlip, target);
+            ec.TrackingSetID = setID;
             for ( int i = 0; i < loopV.Length; ++i ) {
                 int v0 = loopV[i];
                 int v1 = loopV[(i + 1) % loopV.Length];
@@ -117,7 +118,7 @@ namespace g3
             }
 
         }
-        public static void ConstrainVtxLoopTo(Remesher r, int[] loopV, IProjectionTarget target)
+        public static void ConstrainVtxLoopTo(Remesher r, int[] loopV, IProjectionTarget target, int setID = -1)
         {
             if (r.Constraints == null)
                 r.SetExternalConstraints(new MeshConstraints());

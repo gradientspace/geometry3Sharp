@@ -68,4 +68,27 @@ namespace g3
         }
     }
 
+
+
+
+    public class SequentialProjectionTarget : IProjectionTarget
+    {
+        public IProjectionTarget[] Targets { get; set; }
+
+        public SequentialProjectionTarget() { }
+        public SequentialProjectionTarget(params IProjectionTarget[] targets)
+        {
+            Targets = targets;
+        }
+
+        public Vector3d Project(Vector3d vPoint, int identifier = -1)
+        {
+            Vector3d vCur = vPoint;
+            for ( int i = 0; i < Targets.Length; ++i ) {
+                vCur = Targets[i].Project(vCur, identifier);
+            }
+            return vCur;
+        }
+    }
+
 }

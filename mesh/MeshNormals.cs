@@ -89,5 +89,15 @@ namespace g3
 
 
 
+
+        public static void QuickCompute(DMesh3 mesh)
+        {
+            MeshNormals normals = new MeshNormals(mesh);
+            normals.Compute();
+            normals.CopyTo(mesh);
+        }
+
+
+
     }
 }

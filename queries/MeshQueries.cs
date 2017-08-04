@@ -292,5 +292,29 @@ namespace g3
 
 
 
+        public static void EdgeLengthStatsFromEdges(DMesh3 mesh, IEnumerable<int> EdgeItr, out double minEdgeLen, out double maxEdgeLen, out double avgEdgeLen, int samples = 0)
+        {
+            minEdgeLen = double.MaxValue;
+            maxEdgeLen = double.MinValue;
+            avgEdgeLen = 0;
+            int avg_count = 0;
+            int MaxID = mesh.MaxEdgeID;
+
+            Vector3d a = Vector3d.Zero, b = Vector3d.Zero;
+            foreach ( int eid in EdgeItr ) { 
+                if (mesh.IsEdge(eid)) {
+                    mesh.GetEdgeV(eid, ref a, ref b);
+                    double len = a.Distance(b);
+                    if (len < minEdgeLen) minEdgeLen = len;
+                    if (len > maxEdgeLen) maxEdgeLen = len;
+                    avgEdgeLen += len;
+                    avg_count++;
+                }
+            };
+            avgEdgeLen /= (double)avg_count;
+        }
+
+
+
     }
 }
