@@ -196,10 +196,17 @@ namespace g3
 			// create new vertex
 			Vector3d vNew = 0.5 * ( GetVertex(a) + GetVertex(b) );
 			int f = AppendVertex( vNew );
+            if (HasVertexNormals) 
+                SetVertexNormal(f, (GetVertexNormal(a) + GetVertexNormal(b)).Normalized);
+            if (HasVertexColors)
+                SetVertexColor(f, 0.5f * (GetVertexColor(a) + GetVertexColor(b)) );
+            if (HasVertexUVs)
+                SetVertexUV(f, 0.5f * (GetVertexUV(a) + GetVertexUV(b)));
 
-			// quite a bit of code is duplicated between boundary and non-boundary case, but it
-			//  is too hard to follow later if we factor it out...
-			if ( edge_is_boundary(eab) ) {
+
+            // quite a bit of code is duplicated between boundary and non-boundary case, but it
+            //  is too hard to follow later if we factor it out...
+            if ( edge_is_boundary(eab) ) {
 
 				// look up edge bc, which needs to be modified
 				Index3i T0te = GetTriEdges(t0);
