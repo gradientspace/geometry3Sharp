@@ -19,5 +19,15 @@ namespace g3
         }
 
 
+
+
+        public static double SnapToNearbyIncrement(double fValue, double fIncrement, double fTolerance)
+        {
+            double snapped = SnapToIncrement(fValue, fIncrement);
+            if (Math.Abs(snapped - fValue) < fTolerance)
+                return snapped;
+            return fValue;
+        }
+
     }
 }
