@@ -43,8 +43,16 @@ namespace g3 {
 			AxisY = Vector3d.AxisY;
 			AxisZ = Vector3d.AxisZ;
 		}
+        public Box3d(Frame3f frame, Vector3d extent)
+        {
+            Center = frame.Origin;
+            AxisX = frame.X;
+            AxisY = frame.Y;
+            AxisZ = frame.Z;
+            Extent = extent;
+        }
 
-		public static readonly Box3d Empty = new Box3d(Vector3d.Zero);
+        public static readonly Box3d Empty = new Box3d(Vector3d.Zero);
         public static readonly Box3d UnitZeroCentered = new Box3d(Vector3d.Zero, 0.5 * Vector3d.One);
         public static readonly Box3d UnitPositive = new Box3d(0.5 * Vector3d.One, 0.5 * Vector3d.One);
 

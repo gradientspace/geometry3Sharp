@@ -181,6 +181,26 @@ namespace g3
         }
 
 
+        public static double Min(double a, double b, double c) {
+            return Math.Min(a, Math.Min(b, c));
+        }
+        public static float Min(float a, float b, float c) {
+            return Math.Min(a, Math.Min(b, c));
+        }
+        public static int Min(int a, int b, int c) {
+            return Math.Min(a, Math.Min(b, c));
+        }
+        public static double Max(double a, double b, double c) {
+            return Math.Max(a, Math.Max(b, c));
+        }
+        public static float Max(float a, float b, float c) {
+            return Math.Max(a, Math.Max(b, c));
+        }
+        public static int Max(int a, int b, int c) {
+            return Math.Max(a, Math.Max(b, c));
+        }
+
+
 
         // there are fast approximations to this...
         public static double InvSqrt(double f)

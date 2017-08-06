@@ -363,6 +363,19 @@ namespace g3
 
 
 
+        public void AppendBox(Frame3f frame, float size)
+        {
+            TrivialBox3Generator boxgen = new TrivialBox3Generator() {
+                Box = new Box3d(frame, size * 0.5 * Vector3d.One),
+                NoSharedVertices = false
+            };
+            boxgen.Generate();
+            DMesh3 mesh = new DMesh3();
+            boxgen.MakeMesh(mesh);
+            AppendMesh(mesh, Mesh.AllocateTriangleGroup());
+        }
+
+
 
 
 
