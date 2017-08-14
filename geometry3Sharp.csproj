@@ -253,6 +253,7 @@
     <Compile Include="core\DeepCopy.cs" />
     <Compile Include="core\g3Interfaces.cs" />
     <Compile Include="curve\DGraph2.cs" />
+    <Compile Include="mesh\Reducer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
