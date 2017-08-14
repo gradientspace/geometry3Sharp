@@ -31,6 +31,9 @@ namespace g3 {
 
 		// if true, we try to find position for collapsed vertices that
 		// minimizes quadrice error. If false we just use midpoints.
+		// Note: using midpoints is *significantly* slower, because it results
+		// in may more points that would cause a triangle flip, which are then rejected.
+		// (Also results in more invalid collapses, not sure why though...)
 		public bool MinimizeQuadricPositionError = true;
 
 		// if true, then when two Fixed vertices have the same non-invalid SetID,
@@ -54,6 +57,8 @@ namespace g3 {
 		// this just lets us write more concise tests below
 		bool EnableInlineProjection { get { return ProjectionMode == TargetProjectionMode.Inline; } }
 
+		// set to true to print profiling info to console
+		public bool ENABLE_PROFILING = false;
 
 
 		public Reducer(DMesh3 m)
@@ -84,8 +89,6 @@ namespace g3 {
 		{
 			this.target = target;
 		}
-
-		public bool ENABLE_PROFILING = false;
 
 
 
@@ -119,33 +122,41 @@ namespace g3 {
 
 
 
+		// internal class for priority queue
 		class QEdge : g3ext.FastPriorityQueueNode, IEquatable<QEdge>
 		{
 			public int eid;
 			public QuadricError q;
 			public Vector3d collapse_pt;
-			public QEdge(int edge_id, QuadricError qin, Vector3d pt)
-			{
-				eid = edge_id;
-				q = qin;
-				collapse_pt = pt;
+			public QEdge() {
+				eid = DMesh3.InvalidID;
+			}
+			public QEdge(int edge_id, QuadricError qin, Vector3d pt) {
+				Initialize(edge_id, qin, pt);
 			}
 
-			public bool Equals(QEdge other)
-			{
+			public void Initialize(int edge_id, QuadricError qin, Vector3d pt) {
+				eid = edge_id;
+				q = qin;
+				collapse_pt = pt;				
+			}
+
+			public bool Equals(QEdge other) {
 				return eid == other.eid;
 			}
 		}
 
 		g3ext.FastPriorityQueue<QEdge> EdgeQueue;
-		Dictionary<int, QEdge> Nodes;
+		QEdge[] Nodes;
+		MemoryPool<QEdge> NodePool;
 
 		protected virtual void InitializeQueue()
 		{
 			int NE = mesh.EdgeCount;
-			EdgeQueue = new g3ext.FastPriorityQueue<QEdge>(NE);
-			Nodes = new Dictionary<int, QEdge>();
 
+			Nodes = new QEdge[2*NE];		// [RMS] do we need this many?
+			NodePool = new MemoryPool<QEdge>(NE);
+			EdgeQueue = new g3ext.FastPriorityQueue<QEdge>(NE);
 
 			int cur_eid = start_edges();
 			bool done = false;
@@ -157,7 +168,8 @@ namespace g3 {
 					Vector3d opt = OptimalPoint(Q, ev.a, ev.b);
 					double err = Q.Evaluate(opt);
 
-					QEdge ee = new QEdge(cur_eid, Q, opt);
+					QEdge ee = NodePool.Allocate();
+					ee.Initialize(cur_eid, Q, opt);
 					Nodes[cur_eid] = ee;
 					EdgeQueue.Enqueue(ee, (float)err);
 
@@ -169,7 +181,7 @@ namespace g3 {
 		}
 
 
-
+		// return point that minimizes quadric error for edge [ea,eb]
 		Vector3d OptimalPoint(QuadricError q, int ea, int eb) {
 			if (MinimizeQuadricPositionError == false) {
 				return (mesh.GetVertex(ea) + mesh.GetVertex(eb)) * 0.5;
@@ -194,6 +206,7 @@ namespace g3 {
 		}
 
 
+		// update queue weight for each edge in vertex one-ring
 		protected virtual void UpdateNeighbours(int vid) 
 		{
 			foreach (int eid in mesh.VtxEdgesItr(vid)) {
@@ -201,13 +214,14 @@ namespace g3 {
 				QuadricError Q = new QuadricError(ref vertQuadrics[nev.a], ref vertQuadrics[nev.b]);
 				Vector3d opt = OptimalPoint(Q, nev.a, nev.b);
 				double err = Q.Evaluate(opt);
-				QEdge eid_node = null;
-				if (Nodes.TryGetValue(eid, out eid_node)) {
+				QEdge eid_node = Nodes[eid];
+				if (eid_node != null) {
 					eid_node.q = Q;
 					eid_node.collapse_pt = opt;
 					EdgeQueue.UpdatePriority(eid_node, (float)err);
 				} else {
-					QEdge ee = new QEdge(eid, Q, opt);
+					QEdge ee = NodePool.Allocate();
+					ee.Initialize(eid, Q, opt);
 					Nodes[eid] = ee;
 					EdgeQueue.Enqueue(ee, (float)err);
 				}
@@ -237,12 +251,21 @@ namespace g3 {
 			if (mesh.TriangleCount == 0)    // badness if we don't catch this...
 				return;
 
+			begin_pass();
+
+			begin_setup();
 			InitializeVertexQuadrics();
 			InitializeQueue();
+			end_setup();
 
+			begin_ops();
+
+			begin_collapse();
 			while (EdgeQueue.Count > 0 && mesh.TriangleCount > TargetTriangleCount) {
+				COUNT_ITERATIONS++;
 				QEdge cur = EdgeQueue.Dequeue();
-				Nodes.Remove(cur.eid);
+				Nodes[cur.eid] = null;
+				NodePool.Return(cur);
 				if (!mesh.IsEdge(cur.eid))
 					continue;
 				Index2i ev = mesh.GetEdgeV(cur.eid);
@@ -254,8 +277,12 @@ namespace g3 {
 					UpdateNeighbours(vKept);
 				}
 			}
+			end_collapse();
+			end_ops();
 
 			Reproject();
+
+			end_pass();
 		}
 
 
@@ -319,14 +346,14 @@ namespace g3 {
 
 
 		protected enum ProcessResult {
-			Ok_Collapsed,
-			Ignored_CannotCollapse,
-            Ignored_EdgeIsFullyConstrained,
-			Ignored_EdgeTooLong,
-			Ignored_Constrained,
-			Ignored_CreatesFlip,
-			Failed_OpNotSuccessful,
-			Failed_NotAnEdge
+			Ok_Collapsed = 0,
+			Ignored_CannotCollapse = 1,
+            Ignored_EdgeIsFullyConstrained = 2,
+			Ignored_EdgeTooLong = 3,
+			Ignored_Constrained = 4,
+			Ignored_CreatesFlip = 5,
+			Failed_OpNotSuccessful = 6,
+			Failed_NotAnEdge = 7
 		};
 
 		protected virtual ProcessResult CollapseEdge(int edgeID, Vector3d vNewPos, out int collapseToV) 
@@ -667,12 +694,15 @@ skip_to_end:
         // profiling functions, turn on ENABLE_PROFILING to see output in console
         // 
         int COUNT_COLLAPSES;
-        Stopwatch AllOpsW, ProjectW, CollapseW;
+		int COUNT_ITERATIONS;
+        Stopwatch AllOpsW, SetupW, ProjectW, CollapseW;
 
         protected virtual void begin_pass() {
             if ( ENABLE_PROFILING ) {
                 COUNT_COLLAPSES = 0;
+				COUNT_ITERATIONS = 0;
                 AllOpsW = new Stopwatch();
+				SetupW = new Stopwatch();
                 ProjectW = new Stopwatch();
                 CollapseW = new Stopwatch();
             }
@@ -681,10 +711,10 @@ skip_to_end:
         protected virtual void end_pass() {
             if ( ENABLE_PROFILING ) {
                 System.Console.WriteLine(string.Format(
-                    "ReducePass: T {0} V {1} collapses {2}", mesh.TriangleCount, mesh.VertexCount, COUNT_COLLAPSES
+					"ReducePass: T {0} V {1} collapses {2}  iterations {3}", mesh.TriangleCount, mesh.VertexCount, COUNT_COLLAPSES, COUNT_ITERATIONS
                     ));
                 System.Console.WriteLine(string.Format(
-                    "           Timing1:  ops {0} project {1}", Util.ToSecMilli(AllOpsW.Elapsed), Util.ToSecMilli(ProjectW.Elapsed)
+					"           Timing1: setup {0} ops {1} project {2}", Util.ToSecMilli(SetupW.Elapsed), Util.ToSecMilli(AllOpsW.Elapsed), Util.ToSecMilli(ProjectW.Elapsed)
                     ));
             }
         }
@@ -695,6 +725,13 @@ skip_to_end:
         protected virtual void end_ops() {
             if ( ENABLE_PROFILING ) AllOpsW.Stop();
         }
+		protected virtual void begin_setup() {
+			if (ENABLE_PROFILING) SetupW.Start();
+		}
+		protected virtual void end_setup() {
+			if (ENABLE_PROFILING) SetupW.Stop();
+		}
+
         protected virtual void begin_project() {
             if ( ENABLE_PROFILING ) ProjectW.Start();
         }
