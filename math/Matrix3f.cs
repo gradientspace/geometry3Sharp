@@ -43,6 +43,9 @@ namespace g3
                 m = new float[9] { v1.x, v2.x, v3.x, v1.y, v2.y, v3.y, v1.z, v2.z, v3.z };
             }
         }
+		public Matrix3f(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22) {
+			m = new float[9] { m00, m01, m02, m10, m11, m12, m20, m21, m22 };
+		}
 
 
         public static readonly Matrix3f Identity = new Matrix3f(true);
@@ -61,6 +64,56 @@ namespace g3
                 mat.m[3] * v[0] + mat.m[4] * v[1] + mat.m[5] * v[2],
                 mat.m[6] * v[0] + mat.m[7] * v[1] + mat.m[8] * v[2]);
         }
+		public static Matrix3f operator *(Matrix3f mat1, Matrix3f mat2)
+		{
+			float m00 = mat1.m[0] * mat2.m[0] + mat1.m[1] * mat2.m[3] + mat1.m[2] * mat2.m[6];
+			float m01 = mat1.m[0] * mat2.m[1] + mat1.m[1] * mat2.m[4] + mat1.m[2] * mat2.m[7];
+			float m02 = mat1.m[0] * mat2.m[2] + mat1.m[1] * mat2.m[5] + mat1.m[2] * mat2.m[8];
+
+			float m10 = mat1.m[3] * mat2.m[0] + mat1.m[4] * mat2.m[3] + mat1.m[5] * mat2.m[6];
+			float m11 = mat1.m[3] * mat2.m[1] + mat1.m[4] * mat2.m[4] + mat1.m[5] * mat2.m[7];
+			float m12 = mat1.m[3] * mat2.m[2] + mat1.m[4] * mat2.m[5] + mat1.m[5] * mat2.m[8];
+
+			float m20 = mat1.m[6] * mat2.m[0] + mat1.m[7] * mat2.m[3] + mat1.m[8] * mat2.m[6];
+			float m21 = mat1.m[6] * mat2.m[1] + mat1.m[7] * mat2.m[4] + mat1.m[8] * mat2.m[7];
+			float m22 = mat1.m[6] * mat2.m[2] + mat1.m[7] * mat2.m[5] + mat1.m[8] * mat2.m[8];
+
+			return new Matrix3f(m00, m01, m02, m10, m11, m12, m20, m21, m22);
+		}
+
+
+
+		public float Determinant {
+			get {
+				float a11 = m[0], a12 = m[1], a13 = m[2], a21 = m[3], a22 = m[4], a23 = m[5], a31 = m[6], a32 = m[7], a33 = m[8];
+				float i00 = a33 * a22 - a32 * a23;
+				float i01 = -(a33 * a12 - a32 * a13);
+				float i02 = a23 * a12 - a22 * a13;
+				return a11 * i00 + a21 * i01 + a31 * i02;
+			}
+		}
+
+
+		public Matrix3f Inverse() {
+			float a11 = m[0], a12 = m[1], a13 = m[2], a21 = m[3], a22 = m[4], a23 = m[5], a31 = m[6], a32 = m[7], a33 = m[8];
+			float i00 = a33 * a22 - a32 * a23;
+			float i01 = -(a33 * a12 - a32 * a13);
+			float i02 = a23 * a12 - a22 * a13;
+
+			float i10 = -(a33 * a21 - a31 * a23);
+			float i11 = a33*a11 - a31*a13;
+			float i12 = -(a23*a11 - a21*a13);
+
+			float i20 = a32*a21 - a31*a22;
+			float i21 = -(a32*a11 - a31*a12);
+			float i22 = a22*a11 - a21*a12;
+
+			float det = a11 * i00 + a21 * i01 + a31 * i02;
+			if (Math.Abs(det) < float.Epsilon)
+				throw new Exception("Matrix3f.Inverse: matrix is not invertible");
+			det = 1.0f / det;
+			return new Matrix3f(i00 * det, i01 * det, i02 * det, i10 * det, i11 * det, i12 * det, i20 * det, i21 * det, i22 * det);
+		}
 
 
 

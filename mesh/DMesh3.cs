@@ -603,6 +603,20 @@ namespace g3
             return MathUtil.Area(v0, v1, v2);
         }
 
+		/// <summary>
+		/// Compute triangle normal, area, and centroid all at once. Re-uses vertex
+		/// lookups and computes normal & area simultaneously. *However* does not produce
+		/// the same normal/area as separate calls, because of this.
+		/// </summary>
+		public void GetTriInfo(int tID, out Vector3d normal, out double fArea, out Vector3d vCentroid)
+		{
+			Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
+			GetTriVertices(tID, ref v0, ref v1, ref v2);
+			vCentroid = (1.0 / 3.0) * (v0 + v1 + v2);
+			normal = MathUtil.FastNormalArea(v0, v1, v2, out fArea);
+		}
+
+
         public Vector3d GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) { 
             int ai = 3 * triangles[3 * tID], 
                 bi = 3 * triangles[3 * tID + 1], 

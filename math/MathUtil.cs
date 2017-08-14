@@ -405,6 +405,20 @@ namespace g3
         }
 
 
+		/// <summary>
+		/// simultaneously compute triangle normal and area, and only normalize after
+		/// cross-product, not before (so, fewer normalizes then Normal())
+		/// </summary>
+		public static Vector3d FastNormalArea(Vector3d v1, Vector3d v2, Vector3d v3, out double area)
+		{
+			Vector3d edge1 = v2 - v1;
+			Vector3d edge2 = v3 - v1;
+			Vector3d vCross = edge1.Cross(edge2);
+			area = 0.5 * vCross.Normalize();
+			return vCross;
+		}
+
+
 
 		//! fast cotangent between two normalized vectors 
 		//! cot = cos/sin, both of which can be computed from vector identities
