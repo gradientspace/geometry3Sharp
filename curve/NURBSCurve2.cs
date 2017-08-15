@@ -181,6 +181,12 @@ namespace g3
             int i, imin = 0, imax = 0;
             mBasis.Compute(t, 0, ref imin, ref imax);
 
+			// [RMS] clamp imax to valid range in mCtrlWeight/Point. 
+			// Have only seen this happen in one file w/curve coming from DXF.
+			// Possibly actually a bug in how we construct curve? Not sure though.
+			if (imax >= mCtrlWeight.Length)
+				imax = mCtrlWeight.Length - 1;
+
             // Compute position.
             double tmp;
             Vector2d X = Vector2d.Zero;
@@ -199,6 +205,10 @@ namespace g3
             int i, imin = 0, imax = 0;
             mBasis.Compute(t, 0, ref imin, ref imax);
             mBasis.Compute(t, 1, ref imin, ref imax);
+
+			// [RMS] clamp imax to valid range in mCtrlWeight/Point. See comment in GetPosition()
+			if (imax >= mCtrlWeight.Length)
+				imax = mCtrlWeight.Length-1;
 
             // Compute position.
             double tmp;
@@ -269,6 +279,10 @@ namespace g3
                 mBasis.Compute(t, 1, ref imin, ref imax);
             } else  // pos
                 mBasis.Compute(t, 0, ref imin, ref imax);
+
+			// [RMS] clamp imax to valid range in mCtrlWeight/Point. See comment in GetPosition()
+			if (imax >= mCtrlWeight.Length)
+				imax = mCtrlWeight.Length - 1;
 
             double tmp;
 
