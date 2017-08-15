@@ -327,6 +327,12 @@ namespace g3
 			double dDelta = ( curve.polyLine.Start - curve.polyLine.End ).Length;
 			if ( dDelta < tolerance ) {
 
+				// handle degenerate element case
+				if ( curve.polyLine.VertexCount == 2 ) {
+					vElements.Remove(curve);
+					return;
+				}
+
                 // should always be one of these since we constructed it in append()
                 if ( curve.source is ParametricCurveSequence2 ) {
                     (curve.source as ParametricCurveSequence2).IsClosed = true;
