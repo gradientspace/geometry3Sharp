@@ -12,7 +12,11 @@ namespace g3
         NoFlip = 1,
         NoSplit = 2,
         NoCollapse = 4,
-        FullyConstrained = NoFlip | NoSplit | NoCollapse
+		FullyConstrained = NoFlip | NoSplit | NoCollapse,
+
+		PreserveTopology = 8,	// this flag just means we want to avoid 'losing' this edge
+								// when we collapse a neighbour (but allow the edge itself to be collapsed).
+								// Eg when constraining edges for Reduce
     }
 
 
@@ -24,7 +28,7 @@ namespace g3
                                                 // project edges onto targets (must also set VertexConstraint)
 
         public int TrackingSetID;               // not actually a constraint, but allows is to find descendents
-                                                // of an constraind input edge
+                                                // of an constrained input edge
 
 
         public EdgeConstraint(EdgeRefineFlags rflags)
@@ -58,9 +62,9 @@ namespace g3
             get { return refineFlags == EdgeRefineFlags.NoConstraint && Target == null; }
         }
 
-        static public readonly EdgeConstraint Unconstrained = new EdgeConstraint() { refineFlags = 0 };
-        static public readonly EdgeConstraint NoFlips = new EdgeConstraint() { refineFlags = EdgeRefineFlags.NoFlip };
-        static public readonly EdgeConstraint FullyConstrained = new EdgeConstraint() { refineFlags = EdgeRefineFlags.FullyConstrained };
+        static public readonly EdgeConstraint Unconstrained = new EdgeConstraint() { refineFlags = 0, TrackingSetID = -1 };
+        static public readonly EdgeConstraint NoFlips = new EdgeConstraint() { refineFlags = EdgeRefineFlags.NoFlip, TrackingSetID = -1 };
+        static public readonly EdgeConstraint FullyConstrained = new EdgeConstraint() { refineFlags = EdgeRefineFlags.FullyConstrained, TrackingSetID = -1 };
     }
 
 
