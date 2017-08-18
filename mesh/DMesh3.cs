@@ -751,6 +751,22 @@ namespace g3
             return Vector3d.Zero;
         }
 
+		public Vector3d GetEdgePoint(int eID, double t)
+		{
+			if (edges_refcount.isValid(eID)) {
+				int ei = 4 * eID;
+				int iv0 = 3 * edges[ei];
+				int iv1 = 3 * edges[ei + 1];
+				double mt = 1.0 - t;
+				return new Vector3d(
+					mt*vertices[iv0] + t*vertices[iv1],
+					mt*vertices[iv0 + 1] + t*vertices[iv1 + 1],
+					mt*vertices[iv0 + 2] + t*vertices[iv1 + 2]);
+			}
+			Debug.Assert(false);
+			return Vector3d.Zero;
+		}
+
 
         // mesh-building
 
