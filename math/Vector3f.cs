@@ -41,15 +41,15 @@ namespace g3
 
         public Vector2f xy {
             get { return new Vector2f(x, y); }
-            set { x = xy.x; y = xy.y; }
+            set { x = value.x; y = value.y; }
         }
         public Vector2f xz {
             get { return new Vector2f(x, z); }
-            set { x = xy.x; z = xy.y; }
+            set { x = value.x; z = value.y; }
         }
         public Vector2f yz {
             get { return new Vector2f(y, z); }
-            set { y = xy.x; z = xy.y; }
+            set { y = value.x; z = value.y; }
         }
 
         public float LengthSquared
@@ -65,6 +65,20 @@ namespace g3
         {
             get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
         }
+
+		public float Max {
+			get { return Math.Max(x, Math.Max(y, z)); }
+		}
+		public float Min {
+			get { return Math.Min(x, Math.Min(y, z)); }
+		}
+		public float MaxAbs {
+			get { return Math.Max(Math.Abs(x), Math.Max(Math.Abs(y), Math.Abs(z))); }
+		}
+		public float MinAbs {
+			get { return Math.Min(Math.Abs(x), Math.Min(Math.Abs(y), Math.Abs(z))); }
+		}
+
 
         public float Normalize(float epsilon = MathUtil.Epsilonf)
         {
