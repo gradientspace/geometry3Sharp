@@ -665,6 +665,183 @@ namespace g3
 
 
 
+		public struct MergeEdgesInfo
+		{
+			public int eKept;
+			public int eRemoved;
+
+			public Vector2i vKept;
+			public Vector2i vRemoved;           // either may be InvalidID if it was same as vKept
+
+			public Vector2i eRemovedExtra;      // bonus collapsed edge, or InvalidID
+			public Vector2i eKeptExtra;			// edge paired w/ eRemovedExtra
+		}
+		public MeshResult MergeEdges(int eKeep, int eDiscard, out MergeEdgesInfo merge_info) 
+		{
+			merge_info = new MergeEdgesInfo();
+			if (IsEdge(eKeep) == false || IsEdge(eDiscard) == false)
+				return MeshResult.Failed_NotAnEdge;
+
+			Index4i edgeinfo_keep = GetEdge(eKeep);
+			Index4i edgeinfo_discard = GetEdge(eDiscard);
+			if (edgeinfo_keep.d != InvalidID || edgeinfo_discard.d != InvalidID)
+				return MeshResult.Failed_NotABoundaryEdge;
+
+			int a = edgeinfo_keep.a, b = edgeinfo_keep.b;
+			int tab = edgeinfo_keep.c;
+			int eab = eKeep;
+			int c = edgeinfo_discard.a, d = edgeinfo_discard.b;
+			int tcd = edgeinfo_discard.c;
+			int ecd = eDiscard;
+
+			// Need to correctly orient a,b and c,d and then check that 
+			// we will not join triangles with incompatible winding order
+			// I can't see how to do this purely topologically. 
+			// So relying on closest-pairs testing.
+			IndexUtil.orient_tri_edge(ref a, ref b, GetTriangle(tab));
+			//int tcd_otherv = IndexUtil.orient_tri_edge_and_find_other_vtx(ref c, ref d, GetTriangle(tcd));
+			IndexUtil.orient_tri_edge(ref c, ref d, GetTriangle(tcd));
+			int x = c; c = d; d = x;   // joinable bdry edges have opposing orientations, so flip to get ac and b/d correspondences
+			Vector3d Va = GetVertex(a), Vb = GetVertex(b), Vc = GetVertex(c), Vd = GetVertex(d);
+			if ((Va.DistanceSquared(Vc) + Vb.DistanceSquared(Vd)) >
+				(Va.DistanceSquared(Vd) + Vb.DistanceSquared(Vc)))
+				return MeshResult.Failed_SameOrientation;
+
+			// alternative that detects normal flip of triangle tcd. This is a more 
+			// robust geometric test, but fails if tri is degenerate...also more expensive
+			//Vector3d otherv = GetVertex(tcd_otherv);
+			//Vector3d Ncd = MathUtil.FastNormalDirection(GetVertex(c), GetVertex(d), otherv);
+			//Vector3d Nab = MathUtil.FastNormalDirection(GetVertex(a), GetVertex(b), otherv);
+			//if (Ncd.Dot(Nab) < 0)
+			//return MeshResult.Failed_SameOrientation;
+
+			merge_info.eKept = eab;
+			merge_info.eRemoved = ecd;
+
+			// [TODO] this acts on each interior tri twice. could avoid using vtx-tri iterator?
+
+			List<int> edges_a = vertex_edges[a];
+			if (a != c) {
+				// replace c w/ a in edges and tris connected to c, and move edges to a
+				List<int> edges_c = vertex_edges[c];
+				for (int i = 0; i < edges_c.Count; ++i) {
+					int eid = edges_c[i];
+					if (eid == eDiscard)
+						continue;
+					replace_edge_vertex(eid, c, a);
+					short rc = 0;
+					if (replace_tri_vertex(edges[4 * eid + 2], c, a) >= 0)
+						rc++;
+					if (edges[4 * eid + 3] != InvalidID) {
+						if (replace_tri_vertex(edges[4 * eid + 3], c, a) >= 0)
+							rc++;
+					}
+					edges_a.Add(eid);
+					if (rc > 0) {
+						vertices_refcount.increment(a, rc);
+						vertices_refcount.decrement(c, rc);
+					}
+				}
+				vertex_edges[c] = null;
+				vertices_refcount.decrement(c);
+				merge_info.vRemoved[0] = c;
+			} else {
+				edges_a.Remove(ecd);
+				merge_info.vRemoved[0] = InvalidID;
+			}
+			merge_info.vKept[0] = a;
+
+			List<int> edges_b = vertex_edges[b];
+			if (d != b) {
+				// replace d w/ b in edges and tris connected to d, and move edges to b
+				List<int> edges_d = vertex_edges[d];
+				for (int i = 0; i < edges_d.Count; ++i) {
+					int eid = edges_d[i];
+					if (eid == eDiscard)
+						continue;
+					replace_edge_vertex(eid, d, b);
+					short rc = 0;
+					if (replace_tri_vertex(edges[4 * eid + 2], d, b) >= 0)
+						rc++;
+					if (edges[4 * eid + 3] != InvalidID) {
+						if (replace_tri_vertex(edges[4 * eid + 3], d, b) >= 0)
+							rc++;
+					}
+					edges_b.Add(eid);
+					if (rc > 0) {
+						vertices_refcount.increment(b, rc);
+						vertices_refcount.decrement(d, rc);
+					}
+
+				}
+				vertex_edges[d] = null;
+				vertices_refcount.decrement(d);
+				merge_info.vRemoved[1] = d;
+			} else {
+				edges_b.Remove(ecd);
+				merge_info.vRemoved[1] = InvalidID;
+			}
+			merge_info.vKept[1] = b;
+
+			// replace edge cd with edge ab in triangle tcd
+			replace_triangle_edge(tcd, ecd, eab);
+			edges_refcount.decrement(ecd);
+
+			// update edge-tri adjacency
+			set_edge_triangles(eab, tab, tcd);
+
+			// Once we merge ab to cd, there may be additional edges (now) connected
+			// to either a or b that are connected to the same vertex on their 'other' side.
+			// So we now have two boundary edges connecting the same two vertices - disaster!
+			// We need to find and merge these edges. 
+			// Q: I don't think it is possible to have multiple such edge-pairs at a or b
+			//    But I am not certain...is a bit tricky to handle because we modify edges_v...
+			merge_info.eRemovedExtra = new Vector2i(InvalidID, InvalidID);
+			merge_info.eKeptExtra = merge_info.eRemovedExtra;
+			for (int vi = 0; vi < 2; ++vi) {
+				int v1 = a, v2 = c;   // vertices of merged edge
+				if ( vi == 1 ) {
+					v1 = b; v2 = d;
+				}
+				if (v1 == v2)
+					continue;
+				List<int> edges_v = vertex_edges[v1];
+				int Nedges = edges_v.Count;
+				bool found = false;
+				// in this loop, we compare 'other' vert_1 and vert_2 of edges around v1.
+				// problem case is when vert_1 == vert_2  (ie two edges w/ same other vtx).
+				for (int i = 0; i < Nedges && found == false; ++i) {
+					int edge_1 = edges_v[i];
+					if ( edge_is_boundary(edge_1) == false)
+						continue;
+					int vert_1 = edge_other_v(edge_1, v1);
+					for (int j = i + 1; j < Nedges; ++j) {
+						int edge_2 = edges_v[j];
+						int vert_2 = edge_other_v(edge_2, v1);
+						if (vert_1 == vert_2 && edge_is_boundary(edge_2)) { // if ! boundary here, we are in deep trouble...
+							// replace edge_2 w/ edge_1 in tri, update edge and vtx-edge-nbr lists
+							int tri_1 = edges[4 * edge_1 + 2];
+							int tri_2 = edges[4 * edge_2 + 2];
+							replace_triangle_edge(tri_2, edge_2, edge_1);
+							set_edge_triangles(edge_1, tri_1, tri_2);
+							vertex_edges[v1].Remove(edge_2);
+							vertex_edges[vert_1].Remove(edge_2);
+							edges_refcount.decrement(edge_2);
+							merge_info.eRemovedExtra[vi] = edge_2;
+							merge_info.eKeptExtra[vi] = edge_1;
+
+							//Nedges = edges_v.Count; // this code allows us to continue checking, ie in case we had
+							//i--;					  // multiple such edges. but I don't think it's possible.
+							found = true;			  // exit outer i loop
+							break;					  // exit inner j loop
+						}
+					}
+				}
+			}
+
+			return MeshResult.Ok;
+		}
+
 
 
 

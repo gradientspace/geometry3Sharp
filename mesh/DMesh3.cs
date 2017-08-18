@@ -22,8 +22,11 @@ namespace g3
         Failed_FoundDuplicateTriangle = 24,
         Failed_CollapseTetrahedron = 25,
         Failed_CollapseTriangle = 26,
+		Failed_NotABoundaryEdge = 27,
+		Failed_SameOrientation = 28,
 
-        Failed_WouldCreateBowtie = 30
+        Failed_WouldCreateBowtie = 30,
+
     };
 
 
