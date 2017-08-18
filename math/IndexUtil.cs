@@ -91,6 +91,30 @@ namespace g3
             return DMesh3.InvalidID;
         }
 
+
+		// Set [a,b] to order found in tri_verts (mod3). return true if we swapped.
+		// Assumes that a and b are in tri_verts, if not the result is garbage!
+		public static bool orient_tri_edge(ref int a, ref int b, Index3i tri_verts)
+		{
+			if (a == tri_verts.a) {
+				if (tri_verts.c == b) {
+					int x = a; a = b; b = x;
+					return true;
+				}
+			} else if (a == tri_verts.b) {
+				if (tri_verts.a == b) {
+					int x = a; a = b; b = x;
+					return true;
+				}
+			} else if (a == tri_verts.c) {
+				if (tri_verts.b == b) {
+					int x = a; a = b; b = x;
+					return true;
+				}
+			}
+			return false;
+		}
+
         // set [a,b] to order found in tri_verts (mod3), and return third **value**, or InvalidID if not found
         public static int orient_tri_edge_and_find_other_vtx(ref int a, ref int b, int[] tri_verts)
         {
@@ -103,6 +127,20 @@ namespace g3
             }
             return DMesh3.InvalidID;
         }
+
+
+		// set [a,b] to order found in tri_verts (mod3), and return third **value**, or InvalidID if not found
+		public static int orient_tri_edge_and_find_other_vtx(ref int a, ref int b, Index3i tri_verts)
+		{
+			for (int j = 0; j < 3; ++j) {
+				if (same_pair_unordered(a, b, tri_verts[j], tri_verts[(j + 1) % 3])) {
+					a = tri_verts[j];
+					b = tri_verts[(j + 1) % 3];
+					return tri_verts[(j + 2) % 3];
+				}
+			}
+			return DMesh3.InvalidID;
+		}
 
 
         public static bool is_same_triangle(int a, int b, int c, ref Index3i tri)
