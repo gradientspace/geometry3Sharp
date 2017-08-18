@@ -281,7 +281,28 @@ namespace g3
             new Vector3i( 0,-1, 0), new Vector3i( 0, 1, 0)
         };
 
-    }
+		// integer indices offsets in x/y/z directions and diagonals
+		public static readonly Vector3i[] GridOffsets26 = new Vector3i[] {
+			// face-nbrs
+			new Vector3i( 0, 0,-1), new Vector3i( 0, 0, 1),
+			new Vector3i(-1, 0, 0), new Vector3i( 1, 0, 0),
+			new Vector3i( 0,-1, 0), new Vector3i( 0, 1, 0),
+			// edge-nbrs (+y, 0, -y)
+			new Vector3i(1, 1, 0), new Vector3i(-1, 1, 0),
+			new Vector3i(0, 1, 1), new Vector3i( 0, 1,-1),
+			new Vector3i(1, 0, 1), new Vector3i(-1, 0, 1),
+			new Vector3i(1, 0,-1), new Vector3i(-1, 0,-1),
+			new Vector3i(1, -1, 0), new Vector3i(-1,-1, 0),
+			new Vector3i(0, -1, 1), new Vector3i( 0,-1,-1),
+			// corner-nbrs (+y,-y)
+			new Vector3i(1, 1, 1), new Vector3i(-1, 1, 1),
+			new Vector3i(1, 1,-1), new Vector3i(-1, 1,-1),
+			new Vector3i(1,-1, 1), new Vector3i(-1,-1, 1),
+			new Vector3i(1,-1,-1), new Vector3i(-1,-1,-1)
+		};
+
+
+	}
 
 
 

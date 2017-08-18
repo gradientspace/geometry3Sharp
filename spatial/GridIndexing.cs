@@ -60,6 +60,79 @@ namespace g3
 
 
 
+	/// <summary>
+	/// Map to/from grid coords
+	/// </summary>
+	public struct ScaleGridIndexer3 : IGridWorldIndexer3
+	{
+		public double CellSize;
+
+		public ScaleGridIndexer3(double cellSize)
+		{
+			CellSize = cellSize;
+		}
+
+		public Vector3i ToGrid(Vector3d point) {
+			return new Vector3i(
+				(int)(point.x / CellSize),
+				(int)(point.y / CellSize),
+				(int)(point.z / CellSize));
+		}
+
+		public Vector3d FromGrid(Vector3i gridpoint) {
+			return new Vector3d(
+				((double)gridpoint.x * CellSize),
+				((double)gridpoint.y * CellSize),
+				((double)gridpoint.z * CellSize));
+		}
+
+		public Vector3d FromGrid(Vector3d gridpointf) {
+			return new Vector3d(
+				((double)gridpointf.x * CellSize),
+				((double)gridpointf.y * CellSize),
+				((double)gridpointf.z * CellSize));
+		}
+	}
+
+
+
+	/// <summary>
+	/// Map to/from grid coords, where grid is translated from origin
+	/// </summary>
+	public struct ShiftGridIndexer3 : IGridWorldIndexer3
+	{
+		public Vector3d Origin;
+		public double CellSize;
+
+		public ShiftGridIndexer3(Vector3d origin, double cellSize) {
+			Origin = origin;
+			CellSize = cellSize;
+		}
+
+		public Vector3i ToGrid(Vector3d point) {
+			return new Vector3i(
+				(int)((point.x - Origin.x) / CellSize),
+				(int)((point.y - Origin.y) / CellSize),
+				(int)((point.z - Origin.z) / CellSize) );
+		}
+
+		public Vector3d FromGrid(Vector3i gridpoint) {
+			return new Vector3d(
+				((double)gridpoint.x * CellSize) + Origin.x,
+				((double)gridpoint.y * CellSize) + Origin.y,
+				((double)gridpoint.z * CellSize) + Origin.z);
+		}
+
+		public Vector3d FromGrid(Vector3d gridpointf) {
+			return new Vector3d(
+				((double)gridpointf.x * CellSize) + Origin.x,
+				((double)gridpointf.y * CellSize) + Origin.y,
+				((double)gridpointf.z * CellSize) + Origin.z);
+		}
+	}
+
+
+
 
     /// <summary>
     /// Map to/from grid coords, where grid is relative to frame coords/axes
