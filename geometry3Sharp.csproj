@@ -255,6 +255,7 @@
     <Compile Include="curve\DGraph2.cs" />
     <Compile Include="mesh\Reducer.cs" />
     <Compile Include="core\MemoryPool.cs" />
+    <Compile Include="approximation\QuadraticFit2.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

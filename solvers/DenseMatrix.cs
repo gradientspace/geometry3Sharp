@@ -5,13 +5,13 @@ namespace g3
 {
     public class DenseMatrix : IMatrix
     {
-        double[,] d;        // TODO: using multi-d array is a real pain...
+        double[] d;
         int N, M;
 
 
         public DenseMatrix(int Nrows, int Mcols)
         {
-            d = new double[Nrows, Mcols];
+            d = new double[Nrows*Mcols];
             Array.Clear(d, 0, d.Length);
             N = Nrows;
             M = Mcols;
@@ -20,17 +20,19 @@ namespace g3
         {
             N = copy.N; 
             M = copy.M;
-            d = new double[N, M];
-            // is there a more efficient way to do this?!?
-            for (int i = 0; i < N; ++i)
-                for (int j = 0; j < M; ++j)
-                    d[i, j] = copy.d[i, j];
+            d = new double[N*M];
+			// is there a more efficient way to do this?!?
+			Array.Copy(copy.d, d, copy.d.Length);
         }
+
+		public double[] Buffer {
+			get { return d; }
+		}
 
 
         public void Set(int r, int c, double value)
         {
-            d[r, c] = value;
+            d[r*M+c] = value;
         }
 
 
@@ -42,28 +44,29 @@ namespace g3
 
         public double this[int r, int c]
         {
-            get { return d[r, c]; }
-            set { d[r, c] = value; }
+            get { return d[r*M+c]; }
+            set { d[r*M+c] = value; }
         }
         public double this[int i]
         {
-            get { int r = i / M; return d[r, i-r*M]; }
-            set { int r = i / M; d[r, i-r*M] = value; }
+			get { return d[i]; }
+            set { d[i] = value; }
         }
 
 
         public DenseVector Row(int r)
         {
             DenseVector row = new DenseVector(M);
+			int ii = r * M;
             for (int i = 0; i < M; ++i)
-                row[i] = d[r, i];
+                row[i] = d[ii+i];
             return row;
         }
         public DenseVector Column(int c)
         {
             DenseVector col = new DenseVector(N);
             for (int i = 0; i < N; ++i)
-                col[i] = d[i, c];
+                col[i] = d[i*M+c];
             return col;
         }
 
@@ -73,7 +76,7 @@ namespace g3
                 throw new Exception("DenseMatrix.Diagonal: matrix is not square!");
             DenseVector diag = new DenseVector(N);
             for (int i = 0; i < N; ++i)
-                diag[i] = d[i, i];
+                diag[i] = d[i*M+i];
             return diag;
         }
 
@@ -83,7 +86,7 @@ namespace g3
             DenseMatrix t = new DenseMatrix(M, N);
             for ( int r = 0; r < N; ++r ) {
                 for (int c = 0; c < M; ++c)
-                    t.d[c, r] = d[r, c];
+                    t.d[c*M+r] = d[r*M+c];
             }
             return t;
         }
@@ -91,10 +94,11 @@ namespace g3
         public void TransposeInPlace()
         {
             if (N != M) {
-                double[,] d2 = new double[M, N];
+				// [TODO]: do not need to make new matrix for this case anymore...right?
+                double[] d2 = new double[M*N];
                 for ( int r = 0; r < N; ++r ) {
                     for (int c = 0; c < M; ++c)
-                        d2[c, r] = d[r, c];
+                        d2[c*M+r] = d[r*M+c];
                 }
                 d = d2;
                 int k = M; M = N; N = k;
@@ -102,9 +106,10 @@ namespace g3
                 for (int r = 0; r < N; ++r) {
                     for (int c = 0; c < M; ++c) {
                         if (c != r) {
-                            double tmp = d[r, c];
-                            d[r, c] = d[c, r];
-                            d[c, r] = tmp;
+							int i0 = r * M + c, i1 = c * M + r;
+                            double tmp = d[i0];
+                            d[i0] = d[i1];
+                            d[i1] = tmp;
                         }
                     }
                 }
@@ -120,7 +125,7 @@ namespace g3
                 throw new Exception("DenseMatrix.IsSymmetric: matrix is not square!");
             for (int i = 0; i < N; ++i ) {
                 for ( int j = 0; j < i; ++j ) {
-                    if (Math.Abs(d[i, j] - d[j, i]) > dTolerance)
+                    if (Math.Abs(d[i*M+j] - d[j*M+i]) > dTolerance)
                         return false;
                 }
             }
@@ -145,8 +150,9 @@ namespace g3
         {
             for ( int i = 0; i < N; ++i ) {
                 Result[i] = 0;
+				int ii = i * M;
                 for ( int j = 0; j < M; ++j ) {
-                    Result[i] += d[i, j] * X[j];
+                    Result[i] += d[ii+j] * X[j];
                 }
             }
         }
@@ -157,9 +163,8 @@ namespace g3
         {
             if (N != M2.N|| M != M2.M)
                 throw new Exception("DenseMatrix.Add: matrices have incompatible dimensions");
-            for (int ri = 0; ri < N; ++ri)
-                for (int ci = 0; ci < M; ++ci)
-                    d[ri, ci] += M2.d[ri, ci];
+			for (int i = 0; i < d.Length; ++i)
+				d[i] += M2.d[i];
         }
         public void Add(IMatrix M2)
         {
@@ -167,7 +172,7 @@ namespace g3
                 throw new Exception("DenseMatrix.Add: matrices have incompatible dimensions");
             for (int ri = 0; ri < N; ++ri)
                 for (int ci = 0; ci < M; ++ci)
-                    d[ri, ci] += M2[ri, ci];
+                    d[ri*M+ci] += M2[ri, ci];
         }
 
 
@@ -175,9 +180,8 @@ namespace g3
         {
             if (N != M2.N|| M != M2.M)
                 throw new Exception("DenseMatrix.MulAdd: matrices have incompatible dimensions");
-            for (int ri = 0; ri < N; ++ri)
-                for (int ci = 0; ci < M; ++ci)
-                    d[ri, ci] += s*M2.d[ri, ci];
+			for (int i = 0; i < d.Length; ++i)
+				d[i] += s*M2.d[i];
         }
         public void MulAdd(IMatrix M2, double s)
         {
@@ -185,7 +189,7 @@ namespace g3
                 throw new Exception("DenseMatrix.MulAdd: matrices have incompatible dimensions");
             for (int ri = 0; ri < N; ++ri)
                 for (int ci = 0; ci < M; ++ci)
-                    d[ri, ci] += s*M2[ri, ci];
+                    d[ri*M+ci] += s*M2[ri, ci];
         }
 
 
@@ -211,15 +215,17 @@ namespace g3
                 throw new Exception("DenseMatrix.Multiply: Result matrix has incorrect dimensions");
 
             for ( int r1i = 0; r1i < rows1; r1i++ ) {
+				int ii = r1i * M;
                 for ( int c2i = 0; c2i < cols2; c2i++ ) {
                     double v = 0;
                     for (int k = 0; k < cols1; ++k)
-                        v += d[r1i, k] * M2.d[k, c2i];
-                    R[r1i, c2i] = v;
+                        v += d[ii+k] * M2.d[k*M+c2i];
+                    R[ii+c2i] = v;
                 }
             }
 
         }
 
     }
+
 }

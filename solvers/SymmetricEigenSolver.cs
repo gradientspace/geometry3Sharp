@@ -146,6 +146,20 @@ namespace g3
             GetEigenvalues(eigenvalues);
             return eigenvalues;
         }
+		public double GetEigenvalue(int c) 
+		{
+			if (mSize > 0) {
+				if (mPermutation[0] >= 0) {
+					// Sorting was requested.
+					return mDiagonal[mPermutation[c]];
+				} else {
+					// Sorting was not requested.
+					return mDiagonal[c];
+				}
+			} else {
+				return double.MaxValue;
+			}			
+		}
 
         // Accumulate the Householder reflections and Givens rotations to produce
         // the orthogonal matrix Q for which Q^T*A*Q = D.  The input
