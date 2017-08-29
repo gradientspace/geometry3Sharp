@@ -158,6 +158,9 @@ namespace g3 {
 			NodePool = new MemoryPool<QEdge>(NE);
 			EdgeQueue = new g3ext.FastPriorityQueue<QEdge>(NE);
 
+            // [TODO] if we were to precompute Nodes list, then sort, then Enqueue, would
+            //  that be more efficient? Cannot sort Nodes though, need a copy of array...
+
 			int cur_eid = start_edges();
 			bool done = false;
 			do {
@@ -165,7 +168,7 @@ namespace g3 {
 					Index2i ev = mesh.GetEdgeV(cur_eid);
 
 					QuadricError Q = new QuadricError(ref vertQuadrics[ev.a], ref vertQuadrics[ev.b]);
-					Vector3d opt = OptimalPoint(Q, ev.a, ev.b);
+					Vector3d opt = OptimalPoint(ref Q, ev.a, ev.b);
 					double err = Q.Evaluate(opt);
 
 					QEdge ee = NodePool.Allocate();
@@ -182,26 +185,26 @@ namespace g3 {
 
 
 		// return point that minimizes quadric error for edge [ea,eb]
-		Vector3d OptimalPoint(QuadricError q, int ea, int eb) {
+		Vector3d OptimalPoint(ref QuadricError q, int ea, int eb) {
 			if (MinimizeQuadricPositionError == false) {
 				return (mesh.GetVertex(ea) + mesh.GetVertex(eb)) * 0.5;
 			} else {
-				try {
-					return q.OptimalPoint();
-				} catch {
-					// degenerate matrix, evaluate quadric at edge end and midpoints
-					// (could do line search here...)
-					Vector3d va = mesh.GetVertex(ea);
-					Vector3d vb = mesh.GetVertex(eb);
-					Vector3d c = (va + vb) * 0.5;
-					double fa = q.Evaluate(va);
-					double fb = q.Evaluate(vb);
-					double fc = q.Evaluate(c);
-					double m = MathUtil.Min(fa, fb, fc);
-					if (m == fa) return va;
-					else if (m == fb) return vb;
-					return c;
-				}
+                Vector3d result = Vector3d.Zero;
+                if (q.OptimalPoint(ref result))
+                    return result;
+
+                // degenerate matrix, evaluate quadric at edge end and midpoints
+				// (could do line search here...)
+				Vector3d va = mesh.GetVertex(ea);
+				Vector3d vb = mesh.GetVertex(eb);
+				Vector3d c = (va + vb) * 0.5;
+				double fa = q.Evaluate(va);
+				double fb = q.Evaluate(vb);
+				double fc = q.Evaluate(c);
+				double m = MathUtil.Min(fa, fb, fc);
+				if (m == fa) return va;
+				else if (m == fb) return vb;
+				return c;
 			}
 		}
 
@@ -212,7 +215,7 @@ namespace g3 {
 			foreach (int eid in mesh.VtxEdgesItr(vid)) {
 				Index2i nev = mesh.GetEdgeV(eid);
 				QuadricError Q = new QuadricError(ref vertQuadrics[nev.a], ref vertQuadrics[nev.b]);
-				Vector3d opt = OptimalPoint(Q, nev.a, nev.b);
+				Vector3d opt = OptimalPoint(ref Q, nev.a, nev.b);
 				double err = Q.Evaluate(opt);
 				QEdge eid_node = Nodes[eid];
 				if (eid_node != null) {
@@ -829,8 +832,7 @@ skip_to_end:
 
 
 
-
-		public Vector3d OptimalPoint() {
+		public bool OptimalPoint(ref Vector3d result) {
 			double a11 = Azz * Ayy - Ayz * Ayz;
 			double a12 = Axz * Ayz - Azz * Axy;
 			double a13 = Axy * Ayz - Axz * Ayy;
@@ -838,16 +840,19 @@ skip_to_end:
 			double a23 = Axy * Axz - Axx * Ayz;
 			double a33 = Axx * Ayy - Axy * Axy;
 			double det = (Axx * a11) + (Axy * a12) + (Axz * a13);
-			if (Math.Abs(det) > MathUtil.Epsilonf) {
+            // [RMS] not sure what we should be using for this threshold...have seen
+            //  det less than 10^-9 on "normal" meshes.
+			if (Math.Abs(det) > 1000.0*MathUtil.Epsilon) {
 				det = 1.0 / det;
 				a11 *= det; a12 *= det; a13 *= det;
 				a22 *= det; a23 *= det; a33 *= det;				
 				double x = a11 * bx + a12 * by + a13 * bz;
 				double y = a12 * bx + a22 * by + a23 * bz;
 				double z = a13 * bx + a23 * by + a33 * bz;
-				return new Vector3d(-x, -y, -z);
+                result = new Vector3d(-x, -y, -z);
+                return true;
 			} else {
-				throw new Exception("now what?");
+                return false;
 			}
 
 		}

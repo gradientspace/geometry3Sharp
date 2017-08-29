@@ -29,6 +29,11 @@ namespace g3
         {
             Watch.Stop();
         }
+        public bool Running
+        {
+            get { return Watch.IsRunning; }
+        }
+
         public virtual void Accumulate()
         {
             Watch.Stop();
@@ -65,10 +70,25 @@ namespace g3
             return Timers[label];
         }
 
+
+        public BlockTimer StopAllAndStartNew(string label)
+        {
+            StopAll();
+            return Start(label);
+        }
+
         public void Stop(string label)
         {
             Timers[label].Stop();
         }
+
+        public void StopAll()
+        {
+            foreach (BlockTimer t in Timers.Values)
+                if ( t.Running )
+                    t.Stop();
+        }
+
 
         public void StopAndAccumulate(string label)
         {
