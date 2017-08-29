@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+
+#if G3_USING_UNITY
+using UnityEngine;
+#endif
 
 namespace g3
 {
@@ -158,6 +159,56 @@ namespace g3
             Vector3d e2 = (c - a).Normalized;
             return new Vector3f(e1.Cross(e2));
         }
+
+
+#if G3_USING_UNITY
+        // generate unity mesh. 
+        // [TODO] The left/right flip here may not work...
+
+        static Vector3[] ToUnityVector3(VectorArray3f a, bool bFlipLR = false) {
+            Vector3[] v = new Vector3[a.Count];
+            float fZSign = (bFlipLR) ? -1 : 1;
+            for (int i = 0; i < a.Count; ++i) {
+                v[i].x = a.array[3 * i];
+                v[i].y = a.array[3 * i + 1];
+                v[i].z = fZSign * a.array[3 * i + 2];
+            }
+            return v;
+        }
+        static Vector3[] ToUnityVector3(VectorArray3d a, bool bFlipLR = false) {
+            Vector3[] v = new Vector3[a.Count];
+            float fZSign = (bFlipLR) ? -1 : 1;
+            for (int i = 0; i < a.Count; ++i) {
+                v[i].x = (float)a.array[3 * i];
+                v[i].y = (float)a.array[3 * i + 1];
+                v[i].z = fZSign * (float)a.array[3 * i + 2];
+            }
+            return v;
+        }
+        static Vector2[] ToUnityVector2(VectorArray2f a) {
+            Vector2[] v = new Vector2[a.Count];
+            for (int i = 0; i < a.Count; ++i) {
+                v[i].x = (float)a.array[2 * i];
+                v[i].y = (float)a.array[2 * i + 1];
+            }
+            return v;
+        }
+
+        /// <summary>
+        /// copy generated mesh data into a Unity Mesh object
+        /// </summary>
+        public void MakeMesh(Mesh m, bool bRecalcNormals = false, bool bFlipLR = false)
+        {
+            m.vertices = ToUnityVector3(vertices, bFlipLR);
+            if (uv != null && WantUVs)
+                m.uv = ToUnityVector2(uv);
+            if (normals != null && WantNormals)
+                m.normals = ToUnityVector3(normals, bFlipLR);
+            m.triangles = triangles.array;
+            if (bRecalcNormals)
+                m.RecalculateNormals();
+        }
+#endif
     }
 
 

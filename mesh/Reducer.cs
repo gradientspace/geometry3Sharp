@@ -268,7 +268,6 @@ namespace g3 {
 				NodePool.Return(cur);
 				if (!mesh.IsEdge(cur.eid))
 					continue;
-				Index2i ev = mesh.GetEdgeV(cur.eid);
 
 				int vKept;
 				ProcessResult result = CollapseEdge(cur.eid, cur.collapse_pt, out vKept);
