@@ -157,6 +157,7 @@ namespace g3 {
 			Nodes = new QEdge[2*NE];		// [RMS] do we need this many?
 			NodePool = new MemoryPool<QEdge>(NE);
 			EdgeQueue = new g3ext.FastPriorityQueue<QEdge>(NE);
+            EdgeQueue.ENABLE_DEBUG_SAFETY_CHECKS = ENABLE_DEBUG_CHECKS;
 
             // [TODO] if we were to precompute Nodes list, then sort, then Enqueue, would
             //  that be more efficient? Cannot sort Nodes though, need a copy of array...

@@ -112,6 +112,8 @@ namespace g3ext
         private int _numNodes;
         private T[] _nodes;
 
+        public bool ENABLE_DEBUG_SAFETY_CHECKS = true;
+
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
@@ -208,7 +210,7 @@ namespace g3ext
             {
                 throw new InvalidOperationException("Queue is full - node cannot be added: " + node);
             }
-            if(Contains(node))
+            if(ENABLE_DEBUG_SAFETY_CHECKS && Contains(node))
             {
                 throw new InvalidOperationException("Node is already enqueued: " + node);
             }
@@ -339,7 +341,7 @@ namespace g3ext
                 throw new InvalidOperationException("Cannot call Dequeue() on an empty queue");
             }
 
-            if(!IsValidQueue())
+            if(ENABLE_DEBUG_SAFETY_CHECKS && (!IsValidQueue()) )
             {
                 throw new InvalidOperationException("Queue has been corrupted (Did you update a node priority manually instead of calling UpdatePriority()?" +
                                                     "Or add the same node to two different queues?)");
@@ -415,7 +417,7 @@ namespace g3ext
             {
                 throw new ArgumentNullException("node");
             }
-            if(!Contains(node))
+            if(ENABLE_DEBUG_SAFETY_CHECKS && (!Contains(node)) )
             {
                 throw new InvalidOperationException("Cannot call UpdatePriority() on a node which is not enqueued: " + node);
             }
@@ -454,7 +456,7 @@ namespace g3ext
             {
                 throw new ArgumentNullException("node");
             }
-            if(!Contains(node))
+            if(ENABLE_DEBUG_SAFETY_CHECKS && (!Contains(node)) )
             {
                 throw new InvalidOperationException("Cannot call Remove() on a node which is not enqueued: " + node);
             }

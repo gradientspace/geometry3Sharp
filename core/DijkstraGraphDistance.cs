@@ -39,6 +39,7 @@ namespace g3
         {
             int initial_max = (nMaxNodes < 1024) ? nMaxNodes : nMaxNodes / 4;
             Queue = new FastPriorityQueue<GraphNode>(initial_max);
+            Queue.ENABLE_DEBUG_SAFETY_CHECKS = false;   // otherwise debug is super-slow
 
             NodeDistanceF = nodeDistanceF;
             NeighboursF = neighboursF;
