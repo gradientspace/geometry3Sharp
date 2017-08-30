@@ -63,6 +63,10 @@ namespace g3
         }
 
 
+        public float FirstPriority {
+            get { return nodes[1].priority; }
+        }
+
         /// <summary>
         /// constant-time check to see if id is already in queue
         /// </summary>

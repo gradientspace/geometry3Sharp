@@ -52,7 +52,7 @@ namespace g3 {
         public List<int> DebugEdges = new List<int>();
 
         // if Target is set, we can project onto it in different ways
-        enum TargetProjectionMode
+        public enum TargetProjectionMode
         {
             NoProjection,           // disable projection
             AfterRefinement,        // do all projection after the refine/smooth pass
@@ -60,7 +60,7 @@ namespace g3 {
                                     // expensive because eg we might create a vertex with
                                     // split, then project, then smooth, then project again.
         }
-        TargetProjectionMode ProjectionMode = TargetProjectionMode.AfterRefinement;
+        public TargetProjectionMode ProjectionMode = TargetProjectionMode.AfterRefinement;
 
         // this just lets us write more concise tests below
         bool EnableInlineProjection { get { return ProjectionMode == TargetProjectionMode.Inline; } }

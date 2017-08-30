@@ -3,29 +3,19 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 
-namespace g3 {
+namespace g3
+{
 
+    /// <summary>
+    /// Mesh Simplication - implementation of Garland & Heckbert Quadric Error Metric (QEM) Simplification
+    /// 
+    /// </summary>
 	public class Reducer
 	{
 
 		protected DMesh3 mesh;
 		MeshConstraints constraints = null;
 		IProjectionTarget target = null;
-
-		public double MaxEdgeLength = 0.1f;
-
-		// Sometimes we need to have very granular control over what happens to
-		// specific vertices. This function allows client to specify such behavior.
-		// Somewhat redundant w/ VertexConstraints, but simpler to code.
-		[Flags]
-		public enum VertexControl
-		{
-			AllowAll = 0,
-			NoProject = 2,
-			NoMovement = NoProject
-		}
-		public Func<int, VertexControl> VertexControlF;
-
 
 		// other options
 
@@ -40,19 +30,21 @@ namespace g3 {
 		// we treat them as not fixed and allow collapse
 		public bool AllowCollapseFixedVertsWithSameSetID = true;
 
+        // if true, we try to keep boundary vertices on boundary. You probably want this.
+        public bool PreserveBoundary = true;
+
 		// [RMS] this is a debugging aid, will break to debugger if these edges are touched, in debug builds
 		public List<int> DebugEdges = new List<int>();
 
 		// if Target is set, we can project onto it in different ways
-		enum TargetProjectionMode
+		public enum TargetProjectionMode
 		{
 			NoProjection,           // disable projection
-			AfterRefinement,        // do all projection after the refine/smooth pass
-			Inline                  // project after each vertex update. Better results but more
-									// expensive because eg we might create a vertex with
-									// split, then project, then smooth, then project again.
+			AfterRefinement,        // do all projection after reducing
+			Inline                  // projection is computed before evaluating quadrics, so
+                                    // we are properly evaluating QEM error of result
 		}
-		TargetProjectionMode ProjectionMode = TargetProjectionMode.AfterRefinement;
+		public TargetProjectionMode ProjectionMode = TargetProjectionMode.AfterRefinement;
 
 		// this just lets us write more concise tests below
 		bool EnableInlineProjection { get { return ProjectionMode == TargetProjectionMode.Inline; } }
@@ -150,7 +142,7 @@ namespace g3 {
             gParallel.ForEach(mesh.EdgeIndices(), (eid) => {
 				Index2i ev = mesh.GetEdgeV(eid);
 				QuadricError Q = new QuadricError(ref vertQuadrics[ev.a], ref vertQuadrics[ev.b]);
-				Vector3d opt = OptimalPoint(ref Q, ev.a, ev.b);
+				Vector3d opt = OptimalPoint(eid, ref Q, ev.a, ev.b);
 				edgeErrors[eid] = (float)Q.Evaluate(opt);
                 EdgeQuadrics[eid] = new QEdge(eid, Q, opt);
             });
@@ -189,19 +181,35 @@ namespace g3 {
 
 
 		// return point that minimizes quadric error for edge [ea,eb]
-		Vector3d OptimalPoint(ref QuadricError q, int ea, int eb) {
+		Vector3d OptimalPoint(int eid, ref QuadricError q, int ea, int eb) {
+
+            // if we would like to preserve boundary, we need to know that here
+            // so that we properly score these edges
+            if (HaveBoundary && PreserveBoundary) {
+                if (mesh.IsBoundaryEdge(eid)) {
+                    return (mesh.GetVertex(ea) + mesh.GetVertex(eb)) * 0.5;
+                } else {
+                    if (IsBoundaryV(ea))
+                        return mesh.GetVertex(ea);
+                    else if (IsBoundaryV(eb))
+                        return mesh.GetVertex(eb);
+                }
+            }
+
+            // [TODO] if we have constraints, we should apply them here, for same reason as bdry above...
+
 			if (MinimizeQuadricPositionError == false) {
-				return (mesh.GetVertex(ea) + mesh.GetVertex(eb)) * 0.5;
+				return project( (mesh.GetVertex(ea) + mesh.GetVertex(eb)) * 0.5 );
 			} else {
                 Vector3d result = Vector3d.Zero;
                 if (q.OptimalPoint(ref result))
-                    return result;
+                    return project(result);
 
                 // degenerate matrix, evaluate quadric at edge end and midpoints
 				// (could do line search here...)
 				Vector3d va = mesh.GetVertex(ea);
 				Vector3d vb = mesh.GetVertex(eb);
-				Vector3d c = (va + vb) * 0.5;
+				Vector3d c = project((va + vb) * 0.5);
 				double fa = q.Evaluate(va);
 				double fb = q.Evaluate(vb);
 				double fc = q.Evaluate(c);
@@ -211,6 +219,15 @@ namespace g3 {
 				return c;
 			}
 		}
+        Vector3d project(Vector3d pos) {
+            if (EnableInlineProjection && target != null) {
+                return target.Project(pos);
+            }
+            return pos;
+        }
+
+
+
 
 
 		// update queue weight for each edge in vertex one-ring
@@ -219,13 +236,9 @@ namespace g3 {
 			foreach (int eid in mesh.VtxEdgesItr(vid)) {
 				Index2i nev = mesh.GetEdgeV(eid);
 				QuadricError Q = new QuadricError(ref vertQuadrics[nev.a], ref vertQuadrics[nev.b]);
-				Vector3d opt = OptimalPoint(ref Q, nev.a, nev.b);
+				Vector3d opt = OptimalPoint(eid, ref Q, nev.a, nev.b);
 				double err = Q.Evaluate(opt);
-
                 EdgeQuadrics[eid] = new QEdge(eid, Q, opt);
-
-				//QEdge eid_node = Nodes[eid];
-
 				if ( EdgeQueue.Contains(eid) ) {
 					EdgeQueue.Update(eid, (float)err);
 				} else {
@@ -246,6 +259,25 @@ namespace g3 {
 
 
 
+        bool HaveBoundary;
+        bool[] IsBoundaryVtxCache;
+        protected virtual void Precompute()
+        {
+            HaveBoundary = false;
+            IsBoundaryVtxCache = new bool[mesh.MaxVertexID];
+            foreach ( int eid in mesh.BoundaryEdgeIndices()) {
+                Index2i ev = mesh.GetEdgeV(eid);
+                IsBoundaryVtxCache[ev.a] = true;
+                IsBoundaryVtxCache[ev.b] = true;
+                HaveBoundary = true;
+            }
+        }
+        protected bool IsBoundaryV(int vid)
+        {
+            return IsBoundaryVtxCache[vid];
+        }
+
+
 
 		protected double MinEdgeLength = double.MaxValue;
 		protected int TargetTriangleCount = int.MaxValue;
@@ -260,6 +292,7 @@ namespace g3 {
 			begin_pass();
 
 			begin_setup();
+            Precompute();
 			InitializeVertexQuadrics();
 			InitializeQueue();
 			end_setup();
@@ -398,10 +431,23 @@ namespace g3 {
 			if (bCanCollapse == false)
 				return ProcessResult.Ignored_Constrained;
 
-			// optimization: if edge cd exists, we cannot collapse or flip. look that up here?
-			//  funcs will do it internally...
-			//  (or maybe we can collapse if cd exists? edge-collapse doesn't check for it explicitly...)
-			ProcessResult retVal = ProcessResult.Failed_OpNotSuccessful;
+            // if we have a boundary, we want to collapse to boundary
+            if (PreserveBoundary && HaveBoundary) {
+                if (collapse_to != -1) {
+                    if (( IsBoundaryV(b) && collapse_to != b) ||
+                         ( IsBoundaryV(a) && collapse_to != a))
+                        return ProcessResult.Ignored_Constrained;
+                }
+                if (IsBoundaryV(b))
+                    collapse_to = b;
+                else if (IsBoundaryV(a))
+                    collapse_to = a;
+            }
+
+            // optimization: if edge cd exists, we cannot collapse or flip. look that up here?
+            //  funcs will do it internally...
+            //  (or maybe we can collapse if cd exists? edge-collapse doesn't check for it explicitly...)
+            ProcessResult retVal = ProcessResult.Failed_OpNotSuccessful;
 
             int iKeep = b, iCollapse = a;
 
@@ -414,14 +460,14 @@ namespace g3 {
             } else
                 vNewPos = get_projected_collapse_position(iKeep, vNewPos);
 
-			if (creates_flip_or_invalid(a, b, vNewPos, t0, t1)) {
+            // check if this collapse will create a normal flip. Also checks
+            // for invalid collapse nbrhood, since we are doing one-ring iter anyway.
+            // [TODO] could we skip this one-ring check in CollapseEdge? pass in hints?
+			if ( creates_flip_or_invalid(a, b, vNewPos, t0, t1) ||  creates_flip_or_invalid(b, a, vNewPos, t0,t1) ) {
 				retVal = ProcessResult.Ignored_CreatesFlip;
 				goto skip_to_end;
 			}
-				
 
-            // TODO be smart about picking b (keep vtx). 
-            //    - swap if one is bdry vtx, for example?
             // lots of cases where we cannot collapse, but we should just let
             // mesh sort that out, right?
             COUNT_COLLAPSES++;
@@ -473,7 +519,7 @@ skip_to_end:
 					sign = ncur.Dot(nnew);
 				} else
 					throw new Exception("should never be here!");
-				if (sign <= 0)
+				if (sign <= 0.0)
 					return true;
 			}
 			return false;
@@ -610,15 +656,12 @@ skip_to_end:
                 if (vc.Fixed)
                     return vNewPos;
             }
-            // no constraint applied, so if we have a target surface, project to that
-            if ( EnableInlineProjection && target != null ) {
-                if (VertexControlF == null || (VertexControlF(vid) & VertexControl.NoProject) == 0)
-                    return target.Project(vNewPos, vid);
-            }
+
+            // we don't need to do inline projection to target surface here because we 
+            // already did it in OptimalPoint()
+
             return vNewPos;
         }
-
-
 
 
 
@@ -628,8 +671,6 @@ skip_to_end:
         {
             Action<int> project = (vID) => {
                 if (vertex_is_constrained(vID))
-                    return;
-                if (VertexControlF != null && (VertexControlF(vID) & VertexControl.NoProject) != 0)
                     return;
                 Vector3d curpos = mesh.GetVertex(vID);
                 Vector3d projected = target.Project(curpos, vID);
