@@ -121,68 +121,71 @@ namespace g3 {
 		}
 
 
-
 		// internal class for priority queue
-		class QEdge : g3ext.FastPriorityQueueNode, IEquatable<QEdge>
-		{
+        struct QEdge { 
 			public int eid;
 			public QuadricError q;
 			public Vector3d collapse_pt;
-			public QEdge() {
-				eid = DMesh3.InvalidID;
-			}
-			public QEdge(int edge_id, QuadricError qin, Vector3d pt) {
-				Initialize(edge_id, qin, pt);
-			}
 
-			public void Initialize(int edge_id, QuadricError qin, Vector3d pt) {
+			public QEdge(int edge_id, QuadricError qin, Vector3d pt) {
 				eid = edge_id;
 				q = qin;
-				collapse_pt = pt;				
-			}
-
-			public bool Equals(QEdge other) {
-				return eid == other.eid;
+				collapse_pt = pt;
 			}
 		}
 
-		g3ext.FastPriorityQueue<QEdge> EdgeQueue;
-		QEdge[] Nodes;
-		MemoryPool<QEdge> NodePool;
+        QEdge[] EdgeQuadrics;
+        IndexPriorityQueue EdgeQueue;
 
 		protected virtual void InitializeQueue()
 		{
 			int NE = mesh.EdgeCount;
+            int MaxEID = mesh.MaxEdgeID;
 
-			Nodes = new QEdge[2*NE];		// [RMS] do we need this many?
-			NodePool = new MemoryPool<QEdge>(NE);
-			EdgeQueue = new g3ext.FastPriorityQueue<QEdge>(NE);
-            EdgeQueue.ENABLE_DEBUG_SAFETY_CHECKS = ENABLE_DEBUG_CHECKS;
+            EdgeQuadrics = new QEdge[MaxEID];
+            EdgeQueue = new IndexPriorityQueue(MaxEID);
+            float[] edgeErrors = new float[MaxEID];
 
-            // [TODO] if we were to precompute Nodes list, then sort, then Enqueue, would
-            //  that be more efficient? Cannot sort Nodes though, need a copy of array...
+            // vertex quadrics can be computed in parallel
+            gParallel.ForEach(mesh.EdgeIndices(), (eid) => {
+				Index2i ev = mesh.GetEdgeV(eid);
+				QuadricError Q = new QuadricError(ref vertQuadrics[ev.a], ref vertQuadrics[ev.b]);
+				Vector3d opt = OptimalPoint(ref Q, ev.a, ev.b);
+				edgeErrors[eid] = (float)Q.Evaluate(opt);
+                EdgeQuadrics[eid] = new QEdge(eid, Q, opt);
+            });
 
-			int cur_eid = start_edges();
-			bool done = false;
-			do {
-				if (mesh.IsEdge(cur_eid)) {
-					Index2i ev = mesh.GetEdgeV(cur_eid);
+            // sorted pq insert is faster, so sort edge errors array and index map
+            int[] indices = new int[MaxEID];
+            for (int i = 0; i < MaxEID; ++i)
+                indices[i] = i;
+            Array.Sort(edgeErrors, indices);
 
-					QuadricError Q = new QuadricError(ref vertQuadrics[ev.a], ref vertQuadrics[ev.b]);
-					Vector3d opt = OptimalPoint(ref Q, ev.a, ev.b);
-					double err = Q.Evaluate(opt);
+            // now do inserts
+            for ( int i = 0; i < edgeErrors.Length; ++i ) {
+                int eid = indices[i];
+                if ( mesh.IsEdge(eid) ) {
+                    QEdge edge = EdgeQuadrics[eid];
+                    EdgeQueue.Enqueue(edge.eid, edgeErrors[i]);
+                }
+            }
 
-					QEdge ee = NodePool.Allocate();
-					ee.Initialize(cur_eid, Q, opt);
-					Nodes[cur_eid] = ee;
-					EdgeQueue.Enqueue(ee, (float)err);
-
-				}
-				cur_eid = next_edge(cur_eid, out done);
-			} while (done == false);
-
-
-		}
+            /* 
+            // previous code that does unsorted insert. This is marginally slower, but
+            // might get even slower on larger meshes? have only tried up to about 350k.
+            // (still, this function is not the bottleneck...)
+            int cur_eid = start_edges();
+            bool done = false;
+            do {
+                if (mesh.IsEdge(cur_eid)) {
+                    QEdge edge = EdgeQuadrics[cur_eid];
+                    double err = errList[cur_eid];
+                    EdgeQueue.Enqueue(cur_eid, (float)err);
+                }
+                cur_eid = next_edge(cur_eid, out done);
+            } while (done == false);
+            */
+        }
 
 
 		// return point that minimizes quadric error for edge [ea,eb]
@@ -218,16 +221,15 @@ namespace g3 {
 				QuadricError Q = new QuadricError(ref vertQuadrics[nev.a], ref vertQuadrics[nev.b]);
 				Vector3d opt = OptimalPoint(ref Q, nev.a, nev.b);
 				double err = Q.Evaluate(opt);
-				QEdge eid_node = Nodes[eid];
-				if (eid_node != null) {
-					eid_node.q = Q;
-					eid_node.collapse_pt = opt;
-					EdgeQueue.UpdatePriority(eid_node, (float)err);
+
+                EdgeQuadrics[eid] = new QEdge(eid, Q, opt);
+
+				//QEdge eid_node = Nodes[eid];
+
+				if ( EdgeQueue.Contains(eid) ) {
+					EdgeQueue.Update(eid, (float)err);
 				} else {
-					QEdge ee = NodePool.Allocate();
-					ee.Initialize(eid, Q, opt);
-					Nodes[eid] = ee;
-					EdgeQueue.Enqueue(ee, (float)err);
+					EdgeQueue.Enqueue(eid, (float)err);
 				}
 			}			
 		}
@@ -267,16 +269,14 @@ namespace g3 {
 			begin_collapse();
 			while (EdgeQueue.Count > 0 && mesh.TriangleCount > TargetTriangleCount) {
 				COUNT_ITERATIONS++;
-				QEdge cur = EdgeQueue.Dequeue();
-				Nodes[cur.eid] = null;
-				NodePool.Return(cur);
-				if (!mesh.IsEdge(cur.eid))
+                int eid = EdgeQueue.Dequeue();
+				if (!mesh.IsEdge(eid))
 					continue;
 
 				int vKept;
-				ProcessResult result = CollapseEdge(cur.eid, cur.collapse_pt, out vKept);
+				ProcessResult result = CollapseEdge(eid, EdgeQuadrics[eid].collapse_pt, out vKept);
 				if (result == ProcessResult.Ok_Collapsed) {
-					vertQuadrics[vKept] = cur.q;
+					vertQuadrics[vKept] = EdgeQuadrics[eid].q;
 					UpdateNeighbours(vKept);
 				}
 			}
@@ -287,7 +287,6 @@ namespace g3 {
 
 			end_pass();
 		}
-
 
 
 

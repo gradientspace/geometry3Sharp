@@ -512,5 +512,14 @@ namespace g3ext
             }
             return true;
         }
+
+
+
+
+        public void DebugPrint() {
+            for (int i = 1; i <= _numNodes; ++i)
+                System.Console.WriteLine("{0} : p {1}  idx {2}", i, _nodes[i].Priority, _nodes[i].QueueIndex);
+        }
+
     }
 }

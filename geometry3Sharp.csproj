@@ -57,6 +57,7 @@
     <Compile Include="core\HashUtil.cs" />
     <Compile Include="core\HBitArray.cs" />
     <Compile Include="core\Indexing.cs" />
+    <Compile Include="core\priorityqueue\IndexPriorityQueue.cs" />
     <Compile Include="core\priorityqueue\FastPriorityQueue.cs" />
     <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
