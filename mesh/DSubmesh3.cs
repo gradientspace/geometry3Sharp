@@ -64,6 +64,19 @@ namespace g3
         }
 
 
+        public int MapEdgeToSubmesh(int base_eid)
+        {
+            Index2i base_ev = BaseMesh.GetEdgeV(base_eid);
+            Index2i sub_ev = MapVerticesToSubmesh(base_ev);
+            return SubMesh.FindEdge(sub_ev.a, sub_ev.b);
+        }
+        public void MapEdgesToSubmesh(int[] edges)
+        {
+            for (int i = 0; i < edges.Length; ++i)
+                edges[i] = MapEdgeToSubmesh(edges[i]);
+        }
+
+
         public void ComputeBoundaryInfo(int[] subTriangles) {
             ComputeBoundaryInfo(subTriangles, subTriangles.Length);
         }

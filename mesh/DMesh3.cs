@@ -1084,16 +1084,17 @@ namespace g3
             if (eid == InvalidID)
                 return InvalidID;
             int ei = 4 * eid;
-            int ti = 3*edges[ei + 2];
-            Index3i tri = new Index3i(triangles[ti], triangles[ti + 1], triangles[ti + 2]);
-            if (IndexUtil.is_same_triangle(a, b, c, ref tri))
+
+            // triangles attached to edge [a,b] must contain verts a and b...
+            int ti = 3 * edges[ei + 2];
+            if (triangles[ti] == c || triangles[ti + 1] == c || triangles[ti + 2] == c )
                 return edges[ei + 2];
-            if ( edges[ei + 3] != InvalidID ) {
+            if (edges[ei + 3] != InvalidID) {
                 ti = 3 * edges[ei + 3];
-                tri.a = triangles[ti]; tri.b = triangles[ti + 1]; tri.c = triangles[ti + 2];
-                if (IndexUtil.is_same_triangle(a, b, c, ref tri))
+                if (triangles[ti] == c || triangles[ti + 1] == c || triangles[ti + 2] == c )
                     return edges[ei + 3];
             }
+
             return InvalidID;
         }
 

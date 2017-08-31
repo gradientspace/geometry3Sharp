@@ -14,7 +14,9 @@ namespace g3
         NotBoundaryEdge,
 
         VerticesNotConnectedByEdge,
-        IncorrectLoopOrientation
+        IncorrectLoopOrientation,
+
+        DuplicateTriangles
     }
 
 
@@ -64,6 +66,19 @@ namespace g3
                 Index2i ev = mesh.GetOrientedBoundaryEdgeV(eid);
                 if (!(ev.a == a && ev.b == b))
                     return ValidationStatus.IncorrectLoopOrientation;
+            }
+
+            return ValidationStatus.Ok;
+        }
+
+
+
+        public static ValidationStatus HasDuplicateTriangles(DMesh3 mesh)
+        {
+            foreach (int tid in mesh.TriangleIndices()) {
+                Index3i nbrs = mesh.GetTriNeighbourTris(tid);
+                if (nbrs.a == nbrs.b && nbrs.b == nbrs.c && nbrs.a != DMesh3.InvalidID)
+                    return ValidationStatus.DuplicateTriangles;
             }
 
             return ValidationStatus.Ok;

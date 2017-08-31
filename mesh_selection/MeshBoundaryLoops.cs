@@ -79,6 +79,22 @@ namespace g3
         }
 
 
+
+        /// <summary>
+        /// find the loop that contains an edge, or return -1
+        /// </summary>
+        public int FindLoopContainingEdge(int eid)
+        {
+            int N = Loops.Count;
+            for (int li = 0; li < N; ++li) {
+                if (Loops[li].Edges.Contains(eid))
+                    return li;
+            }
+            return -1;
+        }
+
+
+
 		/// <summary>
 		/// Find the set of boundary EdgeLoops. Note that if we encounter topological
 		/// issues, we will throw MeshBoundaryLoopsException w/ more info (if possible)

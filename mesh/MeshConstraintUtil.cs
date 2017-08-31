@@ -143,5 +143,16 @@ namespace g3
         }
 
 
+
+        public static void AddTrackedEdges(MeshConstraints cons, int[] edges, int setID)
+        {
+            EdgeConstraint ec = EdgeConstraint.Unconstrained;
+            ec.TrackingSetID = setID;
+            for ( int i = 0; i < edges.Length; ++i ) {
+                cons.SetOrUpdateEdgeConstraint(edges[i], ec);
+            }
+        }
+
+
     }
 }
