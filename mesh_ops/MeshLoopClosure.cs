@@ -27,7 +27,12 @@ namespace g3
         public virtual ValidationStatus Validate()
         {
             ValidationStatus loopStatus = MeshValidation.IsBoundaryLoop(Mesh, InitialBorderLoop);
-            return loopStatus;
+            if ( loopStatus != ValidationStatus.Ok)
+                return loopStatus;
+            ValidationStatus meshStatus = MeshValidation.HasDuplicateTriangles(Mesh);
+            if (meshStatus != ValidationStatus.Ok)
+                return meshStatus;
+            return ValidationStatus.Ok;
         }
 
 
@@ -45,12 +50,16 @@ namespace g3
             double target_edge_len = (TargetEdgeLen <= 0) ? avglen : TargetEdgeLen;
 
             // massage around boundary loop
-            cleanup_boundary(Mesh, InitialBorderLoop, avglen, 3);
+            List<int> refinedBorderEdges;
+            cleanup_boundary(Mesh, InitialBorderLoop, avglen, out refinedBorderEdges, 3);
 
-            // find new border loop
-            // [TODO] this just assumes there is only one!!
+            // find new border loop. try to find new loop containing edges from loop we refined in cleanup_boundary,
+            // if that fails just use largest loop.
             MeshBoundaryLoops loops = new MeshBoundaryLoops(Mesh);
-            EdgeLoop fill_loop = loops.Loops[0];
+            int iloop = loops.FindLoopContainingEdge(refinedBorderEdges[0]);
+            if (iloop == -1)
+                iloop = loops.MaxVerticesLoopIndex;
+            EdgeLoop fill_loop = loops.Loops[iloop];
 
             int extrude_group = (ExtrudeGroup == -1) ? Mesh.AllocateTriangleGroup() : ExtrudeGroup;
             int fill_group = (FillGroup == -1) ? Mesh.AllocateTriangleGroup() : FillGroup;
@@ -196,9 +205,10 @@ namespace g3
 
 
         // This function does local remeshing around a boundary loop within a fixed # of
-        // rings, to try to 'massage' it into a cleaner shape/topology
+        // rings, to try to 'massage' it into a cleaner shape/topology.
+        // The result_edges list is the mapped edges of loop on the resulting mesh, but it is *not* in-order
         // [TODO] use geodesic distance instead of fixed # of rings?
-        public static void cleanup_boundary(DMesh3 mesh, EdgeLoop loop, double target_edge_len, int nRings = 3)
+        public static void cleanup_boundary(DMesh3 mesh, EdgeLoop loop, double target_edge_len, out List<int> result_edges, int nRings = 3)
         {
             Debug.Assert(loop.IsBoundaryLoop());
 
@@ -211,6 +221,14 @@ namespace g3
 
             RegionRemesher r = new RegionRemesher(mesh, roi.ToArray());
 
+            // tag the input loop edges in the remesher, so that we can find this loop afterwards
+            int[] init_loop_edges = new int[loop.EdgeCount];
+            Array.Copy(loop.Edges, init_loop_edges, loop.EdgeCount);
+            r.Region.MapEdgesToSubmesh(init_loop_edges);
+            MeshConstraintUtil.AddTrackedEdges(r.Constraints, init_loop_edges, 100);
+            //foreach (int eid in init_loop_edges)
+            //    Debug.Assert(r.Region.SubMesh.IsBoundaryEdge(eid));
+
             r.Precompute();
             r.EnableFlips = r.EnableSplits = r.EnableCollapses = true;
             r.MinEdgeLength = target_edge_len;
@@ -221,7 +239,17 @@ namespace g3
                 r.BasicRemeshPass();
             Debug.Assert(mesh.CheckValidity());
 
+            // extract the edges we tagged (they are unordered)
+            List<int> new_loop_edges = r.Constraints.FindConstrainedEdgesBySetID(100);
+            //foreach (int eid in new_loop_edges)
+            //    Debug.Assert(r.Region.SubMesh.IsBoundaryEdge(eid));
+
             r.BackPropropagate();
+
+            // map the extracted edges back to the backpropped input mesh
+            result_edges = MeshIndexUtil.MapEdgesViaVertexMap(r.ReinsertSubToBaseMapV, r.Region.SubMesh, r.BaseMesh, new_loop_edges);
+            //foreach (int eid in result_edges)
+            //    Debug.Assert(mesh.IsBoundaryEdge(eid));
         }
 
 
