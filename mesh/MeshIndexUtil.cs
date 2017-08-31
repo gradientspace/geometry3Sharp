@@ -22,7 +22,7 @@ namespace g3
                 Index2i aev = MeshA.GetEdgeV(eid_a);
                 int bev0 = AtoBV[aev.a];
                 int bev1 = AtoBV[aev.b];
-                int eid_b = MeshB.FindEdge(bev0, bev0);
+                int eid_b = MeshB.FindEdge(bev0, bev1);
                 Debug.Assert(eid_b != DMesh3.InvalidID);
                 result.Add(eid_b);
             }
