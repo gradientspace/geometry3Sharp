@@ -248,6 +248,18 @@ namespace g3
         }
 
 
+        // in ReinsertSubmesh, a problem can arise where the mesh we are inserting has duplicate triangles of
+        // the base mesh. This can lead to problematic behavior later. We can do various things, like delete
+        // and replace that existing triangle, or just use it instead of adding a new one. Or fail, or ignore it.
+        // This enum/argument controls the behavior. 
+        // However, fundamentally this kind of problem should be handled upstream!! For example by not trying
+        // to remesh areas that contain nonmanifold geometry...
+        public enum DuplicateTriBehavior
+        {
+            AssertContinue,         // check will not be done in Release!
+            AssertAbort, UseExisting, Replace
+        }
+
 
         // Assumption here is that Submesh has been modified, but boundary loop has
         // been preserved, and that old submesh has already been removed from this mesh.
@@ -259,7 +271,8 @@ namespace g3
         //
         // Returns true if submesh successfully inserted, false if any triangles failed
         // (which happens if triangle would result in non-manifold mesh)
-        public bool ReinsertSubmesh(DSubmesh3 sub, ref int[] new_tris, out IndexMap SubToNewV)
+        public bool ReinsertSubmesh(DSubmesh3 sub, ref int[] new_tris, out IndexMap SubToNewV,
+            DuplicateTriBehavior eDuplicateBehavior = DuplicateTriBehavior.AssertAbort)
         {
             if (sub.BaseBorderV == null)
                 throw new Exception("MeshEditor.ReinsertSubmesh: Submesh does not have required boundary info. Call ComputeBoundaryInfo()!");
@@ -311,7 +324,25 @@ namespace g3
                     new_t[j] = new_v;
                 }
 
-                Debug.Assert(Mesh.FindTriangle(new_t.a, new_t.b, new_t.c) == DMesh3.InvalidID);
+                // try to handle duplicate-tri case
+                if (eDuplicateBehavior == DuplicateTriBehavior.AssertContinue) {
+                    Debug.Assert(Mesh.FindTriangle(new_t.a, new_t.b, new_t.c) == DMesh3.InvalidID);
+                } else {
+                    int existing_tid = Mesh.FindTriangle(new_t.a, new_t.b, new_t.c);
+                    if (existing_tid != DMesh3.InvalidID) {
+                        if (eDuplicateBehavior == DuplicateTriBehavior.AssertAbort) {
+                            Debug.Assert(existing_tid == DMesh3.InvalidID);
+                            return false;
+                        } else if (eDuplicateBehavior == DuplicateTriBehavior.UseExisting) {
+                            if (new_tris != null)
+                                new_tris[nti++] = existing_tid;
+                            continue;
+                        } else if (eDuplicateBehavior == DuplicateTriBehavior.Replace) {
+                            Mesh.RemoveTriangle(existing_tid, false);
+                        }
+                    }
+                }
+
 
                 int new_tid = Mesh.AppendTriangle(new_t, gid);
                 Debug.Assert(new_tid != DMesh3.InvalidID && new_tid != DMesh3.NonManifoldID);

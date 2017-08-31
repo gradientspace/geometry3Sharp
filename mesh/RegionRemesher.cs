@@ -14,6 +14,9 @@ namespace g3
         // this is only valid after BackPropagate() call!! maps submeshverts to base mesh
         public IndexMap ReinsertSubToBaseMapV;
 
+        // handle a tricky problem...see comments for DuplicateTriBehavior enum
+        public MeshEditor.DuplicateTriBehavior ReinsertDuplicateTriBehavior = MeshEditor.DuplicateTriBehavior.AssertContinue;
+
         // By default is initialized w/ all boundary constraints
         // You can add more, but don't screw up!
         MeshConstraints bdry_constraints;
@@ -130,8 +133,9 @@ namespace g3
         // failed to insert. Does not revert changes that were successful.
         public bool BackPropropagate(bool bAllowSubmeshRepairs = true)
         {
-            if (bAllowSubmeshRepairs)
+            if (bAllowSubmeshRepairs) {
                 RepairPossibleNonManifoldEdges();
+            }
 
             // remove existing submesh triangles
             MeshEditor editor = new MeshEditor(BaseMesh);
@@ -140,12 +144,12 @@ namespace g3
             // insert new submesh
             int[] new_tris = new int[Region.SubMesh.TriangleCount];
             ReinsertSubToBaseMapV = null;
-            bool bOK = editor.ReinsertSubmesh(Region, ref new_tris, out ReinsertSubToBaseMapV);
-            cur_base_tris = new_tris;
+            bool bOK = editor.ReinsertSubmesh(Region, ref new_tris, out ReinsertSubToBaseMapV, ReinsertDuplicateTriBehavior);
 
             // assert that new triangles are all valid (goes wrong sometimes??)
-            Debug.Assert(IndexUtil.IndicesCheck(cur_base_tris, BaseMesh.IsTriangle));
+            Debug.Assert(IndexUtil.IndicesCheck(new_tris, BaseMesh.IsTriangle));
 
+            cur_base_tris = new_tris;
             return bOK;
         }
 
