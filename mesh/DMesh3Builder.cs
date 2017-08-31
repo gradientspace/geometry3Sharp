@@ -48,12 +48,26 @@ namespace g3
 
         public int AppendTriangle(int i, int j, int k)
         {
-            return Meshes[nActiveMesh].AppendTriangle(i, j, k);
+            // [RMS] What to do here? We definitely do not want to add a duplicate triangle!!
+            //   But is silently ignoring the right thing to do?
+            int existing_tid = Meshes[nActiveMesh].FindTriangle(i, j, k);
+            if (existing_tid != DMesh3.InvalidID)
+                return existing_tid;
+
+            int tid = Meshes[nActiveMesh].AppendTriangle(i, j, k);
+            return tid;
         }
 
         public int AppendTriangle(int i, int j, int k, int g)
         {
-            return Meshes[nActiveMesh].AppendTriangle(i, j, k, g);
+            // [RMS] What to do here? We definitely do not want to add a duplicate triangle!!
+            //   But is silently ignoring the right thing to do?
+            int existing_tid = Meshes[nActiveMesh].FindTriangle(i, j, k);
+            if (existing_tid != DMesh3.InvalidID)
+                return existing_tid;
+
+            int tid = Meshes[nActiveMesh].AppendTriangle(i, j, k, g);
+            return tid;
         }
 
         public int AppendVertex(double x, double y, double z)
