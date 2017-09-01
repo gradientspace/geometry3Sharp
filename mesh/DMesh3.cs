@@ -1383,10 +1383,21 @@ namespace g3
 
         int find_edge(int vA, int vB)
         {
+            // [RMS] edge vertices must be sorted (min,max),
+            //   that means we only need one index-check in inner loop.
+            //   commented out code is robust to incorrect ordering, but slower.
             int vO = Math.Max(vA, vB);
             List<int> e0 = vertex_edges[Math.Min(vA, vB)];
-            int idx = e0.FindIndex((x) => edge_has_v(x, vO));
-            return (idx == -1) ? InvalidID : e0[idx];
+            //int vO = vA;
+            //List<int> e0 = vertex_edges[vB];
+            int N = e0.Count;
+            for (int i = 0; i < N; ++i) {
+                int eid = e0[i];
+                if (edges[4 * eid + 1] == vO)
+                    //if (edge_has_v(eid, vO))
+                    return eid;
+            }
+            return InvalidID;
         }
 
         int find_edge_from_tri(int vA, int vB, int tID)
