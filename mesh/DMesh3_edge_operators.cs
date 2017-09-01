@@ -481,18 +481,31 @@ namespace g3
 			//  Unfortunately I cannot see a way to do this more efficiently than brute-force search
 			//  [TODO] if we had tri iterator for a, couldn't we check each tri for b  (skipping t0 and t1) ?
 			List<int> edges_a = vertex_edges[a];
-			int edges_a_count = 0;
-			foreach (int eid_a in edges_a) {
+            int edges_a_count = edges_a.Count;
+            int edges_b_count = edges_b.Count;
+            int eac = InvalidID, ead = InvalidID, ebc = InvalidID, ebd = InvalidID;
+            for ( int ai = 0; ai < edges_a_count; ai++ ) {
+                int eid_a = edges_a[ai];
 				int vax =  edge_other_v(eid_a, a);
-				edges_a_count++;
-				if ( vax == b || vax == c || vax == d )
+                if ( vax == c ) {
+                    eac = eid_a;
+                    continue;
+                }
+                if ( vax == d ) {
+                    ead = eid_a;
+                    continue;
+                }
+				if ( vax == b )
 					continue;
-				foreach (int eid_b in edges_b) {
+                for ( int bi = 0; bi < edges_b_count; ++bi ) {
+                    int eid_b = edges_b[bi];
 					if ( edge_other_v(eid_b, b) == vax )
 						return MeshResult.Failed_InvalidNeighbourhood;
 				}
 			}
 
+            // [RMS] I am not sure this tetrahedron case will detect bowtie vertices.
+            // But the single-triangle case does
 
 			// We cannot collapse if we have a tetrahedron. In this case a has 3 nbr edges,
 			//  and edge cd exists. But that is not conclusive, we also have to check that
@@ -509,9 +522,10 @@ namespace g3
 					return MeshResult.Failed_CollapseTetrahedron;
 				}
 
-			} else if (edges_a_count == 2 && bIsBoundaryEdge == true) {
-				// cannot collapse edge if we are down to a single triangle
-				if ( edges_b.Count == 2 && vertex_edges[c].Count == 2 )
+			} else if (bIsBoundaryEdge == true && edge_is_boundary(eac) ) {
+                // Cannot collapse edge if we are down to a single triangle
+                ebc = find_edge(b, c);
+                if ( edge_is_boundary(ebc) )
 					return MeshResult.Failed_CollapseTriangle;
 			}
 
@@ -532,20 +546,18 @@ namespace g3
 			// 2) find edges ad and ac, and tris tad, tac across those edges  (will use later)
 			// 3) for other edges, replace a with b, and add that edge to b
 			// 4) replace a with b in all triangles connected to a
-			int ead = InvalidID, eac = InvalidID;
 			int tad = InvalidID, tac = InvalidID;
-			foreach (int eid in edges_a) {
+            for ( int ai = 0; ai < edges_a_count; ai++ ) {
+                int eid = edges_a[ai];
 				int o = edge_other_v(eid, a);
 				if (o == b) {
 					if (edges_b.Remove(eid) != true )
 						debug_fail("remove case o == b");
 				} else if (o == c) {
-					eac = eid;
 					if ( vertex_edges[c].Remove(eid) != true )
 						debug_fail("remove case o == c");
 					tac = edge_other_t(eid, t0);
 				} else if (o == d) {
-					ead = eid;
 					if ( vertex_edges[d].Remove(eid) != true )
 						debug_fail("remove case o == c, step 1");
 					tad = edge_other_t(eid, t1);
@@ -569,7 +581,6 @@ namespace g3
 				}
 			}
 
-            int ebc = InvalidID, ebd = InvalidID;
 			if (bIsBoundaryEdge == false) {
 
 				// remove all edges from vtx a, then remove vtx a
@@ -597,7 +608,8 @@ namespace g3
 
 				// replace t0 and t1 in edges ebd and ebc that we kept
 				ebd = find_edge( b, d );
-				ebc = find_edge( b, c );
+                if ( ebc == InvalidID )   // we may have already looked this up
+				    ebc = find_edge( b, c );
 
 				if( replace_edge_triangle(ebd, t1, tad ) == -1 )
 					debug_fail("isboundary=false branch, ebd replace triangle");
