@@ -231,5 +231,51 @@ namespace g3
         }
 
 
+
+
+        public struct GenusResult
+        {
+            public bool Valid;
+            public int Genus;
+            public bool HasBoundary;
+            public bool MultipleConnectedComponents;
+            public bool HasBowtieVertices;
+        }
+        public static GenusResult Genus(DMesh3 mesh)
+        {
+            GenusResult result = new GenusResult() { Valid = false, Genus = -1 };
+
+            if (! mesh.CachedIsClosed ) {
+                result.HasBoundary = true;
+                return result;
+            }
+
+            MeshConnectedComponents compT = new MeshConnectedComponents(mesh);
+            compT.FindConnectedT();
+            if ( compT.Count > 1 ) {
+                result.MultipleConnectedComponents = true;
+                return result;
+            }
+            int isolated_verts = 0;
+            foreach ( int vid in mesh.VertexIndices() ) {
+                if ( mesh.IsBowtieVertex(vid) ) {
+                    result.HasBowtieVertices = true;
+                    return result;
+                }
+                if (mesh.GetVtxTriangleCount(vid) == 0)
+                    isolated_verts++;
+            }
+
+            int V = mesh.VertexCount - isolated_verts;
+            int F = mesh.TriangleCount;
+            int E = mesh.EdgeCount;
+
+            result.Genus = (2 - (V + F - E)) / 2;
+            result.Valid = true;
+            return result;
+        }
+
+
+
     }
 }
