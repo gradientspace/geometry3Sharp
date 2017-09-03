@@ -1403,11 +1403,13 @@ namespace g3
         int find_edge_from_tri(int vA, int vB, int tID)
         {
             int i = 3 * tID;
-            if (IndexUtil.same_pair_unordered(vA, vB, triangles[i], triangles[i + 1]))
+            int t0 = triangles[i], t1 = triangles[i + 1];
+            if (IndexUtil.same_pair_unordered(vA, vB, t0, t1))
                 return triangle_edges[i];
-            if (IndexUtil.same_pair_unordered(vA, vB, triangles[i+1], triangles[i + 2]))
+            int t2 = triangles[i + 2];
+            if (IndexUtil.same_pair_unordered(vA, vB, t1, t2))
                 return triangle_edges[i+1];
-            if (IndexUtil.same_pair_unordered(vA, vB, triangles[i+2], triangles[i]))
+            if (IndexUtil.same_pair_unordered(vA, vB, t2, t0))
                 return triangle_edges[i+2];
             return InvalidID;
         }

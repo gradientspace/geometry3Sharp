@@ -524,7 +524,7 @@ namespace g3
 
 			} else if (bIsBoundaryEdge == true && edge_is_boundary(eac) ) {
                 // Cannot collapse edge if we are down to a single triangle
-                ebc = find_edge(b, c);
+                ebc = find_edge_from_tri(b, c, t0);
                 if ( edge_is_boundary(ebc) )
 					return MeshResult.Failed_CollapseTriangle;
 			}
@@ -607,9 +607,9 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 and t1 in edges ebd and ebc that we kept
-				ebd = find_edge( b, d );
+				ebd = find_edge_from_tri( b, d, t1 );
                 if ( ebc == InvalidID )   // we may have already looked this up
-				    ebc = find_edge( b, c );
+				    ebc = find_edge_from_tri( b, c, t0 );
 
 				if( replace_edge_triangle(ebd, t1, tad ) == -1 )
 					debug_fail("isboundary=false branch, ebd replace triangle");
@@ -650,7 +650,7 @@ namespace g3
 				Debug.Assert( edges_refcount.isValid( eac ) == false );
 
 				// replace t0 in edge ebc that we kept
-				ebc = find_edge( b, c );
+				ebc = find_edge_from_tri( b, c, t0 );
 				if ( replace_edge_triangle(ebc, t0, tac ) == -1 )
 					debug_fail("isboundary=false branch, ebc replace triangle");
 
