@@ -33,9 +33,8 @@ namespace g3
         }
         public static Frame3f Rotate(Frame3f f, Vector3d origin, Quaternionf rotation)
         {
-            f.Origin -= (Vector3f)origin;
             f.Rotate(rotation);
-            f.Origin += (Vector3f)origin;
+            f.Origin = (Vector3f)Rotate(f.Origin, origin, rotation);
             return f;
         }
         public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaternionf rotation)
