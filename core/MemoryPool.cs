@@ -8,24 +8,24 @@ namespace g3
 	/// </summary>
 	public class MemoryPool<T> where T : class, new()
 	{
-		List<T> Allocated;
-		List<T> Free;
+        DVector<T> Allocated;
+        DVector<T> Free;
 
-		public MemoryPool(int nEstCapacity = 64)
+		public MemoryPool()
 		{
-			Allocated = new List<T>(nEstCapacity);
-			Free = new List<T>(16);
-		}
+			Allocated = new DVector<T>();
+			Free = new DVector<T>();
+        }
 
 		public T Allocate()
 		{
-			if ( Free.Count > 0 ) {
-				T allocated = Free[Free.Count - 1];
-				Free.RemoveAt(Free.Count - 1);
+			if ( Free.size > 0 ) {
+				T allocated = Free[Free.size - 1];
+                Free.pop_back();
 				return allocated;
 			} else {
 				T newval = new T();
-				Allocated.Add(newval);
+                Allocated.Add(newval);
 				return newval;
 			}
 		}
@@ -34,6 +34,18 @@ namespace g3
 			Free.Add(obj);
 		}
 
+
+        public void ReturnAll()
+        {
+            Free = new DVector<T>(Allocated);
+        }
+
+
+        public void FreeAll()
+        {
+            Allocated = new DVector<T>();
+            Free = new DVector<T>();
+        }
 
 	}
 }
