@@ -15,28 +15,24 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 - **DVector**: indexed list with vector-style interface, but internally stored as separate blocks of memory
     - appending is amortized O(1), never a full buffer copy like normal list
-
 - **RefCountVector**: track index reference counts, maintain list of free indices
-
 - **VectorArray2/VectorArray3**: wrapper around regular array providing N-element access
     - eg operator[] gets/sets Vector3d for VectorArray3d, internally is double[3*count]
-
 - **HBitArray**: hierarchical BitArray, efficient iteration over large-but-sparse bitsets
-
 - **Units**: enums, conversions, string representations
-
 - **gParallel**: multi-threading utilities, including parallel *ForEach* that works w/ .Net 3.5
-
 - **gSerialization**: binary serialization of core types (vectors, frames, polygons, DMesh3)
-
 - **CommandArgumentSet**: string-based argument representation/parsing, useful for command line args, etc
+- **DynamicPriorityQueue**: min-heap priority queue for sparse situations (ie subset of large graph). 
+- **IndexPriorityQueue**: min-heap priority queue for dense situations (ie small or large number of items in queue)
+- **DijkstraGraphDistance**: compute shortest-path distances between nodes in graph, from seed points. Graph is defined externally by iterators and Func's, so this class can easily be applied to many situations.
 
 
 # Math
 
 - reasonably complete set of vector-math objects, implemented as structs
     - Vector2/3, Matrix2/3, Quaternion, Segment2/3, Line2/3, Ray3, Triangle2/3, AxisAlignedBox2/3, (oriented) Box2/3
-    - Index2/3/4
+    - Index2/3/4, int Vector 2/3i, int AxisAlignedBox3i
     - Interval1d, and Interval1i which is IEnumerable
     - double & float versions of vector/line/ray/segment/box types (and int types for vectors)
     - implicit float->double conversion operators between types, explicit double->float operators
@@ -51,19 +47,30 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
     - ray-plane intersection
     - **Frames are awesome** and you should use them instead of matrices!!
 
+- **MathUtil**: constants, IsFinite, EpsilonEqual, PrecisionEqual, Clamp, RangeClamp, SignedClamp, ClampAngle (properly handles negative angles & zero-crossings!), 3-item Min/Max/MinMax, PlaneAngle, MostParallelAxis, Lerp, SmoothInterp, SmoothRise0To1, LinearRampT (with deadzone), Area and Normal of 3D triangle, FastNormal, VectorCot/VectorTan (fast co/tangent between 3D vectors), IsObtuse, IsLeft
+
 - **TransformSequence**: stack of affine transformations
 - **IndexUtil**: utility functions for working with tuples/lists of indices (cycling, filtering, etc)
 - **BoundsUtil**: construct bboxes from different data sources, containment tests
+- **QueryTuple2d**: robust 2D triangle predicates (ported from GTEngine)
 
 - **Integrate1d**: Romberg integration, Gaussian quadrature with legendre polynomials, trapezoid rule
 - **Interval1d**: 1D interval class/intersection/etc
 
+# Approximation
+
+- **BiArcFit2**: fit 2D bi-arc to pair of points and tangents
+- **QuadraticFit2**: fit general quadratic or 2D circle to set of 2D points
+- **GaussPointsFit3**: fit mean/covariance of gaussian distribution to set of 3D points
+- **OrthogonalPlaneFit3**: fit of plane to 3D point set
+
 
 # Solvers
 
-- basic arbitrary-size **DenseMatrix**, **DiagonalMatrix**, **SymmetricSparseMatrix**
+- basic arbitrary-size **DenseMatrix**, **DenseVector**, **DiagonalMatrix**, **SymmetricSparseMatrix** (based on Dictionary), **PackedSparseMatrix** (row arrays)
 - **SparseSymmetricCG** conjugate-gradient matrix solver
 - **SingularValueDecomposition** SVD for arbitrary matrices
+- **SymmetricEigenSolver** eigensolver for symmetric matrices using Symmetric QR, ported from GTEngine. 
 
 
 
@@ -129,6 +136,10 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 - **RegionRemesher**: applies *Remesher* to sub-region of a *DMesh3*, via *DSubmesh3*
     - boundary of sub-region automatically preserved
     - *BackPropropagate()* function integrates submesh back into input mesh
+    
+- **Reducer**: edge-collapse mesh simplification using QEM (Quadric Error Metric)
+    - entire mesh can be constrained to lie on an IProjectionTarget (eg for reprojection onto initial surface)
+    - uses same **MeshConstraints** system as Remesher
     
 - Mesh manipulation/query utilities
     - **MeshEditor**: low-level mesh editing operations
