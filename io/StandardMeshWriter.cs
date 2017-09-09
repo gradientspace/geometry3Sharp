@@ -82,7 +82,6 @@ namespace g3
                 STLWriter writer = new STLWriter();
                 var result = writer.Write(w, vMeshes, options);
                 w.Close();
-                file_stream.Close();
                 return result;
 
             } else {
