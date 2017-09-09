@@ -9,7 +9,8 @@ namespace g3
     /// <summary>
     /// This is a priority queue class that does not use an object for each queue node.
     /// Integer IDs must be provided by the user to identify unique nodes.
-    /// The max expected ID must also be provided (although this could be relaxed by resizing in Enqueue...)
+    /// Internally an array is used to keep track of the mapping from ids to internal indices,
+    /// so the max ID must also be provided.
     /// 
     /// conceptually based on https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
     /// </summary>
@@ -20,16 +21,16 @@ namespace g3
 
         struct QueueNode
         {
-            public int id;
+            public int id;              // external id
 
-            public float priority;      // queue internals
-            public int index;           // queue internals
+            public float priority;      // the priority of this id
+            public int index;           // index in tree data structure (tree is stored as flat array)
         }
 
-        DVector<QueueNode> nodes;       // list of allocated nodes, active up to num_nodes
+        DVector<QueueNode> nodes;       // tree of allocated nodes, stored linearly. active up to num_nodes (allocated may be larger)
         int num_nodes;                  // count of active nodes
         int[] id_to_index;              // mapping from external ids to internal node indices
-                                        // [TODO] could make this sparse somehow? use SparseList?
+                                        // [TODO] could make this sparse using SparseList...
 
 
         public IndexPriorityQueue(int maxIndex)
@@ -62,7 +63,9 @@ namespace g3
             get { return nodes[1].id; }
         }
 
-
+        /// <summary>
+        /// Priority of node at head of queue
+        /// </summary>
         public float FirstPriority {
             get { return nodes[1].priority; }
         }
@@ -159,13 +162,16 @@ namespace g3
                 return;
             }
 
+            // [RMS] is there a better way to do this? seems random to move the last node to
+            // top of tree? But I guess otherwise we might have to shift entire branches??
+
             //Swap the node with the last node
             swap_nodes_at_indices(iNode, num_nodes);
             // after swap, inode is the one we want to keep, and numNodes is the one we discard
             nodes[num_nodes] = new QueueNode();
             num_nodes--;
 
-            //Now bubble formerLastNode (which is no longer the last node) up or down as appropriate
+            //Now shift iNode (ie the former last node) up or down as appropriate
             on_node_updated(iNode);
         }
 
@@ -184,9 +190,7 @@ namespace g3
             id_to_index[n1.id] = i2;
         }
 
-        /// <summary>
         /// move node at iFrom to iTo
-        /// </summary>
         private void move(int iFrom, int iTo)
         {
             QueueNode n = nodes[iFrom];
@@ -195,51 +199,83 @@ namespace g3
             id_to_index[n.id] = iTo;
         }
 
+        /// set node at iTo
+        private void set(int iTo, ref QueueNode n)
+        {
+            n.index = iTo;
+            nodes[iTo] = n;
+            id_to_index[n.id] = iTo;
+        }
 
 
+        // move iNode up tree to correct position by iteratively swapping w/ parent
         private void move_up(int iNode)
         {
-            // while our priority is lower than parent, we swap upwards
+            // save start node, we will move this one to correct position in tree
+            int iStart = iNode;
+            QueueNode iStartNode = nodes[iStart];
+
+            // while our priority is lower than parent, we swap upwards, ie move parent down
             int iParent = iNode / 2;
             while ( iParent >= 1 ) {
-                if ( compare_priority(iParent, iNode) )
+                if (nodes[iParent].priority < iStartNode.priority)
                     break;
-                swap_nodes_at_indices(iNode, iParent);
+                move(iParent, iNode);
                 iNode = iParent;
                 iParent = nodes[iNode].index / 2;
+            }
+
+            // write input node into final position, if we moved it
+            if (iNode != iStart) {
+                set(iNode, ref iStartNode);
             }
         }
 
 
-
+        // move iNode down tree branches to correct position, by iteratively swapping w/ children
         private void move_down(int iNode)
         {
+            // save start node, we will move this one to correct position in tree
+            int iStart = iNode;
+            QueueNode iStartNode = nodes[iStart];
+
+            // keep moving down until lower nodes have higher priority
             while (true) {
-                int iParent = iNode;
+                int iMoveTo = iNode;
                 int iLeftChild = 2 * iNode;
 
                 // past end of tree, must be in the right spot
-                if(iLeftChild > num_nodes) {
+                if (iLeftChild > num_nodes) {
                     break;
                 }
 
                 // check if priority is higher than either child
-                if( compare_priority(iLeftChild, iParent) ) 
-                    iParent = iLeftChild;
-
+                float min_priority = iStartNode.priority;
+                float left_child_priority = nodes[iLeftChild].priority;
+                if (left_child_priority < min_priority) {
+                    iMoveTo = iLeftChild;
+                    min_priority = left_child_priority;
+                }
                 int iRightChild = iLeftChild + 1;
-                if ( iRightChild <= num_nodes ) {
-                    if ( compare_priority(iRightChild, iParent) )
-                        iParent = iRightChild;
+                if (iRightChild <= num_nodes) {
+                    if (nodes[iRightChild].priority < min_priority) {
+                        iMoveTo = iRightChild;
+                    }
                 }
 
-                // if we found node with higher priority, swap downwards with that child and continue
-                if (iParent != iNode) {
-                    swap_nodes_at_indices(iParent, iNode);
-                    iNode = iParent;
+                // if we found node with higher priority, swap with it (ie move it up) and take its place
+                // (but we only write start node to final position, not intermediary slots)
+                if (iMoveTo != iNode) {
+                    move(iMoveTo, iNode);
+                    iNode = iMoveTo;
                 } else {
                     break;
                 }
+            }
+
+            // if we moved node, write it to its new position
+            if ( iNode != iStart ) {
+                set(iNode, ref iStartNode);
             }
         }
 
