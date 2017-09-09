@@ -149,7 +149,7 @@ namespace g3
                 if (dense != null) {
                     dense[idx] = value;
                 } else {
-                    sparse.Add(idx, value);
+                    sparse[idx] = value;
                 }
             }
         }
@@ -199,6 +199,17 @@ namespace g3
                     yield return v;
             }
         }
+
+
+        public void Clear()
+        {
+            if (dense != null) {
+                Array.Clear(dense, 0, dense.Length);
+            } else {
+                sparse.Clear();
+            }           
+        }
+
     }
 
 
