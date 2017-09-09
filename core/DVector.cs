@@ -15,12 +15,14 @@ namespace g3
     public class DVector<T>
     {
         List<T[]> Blocks;
-        int nBlockSize;
         int iCurBlock;
         int iCurBlockUsed;
+        
+        // [RMS] nBlockSize must be a power-of-two, so we can use bit-shifts in operator[]
+        int nBlockSize = 2048;   // (1 << 11)
+        const int nShiftBits = 11;
 
         public DVector() {
-            nBlockSize = 2048;
             iCurBlock = 0;
             iCurBlockUsed = 0;
             Blocks = new List<T[]>();
@@ -41,13 +43,11 @@ namespace g3
 
         public DVector(T[] data)
         {
-            nBlockSize = 2048;
             Initialize(data);
         }
 
         public DVector(IEnumerable<T> init)
         {
-            nBlockSize = 2048;
             iCurBlock = 0;
             iCurBlockUsed = 0;
             Blocks = new List<T[]>();
@@ -171,16 +171,18 @@ namespace g3
 
         public T this[int i]
         {
+            // [RMS] bit-shifts here are significantly faster
             get {
-                // [RMS] this is definitely marginally faster =)
-                int bi = i / nBlockSize;
-                return Blocks[bi][i - bi * nBlockSize];
-                //return Blocks[i / nBlockSize][i % nBlockSize];
+                //int bi = i / nBlockSize;
+                //return Blocks[bi][i - (bi * nBlockSize)];
+                int bi = i >> nShiftBits;
+                return Blocks[bi][i - (bi << nShiftBits)];
             }
             set {
-                int bi = i / nBlockSize;
-                Blocks[bi][i - bi * nBlockSize] = value;
-                //Blocks[i / nBlockSize][i % nBlockSize] = value;
+                //int bi = i / nBlockSize;
+                //Blocks[bi][i - (bi * nBlockSize)] = value;
+                int bi = i >> nShiftBits;
+                Blocks[bi][i - (bi << nShiftBits)] = value;
             }
         }
 
