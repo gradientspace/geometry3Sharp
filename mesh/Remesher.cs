@@ -329,7 +329,7 @@ namespace g3 {
 				DMesh3.EdgeCollapseInfo collapseInfo;
 				MeshResult result = mesh.CollapseEdge(iKeep, iCollapse, out collapseInfo);
 				if ( result == MeshResult.Ok ) {
-					mesh.SetVertex(b, vNewPos);
+					mesh.SetVertex(iKeep, vNewPos);
                     if (constraints != null) {
                         constraints.ClearEdgeConstraint(edgeID);
                         constraints.ClearEdgeConstraint(collapseInfo.eRemoved0);
