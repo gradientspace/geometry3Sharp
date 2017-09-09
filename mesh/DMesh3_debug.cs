@@ -13,8 +13,21 @@ namespace g3
                 throw new Exception("DMesh3.debug_is_vertex - not a vertex!");
         }
 
+        [Conditional("DEBUG")]
+        public void debug_check_is_triangle(int t)
+        {
+            if (!IsTriangle(t))
+                throw new Exception("DMesh3.debug_is_triangle - not a triangle!");
+        }
 
-		public void debug_print_vertex(int v) {
+        [Conditional("DEBUG")]
+        public void debug_check_is_edge(int e)
+        {
+            if (!IsEdge(e))
+                throw new Exception("DMesh3.debug_is_edge - not an edge!");
+        }
+
+        public void debug_print_vertex(int v) {
 			System.Console.WriteLine("Vertex " + v.ToString());
 			List<int> tris = new List<int>();
 			GetVtxTriangles(v, tris, false);

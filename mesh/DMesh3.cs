@@ -379,57 +379,72 @@ namespace g3
 
 
         public Vector3d GetVertex(int vID) {
-            return vertices_refcount.isValid(vID) ?
-                new Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]) : InvalidVertex;
+            debug_check_is_vertex(vID);
+            int i = 3 * vID;
+            return new Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
         }
 
         public void SetVertex(int vID, Vector3d vNewPos) {
             Debug.Assert(vNewPos.IsFinite);     // this will really catch a lot of bugs...
+            debug_check_is_vertex(vID);
 
-			if ( vertices_refcount.isValid(vID) ) {
-				int i = 3*vID;
-				vertices[i] = vNewPos.x; vertices[i+1] = vNewPos.y; vertices[i+2] = vNewPos.z;
-                updateTimeStamp(true);
-			}
+			int i = 3*vID;
+			vertices[i] = vNewPos.x; vertices[i+1] = vNewPos.y; vertices[i+2] = vNewPos.z;
+            updateTimeStamp(true);
 		}
 
 		public Vector3f GetVertexNormal(int vID) {
             if (normals == null)
                 return Vector3f.AxisY;
-            else
-                return vertices_refcount.isValid(vID) ?
-                    new Vector3f(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]) : Vector3f.AxisY;
+            else {
+                debug_check_is_vertex(vID);
+                int i = 3 * vID;
+                return new Vector3f(normals[i], normals[i + 1], normals[i + 2]);
+            }
 		}
 
 		public void SetVertexNormal(int vID, Vector3f vNewNormal) {
-			if ( HasVertexNormals && vertices_refcount.isValid(vID) ) {
-				int i = 3*vID;
+			if ( HasVertexNormals ) {
+                debug_check_is_vertex(vID);
+                int i = 3*vID;
 				normals[i] = vNewNormal.x; normals[i+1] = vNewNormal.y; normals[i+2] = vNewNormal.z;
                 updateTimeStamp(false);
 			}
 		}
 
-		public Vector3f GetVertexColor(int vID) { 
-			return vertices_refcount.isValid(vID) ?
-                new Vector3f(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]) : Vector3f.One;
+		public Vector3f GetVertexColor(int vID) {
+            if (normals == null)
+                return Vector3f.One;
+            else {
+                debug_check_is_vertex(vID);
+                int i = 3 * vID;
+                return new Vector3f(colors[i], colors[i + 1], colors[i + 2]);
+            }
 		}
 
 		public void SetVertexColor(int vID, Vector3f vNewColor) {
-			if ( HasVertexColors && vertices_refcount.isValid(vID) ) {
-				int i = 3*vID;
+			if ( HasVertexColors ) {
+                debug_check_is_vertex(vID);
+                int i = 3*vID;
 				colors[i] = vNewColor.x; colors[i+1] = vNewColor.y; colors[i+2] = vNewColor.z;
                 updateTimeStamp(false);
 			}
 		}
 
-		public Vector2f GetVertexUV(int vID) { 
-			return vertices_refcount.isValid(vID) ?
-                new Vector2f(uv[2 * vID], uv[2 * vID + 1]) : Vector2f.Zero;
+		public Vector2f GetVertexUV(int vID) {
+            if (uv == null)
+                return Vector2f.Zero;
+            else {
+                debug_check_is_vertex(vID);
+                int i = 2 * vID;
+                return new Vector2f(uv[i], uv[i + 1]);
+            }
 		}
 
 		public void SetVertexUV(int vID, Vector2f vNewUV) {
-			if ( HasVertexUVs && vertices_refcount.isValid(vID) ) {
-				int i = 2*vID;
+			if ( HasVertexUVs ) {
+                debug_check_is_vertex(vID);
+                int i = 2*vID;
 				uv[i] = vNewUV.x; uv[i+1] = vNewUV.y;
                 updateTimeStamp(false);
 			}
@@ -528,13 +543,15 @@ namespace g3
 
 
         public Index3i GetTriangle(int tID) {
-            return triangles_refcount.isValid(tID) ?
-                new Index3i(triangles[3 * tID], triangles[3 * tID + 1], triangles[3 * tID + 2]) : InvalidTriangle;
+            debug_check_is_triangle(tID);
+            int i = 3 * tID;
+            return new Index3i(triangles[i], triangles[i + 1], triangles[i + 2]);
         }
 
         public Index3i GetTriEdges(int tID) {
-            return triangles_refcount.isValid(tID) ?
-                new Index3i(triangle_edges[3 * tID], triangle_edges[3 * tID + 1], triangle_edges[3 * tID + 2]) : InvalidTriangle;
+            debug_check_is_triangle(tID);
+            int i = 3 * tID;
+            return new Index3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
         }
 
         public Index3i GetTriNeighbourTris(int tID) {
@@ -556,7 +573,8 @@ namespace g3
 		}
 
 		public void SetTriangleGroup(int tid, int group_id) {
-			if ( triangle_groups != null && triangles_refcount.isValid(tid) ) {
+			if ( triangle_groups != null ) {
+                debug_check_is_triangle(tid);
                 triangle_groups[tid] = group_id;
                 max_group_id = Math.Max(max_group_id, group_id+1);
                 updateTimeStamp(false);
@@ -681,23 +699,23 @@ namespace g3
 
 
         public Index2i GetEdgeV(int eID) {
-            return edges_refcount.isValid(eID) ?
-                new Index2i(edges[4 * eID], edges[4 * eID + 1]) : InvalidEdge;
+            debug_check_is_edge(eID);
+            int i = 4 * eID;
+            return new Index2i(edges[i], edges[i + 1]);
         }
         public bool GetEdgeV(int eID, ref Vector3d a, ref Vector3d b) {
-            if ( edges_refcount.isValid(eID) ) {
-                int iv0 = 3 * edges[4 * eID];
-                a.x = vertices[iv0]; a.y = vertices[iv0 + 1]; a.z = vertices[iv0 + 2];
-                int iv1 = 3 * edges[4 * eID + 1];
-                b.x = vertices[iv1]; b.y = vertices[iv1 + 1]; b.z = vertices[iv1 + 2];
-                return true;
-            }
-            return false;
+            debug_check_is_edge(eID);
+            int iv0 = 3 * edges[4 * eID];
+            a.x = vertices[iv0]; a.y = vertices[iv0 + 1]; a.z = vertices[iv0 + 2];
+            int iv1 = 3 * edges[4 * eID + 1];
+            b.x = vertices[iv1]; b.y = vertices[iv1 + 1]; b.z = vertices[iv1 + 2];
+            return true;
         }
 
         public Index2i GetEdgeT(int eID) {
-            return edges_refcount.isValid(eID) ?
-                new Index2i(edges[4 * eID + 2], edges[4 * eID + 3]) : InvalidEdge;
+            debug_check_is_edge(eID);
+            int i = 4 * eID;
+            return new Index2i(edges[i + 2], edges[i + 3]);
         }
 
         /// <summary>
@@ -705,14 +723,13 @@ namespace g3
         /// </summary>
         public Index4i GetEdge(int eID)
         {
+            debug_check_is_edge(eID);
             int i = 4 * eID;
-            return edges_refcount.isValid(eID) ?
-                new Index4i(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]) : Index4i.Max;
+            return new Index4i(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]);
         }
 
 		public bool GetEdge(int eID, ref int a, ref int b, ref int t0, ref int t1) {
-			if ( edges_refcount.isValid(eID) == false )
-				return false;
+            debug_check_is_edge(eID);
 			int i = eID*4;
 			a = edges[i]; b = edges[i+1]; t0 = edges[i+2]; t1 = edges[i+3];
 			return true;
