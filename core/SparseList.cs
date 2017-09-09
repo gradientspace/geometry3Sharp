@@ -49,7 +49,7 @@ namespace g3
                 if (dense != null) {
                     dense[idx] = value;
                 } else {
-                    sparse.Add(idx, value);
+                    sparse[idx] = value;
                 }
             }
         }

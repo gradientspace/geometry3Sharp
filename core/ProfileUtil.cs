@@ -111,6 +111,13 @@ namespace g3
                 t.Accumulated = TimeSpan.Zero;
         }
 
+        public void DivideAllAccumulated(int div)
+        {
+            foreach (BlockTimer t in Timers.Values) {
+                t.Accumulated = new TimeSpan(t.Accumulated.Ticks / div);
+            }
+        }
+
 
         public string Elapsed(string label)
         {
