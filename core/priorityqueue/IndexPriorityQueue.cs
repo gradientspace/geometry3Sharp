@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,14 +8,16 @@ namespace g3
 {
 
     /// <summary>
-    /// This is a priority queue class that does not use an object for each queue node.
+    /// This is a min-heap priority queue class that does not use an object for each queue node.
     /// Integer IDs must be provided by the user to identify unique nodes.
     /// Internally an array is used to keep track of the mapping from ids to internal indices,
     /// so the max ID must also be provided.
     /// 
+    /// See DijkstraGraphDistance for example usage.
+    /// 
     /// conceptually based on https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
     /// </summary>
-    public class IndexPriorityQueue
+    public class IndexPriorityQueue : IEnumerable<int>
     {
         // set this to true during development to catch issues
         public bool EnableDebugChecks = false;
@@ -33,11 +36,16 @@ namespace g3
                                         // [TODO] could make this sparse using SparseList...
 
 
-        public IndexPriorityQueue(int maxIndex)
+        /// <summary>
+        /// maxIndex parameter is required because internally a fixed-size array is used to track mapping
+        /// from IDs to internal node indices. If this seems problematic because you won't be inserting the
+        /// full index space, consider a DynamicPriorityQueue instead.
+        /// </summary>
+        public IndexPriorityQueue(int maxID)
         {
             nodes = new DVector<QueueNode>();
-            id_to_index = new int[maxIndex];
-            for (int i = 0; i < maxIndex; ++i)
+            id_to_index = new int[maxID];
+            for (int i = 0; i < maxID; ++i)
                 id_to_index[i] = -1;
             num_nodes = 0;
         }
@@ -48,9 +56,15 @@ namespace g3
         }
 
 
-        public void Clear()
+        /// <summary>
+        /// reset the queue to empty state. 
+        /// if bFreeMemory is false, we don't discard internal data structures, so there will be less allocation next time
+        /// (this does not make a huge difference...)
+        /// </summary>
+        public void Clear(bool bFreeMemory = true)
         {
-            nodes = new DVector<QueueNode>();
+            if ( bFreeMemory )
+                nodes = new DVector<QueueNode>();
             Array.Clear(id_to_index, 0, id_to_index.Length);
             num_nodes = 0;
         }
@@ -148,9 +162,22 @@ namespace g3
 
 
 
+        public IEnumerator<int> GetEnumerator()
+        {
+            for (int i = 1; i <= num_nodes; i++)
+                yield return nodes[i].id;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+
+
         /*
          * Internals
-         */ 
+         */
 
 
         private void remove_at_index(int iNode)
@@ -249,7 +276,7 @@ namespace g3
                     break;
                 }
 
-                // check if priority is higher than either child
+                // check if priority is larger than either child - if so we want to swap
                 float min_priority = iStartNode.priority;
                 float left_child_priority = nodes[iLeftChild].priority;
                 if (left_child_priority < min_priority) {
@@ -282,13 +309,10 @@ namespace g3
 
 
 
-
-        /// <summary>
         /// call after node is modified, to move it to correct position in queue
-        /// </summary>
         private void on_node_updated(int iNode) {
             int iParent = iNode / 2;
-            if ( iParent > 0 && compare_priority(iNode, iParent) )
+            if ( iParent > 0 && has_higher_priority(iNode, iParent) )
                 move_up(iNode);
             else
                 move_down(iNode);
@@ -299,14 +323,30 @@ namespace g3
 
 
 
-        /// <summary>
         /// returns true if priority at iHigher is less than at iLower
-        /// </summary>
-        private bool compare_priority(int iHigher, int iLower)
+        private bool has_higher_priority(int iHigher, int iLower)
         {
             return (nodes[iHigher].priority < nodes[iLower].priority);
         }
 
+
+
+        /// <summary>
+        /// Check if queue has been corrupted
+        /// </summary>
+        public bool IsValidQueue()
+        {
+            for (int i = 1; i < num_nodes; i++) {
+                int childLeftIndex = 2 * i;
+                if (childLeftIndex < num_nodes && has_higher_priority(childLeftIndex, i))
+                    return false;
+
+                int childRightIndex = childLeftIndex + 1;
+                if (childRightIndex < num_nodes && has_higher_priority(childRightIndex, i))
+                    return false;
+            }
+            return true;
+        }
 
 
         public void DebugPrint() {
