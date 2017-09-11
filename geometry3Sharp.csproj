@@ -57,8 +57,8 @@
     <Compile Include="core\HashUtil.cs" />
     <Compile Include="core\HBitArray.cs" />
     <Compile Include="core\Indexing.cs" />
-    <Compile Include="core\priorityqueue\DynamicPriorityQueue.cs" />
-    <Compile Include="core\priorityqueue\IndexPriorityQueue.cs" />
+    <Compile Include="core\DynamicPriorityQueue.cs" />
+    <Compile Include="core\IndexPriorityQueue.cs" />
     <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\Snapping.cs" />
@@ -102,6 +102,7 @@
     <Compile Include="math\Integrate1d.cs" />
     <Compile Include="math\Interval1i.cs" />
     <Compile Include="math\MathUtil.cs" />
+    <Compile Include="math\Matrix2f.cs" />
     <Compile Include="math\Matrix2d.cs" />
     <Compile Include="math\Matrix3f.cs" />
     <Compile Include="math\MatrixUtil.cs" />
@@ -141,6 +142,7 @@
     <Compile Include="io\StandardMeshReader.cs" />
     <Compile Include="io\StandardMeshWriter.cs" />
     <Compile Include="mesh_generators\VoxelSurfaceGenerator.cs" />
+    <Compile Include="mesh_ops\MeshLocalParam.cs" />
     <Compile Include="mesh_ops\LaplacianMeshSmoother.cs" />
     <Compile Include="mesh_ops\LaplacianMeshDeformer.cs" />
     <Compile Include="mesh\MeshConstraints.cs" />
