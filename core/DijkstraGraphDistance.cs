@@ -237,11 +237,11 @@ namespace g3
         {
             float cur_dist = parent.priority;
             foreach (int nbr_id in NeighboursF(parent.id)) {
-                float nbr_dist = NodeDistanceF(parent.id, nbr_id) + cur_dist;
                 GraphNode nbr = get_node(nbr_id);
                 if (nbr.frozen)
                     continue;
 
+                float nbr_dist = NodeDistanceF(parent.id, nbr_id) + cur_dist;
                 if (SparseQueue.Contains(nbr)) {
                     if (nbr_dist < nbr.priority) {
                         nbr.parent = parent;
@@ -268,11 +268,11 @@ namespace g3
             GraphNodeStruct g = DenseNodes[parent_id];
             float cur_dist = g.distance;
             foreach (int nbr_id in NeighboursF(parent_id)) {
-                float nbr_dist = NodeDistanceF(parent_id, nbr_id) + cur_dist;
                 GraphNodeStruct nbr = DenseNodes[nbr_id];
                 if (nbr.frozen)
                     continue;
 
+                float nbr_dist = NodeDistanceF(parent_id, nbr_id) + cur_dist;
                 if (DenseQueue.Contains(nbr_id)) {
                     if (nbr_dist < nbr.distance) {
                         nbr.parent = parent_id;

@@ -383,6 +383,11 @@ namespace g3
             int i = 3 * vID;
             return new Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
         }
+        public Vector3f GetVertexf(int vID) {
+            debug_check_is_vertex(vID);
+            int i = 3 * vID;
+            return new Vector3f((float)vertices[i], (float)vertices[i + 1], (float)vertices[i + 2]);
+        }
 
         public void SetVertex(int vID, Vector3d vNewPos) {
             Debug.Assert(vNewPos.IsFinite);     // this will really catch a lot of bugs...
