@@ -14,9 +14,10 @@ namespace g3
         public enum UVModes
         {
             ExponentialMap,
+            ExponentialMap_UpwindAvg,
             PlanarProjection
         }
-        public UVModes UVMode = UVModes.ExponentialMap;
+        public UVModes UVMode = UVModes.ExponentialMap_UpwindAvg;
 
 
         class GraphNode : DynamicPriorityQueueNode, IEquatable<GraphNode>
@@ -102,6 +103,9 @@ namespace g3
                     switch (UVMode) {
                         case UVModes.ExponentialMap:
                             update_uv_expmap(g);
+                            break;
+                        case UVModes.ExponentialMap_UpwindAvg:
+                            update_uv_upwind_expmap(g);
                             break;
                         case UVModes.PlanarProjection:
                             update_uv_planar(g);
@@ -217,6 +221,34 @@ namespace g3
             node.uv = propagate_uv(PositionF(vid), node.parent.uv, ref parentFrame, ref SeedFrame);
         }
 
+
+
+        void update_uv_upwind_expmap(GraphNode node)
+        {
+            int vid = node.id;
+            Vector3f pos = PositionF(vid);
+
+            Vector2f avg_uv = Vector2f.Zero;
+            float fWeightSum = 0;
+            int nbr_count = 0;
+            foreach ( var nbr_id in NeighboursF(node.id) ) {
+                GraphNode nbr_node = get_node(nbr_id, false);
+                if ( nbr_node.frozen ) {
+                    Vector3f nbr_pos = PositionF(nbr_id);
+                    Frame3f nbr_frame = new Frame3f(nbr_pos, NormalF(nbr_id));
+                    Vector2f nbr_uv = propagate_uv(pos, nbr_node.uv, ref nbr_frame, ref SeedFrame);
+                    float fWeight = 1.0f / (pos.DistanceSquared(nbr_pos) + MathUtil.ZeroTolerancef);
+                    avg_uv += fWeight * nbr_uv;
+                    fWeightSum += fWeight;
+                    nbr_count++;
+                }
+            }
+            Util.gDevAssert(nbr_count > 0);
+
+            //avg_uv /= (float)nbr_count;
+            avg_uv /= fWeightSum;
+            node.uv = avg_uv;
+        }
 
 
 
