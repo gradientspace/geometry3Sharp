@@ -668,6 +668,46 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Compute interpolated vertex attributes at point of triangle
+        /// </summary>
+        public void GetTriBaryPoint(int tID, double bary0, double bary1, double bary2, out NewVertexInfo vinfo)
+        {
+            vinfo = new NewVertexInfo();
+            int ai = 3 * triangles[3 * tID],
+                bi = 3 * triangles[3 * tID + 1],
+                ci = 3 * triangles[3 * tID + 2];
+            vinfo.v = new Vector3d(
+                (bary0 * vertices[ai] + bary1 * vertices[bi] + bary2 * vertices[ci]),
+                (bary0 * vertices[ai + 1] + bary1 * vertices[bi + 1] + bary2 * vertices[ci + 1]),
+                (bary0 * vertices[ai + 2] + bary1 * vertices[bi + 2] + bary2 * vertices[ci + 2]));
+            vinfo.bHaveN = HasVertexNormals;
+            if (vinfo.bHaveN) {
+                vinfo.n = new Vector3f(
+                    (bary0 * normals[ai] + bary1 * normals[bi] + bary2 * normals[ci]),
+                    (bary0 * normals[ai + 1] + bary1 * normals[bi + 1] + bary2 * normals[ci + 1]),
+                    (bary0 * normals[ai + 2] + bary1 * normals[bi + 2] + bary2 * normals[ci + 2]));
+                vinfo.n.Normalize();
+            }
+            vinfo.bHaveC = HasVertexColors;
+            if (vinfo.bHaveC) {
+                vinfo.c = new Vector3f(
+                    (bary0 * colors[ai] + bary1 * colors[bi] + bary2 * colors[ci]),
+                    (bary0 * colors[ai + 1] + bary1 * colors[bi + 1] + bary2 * colors[ci + 1]),
+                    (bary0 * colors[ai + 2] + bary1 * colors[bi + 2] + bary2 * colors[ci + 2]));
+            }
+            vinfo.bHaveUV = HasVertexUVs;
+            if (vinfo.bHaveUV) {
+                ai = 2 * triangles[3 * tID];
+                bi = 2 * triangles[3 * tID + 1];
+                ci = 2 * triangles[3 * tID + 2];
+                vinfo.uv = new Vector2f(
+                    (bary0 * uv[ai] + bary1 * uv[bi] + bary2 * uv[ci]),
+                    (bary0 * uv[ai + 1] + bary1 * uv[bi + 1] + bary2 * uv[ci + 1]));
+            }
+        }
+
+
 
         public AxisAlignedBox3d GetTriBounds(int tID)
         {
@@ -753,7 +793,7 @@ namespace g3
                     return new Index2i(tri[ai], tri[(ai + 1) % 3]);
                 }
             }
-            Debug.Assert(false);        // should not happen!
+            Util.gDevAssert(false);
             return InvalidEdge;
         }
 			
@@ -769,7 +809,7 @@ namespace g3
                 }
                 return n;
             }
-            Debug.Assert(false);
+            Util.gDevAssert(false);
             return Vector3d.Zero;
         }
 
@@ -785,7 +825,7 @@ namespace g3
 					mt*vertices[iv0 + 1] + t*vertices[iv1 + 1],
 					mt*vertices[iv0 + 2] + t*vertices[iv1 + 2]);
 			}
-			Debug.Assert(false);
+            Util.gDevAssert(false);
 			return Vector3d.Zero;
 		}
 

@@ -86,9 +86,32 @@ namespace g3
         }
 
 
-		// IParametricCurve2d interface
 
-		public bool IsClosed { get { return false; } }
+
+        /// <summary>
+        /// Returns:
+        ///   +1, on right of line
+        ///   -1, on left of line
+        ///    0, on the line
+        /// </summary>
+        public int WhichSide(Vector2d test)
+        {
+            // [TODO] subtract Center from test?
+            Vector2d vec0 = Center + Extent * Direction;
+            Vector2d vec1 = Center - Extent * Direction;
+            double x0 = test[0] - vec0[0];
+            double y0 = test[1] - vec0[1];
+            double x1 = vec1[0] - vec0[0];
+            double y1 = vec1[1] - vec0[1];
+            double det = x0 * y1 - x1 * y0;
+            return (det > (double)0 ? +1 : (det < (double)0 ? -1 : 0));
+        }
+
+
+
+        // IParametricCurve2d interface
+
+        public bool IsClosed { get { return false; } }
 
 		public double ParamLength { get { return 1.0f; } }
 

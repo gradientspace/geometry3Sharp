@@ -22,14 +22,22 @@ namespace g3
 			Timestamp = 0;
 		}
 
-		public PolyLine2d(Polygon2d copy)
+        public PolyLine2d(Polygon2d copy, bool bDuplicateFirstLast)
 		{
-			vertices = new List<Vector2d>(copy);
-			vertices.Add(copy.Start);  // duplicate start vert
-			Timestamp = 0;
+            if (bDuplicateFirstLast)
+			    vertices = new List<Vector2d>(copy);        // Polygon2d iterator outputs first vtx again at end...
+            else
+                vertices = new List<Vector2d>(copy.Vertices);        // Polygon2d iterator outputs first vtx again at end...
+            Timestamp = 0;
 		}
 
-		public PolyLine2d(Vector2d[] v)
+        public PolyLine2d(IList<Vector2d> copy)
+        {
+            vertices = new List<Vector2d>(copy);
+            Timestamp = 0;
+        }
+
+        public PolyLine2d(Vector2d[] v)
 		{
 			vertices = new List<Vector2d>(v);
 			Timestamp = 0;

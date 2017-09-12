@@ -479,6 +479,55 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Compute barycentric coordinates/weights of vPoint inside triangle (V0,V1,V2). 
+        /// If point is in triangle plane and inside triangle, coords will be positive and sum to 1.
+        /// ie if result is a, then vPoint = a.x*V0 + a.y*V1 + a.z*V2.
+        /// </summary>
+        public static Vector3d BarycentricCoords(Vector3d vPoint, Vector3d V0, Vector3d V1, Vector3d V2)
+        {
+            Vector3d kV02 = V0 - V2;
+            Vector3d kV12 = V1 - V2;
+            Vector3d kPV2 = vPoint - V2;
+            double fM00 = kV02.Dot(kV02);
+            double fM01 = kV02.Dot(kV12);
+            double fM11 = kV12.Dot(kV12);
+            double fR0 = kV02.Dot(kPV2);
+            double fR1 = kV12.Dot(kPV2);
+            double fDet = fM00 * fM11 - fM01 * fM01;
+            double fInvDet = 1.0 / fDet;
+            double fBary1 = (fM11 * fR0 - fM01 * fR1) * fInvDet;
+            double fBary2 = (fM00 * fR1 - fM01 * fR0) * fInvDet;
+            double fBary3 = 1.0 - fBary1 - fBary2;
+            return new Vector3d(fBary1, fBary2, fBary3);
+        }
+
+
+        /// <summary>
+        /// Compute barycentric coordinates/weights of vPoint inside triangle (V0,V1,V2). 
+        /// If point is inside triangle, coords will pe positive and sum to 1.
+        /// ie if result is a, then vPoint = a.x*V0 + a.y*V1 + a.z*V2.
+        /// </summary>
+        public static Vector3d BarycentricCoords(Vector2d vPoint, Vector2d V0, Vector2d V1, Vector2d V2)
+        {
+            Vector2d kV02 = V0 - V2;
+            Vector2d kV12 = V1 - V2;
+            Vector2d kPV2 = vPoint - V2;
+            double fM00 = kV02.Dot(kV02);
+            double fM01 = kV02.Dot(kV12);
+            double fM11 = kV12.Dot(kV12);
+            double fR0 = kV02.Dot(kPV2);
+            double fR1 = kV12.Dot(kPV2);
+            double fDet = fM00 * fM11 - fM01 * fM01;
+            double fInvDet = 1.0 / fDet;
+            double fBary1 = (fM11 * fR0 - fM01 * fR1) * fInvDet;
+            double fBary2 = (fM00 * fR1 - fM01 * fR0) * fInvDet;
+            double fBary3 = 1.0 - fBary1 - fBary2;
+            return new Vector3d(fBary1, fBary2, fBary3);
+        }
+
+
+
 
         static readonly int[] powers_of_10 = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
         public static int PowerOf10(int n) {

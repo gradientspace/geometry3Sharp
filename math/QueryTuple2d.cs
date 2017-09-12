@@ -157,7 +157,7 @@ namespace g3
         // functions return 'true' for a positive ordering and 'false' for a
         // negative ordering.
 
-        bool Sort (ref int v0, ref int v1)
+        public static bool Sort (ref int v0, ref int v1)
         {
             int j0, j1;
             bool positive;
@@ -176,7 +176,7 @@ namespace g3
             return positive;
         }
 
-        bool Sort (ref int v0, ref int v1, ref int v2)
+        public static bool Sort (ref int v0, ref int v1, ref int v2)
         {
             int j0, j1, j2;
             bool positive;
@@ -218,7 +218,7 @@ namespace g3
             return positive;
         }
 
-        bool Sort (ref int v0, ref int v1, ref int v2, ref int v3)
+        public static bool Sort (ref int v0, ref int v1, ref int v2, ref int v3)
         {
             int j0, j1, j2, j3;
             bool positive;
