@@ -860,6 +860,74 @@ namespace g3
 
 
 
+        public struct PokeTriangleInfo
+        {
+            public int new_vid;
+            public int new_t1, new_t2;
+            public Index3i new_edges;
+        }
+        public virtual MeshResult PokeTriangle(int tid, out PokeTriangleInfo result)
+        {
+            return PokeTriangle(tid, Vector3d.One / 3.0, out result);
+        }
+        public virtual MeshResult PokeTriangle(int tid, Vector3d baryCoordinates, out PokeTriangleInfo result)
+        {
+            result = new PokeTriangleInfo();
+
+            if (!IsTriangle(tid))
+                return MeshResult.Failed_NotATriangle;
+
+            Index3i tv = GetTriangle(tid);
+            Index3i te = GetTriEdges(tid);
+
+            // create new vertex with interpolated vertex attribs
+            NewVertexInfo vinfo;
+            GetTriBaryPoint(tid, baryCoordinates.x, baryCoordinates.y, baryCoordinates.z, out vinfo);
+            int center = AppendVertex(vinfo);
+
+            // add in new edges to center vtx, do not connect to triangles yet
+            int eaC = add_edge(tv.a, center, -1, -1);
+            int ebC = add_edge(tv.b, center, -1, -1);
+            int ecC = add_edge(tv.c, center, -1, -1);
+            vertices_refcount.increment(tv.a);
+            vertices_refcount.increment(tv.b);
+            vertices_refcount.increment(tv.c);
+            vertices_refcount.increment(center, 3);
+
+            // old triangle becomes tri along first edge
+            set_triangle(tid, tv.a, tv.b, center);
+            set_triangle_edges(tid, te.a, ebC, eaC);
+
+            // add two new triangles
+            int t1 = add_triangle_only(tv.b, tv.c, center, te.b, ecC, ebC );
+            int t2 = add_triangle_only(tv.c, tv.a, center, te.c, eaC, ecC);
+
+            // second and third edges of original tri have new neighbours
+            replace_edge_triangle(te.b, tid, t1);
+            replace_edge_triangle(te.c, tid, t2);
+
+            // set the triangles for the new edges we created above
+            set_edge_triangles(eaC, tid, t2);
+            set_edge_triangles(ebC, tid, t1);
+            set_edge_triangles(ecC, t1, t2);
+
+            // transfer groups
+            if ( HasTriangleGroups ) {
+                int g = triangle_groups[tid];
+                triangle_groups.insert(g, t1);
+                triangle_groups.insert(g, t2);
+            }
+
+            result.new_vid = center;
+            result.new_t1 = t1;
+            result.new_t2 = t2;
+            result.new_edges = new Index3i(eaC, ebC, ecC);
+
+            return MeshResult.Ok;
+        }
+
+
+
 
 
         // internal
