@@ -559,6 +559,12 @@ namespace g3
             return new Index3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
         }
 
+        public int GetTriEdge(int tid, int j) {
+            debug_check_is_triangle(tid);
+            return triangle_edges[3*tid+j];
+        }
+
+
         public Index3i GetTriNeighbourTris(int tID) {
             if (triangles_refcount.isValid(tID)) {
                 int tei = 3 * tID;

@@ -7,7 +7,11 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class Util
+
+    public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }
+
+
+    public static class Util
     {
 
 		static public void gBreakToDebugger() {

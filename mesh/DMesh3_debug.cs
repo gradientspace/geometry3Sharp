@@ -127,10 +127,6 @@ namespace g3
         }
 
 
-
-
-        public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }
-
         /// <summary>
         // This function checks that the mesh is well-formed, ie all internal data
         // structures are consistent
@@ -140,18 +136,13 @@ namespace g3
 			int[] triToVtxRefs = new int[this.MaxVertexID];
 
             bool is_ok = true;
-            Action<bool> CheckOrFailF = (b) => {
-                is_ok = is_ok && b;
-            };
+            Action<bool> CheckOrFailF = (b) => { is_ok = is_ok && b; };
             if ( eFailMode == FailMode.DebugAssert ) {
-                CheckOrFailF = (b) => { Debug.Assert(b);
-                                        is_ok = is_ok && b; };
+                CheckOrFailF = (b) => { Debug.Assert(b); is_ok = is_ok && b; };
             } else if ( eFailMode == FailMode.gDevAssert ) {
-                CheckOrFailF = (b) => { Util.gDevAssert(b);
-                                        is_ok = is_ok && b; };
+                CheckOrFailF = (b) => { Util.gDevAssert(b); is_ok = is_ok && b; };
             } else if ( eFailMode == FailMode.Throw ) {
-                CheckOrFailF = (b) => { if (b == false)
-                                            throw new Exception("DMesh3.CheckValidity: check failed"); };
+                CheckOrFailF = (b) => { if (b == false) throw new Exception("DMesh3.CheckValidity: check failed"); };
             }
 
 			if ( normals != null )

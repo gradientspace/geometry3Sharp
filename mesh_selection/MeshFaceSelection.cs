@@ -298,12 +298,19 @@ namespace g3
 
 
 
-
-        public void FloodFill(int tSeed, Func<int,bool> FilterF = null)
+        /// <summary>
+        /// Grow selection outwards from seed triangle, until it hits boundaries defined by triangle and edge filters.
+        /// Edge filter is not effective unless it (possibly combined w/ triangle filter) defines closed loops.
+        /// </summary>
+        public void FloodFill(int tSeed, Func<int,bool> TriFilterF = null, Func<int, bool> EdgeFilterF = null)
         {
-            FloodFill(new int[] { tSeed }, FilterF);
+            FloodFill(new int[] { tSeed }, TriFilterF, EdgeFilterF);
         }
-        public void FloodFill(int[] Seeds, Func<int,bool> FilterF = null)
+        /// <summary>
+        /// Grow selection outwards from seed triangles, until it hits boundaries defined by triangle and edge filters.
+        /// Edge filter is not effective unless it (possibly combined w/ triangle filter) defines closed loops.
+        /// </summary>
+        public void FloodFill(int[] Seeds, Func<int,bool> TriFilterF = null, Func<int,bool> EdgeFilterF = null)
         {
             DVector<int> stack = new DVector<int>(Seeds);
             while ( stack.size > 0 ) {
@@ -315,7 +322,9 @@ namespace g3
                     int nbr_tid = nbrs[j];
                     if (nbr_tid == DMesh3.InvalidID || IsSelected(nbr_tid))
                         continue;
-                    if (FilterF != null && FilterF(nbr_tid) == false)
+                    if (TriFilterF != null && TriFilterF(nbr_tid) == false)
+                        continue;
+                    if (EdgeFilterF != null && EdgeFilterF(Mesh.GetTriEdge(tID,j)) == false)
                         continue;
                     add(nbr_tid);
 

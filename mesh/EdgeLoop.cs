@@ -31,6 +31,7 @@ namespace g3
                 Edges = edges;
             }
         }
+
         public EdgeLoop(EdgeLoop copy)
         {
             Mesh = copy.Mesh;
@@ -41,6 +42,29 @@ namespace g3
             BowtieVertices = new int[copy.BowtieVertices.Length];
             Array.Copy(copy.BowtieVertices, BowtieVertices, BowtieVertices.Length);
         }
+
+
+        /// <summary>
+        /// construct EdgeLoop from a list of edges of mesh
+        /// </summary>
+        public static EdgeLoop FromEdges(DMesh3 mesh, IList<int> edges)
+        {
+            int[] Edges = new int[edges.Count];
+            for (int i = 0; i < Edges.Length; ++i)
+                Edges[i] = edges[i];
+
+            int[] Vertices = new int[Edges.Length];
+            Index2i start_ev = mesh.GetEdgeV(Edges[0]);
+            Index2i prev_ev = start_ev;
+            for (int i = 1; i < Edges.Length; ++i) {
+                Index2i next_ev = mesh.GetEdgeV(Edges[i % Edges.Length]);
+                Vertices[i] = IndexUtil.find_shared_edge_v(ref prev_ev, ref next_ev);
+                prev_ev = next_ev;
+            }
+            Vertices[0] = IndexUtil.find_edge_other_v(ref start_ev, Vertices[1]);
+            return new EdgeLoop(mesh, Vertices, Edges, false);
+        }
+
 
 
         public int VertexCount {
@@ -204,8 +228,51 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Exhaustively check that verts and edges of this EdgeLoop are consistent. Not for production use.
+        /// </summary>
+        public bool CheckValidity(FailMode eFailMode = FailMode.Throw)
+        {
+            bool is_ok = true;
+            Action<bool> CheckOrFailF = (b) => { is_ok = is_ok && b; };
+            if (eFailMode == FailMode.DebugAssert) {
+                CheckOrFailF = (b) => { Debug.Assert(b); is_ok = is_ok && b; };
+            } else if (eFailMode == FailMode.gDevAssert) {
+                CheckOrFailF = (b) => { Util.gDevAssert(b); is_ok = is_ok && b; };
+            } else if (eFailMode == FailMode.Throw) {
+                CheckOrFailF = (b) => { if (b == false) throw new Exception("EdgeSpan.CheckValidity: check failed"); };
+            }
 
-        // utility function
+            CheckOrFailF(Vertices.Length == Edges.Length);
+            for (int ei = 0; ei < Edges.Length; ++ei) {
+                Index2i ev = Mesh.GetEdgeV(Edges[ei]);
+                CheckOrFailF(Mesh.IsVertex(ev.a));
+                CheckOrFailF(Mesh.IsVertex(ev.b));
+                CheckOrFailF(Mesh.FindEdge(ev.a, ev.b) != DMesh3.InvalidID);
+                CheckOrFailF(Vertices[ei] == ev.a || Vertices[ei] == ev.b);
+                CheckOrFailF(Vertices[(ei + 1) % Edges.Length] == ev.a || Vertices[(ei + 1) % Edges.Length] == ev.b);
+            }
+            for ( int vi = 0; vi < Vertices.Length; ++vi ) {
+                int a = Vertices[vi], b = Vertices[(vi + 1) % Vertices.Length];
+                CheckOrFailF(Mesh.IsVertex(a));
+                CheckOrFailF(Mesh.IsVertex(b));
+                CheckOrFailF(Mesh.FindEdge(a,b) != DMesh3.InvalidID);
+                int n = 0, edge_before_b = Edges[vi], edge_after_b = Edges[(vi + 1) % Vertices.Length];
+                foreach ( int nbr_e in Mesh.VtxEdgesItr(b) ) {
+                    if (nbr_e == edge_before_b || nbr_e == edge_after_b)
+                        n++;
+                }
+                CheckOrFailF(n == 2);
+            }
+            return true;
+        }
+
+
+
+
+        /// <summary>
+        /// Convert a vertex loop to an edge loop. This should be somewhere else...
+        /// </summary>
         public static int[] VertexLoopToEdgeLoop(DMesh3 mesh, int[] vertex_loop)
         {
             int NV = vertex_loop.Length;

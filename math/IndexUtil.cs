@@ -13,6 +13,32 @@ namespace g3
                 (a0 == b1 && a1 == b0);
         }
 
+        // find the vtx that is the same in both ev0 and ev1
+        public static int find_shared_edge_v(ref Index2i ev0, ref Index2i ev1)
+        {
+            if (ev0.a == ev1.a)             return ev0.a;
+            else if (ev0.a == ev1.b)        return ev0.a;
+            else if (ev0.b == ev1.a)        return ev0.b;
+            else if (ev0.b == ev1.b)        return ev0.b;
+            else return DMesh3.InvalidID;
+        }
+
+
+        // find the vtx that is the same in both ev0 and ev1
+        public static int find_edge_other_v(ref Index2i ev, int v)
+        {
+            if (ev.a == v)          return ev.b;
+            else if (ev.b == v)     return ev.a;
+            else                    return DMesh3.InvalidID;
+        }
+        public static int find_edge_other_v(Index2i ev, int v)
+        {
+            if (ev.a == v)          return ev.b;
+            else if (ev.b == v)     return ev.a;
+            else                    return DMesh3.InvalidID;
+        }
+
+
         // return index of a in tri_verts, or InvalidID if not found
         public static int find_tri_index(int a, int[] tri_verts)
         {
