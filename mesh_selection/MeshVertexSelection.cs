@@ -74,6 +74,13 @@ namespace g3
                 add(tri.a); add(tri.b); add(tri.c);
             }
         }
+        public void SelectTriangleVertices(IEnumerable<int> triangles)
+        {
+            foreach (int tid in triangles) { 
+                Index3i tri = Mesh.GetTriangle(tid);
+                add(tri.a); add(tri.b); add(tri.c);
+            }
+        }
         public void SelectTriangleVertices(MeshFaceSelection triangles)
         {
             foreach ( int tid in triangles ) {
