@@ -52,13 +52,13 @@
     <Compile Include="core\CommandArgumentSet.cs" />
     <Compile Include="core\DijkstraGraphDistance.cs" />
     <Compile Include="core\DVector.cs" />
+    <Compile Include="core\DynamicPriorityQueue.cs" />
     <Compile Include="core\FileSystemUtils.cs" />
     <Compile Include="core\gParallel.cs" />
     <Compile Include="core\HashUtil.cs" />
     <Compile Include="core\HBitArray.cs" />
     <Compile Include="core\Indexing.cs" />
-    <Compile Include="core\priorityqueue\DynamicPriorityQueue.cs" />
-    <Compile Include="core\priorityqueue\IndexPriorityQueue.cs" />
+    <Compile Include="core\IndexPriorityQueue.cs" />
     <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\Snapping.cs" />
