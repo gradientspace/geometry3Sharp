@@ -20,6 +20,17 @@ namespace g3
             v.y = reader.ReadSingle();
         }
 
+        public static void Store(Vector2d v, BinaryWriter writer)
+        {
+            writer.Write(v.x);
+            writer.Write(v.y);
+        }
+        public static void Restore(ref Vector2d v, BinaryReader reader)
+        {
+            v.x = reader.ReadDouble();
+            v.y = reader.ReadDouble();
+        }
+
         public static void Store(Vector3f v, BinaryWriter writer)
         {
             writer.Write(v.x);
@@ -75,6 +86,18 @@ namespace g3
             Restore(ref origin, reader);
             Restore(ref orientation, reader);
             vFrame = new Frame3f(origin, orientation);
+        }
+
+
+        public static void Store(AxisAlignedBox2d b, BinaryWriter writer)
+        {
+            Store(b.Min, writer);
+            Store(b.Max, writer);
+        }
+        public static void Restore(ref AxisAlignedBox2d b, BinaryReader reader)
+        {
+            Restore(ref b.Min, reader);
+            Restore(ref b.Max, reader);
         }
 
 

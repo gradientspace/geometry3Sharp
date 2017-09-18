@@ -76,7 +76,13 @@ namespace g3
 			Timestamp++; 
         }
 
-		public void Reverse()
+        public void RemoveVertex(int idx)
+        {
+            vertices.RemoveAt(idx);
+            Timestamp++;
+        }
+
+        public void Reverse()
 		{
 			vertices.Reverse();
 			Timestamp++;
@@ -453,6 +459,59 @@ namespace g3
             return new Polygon2d(vertices);
         }
 
-
     }
+
+
+
+
+
+    /// <summary>
+    /// Wrapper for a Polygon2d that provides minimal IParametricCurve2D interface
+    /// </summary>
+    public class Polygon2DCurve : IParametricCurve2d
+    {
+        public Polygon2d Polygon;
+
+        public bool IsClosed { get { return true; } }
+
+        // can call SampleT in range [0,ParamLength]
+        public double ParamLength { get { return Polygon.VertexCount; } }
+        public Vector2d SampleT(double t)
+        {
+            int i = (int)t;
+            if (i >= Polygon.VertexCount - 1)
+                return Polygon[Polygon.VertexCount - 1];
+            Vector2d a = Polygon[i];
+            Vector2d b = Polygon[i + 1];
+            double alpha = t - (double)i;
+            return (1.0 - alpha) * a + (alpha) * b;
+        }
+        public Vector2d TangentT(double t)
+        {
+            throw new NotImplementedException("Polygon2dCurve.TangentT");
+        }
+
+        public bool HasArcLength { get { return false; } }
+        public double ArcLength {
+            get { throw new NotImplementedException("Polygon2dCurve.ArcLength"); }
+        }
+        public Vector2d SampleArcLength(double a)
+        {
+            throw new NotImplementedException("Polygon2dCurve.SampleArcLength");
+        }
+
+        public void Reverse()
+        {
+            Polygon.Reverse();
+        }
+
+        public IParametricCurve2d Clone()
+        {
+            return new Polygon2DCurve() { Polygon = new Polygon2d(this.Polygon) };
+        }
+    }
+
+
+
+
 }
