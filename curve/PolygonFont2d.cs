@@ -42,12 +42,12 @@ namespace g3
         }
 
 
-        public IEnumerable<GeneralPolygon2d> GetCharacter(char c)
+        public List<GeneralPolygon2d> GetCharacter(char c)
         {
             string s = c.ToString();
             if (!Characters.ContainsKey(s))
                 throw new Exception("PolygonFont2d.GetCharacterBounds: character " + c + " not available!");
-            return Characters[s].Polygons;
+            return new List<GeneralPolygon2d>(Characters[s].Polygons);
         }
 
         public AxisAlignedBox2d GetCharacterBounds(char c)
@@ -96,6 +96,15 @@ namespace g3
         }
 
 
+        public static PolygonFont2d ReadFont(string filename)
+        {
+            using (FileStream file_stream = File.Open(filename, FileMode.Open)) {
+                BinaryReader binReader = new BinaryReader(file_stream);
+                PolygonFont2d newfont = new PolygonFont2d();
+                PolygonFont2d.Restore(newfont, binReader);
+                return newfont;
+            }
+        }
         public static void Restore(PolygonFont2d font, BinaryReader reader)
         {
             int version = reader.ReadInt32();
