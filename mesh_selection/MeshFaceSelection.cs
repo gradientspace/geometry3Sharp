@@ -313,6 +313,8 @@ namespace g3
         public void FloodFill(int[] Seeds, Func<int,bool> TriFilterF = null, Func<int,bool> EdgeFilterF = null)
         {
             DVector<int> stack = new DVector<int>(Seeds);
+            for (int k = 0; k < Seeds.Length; ++k)
+                add(Seeds[k]);
             while ( stack.size > 0 ) {
                 int tID = stack.back;
                 stack.pop_back();

@@ -94,7 +94,7 @@ namespace g3
         ///   -1, on left of line
         ///    0, on the line
         /// </summary>
-        public int WhichSide(Vector2d test)
+        public int WhichSide(Vector2d test, double tol = 0)
         {
             // [TODO] subtract Center from test?
             Vector2d vec0 = Center + Extent * Direction;
@@ -104,7 +104,7 @@ namespace g3
             double x1 = vec1[0] - vec0[0];
             double y1 = vec1[1] - vec0[1];
             double det = x0 * y1 - x1 * y0;
-            return (det > (double)0 ? +1 : (det < (double)0 ? -1 : 0));
+            return (det > tol ? +1 : (det < -tol ? -1 : 0));
         }
 
 

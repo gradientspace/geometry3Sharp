@@ -107,6 +107,7 @@
     <Compile Include="math\Matrix3f.cs" />
     <Compile Include="math\MatrixUtil.cs" />
     <Compile Include="math\Plane3.cs" />
+    <Compile Include="math\PrimalQuery2d.cs" />
     <Compile Include="math\Quaternionf.cs" />
     <Compile Include="math\QueryTuple2d.cs" />
     <Compile Include="math\TransformSequence.cs" />
