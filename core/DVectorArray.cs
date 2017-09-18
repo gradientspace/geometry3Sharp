@@ -52,6 +52,10 @@ namespace g3
             vector.push_back(c);
         }
 
+        public void Clear() {
+            vector.Clear();
+        }
+
         //public void Set(int iStart, int iCount, DVectorArray3<T> source) {
         //	Array.Copy(source.vector, 0, vector, 3*iStart, 3*iCount);
         //}
