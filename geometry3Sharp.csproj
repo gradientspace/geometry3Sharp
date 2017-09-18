@@ -144,6 +144,7 @@
     <Compile Include="io\StandardMeshReader.cs" />
     <Compile Include="io\StandardMeshWriter.cs" />
     <Compile Include="mesh_generators\VoxelSurfaceGenerator.cs" />
+    <Compile Include="mesh_ops\MeshInsertUVPolyCurve.cs" />
     <Compile Include="mesh_ops\MeshLocalParam.cs" />
     <Compile Include="mesh_ops\LaplacianMeshSmoother.cs" />
     <Compile Include="mesh_ops\LaplacianMeshDeformer.cs" />
