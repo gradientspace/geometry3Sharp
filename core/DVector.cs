@@ -272,6 +272,20 @@ namespace g3
 
 
 
+
+        /// <summary>
+        /// Calls Array.Clear() on each block, which sets value to 'default' for type
+        /// </summary>
+        public void Clear()
+        {
+            foreach (var block in Blocks) {
+                Array.Clear(block, 0, block.Length);
+            }
+        }
+
+
+
+
         /*
          * [RMS] C# resolves generics at compile-type, so we cannot call an overloaded
          *   function based on the generic type. Hence, we have these static helpers for

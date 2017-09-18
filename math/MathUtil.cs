@@ -366,7 +366,19 @@ namespace g3
             } else
                 return 1.0f;
         }
-
+        public static double WyvillFalloff(double fD, double fInnerRad, double fOuterRad)
+        {
+            if (fD > fOuterRad) {
+                return 0;
+            } else if (fD > fInnerRad) {
+                fD -= fInnerRad;
+                fD /= (fOuterRad - fInnerRad);
+                fD = Math.Max(0, Math.Min(1, fD));
+                double fVal = (1.0f - fD * fD);
+                return fVal * fVal * fVal;
+            } else
+                return 1.0;
+        }
 
 
 

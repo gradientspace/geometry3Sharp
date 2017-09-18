@@ -48,6 +48,7 @@ namespace g3
         IndexPriorityQueue DenseQueue;
         GraphNodeStruct[] DenseNodes;
 
+        Func<int,bool> NodeFilterF;
         Func<int, int, float> NodeDistanceF;
         Func<int, IEnumerable<int>> NeighboursF;
 
@@ -56,12 +57,13 @@ namespace g3
         float max_value;
 
         public DijkstraGraphDistance(int nMaxID, bool bSparse,
-            IEnumerable<int> nodeIDs,
+            Func<int,bool> nodeFilterF,
             Func<int, int, float> nodeDistanceF,
             Func<int, IEnumerable<int>> neighboursF,
             IEnumerable<Vector2d> seeds = null                // these are pairs (index, seedval)
             )
         {
+            NodeFilterF = nodeFilterF;
             NodeDistanceF = nodeDistanceF;
             NeighboursF = neighboursF;
 
@@ -237,6 +239,9 @@ namespace g3
         {
             float cur_dist = parent.priority;
             foreach (int nbr_id in NeighboursF(parent.id)) {
+                if (NodeFilterF(nbr_id) == false)
+                    continue;
+
                 GraphNode nbr = get_node(nbr_id);
                 if (nbr.frozen)
                     continue;
@@ -268,6 +273,9 @@ namespace g3
             GraphNodeStruct g = DenseNodes[parent_id];
             float cur_dist = g.distance;
             foreach (int nbr_id in NeighboursF(parent_id)) {
+                if (NodeFilterF(nbr_id) == false)
+                    continue;
+
                 GraphNodeStruct nbr = DenseNodes[nbr_id];
                 if (nbr.frozen)
                     continue;
