@@ -74,6 +74,7 @@
     <Compile Include="curve\Ellipse2.cs" />
     <Compile Include="curve\PlanarSolid2d.cs" />
     <Compile Include="curve\NURBSCurve2.cs" />
+    <Compile Include="curve\PolygonFont2d.cs" />
     <Compile Include="curve\SculptCurveDeformers.cs" />
     <Compile Include="distance\DistPoint2Box2.cs" />
     <Compile Include="distance\DistSegment2Segment2.cs" />
