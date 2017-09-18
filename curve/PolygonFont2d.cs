@@ -9,6 +9,7 @@ namespace g3
     /// <summary>
     /// This class represents an outline font, where the outline is composed of polygons.
     /// Each font is a list of GeneralPolygon2D objects, so each outline may have 1 or more holes.
+    /// (In fact, the mapping is [string,list_of_gpolygons], so you can actually keep entire strings together if desired)
     /// </summary>
     public class PolygonFont2d
     {
@@ -47,6 +48,12 @@ namespace g3
             string s = c.ToString();
             if (!Characters.ContainsKey(s))
                 throw new Exception("PolygonFont2d.GetCharacterBounds: character " + c + " not available!");
+            return new List<GeneralPolygon2d>(Characters[s].Polygons);
+        }
+        public List<GeneralPolygon2d> GetCharacter(string s)
+        {
+            if (!Characters.ContainsKey(s))
+                throw new Exception("PolygonFont2d.GetCharacterBounds: character " + s + " not available!");
             return new List<GeneralPolygon2d>(Characters[s].Polygons);
         }
 

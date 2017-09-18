@@ -23,16 +23,18 @@ namespace g3
         // this function sets UV-space coordinates. Default is to set x=x, y=y, z=0
         public Action<int, Vector2d> SetPointF;
 
-        // results
+        // the spans & loops take some compute time and can be disabled if you don't need it...
+        public bool EnableCutSpansAndLoops = true;
+
+
+        // Results
 
         // (ordered) vertex ids of Curve vertices after insertion into mesh
         public int[] CurveVertices;
 
-        // (unordered) vertices that lie on the curve. superset of CurveVertices.
-        public HashSet<int> CutVertices;
-
         // (unordered) edges that lie on the curve.
         public HashSet<int> OnCutEdges;
+
 
         // Edge loops and spans inserted into the mesh by this operation
         public List<EdgeSpan> Spans;
@@ -175,11 +177,6 @@ namespace g3
             HashSet<int> ZeroEdges = new HashSet<int>();
             HashSet<int> ZeroVertices = new HashSet<int>();
             OnCutEdges = new HashSet<int>();
-            CutVertices = new HashSet<int>();
-
-            // TODO: do we need to track this separately for each segment?
-            foreach ( int vid in CurveVertices )
-                CutVertices.Add(vid);
 
             // loop over segments, insert each one in sequence
             int N = (IsLoop) ? Curve.VertexCount : Curve.VertexCount - 1;
@@ -220,6 +217,9 @@ namespace g3
                 // (need both in case we re-use an old edge index)
                 int MaxEID = Mesh.MaxEdgeID;
                 HashSet<int> NewEdges = new HashSet<int>();
+                HashSet<int> NewCutVertices = new HashSet<int>();
+                NewCutVertices.Add(i0_vid);
+                NewCutVertices.Add(i1_vid);
 
                 // cut existing edges with segment
                 for (int eid = 0; eid < MaxEID; ++eid) {
@@ -296,7 +296,7 @@ namespace g3
 
                     // move split point to intersection position
                     SetPointF(splitInfo.vNew, x);
-                    CutVertices.Add(splitInfo.vNew);
+                    NewCutVertices.Add(splitInfo.vNew);
 
                     NewEdges.Add(splitInfo.eNewBN);
                     NewEdges.Add(splitInfo.eNewCN);
@@ -304,19 +304,17 @@ namespace g3
                     // some splits - but not all - result in new 'other' edges that are on
                     // the polypath. We want to keep track of these edges so we can extract loop later.
                     Index2i ecn = Mesh.GetEdgeV(splitInfo.eNewCN);
-                    if (CutVertices.Contains(ecn.a) && CutVertices.Contains(ecn.b))
+                    if (NewCutVertices.Contains(ecn.a) && NewCutVertices.Contains(ecn.b))
                         OnCutEdges.Add(splitInfo.eNewCN);
 
                     // since we don't handle bdry edges this should never be false, but maybe we will handle bdry later...
                     if (splitInfo.eNewDN != DMesh3.InvalidID) {
                         NewEdges.Add(splitInfo.eNewDN);
                         Index2i edn = Mesh.GetEdgeV(splitInfo.eNewDN);
-                        if (CutVertices.Contains(edn.a) && CutVertices.Contains(edn.b))
+                        if (NewCutVertices.Contains(edn.a) && NewCutVertices.Contains(edn.b))
                             OnCutEdges.Add(splitInfo.eNewDN);
                     }
                 }
-
-
             }
 
 
@@ -326,13 +324,69 @@ namespace g3
             //Util.WriteDebugMesh(Mesh, string.Format("C:\\git\\geometry3SharpDemos\\geometry3Test\\test_output\\after_inserted.obj"));
 
 
-
             // extract the cut paths
-            find_cut_paths(OnCutEdges);
+            if (EnableCutSpansAndLoops)
+                find_cut_paths(OnCutEdges);
 
             return true;
 
 		} // Apply()
+
+
+
+
+
+
+
+        /// <summary>
+        /// Generally after calling Apply(), we have over-triangulated the mesh, because we have split
+        /// the original edges multiple times, etc. This function will walk the edges and collapse 
+        /// the unnecessary edges/vertices along the inserted loops. 
+        /// </summary>
+        public void Simplify()
+        {
+            for ( int k = 0; k < Loops.Count; ++k) {
+                EdgeLoop newloop = simplify(Loops[k]);
+                Loops[k] = newloop;
+            }
+        }
+
+        // Walk along edge loop and collapse to inserted curve vertices. 
+        EdgeLoop simplify(EdgeLoop loop)
+        {
+            HashSet<int> curve_verts = new HashSet<int>(CurveVertices);
+
+            List<int> remaining_edges = new List<int>();
+            for ( int li = 0; li < loop.EdgeCount; ++li) {
+                int eid = loop.Edges[li];
+                Index2i ev = Mesh.GetEdgeV(eid);
+                
+                // cannot collapse edge between two "original" polygon verts (ie created by face pokes)
+                if (curve_verts.Contains(ev.a) && curve_verts.Contains(ev.b)) {
+                    remaining_edges.Add(eid);
+                    continue;
+                }
+
+                // if we have an original vert, keep it
+                int keep = ev.a, discard = ev.b;
+                if (curve_verts.Contains(ev.b)) {
+                    keep = ev.b;
+                    discard = ev.a;
+                }
+
+                // do collapse and update internal data structures
+                DMesh3.EdgeCollapseInfo collapse;
+                MeshResult result = Mesh.CollapseEdge(keep, discard, out collapse);
+                if ( result == MeshResult.Ok ) {
+                    //continue...
+                    OnCutEdges.Remove(eid);
+                } else {
+                    remaining_edges.Add(eid);
+                }
+            }
+
+            return EdgeLoop.FromEdges(Mesh, remaining_edges);
+        }
 
 
 
