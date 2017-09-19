@@ -142,6 +142,67 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Stitch two sets of boundary edges that are provided as unordered pairs of edges, by
+        /// adding triangulated quads between each edge pair. 
+        /// If a failure is encountered during stitching, the triangles added up to that point are removed.
+        /// </summary>
+        public virtual int[] StitchUnorderedEdges(List<Index2i> EdgePairs, int group_id = -1)
+        {
+            int N = EdgePairs.Count;
+            int[] new_tris = new int[N * 2];
+
+            int i = 0;
+            for (; i < N; ++i) {
+                Index2i edges = EdgePairs[i];
+
+                // look up and orient the first edge
+                Index4i edge_a = Mesh.GetEdge(edges.a);
+                if ( edge_a.d != DMesh3.InvalidID )
+                    goto operation_failed;
+                Index3i edge_a_tri = Mesh.GetTriangle(edge_a.c);
+                int a = edge_a.a, b = edge_a.b;
+                IndexUtil.orient_tri_edge(ref a, ref b, edge_a_tri);
+
+                // look up and orient the second edge
+                Index4i edge_b = Mesh.GetEdge(edges.b);
+                if (edge_b.d != DMesh3.InvalidID)
+                    goto operation_failed;
+                Index3i edge_b_tri = Mesh.GetTriangle(edge_b.c);
+                int c = edge_b.a, d = edge_b.b;
+                IndexUtil.orient_tri_edge(ref c, ref d, edge_b_tri);
+
+                // swap second edge (right? should this be a parameter?)
+                int tmp = c; c = d; d = tmp;
+
+                Index3i t1 = new Index3i(b, a, d);
+                Index3i t2 = new Index3i(a, c, d);
+
+                int tid1 = Mesh.AppendTriangle(t1, group_id);
+                int tid2 = Mesh.AppendTriangle(t2, group_id);
+
+                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                    goto operation_failed;
+
+                new_tris[2 * i] = tid1;
+                new_tris[2 * i + 1] = tid2;
+            }
+
+            return new_tris;
+
+            operation_failed:
+            // remove what we added so far
+            if (i > 0) {
+                if (remove_triangles(new_tris, 2 * (i - 1)) == false)
+                    throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+            }
+            return null;
+        }
+
+
+
+
+
 
         /// <summary>
         /// Trivial back-and-forth stitch between two vertex spans with same length. 
@@ -246,6 +307,89 @@ namespace g3
             }
             return bAllOK;
         }
+
+
+
+
+
+
+
+
+        /// <summary>
+        /// Disconnect the given triangles from their neighbours, by duplicating "boundary" vertices, ie
+        /// vertices on edges for which one triangle is in-set and the other is not. 
+        /// If bComputeEdgePairs is true, we return list of old/new edge pairs (useful for stitching)
+        /// [TODO] currently boundary-edge behaviour is to *not* duplicate boundary verts
+        /// </summary>
+        public bool SeparateTriangles(IEnumerable<int> triangles, bool bComputeEdgePairs, out List<Index2i> EdgePairs)
+        {
+            HashSet<int> in_set = new HashSet<int>(triangles);
+            Dictionary<int, int> VertexMap = new Dictionary<int, int>();
+            EdgePairs = null;
+            HashSet<int> edges = null;
+            List<Index2i> OldEdgeVerts = null;
+            if (bComputeEdgePairs) {
+                EdgePairs = new List<Index2i>();
+                edges = new HashSet<int>();
+                OldEdgeVerts = new List<Index2i>();
+            }
+
+            // duplicate vertices on edges that are on boundary of triangles roi
+            foreach ( int tid in triangles ) {
+                Index3i te = Mesh.GetTriEdges(tid);
+
+                for ( int j = 0; j < 3; ++j ) {
+                    Index2i et = Mesh.GetEdgeT(te[j]);
+                    // [TODO] what about behavior where we want to also duplicate boundary verts??
+                    if (et.b == DMesh3.InvalidID ||  (et.a == tid && in_set.Contains(et.b)) || (et.b == tid && in_set.Contains(et.a)))
+                        te[j] = -1;
+                }
+
+                for ( int j = 0; j < 3; ++j ) {
+                    if (te[j] == -1)
+                        continue;
+                    Index2i ev = Mesh.GetEdgeV(te[j]);
+                    if (VertexMap.ContainsKey(ev.a) == false)
+                        VertexMap[ev.a] = Mesh.AppendVertex(Mesh, ev.a);
+                    if (VertexMap.ContainsKey(ev.b) == false)
+                        VertexMap[ev.b] = Mesh.AppendVertex(Mesh, ev.b);
+
+                    if (bComputeEdgePairs && edges.Contains(te[j]) == false) {
+                        edges.Add(te[j]);
+                        OldEdgeVerts.Add(ev);
+                        EdgePairs.Add(new Index2i(te[j], -1));
+                    }
+                }
+            }
+
+            // update triangles
+            foreach ( int tid in triangles ) {
+                Index3i tv = Mesh.GetTriangle(tid);
+                Index3i tv_new = tv;
+                for ( int j = 0; j < 3; ++j ) {
+                    int newv;
+                    if (VertexMap.TryGetValue(tv[j], out newv)) 
+                        tv_new[j] = newv;
+                }
+                if ( tv_new != tv ) {
+                    Mesh.SetTriangle(tid, tv_new);
+                }
+            }
+
+            if ( bComputeEdgePairs ) {
+                for ( int k = 0; k < EdgePairs.Count; ++k ) {
+                    Index2i old_ev = OldEdgeVerts[k];
+                    int new_a = VertexMap[old_ev.a];
+                    int new_b = VertexMap[old_ev.b];
+                    int new_eid = Mesh.FindEdge(new_a, new_b);
+                    Util.gDevAssert(new_eid != DMesh3.InvalidID);
+                    EdgePairs[k] = new Index2i(EdgePairs[k].a, new_eid);
+                }
+            }
+
+            return true;
+        }
+
 
 
         // in ReinsertSubmesh, a problem can arise where the mesh we are inserting has duplicate triangles of
