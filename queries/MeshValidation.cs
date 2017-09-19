@@ -16,7 +16,10 @@ namespace g3
         VerticesNotConnectedByEdge,
         IncorrectLoopOrientation,
 
-        DuplicateTriangles
+        DuplicateTriangles,
+
+        NearDegenerateMeshEdges,
+        NearDenegerateInputGeometry
     }
 
 

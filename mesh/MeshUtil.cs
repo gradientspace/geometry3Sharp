@@ -62,6 +62,49 @@ namespace g3 {
 
 
 
+        /// <summary>
+        /// Check if collapsing edge edgeID to point newv will flip normal of any attached face
+        /// </summary>
+        public static bool CheckIfCollapseCreatesFlip(DMesh3 mesh, int edgeID, Vector3d newv)
+        {
+            Index4i edge_info = mesh.GetEdge(edgeID);
+            int tc = edge_info.c, td = edge_info.d;
+
+            for (int j = 0; j < 2; ++j) {
+                int vid = edge_info[j];
+                int vother = edge_info[(j + 1) % 2];
+
+                foreach (int tid in mesh.VtxTrianglesItr(vid)) {
+                    if (tid == tc || tid == td)
+                        continue;
+                    Index3i curt = mesh.GetTriangle(tid);
+                    if (curt.a == vother || curt.b == vother || curt.c == vother)
+                        return true;        // invalid nbrhood for collapse
+                    Vector3d va = mesh.GetVertex(curt.a);
+                    Vector3d vb = mesh.GetVertex(curt.b);
+                    Vector3d vc = mesh.GetVertex(curt.c);
+                    Vector3d ncur = (vb - va).Cross(vc - va);
+                    double sign = 0;
+                    if (curt.a == vid) {
+                        Vector3d nnew = (vb - newv).Cross(vc - newv);
+                        sign = ncur.Dot(nnew);
+                    } else if (curt.b == vid) {
+                        Vector3d nnew = (newv - va).Cross(vc - va);
+                        sign = ncur.Dot(nnew);
+                    } else if (curt.c == vid) {
+                        Vector3d nnew = (vb - va).Cross(newv - va);
+                        sign = ncur.Dot(nnew);
+                    } else
+                        throw new Exception("should never be here!");
+                    if (sign <= 0.0)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+
+
 
         public static DCurve3 ExtractLoopV(IMesh mesh, IEnumerable<int> vertices) {
             DCurve3 curve = new DCurve3();
