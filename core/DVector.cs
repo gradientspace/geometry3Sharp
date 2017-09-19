@@ -21,6 +21,7 @@ namespace g3
         // [RMS] nBlockSize must be a power-of-two, so we can use bit-shifts in operator[]
         int nBlockSize = 2048;   // (1 << 11)
         const int nShiftBits = 11;
+        const int nBlockIndexBitmask = 2047;   // low 11 bits
 
         public DVector() {
             iCurBlock = 0;
@@ -175,14 +176,16 @@ namespace g3
             get {
                 //int bi = i / nBlockSize;
                 //return Blocks[bi][i - (bi * nBlockSize)];
-                int bi = i >> nShiftBits;
-                return Blocks[bi][i - (bi << nShiftBits)];
+                //int bi = i >> nShiftBits;
+                //return Blocks[bi][i - (bi << nShiftBits)];
+                return Blocks[i >> nShiftBits][i & nBlockIndexBitmask];
             }
             set {
                 //int bi = i / nBlockSize;
                 //Blocks[bi][i - (bi * nBlockSize)] = value;
-                int bi = i >> nShiftBits;
-                Blocks[bi][i - (bi << nShiftBits)] = value;
+                //int bi = i >> nShiftBits;
+                //Blocks[bi][i - (bi << nShiftBits)] = value;
+                Blocks[i >> nShiftBits][i & nBlockIndexBitmask] = value;
             }
         }
 
