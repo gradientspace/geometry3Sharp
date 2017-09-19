@@ -3,7 +3,12 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class MeshExtrusion
+    /// <summary>
+    /// Assumption is that Loop is a boundary loop on Mesh.
+    /// Operation makes a duplicate loop of vertices, at location defind by PositionF,
+    /// then stitches input and new loops together with a ring of triangles.
+    /// </summary>
+    public class MeshExtrudeLoop
     {
         public DMesh3 Mesh;
         public EdgeLoop Loop;
@@ -19,7 +24,7 @@ namespace g3
         public EdgeLoop NewLoop;
 
 
-        public MeshExtrusion(DMesh3 mesh, EdgeLoop loop)
+        public MeshExtrudeLoop(DMesh3 mesh, EdgeLoop loop)
         {
             Mesh = mesh;
             Loop = loop;

@@ -75,7 +75,7 @@ namespace g3
             //Frame3f plane = new Frame3f((Vector3f)topPt);
 
             // extrude loop to this plane
-            MeshExtrusion extrude = new MeshExtrusion(Mesh, fill_loop);
+            MeshExtrudeLoop extrude = new MeshExtrudeLoop(Mesh, fill_loop);
             extrude.PositionF = (v, n, i) => {
                 return FlatClosePlane.ProjectToPlane((Vector3f)v, 1);
             };

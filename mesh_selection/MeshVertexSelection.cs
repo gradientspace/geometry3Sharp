@@ -39,9 +39,11 @@ namespace g3
             Selected.Remove(vID);
         }
 
+        public int Count {
+            get { return Selected.Count; }
+        }
 
-        public bool IsSelected(int vID)
-        {
+        public bool IsSelected(int vID) {
             return Selected.Contains(vID);
         }
 

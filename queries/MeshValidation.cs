@@ -9,7 +9,6 @@ namespace g3
         Ok,
 
         NotAVertex,
-
         NotBoundaryVertex,
         NotBoundaryEdge,
 
@@ -19,7 +18,7 @@ namespace g3
         DuplicateTriangles,
 
         NearDegenerateMeshEdges,
-        NearDenegerateInputGeometry
+        NearDenegerateInputGeometry,
     }
 
 
