@@ -902,7 +902,7 @@ namespace g3
 			}
 
 			if ( colors != null ) {
-                if (from.normals != null) {
+                if (from.colors != null) {
                     colors.insert(from.colors[bi + 2], i + 2);
                     colors.insert(from.colors[bi + 1], i + 1);
                     colors.insert(from.colors[bi], i);
@@ -915,10 +915,10 @@ namespace g3
 
 			if ( uv != null ) {
 				int j = 2*vid;
-                if (from.normals != null) {
+                if (from.uv != null) {
                     int bj = 2 * fromVID;
-                    colors.insert(from.uv[bj + 1], j + 1);
-                    colors.insert(from.uv[bj], j);
+                    uv.insert(from.uv[bj + 1], j + 1);
+                    uv.insert(from.uv[bj], j);
                 } else {
                     uv.insert(0, j + 1);
                     uv.insert(0, j);
