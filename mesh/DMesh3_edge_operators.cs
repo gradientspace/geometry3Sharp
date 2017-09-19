@@ -161,7 +161,106 @@ namespace g3
 
 
 
-		public struct EdgeSplitInfo {
+
+
+        public virtual MeshResult SetTriangle(int tID, Index3i newv, bool bRemoveIsolatedVertices = true)
+        {
+            Index3i tv = GetTriangle(tID);
+            Index3i te = GetTriEdges(tID);
+            if (tv.a == newv.a && tv.b == newv.b)
+                te.a = -1;
+            if (tv.b == newv.b && tv.c == newv.c)
+                te.b = -1;
+            if (tv.c == newv.c && tv.a == newv.a)
+                te.c = -1;
+
+            if (!triangles_refcount.isValid(tID)) {
+                Debug.Assert(false);
+                return MeshResult.Failed_NotATriangle;
+            }
+            if (IsVertex(newv[0]) == false || IsVertex(newv[1]) == false || IsVertex(newv[2]) == false) {
+                Util.gDevAssert(false);
+                return MeshResult.Failed_NotAVertex;
+            }
+            if (newv[0] == newv[1] || newv[0] == newv[2] || newv[1] == newv[2]) {
+                Util.gDevAssert(false);
+                return MeshResult.Failed_BrokenTopology;
+            }
+            // look up edges. if any already have two triangles, this would 
+            // create non-manifold geometry and so we do not allow it
+            int e0 = find_edge(newv[0], newv[1]);
+            int e1 = find_edge(newv[1], newv[2]);
+            int e2 = find_edge(newv[2], newv[0]);
+            if ((e0 != InvalidID && edge_is_boundary(e0) == false)
+                 || (e1 != InvalidID && edge_is_boundary(e1) == false)
+                 || (e2 != InvalidID && edge_is_boundary(e2) == false)) {
+                return MeshResult.Failed_BrokenTopology;
+            }
+
+
+            // [TODO] check that we are not going to create invalid stuff...
+
+            // Remove triangle from its edges. if edge has no triangles left, then it is removed.
+            for (int j = 0; j < 3; ++j) {
+                int eid = te[j];
+                if (eid == -1)      // we don't need to modify this edge
+                    continue;
+                replace_edge_triangle(eid, tID, InvalidID);
+                if (edges[4 * eid + 2] == InvalidID) {
+                    int a = edges[4 * eid];
+                    List<int> edges_a = vertex_edges[a];
+                    edges_a.Remove(eid);
+
+                    int b = edges[4 * eid + 1];
+                    List<int> edges_b = vertex_edges[b];
+                    edges_b.Remove(eid);
+
+                    edges_refcount.decrement(eid);
+                }
+            }
+
+            // Decrement vertex refcounts. If any hit 1 and we got remove-isolated flag,
+            // we need to remove that vertex
+            for (int j = 0; j < 3; ++j) {
+                int vid = tv[j];
+                if (vid == newv[j])     // we don't need to modify this vertex
+                    continue;
+                vertices_refcount.decrement(vid);
+                if (bRemoveIsolatedVertices && vertices_refcount.refCount(vid) == 1) {
+                    vertices_refcount.decrement(vid);
+                    Debug.Assert(vertices_refcount.isValid(vid) == false);
+                    vertex_edges[vid] = null;
+                }
+            }
+
+
+            // ok now re-insert with new vertices
+            int i = 3 * tID;
+            for (int j = 0; j < 3; ++j) {
+                if (newv[j] != tv[j]) {
+                    triangles[i + j] = newv[j];
+                    vertices_refcount.increment(newv[j]);
+                }
+            }
+
+            if ( te.a != -1 )
+                add_tri_edge(tID, newv[0], newv[1], 0, e0);
+            if (te.b != -1)
+                add_tri_edge(tID, newv[1], newv[2], 1, e1);
+            if (te.c != -1)
+                add_tri_edge(tID, newv[2], newv[0], 2, e2);
+
+            updateTimeStamp(true);
+            return MeshResult.Ok;
+        }
+
+
+
+
+
+
+
+        public struct EdgeSplitInfo {
 			public bool bIsBoundary;
 			public int vNew;
 			public int eNewBN;      // new edge [vNew,vB] (original was AB)
@@ -851,7 +950,8 @@ namespace g3
 				}
 			}
 
-			return MeshResult.Ok;
+            updateTimeStamp(true);
+            return MeshResult.Ok;
 		}
 
 
@@ -923,6 +1023,7 @@ namespace g3
             result.new_t2 = t2;
             result.new_edges = new Index3i(eaC, ebC, ecC);
 
+            updateTimeStamp(true);
             return MeshResult.Ok;
         }
 
