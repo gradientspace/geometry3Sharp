@@ -76,7 +76,22 @@ namespace g3
 
         public virtual ValidationStatus Validate()
 		{
-			// [TODO]
+            double dist_sqr_thresh = MathUtil.ZeroTolerancef * MathUtil.ZeroTolerancef;
+
+            int nStop = IsLoop ? Curve.VertexCount - 1 : Curve.VertexCount;
+            for ( int k = 0; k < nStop; ++k ) {
+                Vector2d v0 = Curve[k];
+                Vector2d v1 = Curve[(k + 1) % Curve.VertexCount];
+                if (v0.DistanceSquared(v1) < dist_sqr_thresh)
+                    return ValidationStatus.NearDenegerateInputGeometry;
+            }
+
+            foreach ( int eid in Mesh.EdgeIndices()) {
+                Index2i ev = Mesh.GetEdgeV(eid);
+                if (PointF(ev.a).DistanceSquared(PointF(ev.b)) < dist_sqr_thresh)
+                    return ValidationStatus.NearDegenerateMeshEdges;
+            }
+
 			return ValidationStatus.Ok;
 		}
 
@@ -367,19 +382,46 @@ namespace g3
                     continue;
                 }
 
-                // if we have an original vert, keep it
+                // if we have an original vert, we need to keep it (and its position!)
                 int keep = ev.a, discard = ev.b;
+                Vector3d set_to = Vector3d.Zero;
                 if (curve_verts.Contains(ev.b)) {
                     keep = ev.b;
                     discard = ev.a;
+                    set_to = Mesh.GetVertex(ev.b);
+                } else if ( curve_verts.Contains(ev.a) ) {
+                    set_to = Mesh.GetVertex(ev.a);
+                } else {
+                    set_to = 0.5 * (Mesh.GetVertex(ev.a) + Mesh.GetVertex(ev.b));
+                }
+                
+                // make sure we are not going to flip any normals
+                // [OPTIMIZATION] May be possible to do this more efficiently because we know we are in
+                //   2D and each tri should have same cw/ccw orientation. But we don't quite "know" we
+                //   are in 2D here, as CollapseEdge function is operating on the mesh coordinates...
+                if (MeshUtil.CheckIfCollapseCreatesFlip(Mesh, eid, set_to)) {
+                    remaining_edges.Add(eid);
+                    continue;
+                }
+
+                // cannot collapse if the 'other' edges we would discard are OnCutEdges. This would
+                // result in loop potentially being broken. bad!
+                Index4i einfo = Mesh.GetEdge(eid);
+                int c = IndexUtil.find_tri_other_vtx(keep, discard, Mesh.GetTriangle(einfo.c));
+                int d = IndexUtil.find_tri_other_vtx(keep, discard, Mesh.GetTriangle(einfo.d));
+                int ec = Mesh.FindEdge(discard, c);
+                int ed = Mesh.FindEdge(discard, d);
+                if (OnCutEdges.Contains(ec) || OnCutEdges.Contains(ed)) {
+                    remaining_edges.Add(eid);
+                    continue;
                 }
 
                 // do collapse and update internal data structures
                 DMesh3.EdgeCollapseInfo collapse;
                 MeshResult result = Mesh.CollapseEdge(keep, discard, out collapse);
                 if ( result == MeshResult.Ok ) {
-                    //continue...
-                    OnCutEdges.Remove(eid);
+                    Mesh.SetVertex(collapse.vKept, set_to);
+                    OnCutEdges.Remove(collapse.eCollapsed);
                 } else {
                     remaining_edges.Add(eid);
                 }
