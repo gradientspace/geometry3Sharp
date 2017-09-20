@@ -40,7 +40,15 @@ namespace g3
 			Timestamp = 0;
         }
 
-		public virtual Polygon2d Duplicate() {
+        public Polygon2d(Func<int,Vector2d> SourceF, int N) 
+        {
+            vertices = new List<Vector2d>();
+            for (int k = 0; k < N; ++k)
+                vertices.Add(SourceF(k));
+            Timestamp = 0;
+        }
+
+        public virtual Polygon2d Duplicate() {
 			Polygon2d p = new Polygon2d(this);
 			p.Timestamp = this.Timestamp;
 			return p;
@@ -111,9 +119,13 @@ namespace g3
 				box.Contain(vertices[i]);
 			return box;
 		}
+        public AxisAlignedBox2d Bounds {
+            get { return GetBounds(); }
+        }
 
 
-		public IEnumerable<Segment2d> SegmentItr() {
+
+        public IEnumerable<Segment2d> SegmentItr() {
 			for ( int i = 0; i < vertices.Count; ++i )
 				yield return new Segment2d( vertices[i], vertices[ (i+1) % vertices.Count ] );
 		}
@@ -335,25 +347,38 @@ namespace g3
 				vertices[i] += translate;
 		}
 
-		public void Scale(Vector2d scale, Vector2d origin) {
+        public void Rotate(Matrix2d rotation, Vector2d origin) {
+            int N = vertices.Count;
+            for (int i = 0; i < N; ++i)
+                vertices[i] = rotation * (vertices[i] - origin) + origin;
+        }
+
+        public void Scale(Vector2d scale, Vector2d origin) {
 			int N = vertices.Count;
 			for (int i = 0; i < N; ++i)
 				vertices[i] = scale * (vertices[i] - origin) + origin;
 		}
 
+        public void Transform(Func<Vector2d, Vector2d> transformF)
+        {
+            int N = vertices.Count;
+            for (int i = 0; i < N; ++i)
+                vertices[i] = transformF(vertices[i]);
+        }
 
 
-		// Polygon simplification
-		// code adapted from: http://softsurfer.com/Archive/algorithm_0205/algorithm_0205.htm
-		// simplifyDP():
-		//  This is the Douglas-Peucker recursive simplification routine
-		//  It just marks vertices that are part of the simplified polyline
-		//  for approximating the polyline subchain v[j] to v[k].
-		//    Input:  tol = approximation tolerance
-		//            v[] = polyline array of vertex points
-		//            j,k = indices for the subchain v[j] to v[k]
-		//    Output: mk[] = array of markers matching vertex array v[]
-		static void simplifyDP( double tol, Vector2d[] v, int j, int k, bool[] mk )
+
+            // Polygon simplification
+            // code adapted from: http://softsurfer.com/Archive/algorithm_0205/algorithm_0205.htm
+            // simplifyDP():
+            //  This is the Douglas-Peucker recursive simplification routine
+            //  It just marks vertices that are part of the simplified polyline
+            //  for approximating the polyline subchain v[j] to v[k].
+            //    Input:  tol = approximation tolerance
+            //            v[] = polyline array of vertex points
+            //            j,k = indices for the subchain v[j] to v[k]
+            //    Output: mk[] = array of markers matching vertex array v[]
+            static void simplifyDP( double tol, Vector2d[] v, int j, int k, bool[] mk )
 		{
 			if (k <= j+1) // there is nothing to simplify
 				return;

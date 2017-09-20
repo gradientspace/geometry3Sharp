@@ -116,6 +116,11 @@ namespace g3 {
 			Center += v;
 		}
 
+        public void RotateAxes(Matrix2d m)
+        {
+            AxisX = m * AxisX;
+            AxisY = m * AxisY;
+        }
 
         public static implicit operator Box2d(Box2f v)
         {

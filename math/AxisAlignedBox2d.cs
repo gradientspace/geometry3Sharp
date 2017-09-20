@@ -94,6 +94,14 @@ namespace g3
             return new Vector2d((i % 3 == 0) ? Min.x : Max.x, (i < 2) ? Min.y : Max.y);
         }
 
+        /// <summary>
+        /// Point inside box where t,s are in range [0,1]
+        /// </summary>
+        public Vector2d SampleT(double tx, double sy)
+        {
+            return new Vector2d((1.0 - tx) * Min.x + (tx) * Max.x, (1.0 - sy) * Min.y + (sy) * Max.y);
+        }
+
         //! value is subtracted from min and added to max
         public void Expand(double fRadius) {
             Min.x -= fRadius; Min.y -= fRadius;

@@ -123,12 +123,25 @@ namespace g3
 				h.Translate(translate);
 		}
 
-		public void Scale(Vector2d scale, Vector2d origin) {
+        public void Rotate(Matrix2d rotation, Vector2d origin) {
+            outer.Rotate(rotation, origin);
+            foreach (var h in holes)
+                h.Rotate(rotation, origin);
+        }
+
+
+        public void Scale(Vector2d scale, Vector2d origin) {
 			outer.Scale(scale, origin);
 			foreach (var h in holes)
 				h.Scale(scale, origin);
 		}
 
+        public void Transform(Func<Vector2d,Vector2d> transformF)
+        {
+            outer.Transform(transformF);
+            foreach (var h in holes)
+                h.Transform(transformF);
+        }
 
         public void Reverse()
         {
@@ -151,7 +164,30 @@ namespace g3
 		}
 
 
-		public Vector2d PointAt(int iSegment, double fSegT, int iHoleIndex = -1)
+        public bool Contains(Polygon2d poly) {
+            if (outer.Contains(poly) == false)
+                return false;
+            foreach (var h in holes) {
+                if (h.Contains(poly))
+                    return false;
+            }
+            return true;
+        }
+
+
+        public bool Intersects(Polygon2d poly)
+        {
+            if (outer.Intersects(poly))
+                return true;
+            foreach (var h in holes) {
+                if (h.Intersects(poly))
+                    return true;
+            }
+            return false;
+        }
+
+
+        public Vector2d PointAt(int iSegment, double fSegT, int iHoleIndex = -1)
 		{
 			if (iHoleIndex == -1)
 				return outer.PointAt(iSegment, fSegT);
