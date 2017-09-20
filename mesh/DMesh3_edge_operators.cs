@@ -191,9 +191,9 @@ namespace g3
             int e0 = find_edge(newv[0], newv[1]);
             int e1 = find_edge(newv[1], newv[2]);
             int e2 = find_edge(newv[2], newv[0]);
-            if ((e0 != InvalidID && edge_is_boundary(e0) == false)
-                 || (e1 != InvalidID && edge_is_boundary(e1) == false)
-                 || (e2 != InvalidID && edge_is_boundary(e2) == false)) {
+            if ((te.a != -1 && e0 != InvalidID && edge_is_boundary(e0) == false)
+                 || (te.b != -1 && e1 != InvalidID && edge_is_boundary(e1) == false)
+                 || (te.c != -1 && e2 != InvalidID && edge_is_boundary(e2) == false)) {
                 return MeshResult.Failed_BrokenTopology;
             }
 
