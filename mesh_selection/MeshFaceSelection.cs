@@ -23,7 +23,13 @@ namespace g3
             temp = new List<int>();
             temp2 = new List<int>();
         }
-
+        public MeshFaceSelection(MeshFaceSelection copy)
+        {
+            Mesh = copy.Mesh;
+            Selected = new HashSet<int>(copy.Selected);
+            temp = new List<int>();
+            temp2 = new List<int>();
+        }
 
         protected BitArray Bitmap {
             get {

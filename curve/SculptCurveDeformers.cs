@@ -54,6 +54,7 @@ namespace g3
 
         public struct DeformInfo
         {
+            public bool bNoChange;
             public double maxEdgeLenSqr;
             public double minEdgeLenSqr;
         }
@@ -178,7 +179,7 @@ namespace g3
                     Curve[i] = NewV[i];
             }
 
-            return new DeformInfo() { minEdgeLenSqr = edgeRangeSqr.a, maxEdgeLenSqr = edgeRangeSqr.b };
+            return new DeformInfo() { bNoChange = false, minEdgeLenSqr = edgeRangeSqr.a, maxEdgeLenSqr = edgeRangeSqr.b };
         }
     }
 
@@ -214,7 +215,7 @@ namespace g3
             // if we did not move brush far enough, don't do anything
             Vector3d vDelta = (vNextPos.Origin - vPreviousPos.Origin);
             if (vDelta.Length < 0.0001f)
-                return new DeformInfo() { maxEdgeLenSqr = 0, minEdgeLenSqr = double.MaxValue };
+                return new DeformInfo() { bNoChange = true, maxEdgeLenSqr = 0, minEdgeLenSqr = double.MaxValue };
 
             // otherwise apply base deformation
             DeformF = (idx, t) => {
