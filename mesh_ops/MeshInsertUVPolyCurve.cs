@@ -459,7 +459,9 @@ namespace g3
                         backwardSpan.AddRange(forwardSpan);
                         Index2i start_ev = Mesh.GetEdgeV(backwardSpan[0]);
                         Index2i end_ev = Mesh.GetEdgeV(backwardSpan[backwardSpan.Count - 1]);
-                        isLoop = IndexUtil.find_shared_edge_v(ref start_ev, ref end_ev) != DMesh3.InvalidID;
+                        // [RMS] >2 check here catches two-edge span case, where we do have shared vert but
+                        //   can never be loop unless we have duplicate edge (!)
+                        isLoop = backwardSpan.Count > 2 && IndexUtil.find_shared_edge_v(ref start_ev, ref end_ev) != DMesh3.InvalidID;
                         forwardSpan = backwardSpan;
                     }
                 }
