@@ -29,7 +29,7 @@ namespace g3
             Closed = bClosed;
             Timestamp = 1;
         }
-        public DCurve3(IList<Vector3d> verticesIn, bool bClosed)
+        public DCurve3(IEnumerable<Vector3d> verticesIn, bool bClosed)
         {
             this.vertices = new List<Vector3d>(verticesIn);
             Closed = bClosed;
@@ -40,6 +40,13 @@ namespace g3
         {
             vertices = new List<Vector3d>(copy.vertices);
             Closed = copy.Closed;
+            Timestamp = 1;
+        }
+
+        public DCurve3(ISampledCurve3d icurve)
+        {
+            this.vertices = new List<Vector3d>(icurve.Vertices);
+            Closed = icurve.Closed;
             Timestamp = 1;
         }
 
@@ -144,6 +151,35 @@ namespace g3
                 return vertices[i];
             else
                 return 0.5 * (vertices[i + 1] + vertices[i - 1]);
+        }
+
+
+
+        public double DistanceSquared(Vector3d p, out int iNearSeg, out double fNearSegT)
+        {
+            iNearSeg = -1;
+            fNearSegT = double.MaxValue;
+            double dist = double.MaxValue;
+            int N = (Closed) ? vertices.Count : vertices.Count - 1;
+            for (int vi = 0; vi < N; ++vi) {
+                int a = vi;
+                int b = (vi + 1) % vertices.Count;
+                Segment3d seg = new Segment3d(vertices[a], vertices[b]);
+                double t = (p - seg.Center).Dot(seg.Direction);
+                double d = double.MaxValue;
+                if (t >= seg.Extent)
+                    d = seg.P1.DistanceSquared(p);
+                else if (t <= -seg.Extent)
+                    d = seg.P0.DistanceSquared(p);
+                else
+                    d = (seg.PointAt(t) - p).LengthSquared;
+                if (d < dist) {
+                    dist = d;
+                    iNearSeg = vi;
+                    fNearSegT = t;
+                }
+            }
+            return dist;
         }
 
     }

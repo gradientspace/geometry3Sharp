@@ -41,7 +41,13 @@ namespace g3
             find_interior_from_seed(tSeed);
         }
 
-
+        /// <summary>
+        /// returns new array containing selected triangles 
+        /// </summary>
+        public int[] ToArray()
+        {
+            return InteriorT.ToArray();
+        }
 
         public MeshFaceSelection ToSelection()
         {
