@@ -61,14 +61,15 @@ namespace g3
         {
             MeshEditor editor = new MeshEditor(Mesh);
 
+
+            editor.SeparateTriangles(Triangles, true, out EdgePairs);
+
             MeshNormals normals = null;
             bool bHaveNormals = Mesh.HasVertexNormals;
             if (!bHaveNormals) {
                 normals = new MeshNormals(Mesh);
                 normals.Compute();
             }
-
-            editor.SeparateTriangles(Triangles, true, out EdgePairs);
 
             ExtrudeVertices = new MeshVertexSelection(Mesh);
             ExtrudeVertices.SelectTriangleVertices(Triangles);
@@ -83,7 +84,6 @@ namespace g3
             k = 0;
             foreach (int vid in ExtrudeVertices)
                 Mesh.SetVertex(vid, NewVertices[k++]);
-
 
             SetGroupID = Group.GetGroupID(Mesh);
             JoinTriangles = editor.StitchUnorderedEdges(EdgePairs, SetGroupID);

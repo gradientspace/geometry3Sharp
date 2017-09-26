@@ -240,7 +240,7 @@ namespace g3
             } else if (eFailMode == FailMode.gDevAssert) {
                 CheckOrFailF = (b) => { Util.gDevAssert(b); is_ok = is_ok && b; };
             } else if (eFailMode == FailMode.Throw) {
-                CheckOrFailF = (b) => { if (b == false) throw new Exception("EdgeSpan.CheckValidity: check failed"); };
+                CheckOrFailF = (b) => { if (b == false) throw new Exception("EdgeLoop.CheckValidity: check failed"); };
             }
 
             CheckOrFailF(Vertices.Length == Edges.Length);
@@ -264,7 +264,7 @@ namespace g3
                 }
                 CheckOrFailF(n == 2);
             }
-            return true;
+            return is_ok;
         }
 
 

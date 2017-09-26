@@ -18,6 +18,11 @@ namespace g3
             StandardMeshWriter writer = new StandardMeshWriter();
             return writer.Write(sFilename, vMeshes, options);
         }
+        static public IOWriteResult WriteMesh(string sFilename, IMesh mesh, WriteOptions options)
+        {
+            StandardMeshWriter writer = new StandardMeshWriter();
+            return writer.Write(sFilename, new List<WriteMesh>() { new WriteMesh(mesh) }, options);
+        }
 
 
         public IOWriteResult Write(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
