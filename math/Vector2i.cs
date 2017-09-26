@@ -11,10 +11,10 @@ namespace g3
         public Vector2i(int x, int y) { this.x = x; this.y = y; }
         public Vector2i(int[] v2) { x = v2[0]; y = v2[1]; }
 
-        static public readonly Vector3i Zero = new Vector3i(0, 0, 0);
-        static public readonly Vector3i AxisX = new Vector3i(1, 0, 0);
-        static public readonly Vector3i AxisY = new Vector3i(0, 1, 0);
-        static public readonly Vector3i AxisZ = new Vector3i(0, 0, 1);
+        static public readonly Vector2i Zero = new Vector2i(0, 0);
+        static public readonly Vector2i One = new Vector2i(1, 1);
+        static public readonly Vector2i AxisX = new Vector2i(1, 0);
+        static public readonly Vector2i AxisY = new Vector2i(0, 1);
 
         public int this[int key]
         {
@@ -28,6 +28,60 @@ namespace g3
         }
 
         public void Add(int s) { x += s; y += s; }
+
+
+
+
+        public static Vector2i operator -(Vector2i v)
+        {
+            return new Vector2i(-v.x, -v.y);
+        }
+
+        public static Vector2i operator *(int f, Vector2i v)
+        {
+            return new Vector2i(f * v.x, f * v.y);
+        }
+        public static Vector2i operator *(Vector2i v, int f)
+        {
+            return new Vector2i(f * v.x, f * v.y);
+        }
+        public static Vector2i operator /(Vector2i v, int f)
+        {
+            return new Vector2i(v.x / f, v.y / f);
+        }
+        public static Vector2i operator /(int f, Vector2i v)
+        {
+            return new Vector2i(f / v.x, f / v.y);
+        }
+
+        public static Vector2i operator *(Vector2i a, Vector2i b)
+        {
+            return new Vector2i(a.x * b.x, a.y * b.y);
+        }
+        public static Vector2i operator /(Vector2i a, Vector2i b)
+        {
+            return new Vector2i(a.x / b.x, a.y / b.y);
+        }
+
+
+        public static Vector2i operator +(Vector2i v0, Vector2i v1)
+        {
+            return new Vector2i(v0.x + v1.x, v0.y + v1.y);
+        }
+        public static Vector2i operator +(Vector2i v0, int f)
+        {
+            return new Vector2i(v0.x + f, v0.y + f);
+        }
+
+        public static Vector2i operator -(Vector2i v0, Vector2i v1)
+        {
+            return new Vector2i(v0.x - v1.x, v0.y - v1.y);
+        }
+        public static Vector2i operator -(Vector2i v0, int f)
+        {
+            return new Vector2i(v0.x - f, v0.y - f);
+        }
+
 
 
         public static bool operator ==(Vector2i a, Vector2i b)
