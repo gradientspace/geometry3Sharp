@@ -673,7 +673,8 @@ namespace g3 {
 
 
 
-        // we can do projection in parallel if we have .net 
+        // Project vertices onto projection target. 
+        // We can do projection in parallel if we have .net 
         void FullProjectionPass()
         {
             Action<int> project = (vID) => {
@@ -689,52 +690,43 @@ namespace g3 {
             gParallel.ForEach<int>(project_vertices(), project);
         }
 
-        // FullProjectionPass with adjustable amount,and adjustable projection range
-        // we can do projection in parallel if we have .net 
-        // 
-        void FullProjectionPass(double projectionAmount, double maxProjectDistance)
+
+        // Project vertices towards projection target by input alpha, and optionally, don't project vertices too far away
+        // We can do projection in parallel if we have .net 
+        // [TODO] this code is currently not called
+        void FullProjectionPass(double projectionAlpha, double maxProjectDistance)
         {
-            double curAmount = 1 - projectionAmount;
+            projectionAlpha = MathUtil.Clamp(projectionAlpha, 0, 1);
 
             Action<int> project;
 
-            if (maxProjectDistance < float.MaxValue && maxProjectDistance > 0)
-            {
-                project = (vID) =>
-                {
+            if (maxProjectDistance < double.MaxValue && maxProjectDistance > 0) {
+                project = (vID) => {
                     if (vertex_is_constrained(vID))
                         return;
                     if (VertexControlF != null && (VertexControlF(vID) & VertexControl.NoProject) != 0)
                         return;
                     Vector3d curpos = mesh.GetVertex(vID);
                     Vector3d projected = target.Project(curpos, vID);
-
 
                     var distance = curpos.Distance(projected);
-
-                    if (distance < maxProjectDistance)
-                    {
-                        double distanceAmount = distance / maxProjectDistance;
-                        double projectDistanceAmount = 1 - distanceAmount;
-
-                        Vector3d setAmount = ((curpos * curAmount) + (projected * projectionAmount)) * projectDistanceAmount + (curpos * distanceAmount);
-                        mesh.SetVertex(vID, setAmount);
+                    if (distance < maxProjectDistance) {
+                        projected = Vector3d.Lerp(curpos, projected, projectionAlpha);
+                        double distanceAlpha = distance / maxProjectDistance;
+                        projected = Vector3d.Lerp(projected, curpos, distanceAlpha);
+                        mesh.SetVertex(vID, projected);
                     }
                 };
-            }
-            else
-            {
-                project = (vID) =>
-                {
+            } else {
+                project = (vID) => {
                     if (vertex_is_constrained(vID))
                         return;
                     if (VertexControlF != null && (VertexControlF(vID) & VertexControl.NoProject) != 0)
                         return;
                     Vector3d curpos = mesh.GetVertex(vID);
                     Vector3d projected = target.Project(curpos, vID);
-
-                    Vector3d setAmount = curpos * curAmount + projected * projectionAmount;
-                    mesh.SetVertex(vID, setAmount);
+                    projected = Vector3d.Lerp(curpos, projected, projectionAlpha);
+                    mesh.SetVertex(vID, projected);
                 };
             }
 
