@@ -336,6 +336,18 @@ namespace g3
 
 
 
+        public MeshResult RemoveVertex(int vid, bool bRemoveIsolatedVertices)
+        {
+            List<int> edges = new List<int>(GetVtxEdges(vid));
+            foreach (int eid in edges) {
+                MeshResult result = RemoveEdge(eid, bRemoveIsolatedVertices);
+                if (result != MeshResult.Ok)
+                    return result;
+            }
+            return MeshResult.Ok;
+        }
+
+
 
 
 		public struct EdgeSplitInfo
