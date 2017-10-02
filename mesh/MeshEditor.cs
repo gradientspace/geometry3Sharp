@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -389,6 +390,66 @@ namespace g3
 
             return true;
         }
+
+
+
+        /// <summary>
+        /// Make a copy of provided triangles, with new vertices. You provide MapV because
+        /// you know if you are doing a small subset or a full-mesh-copy.
+        /// </summary>
+        public List<int> DuplicateTriangles(IEnumerable<int> triangles, ref IndexMap MapV, int group_id = -1)
+        {
+            List<int> new_triangles = new List<int>();
+            foreach ( int tid in triangles ) {
+                Index3i tri = Mesh.GetTriangle(tid);
+                for (int j = 0; j < 3; ++j) {
+                    int vid = tri[j];
+                    if (MapV.Contains(vid) == false) {
+                        int new_vid = Mesh.AppendVertex(Mesh, vid);
+                        MapV[vid] = new_vid;
+                        tri[j] = new_vid;
+                    } else {
+                        tri[j] = MapV[vid];
+                    }
+                }
+                int new_tid = Mesh.AppendTriangle(tri, group_id);
+                new_triangles.Add(new_tid);
+            }
+            return new_triangles;
+        }
+
+
+
+        /// <summary>
+        /// Reverse face orientation on a subset of triangles
+        /// </summary>
+        public void ReverseTriangles(IEnumerable<int> triangles, bool bFlipVtxNormals = true)
+        {
+            if ( bFlipVtxNormals == false ) { 
+                foreach (int tid in triangles) {
+                    Mesh.ReverseTriOrientation(tid);
+                }
+
+            } else {
+                BitArray donev = new BitArray(Mesh.MaxVertexID);
+
+                foreach (int tid in triangles) {
+                    Mesh.ReverseTriOrientation(tid);
+
+                    Index3i tri = Mesh.GetTriangle(tid);
+                    for (int j = 0; j < 3; ++j) {
+                        int vid = tri[j];
+                        if (donev[vid] == false) {
+                            Mesh.SetVertexNormal(vid, -Mesh.GetVertexNormal(vid));
+                            donev[vid] = true;
+                        }
+                    }
+                }
+            }
+
+        }
+
+
 
 
 
