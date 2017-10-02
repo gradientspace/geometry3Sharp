@@ -174,8 +174,12 @@ namespace g3
 
         public void Contain(AxisAlignedBox3i box)
         {
-            Contain(box.Min);
-            Contain(box.Max);
+            Min.x = Math.Min(Min.x, box.Min.x);
+            Min.y = Math.Min(Min.y, box.Min.y);
+            Min.z = Math.Min(Min.z, box.Min.z);
+            Max.x = Math.Max(Max.x, box.Max.x);
+            Max.y = Math.Max(Max.y, box.Max.y);
+            Max.z = Math.Max(Max.z, box.Max.z);
         }
 
 
@@ -191,8 +195,13 @@ namespace g3
 
         public void Contain(AxisAlignedBox3d box)
         {
-            Contain(box.Min);
-            Contain(box.Max);
+            Min.x = Math.Min(Min.x, (int)box.Min.x);
+            Min.y = Math.Min(Min.y, (int)box.Min.y);
+            Min.z = Math.Min(Min.z, (int)box.Min.z);
+            Max.x = Math.Max(Max.x, (int)box.Max.x);
+            Max.y = Math.Max(Max.y, (int)box.Max.y);
+            Max.z = Math.Max(Max.z, (int)box.Max.z);
+
         }
 
 
