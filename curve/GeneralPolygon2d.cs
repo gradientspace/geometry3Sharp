@@ -22,7 +22,7 @@ namespace g3
 		{
 			outer = new Polygon2d(copy.outer);
 			bOuterIsCW = copy.bOuterIsCW;
-			holes = new List<Polygon2d>(copy.holes);
+			holes = new List<Polygon2d>();
 			foreach (var hole in copy.holes)
 				holes.Add(new Polygon2d(hole));
 		}
