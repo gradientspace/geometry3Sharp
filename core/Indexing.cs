@@ -223,6 +223,7 @@ namespace g3
                 dense_map = new int[MaxIndex];
             }
             this.MaxIndex = MaxIndex;
+            SetToInvalid();
         }
 
         public IndexMap(int[] use_dense_map, int MaxIndex = -1)
@@ -244,6 +245,7 @@ namespace g3
                 sparse_map = new Dictionary<int, int>();
             }
             this.MaxIndex = MaxIndex;
+            SetToInvalid();
         }
 
 
@@ -252,7 +254,7 @@ namespace g3
         {
             if ( dense_map != null ) {
                 for (int i = 0; i < dense_map.Length; ++i)
-                    dense_map.SetValue(i, InvalidIndex);
+                    dense_map[i] = InvalidIndex;
             }
         }
 
