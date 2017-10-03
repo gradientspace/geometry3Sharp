@@ -26,12 +26,19 @@ namespace g3
         abstract public void Generate();
 
 
-        public void MakeMesh(SimpleMesh m)
+        public virtual void MakeMesh(SimpleMesh m)
         {
             m.AppendVertices(vertices, (WantNormals) ? normals : null, null, (WantUVs) ? uv : null);
             m.AppendTriangles(triangles);
         }
-        public void MakeMesh(DMesh3 m)
+        public virtual SimpleMesh MakeSimpleMesh()
+        {
+            SimpleMesh m = new SimpleMesh();
+            MakeMesh(m);
+            return m;
+        }
+
+        public virtual void MakeMesh(DMesh3 m)
         {
             int nV = vertices.Count;
             for (int i = 0; i < nV; ++i) {
@@ -55,6 +62,12 @@ namespace g3
                 for (int i = 0; i < nT; ++i)
                     m.AppendTriangle(triangles[i]);
             }
+        }
+        public virtual DMesh3 MakeDMesh()
+        {
+            DMesh3 m = new DMesh3();
+            MakeMesh(m);
+            return m;
         }
 
 
