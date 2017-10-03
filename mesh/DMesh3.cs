@@ -577,8 +577,21 @@ namespace g3
             } else
                 return InvalidTriangle;
         }
+        public IEnumerable<int> TriTrianglesItr(int tID) {
+            if (triangles_refcount.isValid(tID)) {
+                int tei = 3 * tID;
+                for (int j = 0; j < 3; ++j) {
+                    int ei = 4 * triangle_edges[tei + j];
+                    int nbr_t = (edges[ei + 2] == tID) ? edges[ei + 3] : edges[ei + 2];
+                    if (nbr_t != DMesh3.InvalidID)
+                        yield return nbr_t;
+                }
+            }
+        }
 
-		public int GetTriangleGroup(int tID) { 
+
+
+        public int GetTriangleGroup(int tID) { 
 			return (triangle_groups == null) ? -1 
                 : ( triangles_refcount.isValid(tID) ? triangle_groups[tID] : 0 );
 		}
