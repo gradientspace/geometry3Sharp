@@ -77,11 +77,14 @@ namespace g3
 
             // set vertices to new positions
             foreach (int vid in InitialVertices) {
+                int newvid = InitialToOffsetMapV[vid];
+                if (! Mesh.IsVertex(newvid))
+                    continue;
+
                 Vector3d v = Mesh.GetVertex(vid);
                 Vector3f n = (bHaveNormals) ? Mesh.GetVertexNormal(vid) : (Vector3f)normals.Normals[vid];
                 Vector3d newv = ExtrudedPositionF(v, n, vid);
 
-                int newvid = InitialToOffsetMapV[vid];
                 Mesh.SetVertex(newvid, newv);
             }
 
