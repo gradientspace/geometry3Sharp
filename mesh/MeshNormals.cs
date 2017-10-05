@@ -80,11 +80,10 @@ namespace g3
                 Normals[tri.c] += a * N;
             }
 
-            for ( int vi = 0; vi < NV; ++vi) {
+            gParallel.ForEach(Interval1i.Range(NV), (vi) => {
                 if (Normals[vi].LengthSquared > MathUtil.ZeroTolerancef)
-                    Normals[vi].Normalize();
-            }
-
+                    Normals[vi] = Normals[vi].Normalized;
+            });
         }
 
 
