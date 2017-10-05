@@ -41,6 +41,13 @@ namespace g3
         All = VertexNormals | VertexColors | VertexUVs | FaceGroups
     }
 
+    [Flags]
+    public enum MeshHints
+    {
+        None = 0,
+        IsCompact = 1
+    }
+
 
 	//
 	// DMesh3 is a dynamic triangle mesh class. The mesh has has connectivity, 
@@ -172,12 +179,12 @@ namespace g3
         }
 
 
-        public DMesh3(IMesh copy, bool bIsCompactHint, bool bWantNormals = true, bool bWantColors = true, bool bWantUVs = true)
+        public DMesh3(IMesh copy, MeshHints hints, bool bWantNormals = true, bool bWantColors = true, bool bWantUVs = true)
         {
-            Copy(copy, bIsCompactHint, bWantNormals, bWantColors, bWantUVs);
+            Copy(copy, hints, bWantNormals, bWantColors, bWantUVs);
         }
-        public DMesh3(IMesh copy, bool bIsCompactHint, MeshComponents flags) : 
-            this(copy, bIsCompactHint, (flags & MeshComponents.VertexNormals) != 0,  (flags & MeshComponents.VertexColors) != 0,
+        public DMesh3(IMesh copy, MeshHints hints, MeshComponents flags) : 
+            this(copy, hints, (flags & MeshComponents.VertexNormals) != 0,  (flags & MeshComponents.VertexColors) != 0,
                   (flags & MeshComponents.VertexUVs) != 0 )
         {
         }
@@ -265,12 +272,12 @@ namespace g3
         }
 
 
-
-        public void Copy(IMesh copy, bool bIsDense = false, bool bNormals = true, bool bColors = true, bool bUVs = true)
+        /// <summary>
+        /// Copy IMesh into this mesh. Currently always compacts.
+        /// [TODO] if we get dense hint, we could be smarter w/ vertex map, etc
+        /// </summary>
+        public CompactInfo Copy(IMesh copy, MeshHints hints, bool bNormals = true, bool bColors = true, bool bUVs = true)
         {
-            if (bIsDense == false)
-                throw new Exception("DMesh3.Copy: current requires that IMesh be dense/compact");
-
             vertices = new DVector<double>();
             vertex_edges = new DVector<List<int>>();
             vertices_refcount = new RefCountVector();
@@ -286,22 +293,29 @@ namespace g3
             uv = (bUVs && copy.HasVertexUVs) ? new DVector<float>() : null;
             triangle_groups = (copy.HasTriangleGroups) ? new DVector<int>() : null;
 
-            int NV = copy.MaxVertexID;
-            //int[] mapV = new int[NV];
-            for ( int vid = 0; vid < NV; ++vid ) {
-                NewVertexInfo vinfo = copy.GetVertexAll(vid);
-                int new_vid = AppendVertex(vinfo);
-                Debug.Assert(new_vid == vid);
+
+            // [TODO] if we knew some of these were dense we could copy directly...
+
+            NewVertexInfo vinfo = new NewVertexInfo();
+            int[] mapV = new int[copy.MaxVertexID];
+            foreach (int vid in copy.VertexIndices()) {
+                vinfo = copy.GetVertexAll(vid);
+                mapV[vid] = AppendVertex(vinfo);
             }
 
-            int NT = copy.MaxTriangleID;
-            for ( int tid = 0; tid < NT; tid++ ) { 
+            // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
+
+            foreach (int tid in copy.TriangleIndices()) {
                 Index3i t = copy.GetTriangle(tid);
-                //t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
+                t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
                 AppendTriangle(t, g);
-                max_group_id = Math.Max(max_group_id, g+1);
+                max_group_id = Math.Max(max_group_id, g + 1);
             }
+
+            return new CompactInfo() {
+                MapV = new IndexMap(mapV, this.MaxVertexID)
+            };
         }
 
 
