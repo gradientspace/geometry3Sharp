@@ -428,6 +428,10 @@ namespace g3
 			List<int> edges_b = vertex_edges[b];
 			List<int> edges_a = vertex_edges[a];
 
+            // [TODO] if we are down to a single triangle (a,b,c), then
+            //   this will happily discard vtx c and edges ac,bc, leaving us
+            //   with a single edge...
+
 			// get rid of any edges that will be duplicates
 			bool done = false;
 			while (!done) {
@@ -544,6 +548,49 @@ namespace g3
 			get { return vertices_refcount.is_dense; }
 		}
 
+
+
+
+        public bool IsBoundaryVertex(int vID)
+        {
+            return vertices_refcount.isValid(vID) && vertex_edges[vID].Count == 1;
+        }
+
+        public bool IsJunctionVertex(int vID)
+        {
+            return vertices_refcount.isValid(vID) && vertex_edges[vID].Count > 2;
+        }
+
+
+
+
+        /// <summary>
+        /// Compute opening angle at vertex vID. 
+        /// If not a vertex, or valence != 2, returns invalidValue argument.
+        /// If either edge is degenerate, returns invalidValue argument.
+        /// </summary>
+        public double OpeningAngle(int vID, double invalidValue = double.MaxValue)
+        {
+            if (vertices_refcount.isValid(vID) == false)
+                return invalidValue;
+            List<int> vedges = vertex_edges[vID];
+            if (vedges.Count != 2)
+                return invalidValue;
+
+            int nbra = edge_other_v(vedges[0], vID);
+            int nbrb = edge_other_v(vedges[1], vID);
+
+            Vector2d v = new Vector2d(vertices[2 * vID], vertices[2 * vID + 1]);
+            Vector2d a = new Vector2d(vertices[2 * nbra], vertices[2 * nbra + 1]);
+            Vector2d b = new Vector2d(vertices[2 * nbrb], vertices[2 * nbrb + 1]);
+            a -= v;
+            if (a.Normalize() == 0)
+                return invalidValue;
+            b -= v;
+            if (b.Normalize() == 0)
+                return invalidValue;
+            return Vector2d.AngleD(a, b);
+        }
 
 
 
