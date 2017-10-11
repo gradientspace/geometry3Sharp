@@ -531,5 +531,36 @@ namespace g3
             Buffer.BlockCopy(bytes, 0, buffer, 0, bytes.Length);
             vec.Initialize(buffer);
         }
+
+
+
+        public static void Store(string s, BinaryWriter writer)
+        {
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(s);
+            writer.Write(buffer.Length);
+            writer.Write(buffer);
+        }
+        public static void Restore(ref string s, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            byte[] bytes = reader.ReadBytes(N);
+            s = System.Text.Encoding.UTF8.GetString(bytes);
+        }
+
+
+        public static void Store(string[] s, BinaryWriter writer)
+        {
+            writer.Write(s.Length);
+            for (int i = 0; i < s.Length; ++i)
+                Store(s[i], writer);
+        }
+        public static void Restore(ref string[] s, BinaryReader reader)
+        {
+            int N = reader.ReadInt32();
+            s = new string[N];
+            for (int i = 0; i < N; ++i)
+                Restore(ref s[i], reader);
+        }
+
     }
 }
