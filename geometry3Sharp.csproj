@@ -266,6 +266,7 @@
     <Compile Include="mesh\Reducer.cs" />
     <Compile Include="core\MemoryPool.cs" />
     <Compile Include="approximation\QuadraticFit2.cs" />
+    <Compile Include="io\SVGWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

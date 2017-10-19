@@ -113,6 +113,10 @@ namespace g3
         }
 
 
+		public AxisAlignedBox2d Bounds {
+			get { return new AxisAlignedBox2d(Center, 0.5*Radius, 0.5*Radius); }
+		}
+
         public double SignedDistance(Vector2d pt)
         {
             double d = Center.Distance(pt);

@@ -111,7 +111,9 @@ namespace g3
 				box.Contain(vertices[i]);
 			return box;
 		}
-
+		public AxisAlignedBox2d Bounds {
+			get { return GetBounds(); }
+		}
 
 
         public double DistanceSquared(Vector2d point)
