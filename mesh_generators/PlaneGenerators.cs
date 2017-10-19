@@ -12,6 +12,12 @@ namespace g3
         public float Width = 1.0f;
         public float Height = 1.0f;
 
+        /// <summary>
+        /// How to map 2D indices to 3D. Default is (x,0,z). Set this value to (1,2) if you want (x,y,0).
+        /// Set values to negative to mirror on that axis.
+        /// </summary>
+        public Index2i IndicesMap = new Index2i(1, 3);
+
         public enum UVModes
         {
             FullUVSquare,
@@ -20,17 +26,29 @@ namespace g3
         }
         public UVModes UVMode = UVModes.FullUVSquare;
 
+
+        virtual protected Vector3d make_vertex(float x, float y)
+        {
+            Vector3d v = Vector3d.Zero;
+            v[Math.Abs(IndicesMap.a)-1] = (IndicesMap.a < 0) ? -x : x;
+            v[Math.Abs(IndicesMap.b)-1] = (IndicesMap.b < 0) ? -y : y;
+            return v;
+        }
+
         override public void Generate()
         {
+            if (MathUtil.InRange(IndicesMap.a, 1, 3) == false || MathUtil.InRange(IndicesMap.b, 1, 3) == false)
+                throw new Exception("TrivialRectGenerator: Invalid IndicesMap!");
+
             vertices = new VectorArray3d(4);
             uv = new VectorArray2f(4);
             normals = new VectorArray3f(4);
             triangles = new IndexArray3i(2);
 
-            vertices[0] = new Vector3d(-Width / 2.0f, 0, -Height / 2.0f);
-            vertices[1] = new Vector3d(Width / 2.0f, 0, -Height / 2.0f);
-            vertices[2] = new Vector3d(Width / 2.0f, 0, Height / 2.0f);
-            vertices[3] = new Vector3d(-Width / 2.0f, 0, Height / 2.0f);
+            vertices[0] = make_vertex(-Width / 2.0f, -Height / 2.0f);
+            vertices[1] = make_vertex(Width / 2.0f, -Height / 2.0f);
+            vertices[2] = make_vertex(Width / 2.0f, Height / 2.0f);
+            vertices[3] = make_vertex(-Width / 2.0f, Height / 2.0f);
 
             normals[0] = normals[1] = normals[2] = normals[3] = Vector3f.AxisY;
 

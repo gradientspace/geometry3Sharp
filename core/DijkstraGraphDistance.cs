@@ -8,6 +8,13 @@ namespace g3
 {
     public class DijkstraGraphDistance
     {
+
+        /// <summary>
+        /// if you enable this, then you can call GetOrder()
+        /// </summary>
+        public bool TrackOrder = false;
+
+
         class GraphNode : DynamicPriorityQueueNode, IEquatable<GraphNode>
         {
             public int id;
@@ -56,6 +63,8 @@ namespace g3
         List<int> Seeds;
         float max_value;
 
+        List<int> order;
+
         public DijkstraGraphDistance(int nMaxID, bool bSparse,
             Func<int,bool> nodeFilterF,
             Func<int, int, float> nodeDistanceF,
@@ -83,6 +92,7 @@ namespace g3
                 foreach (var v in seeds)
                     AddSeed((int)v.x, (float)v.y);
             }
+
         }
 
 
@@ -126,6 +136,9 @@ namespace g3
         /// </summary>
         public void Compute()
         {
+            if (TrackOrder == true)
+                order = new List<int>();
+
             if (SparseNodes != null)
                 Compute_Sparse();
             else
@@ -137,6 +150,8 @@ namespace g3
                 GraphNode g = SparseQueue.Dequeue();
                 max_value = Math.Max(g.priority, max_value);
                 g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
                 update_neighbours_sparse(g);
             }
         }
@@ -147,6 +162,8 @@ namespace g3
                 int idx = DenseQueue.Dequeue();
                 GraphNodeStruct g = DenseNodes[idx];
                 g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
                 g.distance = max_value;
                 DenseNodes[idx] = g;
                 max_value = Math.Max(idx_priority, max_value);
@@ -174,6 +191,8 @@ namespace g3
                 if (max_value > fMaxDistance)
                     return;
                 g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
                 update_neighbours_sparse(g);
             }
         }
@@ -187,6 +206,8 @@ namespace g3
                 int idx = DenseQueue.Dequeue();
                 GraphNodeStruct g = DenseNodes[idx];
                 g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
                 g.distance = max_value;
                 DenseNodes[idx] = g;
                 update_neighbours_dense(g.id);
@@ -218,6 +239,14 @@ namespace g3
             }
         }
 
+
+
+        public List<int> GetOrder()
+        {
+            if (TrackOrder == false)
+                throw new InvalidOperationException("DijkstraGraphDistance.GetOrder: Must set TrackOrder = true");
+            return order;
+        }
 
 
 

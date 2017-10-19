@@ -214,6 +214,19 @@ namespace g3
 
 
 
+
+        public static void VertexNormalOffset(IDeformableMesh mesh, double offsetDistance)
+        {
+            int NV = mesh.MaxVertexID;
+            for (int vid = 0; vid < NV; ++vid) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3d newPos = mesh.GetVertex(vid) + offsetDistance * (Vector3d)mesh.GetVertexNormal(vid);
+                    mesh.SetVertex(vid, newPos);
+                }
+            }
+        }
+
+
         public static void PerVertexTransform(IDeformableMesh mesh, Func<Vector3d,Vector3d> TransformF )
         {
             int NV = mesh.MaxVertexID;
@@ -224,7 +237,16 @@ namespace g3
                 }
             }
         }
-
+        public static void PerVertexTransform(IDeformableMesh mesh, Func<Vector3d, Vector3f, Vector3d> TransformF)
+        {
+            int NV = mesh.MaxVertexID;
+            for (int vid = 0; vid < NV; ++vid) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3d newPos = TransformF(mesh.GetVertex(vid), mesh.GetVertexNormal(vid));
+                    mesh.SetVertex(vid, newPos);
+                }
+            }
+        }
 
     }
 }

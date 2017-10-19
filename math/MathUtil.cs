@@ -91,7 +91,18 @@ namespace g3
         }
 
 
-         // clamps theta to angle interval [min,max]. should work for any theta,
+        public static bool InRange(float f, float low, float high) {
+            return f >= low && f <= high;
+        }
+        public static bool InRange(double f, double low, double high) {
+            return f >= low && f <= high;
+        }
+        public static bool InRange(int f, int low, int high) {
+            return f >= low && f <= high;
+        }
+
+
+        // clamps theta to angle interval [min,max]. should work for any theta,
         // regardless of cycles, however min & max values should be in range
         // [-360,360] and min < max
         public static double ClampAngleDeg(double theta, double min, double max)

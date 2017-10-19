@@ -66,6 +66,22 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// construct EdgeLoop from a list of vertices of mesh
+        /// </summary>
+        public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices)
+        {
+            int[] Vertices = new int[vertices.Count];
+            for (int i = 0; i < Vertices.Length; i++) 
+                Vertices[i] = vertices[i];
+
+            int[] Edges = new int[Vertices.Length];
+            for (int i = 0; i < Edges.Length; ++i)
+                Edges[i] = mesh.FindEdge(Vertices[i], Vertices[(i + 1) % Vertices.Length]);
+
+            return new EdgeLoop(mesh, Vertices, Edges, false);
+        }
+
 
         public int VertexCount {
             get { return Vertices.Length; }

@@ -187,8 +187,10 @@ namespace g3
         }
 
         public void Contain(AxisAlignedBox2f box) {
-            Contain(box.Min);
-            Contain(box.Max);
+            Min.x = Math.Min(Min.x, box.Min.x);
+            Min.y = Math.Min(Min.y, box.Min.y);
+            Max.x = Math.Max(Max.x, box.Max.x);
+            Max.y = Math.Max(Max.y, box.Max.y);
         }
 
         public AxisAlignedBox2f Intersect(AxisAlignedBox2f box) {

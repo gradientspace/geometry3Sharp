@@ -112,6 +112,15 @@ namespace g3
                 return newfont;
             }
         }
+        public static PolygonFont2d ReadFont(Stream s)
+        {
+            BinaryReader binReader = new BinaryReader(s);
+            PolygonFont2d newfont = new PolygonFont2d();
+            PolygonFont2d.Restore(newfont, binReader);
+            return newfont;
+        }
+
+
         public static void Restore(PolygonFont2d font, BinaryReader reader)
         {
             int version = reader.ReadInt32();

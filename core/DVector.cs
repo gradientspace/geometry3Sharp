@@ -287,6 +287,38 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Apply action to each element of vector. Iterates by block so this is more efficient.
+        /// </summary>
+        public void Apply(Action<T, int> applyF)
+        {
+            for (int bi = 0; bi < iCurBlock; ++bi) {
+                T[] block = Blocks[bi];
+                for (int k = 0; k < nBlockSize; ++k)
+                    applyF(block[k], k);
+            }
+            T[] lastblock = Blocks[iCurBlock];
+            for (int k = 0; k < iCurBlockUsed; ++k)
+                applyF(lastblock[k], k);
+        }
+
+
+        /// <summary>
+        /// set vec[i] = applyF(vec[i], i) for each element of vector
+        /// </summary>
+        public void ApplyReplace(Func<T, int, T> applyF)
+        {
+            for ( int bi = 0; bi < iCurBlock; ++bi ) {
+                T[] block = Blocks[bi];
+                for (int k = 0; k < nBlockSize; ++k)
+                    block[k] = applyF(block[k], k);
+            }
+            T[] lastblock = Blocks[iCurBlock];
+            for (int k = 0; k < iCurBlockUsed; ++k)
+                lastblock[k] = applyF(lastblock[k], k);
+        }
+
+
 
 
         /*

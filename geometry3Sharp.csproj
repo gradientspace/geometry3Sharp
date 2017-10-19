@@ -71,6 +71,8 @@
     <Compile Include="curve\BSplineBasis.cs" />
     <Compile Include="curve\Circle2.cs" />
     <Compile Include="curve\CurveResampler.cs" />
+    <Compile Include="curve\DGraph2Resampler.cs" />
+    <Compile Include="curve\DGraph2Util.cs" />
     <Compile Include="curve\Ellipse2.cs" />
     <Compile Include="curve\PlanarSolid2d.cs" />
     <Compile Include="curve\NURBSCurve2.cs" />
@@ -144,6 +146,7 @@
     <Compile Include="io\StandardMeshReader.cs" />
     <Compile Include="io\StandardMeshWriter.cs" />
     <Compile Include="mesh_generators\VoxelSurfaceGenerator.cs" />
+    <Compile Include="mesh_ops\MeshExtrudeMesh.cs" />
     <Compile Include="mesh_ops\MeshExtrudeFaces.cs" />
     <Compile Include="mesh_ops\MeshInsertUVPolyCurve.cs" />
     <Compile Include="mesh_ops\MeshLocalParam.cs" />

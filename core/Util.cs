@@ -20,9 +20,9 @@ namespace g3
 		}
 
         [Conditional("DEBUG")] 
-        static public void gDevAssert(bool bValue) {
+        static public void gDevAssert(bool bValue, string message = "gDevAssert") {
             if (bValue == false)
-                throw new Exception("gDevAssert");
+                throw new Exception(message);
         }
 	
 	

@@ -4,6 +4,18 @@ using System.Linq;
 
 namespace g3
 {
+    /// <summary>
+    /// Extrude a subset of faces of Mesh. Steps are:
+    /// 1) separate subset from neighbouring triangles
+    /// 2) offset them
+    /// 3) connect original and offset edges (now boundary edges) with a triangle strip
+    /// 
+    /// Caveats:
+    ///    - not sure it works for multiple regions?
+    ///    - boundary vertices are currently attached to offset region, rather than also duplicated
+    ///      and then connected w/ strip
+    ///      [TODO] implement this behavior
+    /// </summary>
     public class MeshExtrudeFaces
     {
         public DMesh3 Mesh;
@@ -17,10 +29,10 @@ namespace g3
         public Func<Vector3d, Vector3f, int, Vector3d> ExtrudedPositionF;
 
         // outputs
-        public List<Index2i> EdgePairs;
-        public MeshVertexSelection ExtrudeVertices;
-        public int[] JoinTriangles;
-        public int SetGroupID;
+        public List<Index2i> EdgePairs;                 // pairs of edges (original, extruded) that were stitched together
+        public MeshVertexSelection ExtrudeVertices;     // vertices of extruded region
+        public int[] JoinTriangles;                     // triangles generated to connect original end extruded edges together
+        public int JoinGroupID;                         // group ID of connection triangles
 
 
         public MeshExtrudeFaces(DMesh3 mesh, int[] triangles, bool bForceCopyArray = false)
@@ -61,7 +73,6 @@ namespace g3
         {
             MeshEditor editor = new MeshEditor(Mesh);
 
-
             editor.SeparateTriangles(Triangles, true, out EdgePairs);
 
             MeshNormals normals = null;
@@ -85,8 +96,8 @@ namespace g3
             foreach (int vid in ExtrudeVertices)
                 Mesh.SetVertex(vid, NewVertices[k++]);
 
-            SetGroupID = Group.GetGroupID(Mesh);
-            JoinTriangles = editor.StitchUnorderedEdges(EdgePairs, SetGroupID);
+            JoinGroupID = Group.GetGroupID(Mesh);
+            JoinTriangles = editor.StitchUnorderedEdges(EdgePairs, JoinGroupID);
 
             return true;
         }
