@@ -11,19 +11,40 @@ namespace g3
 		public MeshBoundaryLoopsException(string message) : base(message) {}
 		public bool UnclosedLoop = false;
 		public bool BowtieFailure = false;
+        public bool RepeatedEdge = false;
 	}
 
 	/// <summary>
-	/// Extract boundary EdgeLoops from Mesh.
+	/// Extract boundary EdgeLoops from Mesh. Can also extract EdgeSpans for open areas,
+    /// however default behavior is to ignore these. Set .SpanBehavior to configure.
 	/// </summary>
     public class MeshBoundaryLoops : IEnumerable<EdgeLoop>
     {
         public DMesh3 Mesh;
         public List<EdgeLoop> Loops;
 
+        public List<EdgeSpan> Spans;       // spans are unclosed loops
+        public bool SawOpenSpans = false;  // will be set to true if we find any open spans
 
-		// if enabled, only edges where this returns true are considered
-		public Func<int, bool> EdgeFilterF = null;
+
+        // What should we do if we encounter open spans. Mainly a result of EdgeFilter, but can also
+        // happen on meshes w/ crazy bowties
+        public enum SpanBehaviors
+        {
+            Ignore, ThrowException, Compute
+        };
+        public SpanBehaviors SpanBehavior = SpanBehaviors.Compute;
+
+        // What should we do if we encounter an unrecoverable failure while walking a loop
+        public enum FailureBehaviors
+        {
+            ThrowException,       // die, and you clean up
+            ConvertToOpenSpan     // keep un-closed loop as a span
+        }
+        public FailureBehaviors FailureBehavior = FailureBehaviors.ConvertToOpenSpan;
+
+        // if enabled, only edges where this returns true are considered
+        public Func<int, bool> EdgeFilterF = null;
 
 
         public MeshBoundaryLoops(DMesh3 mesh, bool bAutoCompute = true)
@@ -35,6 +56,9 @@ namespace g3
 
         public int Count {
             get { return Loops.Count; }
+        }
+        public int SpanCount {
+            get { return Spans.Count; }
         }
 
         public EdgeLoop this[int index] {
@@ -105,6 +129,7 @@ namespace g3
 			// so closed boundary-loop can be followed by walking edges in-order
 
 			Loops = new List<EdgeLoop>();
+            Spans = new List<EdgeSpan>();
 
             int NE = Mesh.MaxEdgeID;
 
@@ -120,6 +145,8 @@ namespace g3
             // Temp buffer for reading back all boundary edges of a vertex.
             // probably always small but in pathological cases it could be large...
             int[] all_e = new int[16];
+
+            // [TODO] might make sense to precompute some things here, like num_be for each bdry vtx?
 
             // process all edges of mesh
             for ( int eid = 0; eid < NE; ++eid ) {
@@ -144,10 +171,15 @@ namespace g3
 
                 // follow the chain in order of oriented edges
                 bool bClosed = false;
+                bool bIsOpenSpan = false;
                 while ( ! bClosed ) {
                     Index2i ev = Mesh.GetOrientedBoundaryEdgeV(eCur);
                     int cure_a = ev.a, cure_b = ev.b;
-                    loop_verts.Add(cure_a);
+                    if (bIsOpenSpan) {
+                        cure_a = ev.b; cure_b = ev.a;
+                    } else {
+                        loop_verts.Add(cure_a);
+                    }
 
                     int e0 = -1, e1 = 1;
                     int bdry_nbrs = Mesh.VtxBoundaryEdges(cure_b, ref e0, ref e1);
@@ -167,10 +199,22 @@ namespace g3
 					}
 
 
-					if (bdry_nbrs < 2)
-						throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: found broken neighbourhood at vertex " + cure_b) { UnclosedLoop = true };
+                    if (bdry_nbrs < 2) {   // hit an 'endpoint' vertex (should only happen when Filter is on...)
+                        if ( SpanBehavior == SpanBehaviors.ThrowException )
+                            throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: found open span at vertex " + cure_b) { UnclosedLoop = true };
+                        if (bIsOpenSpan) {
+                            bClosed = true;
+                            continue;
+                        } else {
+                            bIsOpenSpan = true;    // begin open span
+                            eCur = loop_edges[0];  // restart at other end of loop
+                            loop_edges.Reverse();  // do this so we can push to front
+                            continue;
+                        }
+                    }
 
                     int eNext = -1;
+
                     if (bdry_nbrs > 2) {
 						// found "bowtie" vertex...things just got complicated!
 
@@ -183,26 +227,36 @@ namespace g3
 							// try to find an unused outgoing edge that is oriented properly.
 							// This could create sub-loops, we will handle those later
 							if (bdry_nbrs >= all_e.Length)
-								all_e = new int[bdry_nbrs];
+								all_e = new int[2*bdry_nbrs];
 							int num_be = Mesh.VtxAllBoundaryEdges(cure_b, all_e);
+                            Debug.Assert(num_be == bdry_nbrs);
 
-							if (EdgeFilterF != null) {
+                            if (EdgeFilterF != null) {
 								num_be = BufferUtil.FilterInPlace(all_e, EdgeFilterF, num_be);
 							}
 
-							Debug.Assert(num_be == bdry_nbrs);
-
 							// Try to pick the best "turn left" vertex.
 							eNext = find_left_turn_edge(eCur, cure_b, all_e, num_be, used_edge);
-
-							if (eNext == -1)
-								throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b) { BowtieFailure = true };
+                            if ( eNext == -1 ) {
+                                if ( FailureBehavior == FailureBehaviors.ThrowException || SpanBehavior == SpanBehaviors.ThrowException)
+                                    throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: cannot find valid outgoing edge at bowtie vertex " + cure_b) { BowtieFailure = true };
+                                
+                                // ok, we are stuck. all we can do now is terminate this loop and keep it as a span
+                                if (bIsOpenSpan) {
+                                    bClosed = true;
+                                } else {
+                                    bIsOpenSpan = true;
+                                    bClosed = true;
+                                }
+                                continue;
+                            }
                         }
 
                         if ( bowties.Contains(cure_b) == false )
                             bowties.Add(cure_b);
 
                     } else {
+                        // walk forward to next available edge
                         Debug.Assert(e0 == eCur || e1 == eCur);
                         eNext = (e0 == eCur) ? e1 : e0;
                     }
@@ -213,19 +267,34 @@ namespace g3
                         bClosed = true;
                     } else if (eNext == eStart) {
                         // found edge at start of loop, so loop is done.
-                        bClosed = true;      
+                        bClosed = true;
+                    } else if ( used_edge[eNext] != false ) {
+                        // disaster case - the next edge is already used, but it is not the start of our loop
+                        // All we can do is convert to open span and terminate
+                        if (FailureBehavior == FailureBehaviors.ThrowException || SpanBehavior == SpanBehaviors.ThrowException)
+                            throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: encountered repeated edge " + eNext) { RepeatedEdge = true };
+                        bIsOpenSpan = true;
+                        bClosed = true;
+
                     } else {
                         // push onto accumulated list
                         Debug.Assert( used_edge[eNext] == false );
                         loop_edges.Add(eNext);
+                        used_edge[eNext] = true;
                         eCur = eNext;
-                        used_edge[eCur] = true;
                     }
                 }
 
-                // if we saw a bowtie vertex, we might need to break up this loop,
-                // so call extract_subloops
-                if (bowties.Count > 0) {
+                if (bIsOpenSpan) {
+                    SawOpenSpans = true;
+                    if (SpanBehavior == SpanBehaviors.Compute) {
+                        loop_edges.Reverse();  // orient properly
+                        EdgeSpan span = EdgeSpan.FromEdges(Mesh, loop_edges);
+                        Spans.Add(span);
+                    }
+                } else if (bowties.Count > 0) {
+                    // if we saw a bowtie vertex, we might need to break up this loop,
+                    // so call extract_subloops
                     List<EdgeLoop> subloops = extract_subloops(loop_verts, loop_edges, bowties);
                     for (int i = 0; i < subloops.Count; ++i)
                         Loops.Add(subloops[i]);
@@ -299,7 +368,9 @@ namespace g3
                     best_e = bdry_eid;
                 }
             }
-            Debug.Assert(best_e != -1);
+
+            // [RMS] w/ bowtie vertices and open spans, this does happen
+            //Debug.Assert(best_e != -1);
 
             return best_e;
         }

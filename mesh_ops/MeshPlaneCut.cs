@@ -29,7 +29,9 @@ namespace g3
 		public Vector3d PlaneNormal;
 
 		public List<EdgeLoop> CutLoops;
-		public bool CutLoopsFailed;		// set to true if we could not compute cut loops
+        public List<EdgeSpan> CutSpans;
+        public bool CutLoopsFailed = false;		// set to true if we could not compute cut loops/spans
+        public bool FoundOpenSpans = false;     // set to true if we found open spans in cut
 
 		public List<int[]> LoopFillTriangles;
 
@@ -141,7 +143,9 @@ namespace g3
 				loops.Compute();
 
 				CutLoops = loops.Loops;
+                CutSpans = loops.Spans;
 				CutLoopsFailed = false;
+                FoundOpenSpans = CutSpans.Count > 0;
 
 			} catch {
 				CutLoops = new List<EdgeLoop>();

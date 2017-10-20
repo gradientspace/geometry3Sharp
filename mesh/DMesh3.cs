@@ -1215,9 +1215,11 @@ namespace g3
 		}
 
 
-        // Returns count of boundary edges at vertex, and 
-        // the first two boundary edges if found. 
-        // If return is > 2, call VtxAllBoundaryEdges
+        /// <summary>
+        /// Returns count of boundary edges at vertex, and 
+        /// the first two boundary edges if found. 
+        /// If return is > 2, call VtxAllBoundaryEdges
+        /// </summary>
         public int VtxBoundaryEdges(int vID, ref int e0, ref int e1)
         {
             if ( vertices_refcount.isValid(vID) ) {
@@ -1241,9 +1243,10 @@ namespace g3
             return -1;
         }
 
-
-        // e needs to be large enough (ie call VtxBoundaryEdges, or as large as max one-ring)
-        // returns count, ie number of elements of e that were filled
+        /// <summary>
+        /// e needs to be large enough (ie call VtxBoundaryEdges, or as large as max one-ring)
+        /// returns count, ie number of elements of e that were filled
+        /// </summary>
         public int VtxAllBoundaryEdges(int vID, int[] e)
         {
             if (vertices_refcount.isValid(vID)) {
@@ -1263,17 +1266,6 @@ namespace g3
         }
 
 
-
-        // ack...duplicate of GetTriNbrTris, but unused??
-   //     public Index3i GetTriTriangles(int tID) {
-   //         if (!IsTriangle(tID))
-   //             return InvalidTriangle;
-			//int i = 3*tID;
-   //         return new Index3i(
-   //             edge_other_t(triangle_edges[i], tID),
-   //             edge_other_t(triangle_edges[i + 1], tID),
-   //             edge_other_t(triangle_edges[i + 2], tID));
-   //     }
 
         public MeshResult GetVtxTriangles(int vID, List<int> vTriangles, bool bUseOrientation)
         {
