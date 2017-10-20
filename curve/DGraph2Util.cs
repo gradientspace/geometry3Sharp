@@ -133,6 +133,8 @@ namespace g3
         public static Index2i NextEdgeAndVtx(int eid, int prev_vid, DGraph2 graph)
         {
             Index2i ev = graph.GetEdgeV(eid);
+            if (ev.a == DGraph2.InvalidID)
+                return Index2i.Max;
             int next_vid = (ev.a == prev_vid) ? ev.b : ev.a;
 
             if (graph.GetVtxEdgeCount(next_vid) != 2)

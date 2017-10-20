@@ -308,7 +308,7 @@ namespace g3
 		{
 			if (!edges_refcount.isValid(eID)) {
 				Util.gDevAssert(false);
-				return MeshResult.Failed_NotATriangle;
+				return MeshResult.Failed_NotAnEdge;
 			}
 
 			int i = 3 * eID;
