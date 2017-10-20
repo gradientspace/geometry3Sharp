@@ -173,5 +173,25 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Separate input mesh into disconnected shells
+        /// </summary>
+        public static DMesh3[] Separate(DMesh3 meshIn)
+        {
+            MeshConnectedComponents c = new MeshConnectedComponents(meshIn);
+            c.FindConnectedT();
+
+            DMesh3[] result = new DMesh3[c.Components.Count];
+
+            int ri = 0;
+            foreach (Component comp in c.Components) {
+                DSubmesh3 submesh = new DSubmesh3(meshIn, comp.Indices);
+                result[ri++] = submesh.SubMesh;
+            }
+
+            return result;
+        }
+
+
     }
 }

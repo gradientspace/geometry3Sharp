@@ -102,8 +102,13 @@ namespace g3
 				return (vertices[i + 1] - vertices[i - 1]).Normalized;
 		}
 
+        public Vector2d GetNormal(int i)
+        {
+            return GetTangent(i).Perp;
+        }
 
-		public AxisAlignedBox2d GetBounds() {
+
+        public AxisAlignedBox2d GetBounds() {
 			if ( vertices.Count == 0 )
 				return AxisAlignedBox2d.Empty;
 			AxisAlignedBox2d box = new AxisAlignedBox2d(vertices[0]);
@@ -152,6 +157,16 @@ namespace g3
 			}
 		}
 
+
+
+        public void Offset(double dist)
+        {
+            Vector2d[] newv = new Vector2d[vertices.Count];
+            for (int k = 0; k < vertices.Count; ++k)
+                newv[k] = vertices[k] + dist * GetNormal(k);
+            for (int k = 0; k < vertices.Count; ++k)
+                vertices[k] = newv[k];
+        }
 
 
 
