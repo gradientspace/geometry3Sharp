@@ -48,13 +48,17 @@ namespace g3
             int[] Vertices = new int[Edges.Length+1];
             Index2i start_ev = mesh.GetEdgeV(Edges[0]);
             Index2i prev_ev = start_ev;
-            for (int i = 1; i < Edges.Length; ++i) {
-                Index2i next_ev = mesh.GetEdgeV(Edges[i]);
-                Vertices[i] = IndexUtil.find_shared_edge_v(ref prev_ev, ref next_ev);
-                prev_ev = next_ev;
+            if (Edges.Length > 1) {
+                for (int i = 1; i < Edges.Length; ++i) {
+                    Index2i next_ev = mesh.GetEdgeV(Edges[i]);
+                    Vertices[i] = IndexUtil.find_shared_edge_v(ref prev_ev, ref next_ev);
+                    prev_ev = next_ev;
+                }
+                Vertices[0] = IndexUtil.find_edge_other_v(ref start_ev, Vertices[1]);
+                Vertices[Vertices.Length - 1] = IndexUtil.find_edge_other_v(prev_ev, Vertices[Vertices.Length - 2]);
+            } else {
+                Vertices[0] = start_ev[0]; Vertices[1] = start_ev[1];
             }
-            Vertices[0] = IndexUtil.find_edge_other_v(ref start_ev, Vertices[1]);
-            Vertices[Vertices.Length-1] = IndexUtil.find_edge_other_v(prev_ev, Vertices[Vertices.Length-2]);
             return new EdgeSpan(mesh, Vertices, Edges, false);
         }
 
