@@ -138,7 +138,7 @@ namespace g3 {
 				(-Extent.x*AxisX - Extent.y*AxisY - Extent.z*AxisZ); }
 		}
 		public double Volume {
-			get { return 2*Extent.x + 2*Extent.y * 2*Extent.z; }
+			get { return 2*Extent.x * 2*Extent.y * 2*Extent.z; }
 		}
 
 		public void Contain( Vector3d v) {
@@ -165,7 +165,7 @@ namespace g3 {
 				Contain(v[k]);
 		}
 
-		public bool Contained( Vector3d v ) {
+		public bool Contains( Vector3d v ) {
 			Vector3d lv = v - Center;
 			return (Math.Abs(lv.Dot(AxisX)) <= Extent.x) &&
 				(Math.Abs(lv.Dot(AxisY)) <= Extent.y) &&
@@ -319,7 +319,7 @@ namespace g3 {
 				(-Extent.x*AxisX - Extent.y*AxisY - Extent.z*AxisZ); }
 		}
 		public double Volume {
-			get { return 2*Extent.x + 2*Extent.y * 2*Extent.z; }
+			get { return 2*Extent.x * 2*Extent.y * 2*Extent.z; }
 		}
 
 		public void Contain( Vector3f v) {
@@ -346,7 +346,7 @@ namespace g3 {
 				Contain(v[k]);
 		}
 
-		public bool Contained( Vector3f v ) {
+		public bool Contains( Vector3f v ) {
 			Vector3f lv = v - Center;
 			return (Math.Abs(lv.Dot(AxisX)) <= Extent.x) &&
 				(Math.Abs(lv.Dot(AxisY)) <= Extent.y) &&
