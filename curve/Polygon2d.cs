@@ -297,7 +297,7 @@ namespace g3
 
 			Vector2d n0 = GetNormal(iSeg);
 			Vector2d n1 = GetNormal((iSeg + 1) % vertices.Count);
-			return (1.0 - t) * n0 + t * n1;
+			return ((1.0 - t) * n0 + t * n1).Normalized;
 		}
 
 
