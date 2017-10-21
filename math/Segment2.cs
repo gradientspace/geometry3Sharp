@@ -60,7 +60,7 @@ namespace g3
 			else if ( t <= -Extent )
 				return P0.DistanceSquared(p);
 			Vector2d proj = Center + t * Direction;
-			return (proj - p).LengthSquared;
+            return proj.DistanceSquared(p);
 		}
         public double DistanceSquared(Vector2d p, out double t)
         {
@@ -73,7 +73,7 @@ namespace g3
                 return P0.DistanceSquared(p);
             }
             Vector2d proj = Center + t * Direction;
-            return (proj - p).LengthSquared;
+            return proj.DistanceSquared(p);
         }
 
         public Vector2d NearestPoint(Vector2d p)
@@ -151,6 +151,33 @@ namespace g3
         public IParametricCurve2d Clone() {
             return new Segment2d(this.Center, this.Direction, this.Extent);
         }
+
+
+
+        /// <summary>
+        /// distance from pt to segment (a,b), with no square roots
+        /// </summary>
+        public static double FastDistanceSquared(ref Vector2d a, ref Vector2d b, ref Vector2d pt)
+        {
+            double vx = b.x - a.x, vy = b.y - a.y;
+            double len2 = vx*vx + vy*vy;
+            double dx = pt.x - a.x, dy = pt.y - a.y;
+            if (len2 < 1e-13) {
+                return dx * dx + dy * dy;
+            }
+            double t = (dx*vx + dy*vy);
+            if (t <= 0) {
+                return dx * dx + dy * dy;
+            } else if (t >= len2) {
+                dx = pt.x - b.x; dy = pt.y - b.y;
+                return dx * dx + dy * dy;
+            }
+
+            dx = pt.x - (a.x + ((t * vx)/len2));
+            dy = pt.y - (a.y + ((t * vy)/len2));
+            return dx * dx + dy * dy;
+        }
+
     }
 
 
@@ -233,6 +260,34 @@ namespace g3
             Direction = p1 - p0;
             Extent = 0.5f * Direction.Normalize();
         }
+
+
+
+
+        /// <summary>
+        /// distance from pt to segment (a,b), with no square roots
+        /// </summary>
+        public static float FastDistanceSquared(ref Vector2f a, ref Vector2f b, ref Vector2f pt)
+        {
+            float vx = b.x - a.x, vy = b.y - a.y;
+            float len2 = vx * vx + vy * vy;
+            float dx = pt.x - a.x, dy = pt.y - a.y;
+            if (len2 < 1e-7) {
+                return dx * dx + dy * dy;
+            }
+            float t = (dx * vx + dy * vy);
+            if (t <= 0) {
+                return dx * dx + dy * dy;
+            } else if (t >= len2) {
+                dx = pt.x - b.x; dy = pt.y - b.y;
+                return dx * dx + dy * dy;
+            }
+
+            dx = pt.x - (a.x + ((t * vx) / len2));
+            dy = pt.y - (a.y + ((t * vy) / len2));
+            return dx * dx + dy * dy;
+        }
+
     }
 
 

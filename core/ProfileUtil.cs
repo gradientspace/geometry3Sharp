@@ -48,7 +48,7 @@ namespace g3
         public override string ToString()
         {
             TimeSpan t = Watch.Elapsed;
-            return string.Format("{0:fffffff}", Watch.Elapsed);
+            return string.Format("{0:ss}.{0:fffffff}", Watch.Elapsed);
         }
     }
 
@@ -125,7 +125,7 @@ namespace g3
         }
         public string Accumulated(string label)
         {
-            return string.Format("{0:fffffff}", Timers[label].Accumulated);
+            return string.Format("{0:ss}.{0:fffffff}", Timers[label].Accumulated);
         }
 
         public string AllTicks(string prefix = "Times:")

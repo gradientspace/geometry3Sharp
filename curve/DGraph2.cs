@@ -158,9 +158,30 @@ namespace g3
 			return false;
 		}
 
+        public Segment2d GetEdgeSegment(int eID)
+        {
+            if (edges_refcount.isValid(eID)) {
+                int iv0 = 2 * edges[3 * eID];
+                int iv1 = 2 * edges[3 * eID + 1];
+                return new Segment2d(new Vector2d(vertices[iv0], vertices[iv0 + 1]),
+                                     new Vector2d(vertices[iv1], vertices[iv1 + 1]));
+            }
+            throw new Exception("DGraph2.GetEdgeSegment: invalid segment with id " + eID);
+        }
+
+        public Vector2d GetEdgeCenter(int eID)
+        {
+            if (edges_refcount.isValid(eID)) {
+                int iv0 = 2 * edges[3 * eID];
+                int iv1 = 2 * edges[3 * eID + 1];
+                return new Vector2d((vertices[iv0] + vertices[iv1]) * 0.5,
+                                    (vertices[iv0 + 1] + vertices[iv1 + 1]) * 0.5);
+            }
+            throw new Exception("DGraph2.GetEdgeCenter: invalid segment with id " + eID);
+        }
 
 
-		public int AppendVertex(Vector2d v)
+        public int AppendVertex(Vector2d v)
 		{
 			int vid = vertices_refcount.allocate();
 			int i = 2 * vid;
