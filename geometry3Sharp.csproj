@@ -61,6 +61,7 @@
     <Compile Include="core\IndexPriorityQueue.cs" />
     <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
+    <Compile Include="core\SafeCollections.cs" />
     <Compile Include="core\Snapping.cs" />
     <Compile Include="core\SparseList.cs" />
     <Compile Include="core\TagSet.cs" />
@@ -257,6 +258,7 @@
     <Compile Include="spatial\NarrowBandLevelSet.cs" />
     <Compile Include="spatial\PointHashGrid.cs" />
     <Compile Include="spatial\Polygon2dBoxTree.cs" />
+    <Compile Include="spatial\SegmentHashGrid.cs" />
     <Compile Include="spatial\SpatialFunctions.cs" />
     <Compile Include="spatial\SpatialInterfaces.cs" />
     <Compile Include="io\MeshIOUtil.cs" />
