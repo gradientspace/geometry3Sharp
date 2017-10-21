@@ -12,14 +12,14 @@ namespace g3
     {
         public DGraph2 Graph;
 
+        // if this returns true, edge cannot be modified
+        public Func<int, bool> FixedEdgeFilterF = (eid) => { return false; };
+
+
         public DGraph2Resampler(DGraph2 graph)
         {
             this.Graph = graph;
         }
-
-
-
-
 
 
         public void SplitToMaxEdgeLength(double fMaxLen)
@@ -28,6 +28,8 @@ namespace g3
             int NE = Graph.MaxEdgeID;
             for (int eid = 0; eid < NE; ++eid) {
                 if (!Graph.IsEdge(eid))
+                    continue;
+                if (FixedEdgeFilterF(eid))
                     continue;
                 Index2i ev = Graph.GetEdgeV(eid);
                 double dist = Graph.GetVertex(ev.a).Distance(Graph.GetVertex(ev.b));
@@ -90,7 +92,11 @@ namespace g3
                     if (open < 180 - fMaxDeviationDeg)
                         continue;
 
-                    int eid = Graph.GetVtxEdges(vid).First();
+                    var edges = Graph.GetVtxEdges(vid);
+                    int eid = edges.First();
+                    int eid2 = edges.Last();
+                    if (FixedEdgeFilterF(eid) || FixedEdgeFilterF(eid2))
+                        continue;
 
                     Index2i ev = Graph.GetEdgeV(eid);
                     int other_v = (ev.a == vid) ? ev.b : ev.a;
@@ -124,6 +130,8 @@ namespace g3
                 int N = Graph.MaxEdgeID;
                 for ( int eid = 0; eid < N; eid++ ) {
                     if (!Graph.IsEdge(eid))
+                        continue;
+                    if (FixedEdgeFilterF(eid))
                         continue;
                     Index2i ev = Graph.GetEdgeV(eid);
 
@@ -170,6 +178,8 @@ namespace g3
                     cur_eid = (cur_eid + nPrime) % N;
 
                     if (!Graph.IsEdge(eid))
+                        continue;
+                    if (FixedEdgeFilterF(eid))
                         continue;
                     Index2i ev = Graph.GetEdgeV(eid);
 

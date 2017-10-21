@@ -22,7 +22,7 @@ namespace g3
 		DVector<List<int>> vertex_edges;
 
 		RefCountVector edges_refcount;
-		DVector<int> edges;
+		DVector<int> edges;   // each edge is a tuple (v0,v0,group_id)
 
 		int timestamp = 0;
 		int shape_timestamp = 0;
