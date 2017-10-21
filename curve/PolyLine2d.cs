@@ -134,7 +134,12 @@ namespace g3
         }
 
 
-		public IEnumerable<Segment2d> SegmentItr() {
+        public Segment2d Segment(int iSegment)
+        {
+            return new Segment2d(vertices[iSegment], vertices[iSegment+1]);
+        }
+
+        public IEnumerable<Segment2d> SegmentItr() {
 			for ( int i = 0; i < vertices.Count-1; ++i )
 				yield return new Segment2d( vertices[i], vertices[i+1] );
 		}
@@ -158,8 +163,10 @@ namespace g3
 		}
 
 
-
-        public void Offset(double dist)
+        /// <summary>
+        /// Offset each point by dist along vertex normal direction (ie tangent-perp)
+        /// </summary>
+        public void VertexOffset(double dist)
         {
             Vector2d[] newv = new Vector2d[vertices.Count];
             for (int k = 0; k < vertices.Count; ++k)
@@ -169,18 +176,78 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// make polyline shorter by dist length, by removing from front
+        /// </summary>
+        public bool TrimStart(double dist)
+        {
+            int NV = vertices.Count;
+            int vi = 0;
+            double next_len = vertices[vi].Distance(vertices[vi + 1]);
+            double accum_len = 0;
+            while (vi < NV-2 && (accum_len+next_len) < dist) {
+                accum_len += next_len;
+                vi++;
+                next_len = vertices[vi].Distance(vertices[vi + 1]);
+            }
+            if (vi == NV-2 && (accum_len+next_len) <= dist )
+                return false;
+            double t = (dist - accum_len) / next_len;
+            Vector2d pt = Segment(vi).PointBetween(t);
+            if (vi > 0)
+                vertices.RemoveRange(0, vi);
+            vertices[0] = pt;
+            return true;
+        }
 
-		// Polyline simplification (converted from Polyogon2d.simplifyDP)
-		// code adapted from: http://softsurfer.com/Archive/algorithm_0205/algorithm_0205.htm
-		// simplifyDP():
-		//  This is the Douglas-Peucker recursive simplification routine
-		//  It just marks vertices that are part of the simplified polyline
-		//  for approximating the polyline subchain v[j] to v[k].
-		//    Input:  tol = approximation tolerance
-		//            v[] = polyline array of vertex points
-		//            j,k = indices for the subchain v[j] to v[k]
-		//    Output: mk[] = array of markers matching vertex array v[]
-		static void simplifyDP(double tol, Vector2d[] v, int j, int k, bool[] mk)
+        /// <summary>
+        /// make polyline shorter by dist length, by removing from end
+        /// </summary>
+        public bool TrimEnd(double dist)
+        {
+            int NV = vertices.Count;
+            int vi = NV-1;
+            double next_len = vertices[vi].Distance(vertices[vi-1]);
+            double accum_len = 0;
+            while (vi > 1 && (accum_len + next_len) < dist) {
+                accum_len += next_len;
+                vi--;
+                next_len = vertices[vi].Distance(vertices[vi-1]);
+            }
+            if (vi == 1 && (accum_len + next_len) <= dist)
+                return false;
+            double t = (dist - accum_len) / next_len;
+            Vector2d pt = Segment(vi-1).PointBetween(1-t);
+            if (vi < NV-1)
+                vertices.RemoveRange(vi, (NV-1)-vi);
+            vertices[vi] = pt;
+            return true;
+        }
+
+        /// <summary>
+        /// make polyline shorter by removing each_end_dist from start and end
+        /// </summary>
+        public bool Trim(double each_end_dist)
+        {
+            if (Length < 2 * each_end_dist)
+                return false;
+            return (TrimEnd(each_end_dist) == false) 
+                ? false : TrimStart(each_end_dist);
+        }
+
+
+
+        // Polyline simplification (converted from Polyogon2d.simplifyDP)
+        // code adapted from: http://softsurfer.com/Archive/algorithm_0205/algorithm_0205.htm
+        // simplifyDP():
+        //  This is the Douglas-Peucker recursive simplification routine
+        //  It just marks vertices that are part of the simplified polyline
+        //  for approximating the polyline subchain v[j] to v[k].
+        //    Input:  tol = approximation tolerance
+        //            v[] = polyline array of vertex points
+        //            j,k = indices for the subchain v[j] to v[k]
+        //    Output: mk[] = array of markers matching vertex array v[]
+        static void simplifyDP(double tol, Vector2d[] v, int j, int k, bool[] mk)
 		{
 			if (k <= j + 1) // there is nothing to simplify
 				return;
