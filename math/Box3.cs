@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace g3 {
 
@@ -156,6 +157,47 @@ namespace g3 {
 				}
 			}			
 		}
+
+
+        /// <summary>
+        /// update the box to contain set of input points. More efficient tha ncalling Contain() many times
+        /// code ported from GTEngine GteContOrientedBox3.h 
+        /// </summary>
+        public void Contain(IEnumerable<Vector3d> points)
+        {
+            // Let C be the box center and let U0, U1, and U2 be the box axes.
+            // Each input point is of the form X = C + y0*U0 + y1*U1 + y2*U2.
+            // The following code computes min(y0), max(y0), min(y1), max(y1),
+            // min(y2), and max(y2).  The box center is then adjusted to be
+            //   C' = C + 0.5*(min(y0)+max(y0))*U0 + 0.5*(min(y1)+max(y1))*U1 + 0.5*(min(y2)+max(y2))*U2
+            IEnumerator<Vector3d> points_itr = points.GetEnumerator();
+            points_itr.MoveNext();
+
+            Vector3d diff = points_itr.Current - Center;
+            Vector3d pmin = new Vector3d( diff.Dot(AxisX), diff.Dot(AxisY), diff.Dot(AxisZ));
+            Vector3d pmax = pmin;
+            while (points_itr.MoveNext()) {
+                diff = points_itr.Current - Center;
+
+                double dotx = diff.Dot(AxisX);
+                if (dotx < pmin[0]) pmin[0] = dotx;
+                else if (dotx > pmax[0]) pmax[0] = dotx;
+
+                double doty = diff.Dot(AxisY);
+                if (doty < pmin[1]) pmin[1] = doty;
+                else if (doty > pmax[1]) pmax[1] = doty;
+
+                double dotz = diff.Dot(AxisZ);
+                if (dotz < pmin[2]) pmin[2] = dotz;
+                else if (dotz > pmax[2]) pmax[2] = dotz;
+            }
+            for (int j = 0; j < 3; ++j) {
+                Center += (((double)0.5) * (pmin[j] + pmax[j])) * Axis(j);
+                Extent[j] = ((double)0.5) * (pmax[j] - pmin[j]);
+            }
+        }
+
+
 
 		// I think this can be more efficient...no? At least could combine
 		// all the axis-interval updates before updating Center...

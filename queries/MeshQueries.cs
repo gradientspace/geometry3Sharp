@@ -8,7 +8,9 @@ namespace g3
     public static class MeshQueries
     {
 
-        // convenience function to construct a DistPoint3Triangle3 object for a mesh triangle
+        /// <summary>
+        /// construct a DistPoint3Triangle3 object for a mesh triangle
+        /// </summary>
         public static DistPoint3Triangle3 TriangleDistance(DMesh3 mesh, int ti, Vector3d point)
         {
             if (!mesh.IsTriangle(ti))
@@ -20,9 +22,24 @@ namespace g3
             return q;
         }
 
+        /// <summary>
+        /// Find point-normal frame at closest point to queryPoint on mesh.
+        /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
+        /// </summary>
+        public static Frame3f NearestPointFrame(DMesh3 mesh, ISpatial spatial, Vector3d queryPoint)
+        {
+            int tid = spatial.FindNearestTriangle(queryPoint);
+            Vector3d surfPt = TriangleDistance(mesh, tid, queryPoint).TriangleClosest;
+            if (mesh.HasVertexNormals)
+                return SurfaceFrame(mesh, tid, surfPt);
+            else
+                return new Frame3f(surfPt, mesh.GetTriNormal(tid));
+        }
 
 
-        // convenience function to construct a IntrRay3Triangle3 object for a mesh triangle
+        /// <summary>
+        /// convenience function to construct a IntrRay3Triangle3 object for a mesh triangle
+        /// </summary>
         public static IntrRay3Triangle3 TriangleIntersection(DMesh3 mesh, int ti, Ray3d ray)
         {
             if (!mesh.IsTriangle(ti))
@@ -35,8 +52,54 @@ namespace g3
         }
 
 
-        // compute distance from point to triangle ti in mesh, with minimal extra objects/etc
-        // TODO: take in current-max-distance so we can early-out?
+        /// <summary>
+        /// Find point-normal frame at ray-intersection point on mesh, or return false if no hit.
+        /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
+        /// </summary>
+        public static bool RayHitPointFrame(DMesh3 mesh, ISpatial spatial, Ray3d ray, out Frame3f hitPosFrame)
+        {
+            hitPosFrame = new Frame3f();
+            int tid = spatial.FindNearestHitTriangle(ray);
+            if (tid == DMesh3.InvalidID)
+                return false;
+            var isect = TriangleIntersection(mesh, tid, ray);
+            if (isect.Result != IntersectionResult.Intersects)
+                return false;
+            Vector3d surfPt = ray.PointAt(isect.RayParameter);
+            if (mesh.HasVertexNormals)
+                hitPosFrame = SurfaceFrame(mesh, tid, surfPt);
+            else
+                hitPosFrame = new Frame3f(surfPt, mesh.GetTriNormal(tid));
+            return true;
+        }
+
+
+        /// <summary>
+        /// Get point-normal frame on surface of mesh. Assumption is that point lies in tID.
+        /// returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
+        /// </summary>
+        public static Frame3f SurfaceFrame(DMesh3 mesh, int tID, Vector3d point)
+        {
+            if (!mesh.IsTriangle(tID))
+                throw new Exception("MeshQueries.SurfaceFrame: triangle " + tID + " does not exist!");
+            Triangle3d tri = new Triangle3d();
+            mesh.GetTriVertices(tID, ref tri.V0, ref tri.V1, ref tri.V2);
+            Vector3d bary = tri.BarycentricCoords(point);
+            point = tri.PointAt(bary);
+            if (mesh.HasVertexNormals) {
+                Vector3d normal = mesh.GetTriBaryNormal(tID, bary.x, bary.y, bary.z);
+                return new Frame3f(point, normal);
+            } else
+                return new Frame3f(point, mesh.GetTriNormal(tID));
+        }
+
+
+
+
+
+        /// <summary>
+        /// Compute distance from point to triangle in mesh, with minimal extra objects/etc
+        /// </summary>
         public static double TriDistanceSqr(DMesh3 mesh, int ti, Vector3d point)
         {
             Vector3d V0 = Vector3d.Zero, V1 = Vector3d.Zero, V2 = Vector3d.Zero;

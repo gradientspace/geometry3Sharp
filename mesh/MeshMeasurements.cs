@@ -161,6 +161,17 @@ namespace g3
             return centroid / (double)N;
         }
 
+        public static Vector3d Centroid<T>(IEnumerable<T> values, Func<T, Vector3d> PositionF)
+        {
+            Vector3d centroid = Vector3d.Zero;
+            int N = 0;
+            foreach (T t in values) { 
+                centroid += PositionF(t);
+                N++;
+            }
+            return centroid / (double)N;
+        }
+
 
         public static Vector3d Centroid(DMesh3 mesh, bool bOnlyTriVertices = true)
         {

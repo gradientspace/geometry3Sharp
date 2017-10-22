@@ -40,12 +40,61 @@ namespace g3
                 sumZZ += diff[2] * diff[2];
             }
 
-            sumXX *= invNumPoints;
-            sumXY *= invNumPoints;
-            sumXZ *= invNumPoints;
-            sumYY *= invNumPoints;
-            sumYZ *= invNumPoints;
-            sumZZ *= invNumPoints;
+            do_solve(sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ, invNumPoints);
+        }
+
+
+
+
+
+        public GaussPointsFit3(IEnumerable<Vector3d> points, IEnumerable<double> weights)
+        {
+            Box = new Box3d(Vector3d.Zero, Vector3d.One);
+
+            // Compute the mean of the points.
+            int numPoints = 0;
+            double weightSum = 0;
+            IEnumerator<double> weights_itr = weights.GetEnumerator();
+            foreach (Vector3d v in points) {
+                weights_itr.MoveNext();
+                double w = weights_itr.Current;
+                Box.Center += w * v;
+                weightSum += w;
+                numPoints++;
+            }
+            double invWeightDivide = (1.0) / weightSum;
+            Box.Center *= invWeightDivide;
+
+            // Compute the covariance matrix of the points.
+            double sumXX = (double)0, sumXY = (double)0, sumXZ = (double)0;
+            double sumYY = (double)0, sumYZ = (double)0, sumZZ = (double)0;
+            weights_itr = weights.GetEnumerator();
+            foreach (Vector3d p in points) {
+                weights_itr.MoveNext();
+                double w = weights_itr.Current;
+                w *= w;
+                Vector3d diff = p - Box.Center;
+                sumXX += w * diff[0] * diff[0];
+                sumXY += w * diff[0] * diff[1];
+                sumXZ += w * diff[0] * diff[2];
+                sumYY += w * diff[1] * diff[1];
+                sumYZ += w * diff[1] * diff[2];
+                sumZZ += w * diff[2] * diff[2];
+            }
+
+            do_solve(sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ, invWeightDivide * invWeightDivide);
+        }
+
+
+
+        void do_solve(double sumXX, double sumXY, double sumXZ, double sumYY, double sumYZ, double sumZZ, double invSumMultiplier)
+        {
+            sumXX *= invSumMultiplier;
+            sumXY *= invSumMultiplier;
+            sumXZ *= invSumMultiplier;
+            sumYY *= invSumMultiplier;
+            sumYZ *= invSumMultiplier;
+            sumZZ *= invSumMultiplier;
 
             double[] matrix = new double[] {
                 sumXX, sumXY, sumXZ,
@@ -57,12 +106,13 @@ namespace g3
             SymmetricEigenSolver solver = new SymmetricEigenSolver(3, 4096);
             int iters = solver.Solve(matrix, SymmetricEigenSolver.SortType.Increasing);
             ResultValid = (iters > 0 && iters < SymmetricEigenSolver.NO_CONVERGENCE);
-
-            Box.Extent = new Vector3d(solver.GetEigenvalues());
-            double[] evectors = solver.GetEigenvectors();
-            Box.AxisX = new Vector3d(evectors[0], evectors[1], evectors[2]);
-            Box.AxisY = new Vector3d(evectors[3], evectors[4], evectors[5]);
-            Box.AxisZ = new Vector3d(evectors[6], evectors[7], evectors[8]);
+            if (ResultValid) {
+                Box.Extent = new Vector3d(solver.GetEigenvalues());
+                double[] evectors = solver.GetEigenvectors();
+                Box.AxisX = new Vector3d(evectors[0], evectors[1], evectors[2]);
+                Box.AxisY = new Vector3d(evectors[3], evectors[4], evectors[5]);
+                Box.AxisZ = new Vector3d(evectors[6], evectors[7], evectors[8]);
+            }
         }
 
 

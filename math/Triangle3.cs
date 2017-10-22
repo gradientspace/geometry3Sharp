@@ -29,6 +29,11 @@ namespace g3
             return bary.x* V0 + bary.y* V1 + bary.z* V2;
         }
 
+        public Vector3d BarycentricCoords(Vector3d point)
+        {
+            return MathUtil.BarycentricCoords(point, V0, V1, V2);
+        }
+
         // conversion operators
         public static implicit operator Triangle3d(Triangle3f v)
         {
@@ -65,6 +70,11 @@ namespace g3
         public Vector3f PointAt(Vector3f bary)
         {
             return bary.x * V0 + bary.y * V1 + bary.z * V2;
+        }
+
+        public Vector3f BarycentricCoords(Vector3f point)
+        {
+            return (Vector3f)MathUtil.BarycentricCoords(point, V0, V1, V2);
         }
     }
 

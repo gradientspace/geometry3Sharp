@@ -1467,6 +1467,14 @@ namespace g3
         }
 
 
+        public bool IsBoundaryTriangle(int tID)
+        {
+            debug_check_is_triangle(tID);
+            int i = 3 * tID;
+            return IsBoundaryEdge(triangle_edges[i]) || IsBoundaryEdge(triangle_edges[i + 1]) || IsBoundaryEdge(triangle_edges[i + 2]);
+        }
+
+
 
         int find_edge(int vA, int vB)
         {

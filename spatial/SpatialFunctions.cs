@@ -5,12 +5,15 @@ using System.Collections.Generic;
 namespace g3
 {
 
+    // [TODO] delete this file if nobody is using NormalOffset
+
     // collection of utility classes
     public static class SpatialFunctions
     {
 
         // various offset-surface functions, in class so the compute functions 
         // can be passed to other functions
+        [System.Obsolete("NormalOffset is deprecated - is anybody using it? please lmk.")]
         public class NormalOffset
         {
             public DMesh3 Mesh;
