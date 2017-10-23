@@ -62,6 +62,28 @@ namespace g3
                 vHitNormal = Mesh.GetTriNormal(tHitID);
             return true;
         }
-
     }
+
+
+
+    /// <summary>
+    /// Compute ray-intersection with plane
+    /// </summary>
+    public class PlaneIntersectionTarget : IIntersectionTarget
+    {
+        public Frame3f PlaneFrame;
+        public int NormalAxis = 2;
+
+        public bool HasNormal { get { return true; } }
+        public bool RayIntersect(Ray3d ray, out Vector3d vHit, out Vector3d vHitNormal)
+        {
+            Vector3f rayHit = PlaneFrame.RayPlaneIntersection((Vector3f)ray.Origin, (Vector3f)ray.Direction, NormalAxis);
+            vHit = rayHit;
+            vHitNormal = Vector3f.AxisY;
+            return (rayHit != Vector3f.Invalid);
+        }
+    }
+
+
+
 }
