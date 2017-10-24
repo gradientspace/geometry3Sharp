@@ -85,8 +85,95 @@ namespace g3
 
 
 
+        protected double MinEdgeLength = double.MaxValue;
+        protected int TargetCount = int.MaxValue;
+        protected enum TargetModes
+        {
+            TriangleCount, VertexCount, MinEdgeLength
+        }
+        protected TargetModes ReduceMode = TargetModes.TriangleCount;
 
-		QuadricError[] vertQuadrics;
+
+
+        public virtual void DoReduce()
+        {
+            if (mesh.TriangleCount == 0)    // badness if we don't catch this...
+                return;
+
+            begin_pass();
+
+            begin_setup();
+            Precompute();
+            InitializeVertexQuadrics();
+            InitializeQueue();
+            end_setup();
+
+            begin_ops();
+
+            begin_collapse();
+            while (EdgeQueue.Count > 0) {
+
+                // termination criteria
+                if ( ReduceMode == TargetModes.VertexCount ) {
+                    if (mesh.VertexCount <= TargetCount)
+                        break;
+                } else {
+                    if (mesh.TriangleCount <= TargetCount)
+                        break;
+                }
+
+                COUNT_ITERATIONS++;
+                int eid = EdgeQueue.Dequeue();
+                if (!mesh.IsEdge(eid))
+                    continue;
+
+                int vKept;
+                ProcessResult result = CollapseEdge(eid, EdgeQuadrics[eid].collapse_pt, out vKept);
+                if (result == ProcessResult.Ok_Collapsed) {
+                    vertQuadrics[vKept] = EdgeQuadrics[eid].q;
+                    UpdateNeighbours(vKept);
+                }
+            }
+            end_collapse();
+            end_ops();
+
+            Reproject();
+
+            end_pass();
+        }
+
+
+
+        public virtual void ReduceToTriangleCount(int nCount)
+        {
+            ReduceMode = TargetModes.TriangleCount;
+            TargetCount = Math.Max(1,nCount);
+            MinEdgeLength = double.MaxValue;
+            DoReduce();
+        }
+
+        public virtual void ReduceToVertexCount(int nCount)
+        {
+            ReduceMode = TargetModes.VertexCount;
+            TargetCount = Math.Max(3,nCount);
+            MinEdgeLength = double.MaxValue;
+            DoReduce();
+        }
+
+        public virtual void ReduceToEdgeLength(double minEdgeLen)
+        {
+            ReduceMode = TargetModes.MinEdgeLength;
+            TargetCount = 1;
+            MinEdgeLength = minEdgeLen;
+            DoReduce();
+        }
+
+
+
+
+
+
+        QuadricError[] vertQuadrics;
 		protected virtual void InitializeVertexQuadrics()
 		{
 
@@ -276,66 +363,6 @@ namespace g3
         {
             return IsBoundaryVtxCache[vid];
         }
-
-
-
-		protected double MinEdgeLength = double.MaxValue;
-		protected int TargetTriangleCount = int.MaxValue;
-
-
-
-		public virtual void DoReduce()
-		{
-			if (mesh.TriangleCount == 0)    // badness if we don't catch this...
-				return;
-
-			begin_pass();
-
-			begin_setup();
-            Precompute();
-			InitializeVertexQuadrics();
-			InitializeQueue();
-			end_setup();
-
-			begin_ops();
-
-			begin_collapse();
-			while (EdgeQueue.Count > 0 && mesh.TriangleCount > TargetTriangleCount) {
-				COUNT_ITERATIONS++;
-                int eid = EdgeQueue.Dequeue();
-				if (!mesh.IsEdge(eid))
-					continue;
-
-				int vKept;
-				ProcessResult result = CollapseEdge(eid, EdgeQuadrics[eid].collapse_pt, out vKept);
-				if (result == ProcessResult.Ok_Collapsed) {
-					vertQuadrics[vKept] = EdgeQuadrics[eid].q;
-					UpdateNeighbours(vKept);
-				}
-			}
-			end_collapse();
-			end_ops();
-
-			Reproject();
-
-			end_pass();
-		}
-
-
-
-		public virtual void ReduceToTriangleCount(int nCount) {
-			TargetTriangleCount = nCount;
-			MinEdgeLength = double.MaxValue;
-			DoReduce();
-		}
-
-
-
-		public virtual void ReduceToEdgeLength(double minEdgeLen) {
-			TargetTriangleCount = 1;
-			MinEdgeLength = minEdgeLen;
-			DoReduce();
-		}
 
 
 
