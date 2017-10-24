@@ -65,6 +65,10 @@ namespace g3
 
         List<int> order;
 
+        /// <summary>
+        /// nodeFilterF is used to restrict to valid nodes (eg if id space is sparse, or you only want a subset of possible nbrs)
+        /// seeds list are pairs (id, seedvalue)
+        /// </summary>
         public DijkstraGraphDistance(int nMaxID, bool bSparse,
             Func<int,bool> nodeFilterF,
             Func<int, int, float> nodeDistanceF,
@@ -178,6 +182,9 @@ namespace g3
         /// </summary>
         public void ComputeToMaxDistance(float fMaxDistance)
         {
+            if (TrackOrder == true)
+                order = new List<int>();
+
             if (SparseNodes != null)
                 ComputeToMaxDistance_Sparse(fMaxDistance);
             else
@@ -224,7 +231,7 @@ namespace g3
 
 
         /// <summary>
-        /// Get the computed distance at node id
+        /// Get the computed distance at node id. returns float.MaxValue if node was not computed.
         /// </summary>
         public float GetDistance(int id)
         {

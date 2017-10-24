@@ -163,6 +163,10 @@ namespace g3
             foreach ( int tid in triangles )
                 remove(tid);
         }
+        public void DeselectAll()
+        {
+            Selected.Clear();
+        }
 
 
 
@@ -231,7 +235,6 @@ namespace g3
         /// 
         /// Return false from FilterF to prevent triangles from being included.
         /// </summary>
-        /// <param name="FilterF"></param>
         public void ExpandToOneRingNeighbours(Func<int, bool> FilterF = null)
         {
             temp.Clear();
@@ -301,6 +304,46 @@ namespace g3
                 var t = checkTris; checkTris = addTris; addTris = t;   // swap
             }
         }
+
+
+
+
+
+        /// <summary>
+        /// remove all triangles in vertex one-rings of current selection to set.
+        /// On a large mesh this is quite expensive as we don't know the boundary,
+        /// so we have to iterate over all triangles.
+        /// 
+        /// Return false from FilterF to prevent triangles from being deselected.
+        /// </summary>
+        public void ContractBorderByOneRingNeighbours()
+        {
+            temp.Clear();   // border vertices
+
+            // [TODO] border vertices are pushed onto the temp list multiple times.
+            // minor inefficiency, but maybe we could improve it?
+
+            // find set of vertices on border
+            foreach (int tid in Selected) {
+                Index3i tri_v = Mesh.GetTriangle(tid);
+                for (int j = 0; j < 3; ++j) {
+                    int vid = tri_v[j];
+                    foreach (int nbr_t in Mesh.VtxTrianglesItr(vid)) {
+                        if ( IsSelected(nbr_t) == false ) {
+                            temp.Add(vid);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            foreach ( int vid in temp) {
+                foreach (int nbr_t in Mesh.VtxTrianglesItr(vid)) 
+                    Deselect(nbr_t);
+            }
+
+        }
+
 
 
 
