@@ -228,7 +228,6 @@
     <Compile Include="distance\DistPoint3Triangle3.cs" />
     <Compile Include="distance\DistSegment3Triangle3.cs" />
     <Compile Include="distance\DistTriangle3Triangle3.cs" />
-    <Compile Include="queries\Intersection.cs" />
     <Compile Include="intersection\IntrRay3Triangle3.cs" />
     <Compile Include="math\Triangle3.cs" />
     <Compile Include="intersection\IntrSegment2Segment2.cs" />
@@ -274,6 +273,8 @@
     <Compile Include="core\MemoryPool.cs" />
     <Compile Include="approximation\QuadraticFit2.cs" />
     <Compile Include="io\SVGWriter.cs" />
+    <Compile Include="containment\ContBox3.cs" />
+    <Compile Include="queries\IntersectionUtil.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
