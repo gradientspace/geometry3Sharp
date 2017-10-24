@@ -15,6 +15,9 @@ namespace g3
 	/// </summary>
     public class OBJWriter : IMeshWriter
     {
+        public string GroupNamePrefix = "mmGroup";   // default, compatible w/ meshmixer
+        public Func<int, string> GroupNameF = null;  // use this to replace standard group names w/ your own
+
         public IOWriteResult Write(BinaryWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
         {
             // [RMS] not supported
@@ -23,9 +26,13 @@ namespace g3
 
         public IOWriteResult Write(TextWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
         {
-            int nAccumCountV = 1;       // OBJ indices always start at 1
-            int nAccumCountUV = 1;
+            if (options.groupNamePrefix != null)
+                GroupNamePrefix = options.groupNamePrefix;
+            if (options.GroupNameF != null)
+                GroupNameF = options.GroupNameF;
 
+                int nAccumCountV = 1;       // OBJ indices always start at 1
+            int nAccumCountUV = 1;
 
 			// collect materials
 			string sMaterialLib = "";
@@ -132,7 +139,13 @@ namespace g3
             List<int> sortedGroups = new List<int>(vGroups);
             sortedGroups.Sort();
             foreach ( int g in sortedGroups ) {
-                writer.WriteLine(string.Format("g mmGroup{0}", g));
+                string group_name = GroupNamePrefix;
+                if (GroupNameF != null) {
+                    group_name = GroupNameF(g);
+                } else {
+                    group_name = string.Format("{0}{1}", GroupNamePrefix, g);
+                }
+                writer.WriteLine("g " + group_name);
 
                 foreach (int ti in mesh.TriangleIndices() ) {
                     if (mesh.GetTriangleGroup(ti) != g)
