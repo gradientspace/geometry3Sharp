@@ -9,13 +9,13 @@ namespace g3
 
 
 
-        public static Colorf CopyHue(Colorf BaseColor, Colorf TakeHue, float Alpha)
+        public static Colorf CopyHue(Colorf BaseColor, Colorf TakeHue, float fBlendAlpha)
         {
             ColorHSV baseHSV = new ColorHSV(BaseColor);
             ColorHSV takeHSV = new ColorHSV(TakeHue);
             baseHSV.h = takeHSV.h;
-            baseHSV.s = MathUtil.Lerp(baseHSV.s, takeHSV.s, Alpha);
-            baseHSV.v = MathUtil.Lerp(baseHSV.v, takeHSV.v, Alpha);
+            baseHSV.s = MathUtil.Lerp(baseHSV.s, takeHSV.s, fBlendAlpha);
+            baseHSV.v = MathUtil.Lerp(baseHSV.v, takeHSV.v, fBlendAlpha);
             return baseHSV.ConvertToRGB();
         }
 
