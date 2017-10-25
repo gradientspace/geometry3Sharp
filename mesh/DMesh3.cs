@@ -413,9 +413,9 @@ namespace g3
 		}
 
 		public Vector3f GetVertexNormal(int vID) {
-            if (normals == null)
+            if (normals == null) {
                 return Vector3f.AxisY;
-            else {
+            } else {
                 debug_check_is_vertex(vID);
                 int i = 3 * vID;
                 return new Vector3f(normals[i], normals[i + 1], normals[i + 2]);
@@ -431,10 +431,10 @@ namespace g3
 			}
 		}
 
-		public Vector3f GetVertexColor(int vID) {
-            if (normals == null)
+        public Vector3f GetVertexColor(int vID) {
+            if (colors == null) { 
                 return Vector3f.One;
-            else {
+            } else {
                 debug_check_is_vertex(vID);
                 int i = 3 * vID;
                 return new Vector3f(colors[i], colors[i + 1], colors[i + 2]);
@@ -451,9 +451,9 @@ namespace g3
 		}
 
 		public Vector2f GetVertexUV(int vID) {
-            if (uv == null)
+            if (uv == null) {
                 return Vector2f.Zero;
-            else {
+            } else {
                 debug_check_is_vertex(vID);
                 int i = 2 * vID;
                 return new Vector2f(uv[i], uv[i + 1]);
