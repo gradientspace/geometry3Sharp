@@ -65,7 +65,6 @@ namespace g3
         /// <summary>
         /// Remove vertices that are colinear w/ their two neighbours, within angle tolerance
         /// </summary>
-        /// <param name="fMaxDeviationDeg"></param>
         public void CollapseFlatVertices(double fMaxDeviationDeg = 5)
         {
             bool done = false;

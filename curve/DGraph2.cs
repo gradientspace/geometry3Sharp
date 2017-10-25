@@ -18,8 +18,9 @@ namespace g3
 
 		RefCountVector vertices_refcount;
 		DVector<double> vertices;
+        DVector<float> colors;
 
-		DVector<List<int>> vertex_edges;
+        DVector<List<int>> vertex_edges;
 
 		RefCountVector edges_refcount;
 		DVector<int> edges;   // each edge is a tuple (v0,v0,group_id)
@@ -97,6 +98,25 @@ namespace g3
 			}
 		}
 
+
+		public Vector3f GetVertexColor(int vID) {
+            if (colors == null) {
+                return Vector3f.One;
+            } else {
+                debug_check_is_vertex(vID);
+                int i = 3 * vID;
+                return new Vector3f(colors[i], colors[i + 1], colors[i + 2]);
+            }
+		}
+
+		public void SetVertexColor(int vID, Vector3f vNewColor) {
+			if ( HasVertexColors ) {
+                debug_check_is_vertex(vID);
+                int i = 3*vID;
+				colors[i] = vNewColor.x; colors[i+1] = vNewColor.y; colors[i+2] = vNewColor.z;
+                updateTimeStamp(false);
+			}
+		}
 
 
 		public ReadOnlyCollection<int> GetVtxEdges(int vID) {
@@ -180,14 +200,24 @@ namespace g3
             throw new Exception("DGraph2.GetEdgeCenter: invalid segment with id " + eID);
         }
 
-
-        public int AppendVertex(Vector2d v)
+        public int AppendVertex(Vector2d v) {
+            return AppendVertex(v, Vector3f.One);
+        }
+        public int AppendVertex(Vector2d v, Vector3f c)
 		{
 			int vid = vertices_refcount.allocate();
 			int i = 2 * vid;
 			vertices.insert(v[1], i + 1);
 			vertices.insert(v[0], i);
-			vertex_edges.insert(new List<int>(), vid);
+
+            if (colors != null) {
+                i = 3 * vid;
+                colors.insert(c.z, i + 2);
+                colors.insert(c.y, i + 1);
+                colors.insert(c.x, i);
+            }
+
+            vertex_edges.insert(new List<int>(), vid);
 			updateTimeStamp(true);
 			return vid;
 		}
@@ -256,12 +286,34 @@ namespace g3
 
 
 
+        public bool HasVertexColors { get { return colors != null; } }
+
+        public void EnableVertexColors(Vector3f initial_color)
+        {
+            if (HasVertexColors)
+                return;
+            colors = new DVector<float>();
+            int NV = MaxVertexID;
+            colors.resize(3 * NV);
+            for (int i = 0; i < NV; ++i) {
+                int vi = 3 * i;
+                colors[vi] = initial_color.x;
+                colors[vi + 1] = initial_color.y;
+                colors[vi + 2] = initial_color.z;
+            }
+        }
+        public void DiscardVertexColors()
+        {
+            colors = null;
+        }
 
 
 
-		// iterators
 
-		public IEnumerable<int> VertexIndices() {
+
+        // iterators
+
+        public IEnumerable<int> VertexIndices() {
 			foreach (int vid in vertices_refcount)
 				yield return vid;
 		}
@@ -398,7 +450,8 @@ namespace g3
 
 			// create new vertex
 			Vector2d vNew = 0.5 * (GetVertex(a) + GetVertex(b));
-			int f = AppendVertex(vNew);
+            Vector3f cNew = (HasVertexColors) ? (0.5f * (GetVertexColor(a) + GetVertexColor(b))) : Vector3f.One;
+			int f = AppendVertex(vNew, cNew);
 
 			// rewrite edge bc, create edge af
 			int eaf = eab;
@@ -698,6 +751,16 @@ namespace g3
 		}
 
 
+        [Conditional("DEBUG")]
+        public void debug_check_is_vertex(int v) {
+            if (!IsVertex(v))
+                throw new Exception("DGraph2.debug_is_vertex - not a vertex!");
+        }
+        [Conditional("DEBUG")]
+        public void debug_check_is_edge(int e) {
+            if (!IsEdge(e))
+                throw new Exception("DGraph2.debug_is_edge - not an edge!");
+        }
 
 	}
 }

@@ -17,6 +17,7 @@ namespace g3
 
         public GeneralPolygon2dBoxTree(GeneralPolygon2d poly)
         {
+            Polygon = poly;
             OuterTree = new Polygon2dBoxTree(poly.Outer);
             int NH = poly.Holes.Count;
             if (NH > 0) {
@@ -43,6 +44,27 @@ namespace g3
             }
             return min_dist;
         }
+
+
+        public double DistanceSquared(Vector2d pt)
+        {
+            int iHole, iSeg; double segT;
+            double distSqr = DistanceSquared(pt, out iHole, out iSeg, out segT);
+            return distSqr;
+        }
+        public double Distance(Vector2d pt)
+        {
+            int iHole, iSeg; double segT;
+            double distSqr = DistanceSquared(pt, out iHole, out iSeg, out segT);
+            return Math.Sqrt(distSqr);
+        }
+        public Vector2d NearestPoint(Vector2d pt)
+        {
+            int iHole, iSeg; double segT;
+            double distSqr = DistanceSquared(pt, out iHole, out iSeg, out segT);
+            return Polygon.PointAt(iSeg, segT, iHole);
+        }
+
     }
 
 
@@ -70,6 +92,25 @@ namespace g3
         {
             Polygon = poly;
             build_sequential(poly);
+        }
+
+
+        public double DistanceSquared(Vector2d pt) {
+            int iSeg; double segT;
+            double distSqr = SquaredDistance(pt, out iSeg, out segT);
+            return distSqr;
+        }
+        public double Distance(Vector2d pt)
+        {
+            int iSeg; double segT;
+            double distSqr = SquaredDistance(pt, out iSeg, out segT);
+            return Math.Sqrt(distSqr);
+        }
+        public Vector2d NearestPoint(Vector2d pt)
+        {
+            int iSeg; double segT;
+            double distSqr = SquaredDistance(pt, out iSeg, out segT);
+            return Polygon.PointAt(iSeg, segT);
         }
 
 

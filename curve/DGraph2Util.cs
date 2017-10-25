@@ -126,6 +126,91 @@ namespace g3
 
 
         /// <summary>
+        /// Find and remove any junction (ie valence>2) vertices of the graph.
+        /// At a junction, the pair of best-aligned (ie straightest) edges are left 
+        /// connected, and all the other edges are disconnected
+        /// 
+        /// [TODO] currently there is no DGraph2.SetEdge(), so the 'other' edges
+        /// are deleted and new edges inserted. Hence, edge IDs are not preserved.
+        /// </summary>
+        public static int DisconnectJunctions(DGraph2 graph)
+        {
+            List<int> junctions = new List<int>();
+
+            // find all junctions
+            foreach (int vid in graph.VertexIndices()) {
+                if (graph.IsJunctionVertex(vid))
+                    junctions.Add(vid);
+            }
+
+
+            foreach (int vid in junctions) {
+                Vector2d v = graph.GetVertex(vid);
+                int[] nbr_verts = graph.VtxVerticesItr(vid).ToArray();
+
+                // find best-aligned pair of edges connected to vid
+                Index2i best_aligned = Index2i.Max; double max_angle = 0;
+                for (int i = 0; i < nbr_verts.Length; ++i) {
+                    for (int j = i + 1; j < nbr_verts.Length; ++j) {
+                        double angle = Vector2d.AngleD(
+                            (graph.GetVertex(nbr_verts[i]) - v).Normalized,
+                            (graph.GetVertex(nbr_verts[j]) - v).Normalized);
+                        angle = Math.Abs(angle);
+                        if (angle > max_angle) {
+                            max_angle = angle;
+                            best_aligned = new Index2i(nbr_verts[i], nbr_verts[j]);
+                        }
+                    }
+                }
+
+                // for nbr verts that are not part of the best_aligned edges,
+                // we remove those edges and add a new one connected to a new vertex
+                for (int k = 0; k < nbr_verts.Length; ++k) {
+                    if (nbr_verts[k] == best_aligned.a || nbr_verts[k] == best_aligned.b)
+                        continue;
+                    int eid = graph.FindEdge(vid, nbr_verts[k]);
+                    graph.RemoveEdge(eid, true);
+                    if (graph.IsVertex(nbr_verts[k])) {
+                        Vector2d newpos = Vector2d.Lerp(graph.GetVertex(nbr_verts[k]), v, 0.99);
+                        int newv = graph.AppendVertex(newpos);
+                        graph.AppendEdge(nbr_verts[k], newv);
+                    }
+                }
+            }
+
+            return junctions.Count;
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// If vid has two or more neighbours, returns uniform laplacian, otherwise returns vid position
+        /// </summary>
+        public static Vector2d VertexLaplacian(DGraph2 graph, int vid, out bool isValid)
+        {
+            Vector2d v = graph.GetVertex(vid);
+            Vector2d centroid = Vector2d.Zero;
+            int n = 0;
+            foreach (int vnbr in graph.VtxVerticesItr(vid)) {
+                centroid += graph.GetVertex(vnbr);
+                n++;
+            }
+            if (n == 2) {
+                centroid /= n;
+                isValid = true;
+                return centroid-v;
+            }
+            isValid = false;
+            return v;
+        }
+
+
+
+
+        /// <summary>
         /// If we are at edge eid, which as one vertex prev_vid, find 'other' vertex, and other edge connected to that vertex,
         /// and return pair [next_edge, shared_vtx]
         /// Returns [int.MaxValue, shared_vtx] if shared_vtx is not valence=2   (ie stops at boundaries and complex junctions)
