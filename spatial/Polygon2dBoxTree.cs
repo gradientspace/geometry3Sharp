@@ -61,7 +61,7 @@ namespace g3
         public Vector2d NearestPoint(Vector2d pt)
         {
             int iHole, iSeg; double segT;
-            double distSqr = DistanceSquared(pt, out iHole, out iSeg, out segT);
+            DistanceSquared(pt, out iHole, out iSeg, out segT);
             return Polygon.PointAt(iSeg, segT, iHole);
         }
 
@@ -109,7 +109,7 @@ namespace g3
         public Vector2d NearestPoint(Vector2d pt)
         {
             int iSeg; double segT;
-            double distSqr = SquaredDistance(pt, out iSeg, out segT);
+            SquaredDistance(pt, out iSeg, out segT);
             return Polygon.PointAt(iSeg, segT);
         }
 

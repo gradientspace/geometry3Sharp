@@ -186,7 +186,9 @@ namespace g3
         public virtual bool Apply()
 		{
             insert_corners();
-            HashSet<int> corner_v = new HashSet<int>(CurveVertices);
+
+            // [RMS] not using this?
+            //HashSet<int> corner_v = new HashSet<int>(CurveVertices);
 
             // not sure we need to track all of these
             HashSet<int> ZeroEdges = new HashSet<int>();
