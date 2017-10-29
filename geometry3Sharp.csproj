@@ -275,6 +275,7 @@
     <Compile Include="io\SVGWriter.cs" />
     <Compile Include="containment\ContBox3.cs" />
     <Compile Include="queries\IntersectionUtil.cs" />
+    <Compile Include="containment\TilingUtil.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
