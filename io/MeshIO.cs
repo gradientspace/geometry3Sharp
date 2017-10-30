@@ -14,6 +14,7 @@ namespace g3
         FileAccessError = 1,
         UnknownFormatError = 2,
         FormatNotSupportedError = 3,
+        InvalidFilenameError = 4,
 
         // read errors
         FileParsingError = 100,

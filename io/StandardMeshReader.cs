@@ -89,7 +89,11 @@ namespace g3
             if (MeshBuilder == null)
                 return new IOReadResult(IOCode.GenericReaderError, "MeshBuilder is null!");
 
-            string sExtension = Path.GetExtension(sFilename).Substring(1);
+            string sExtension = Path.GetExtension(sFilename);
+            if ( sExtension.Length < 2 ) {
+                return new IOReadResult(IOCode.InvalidFilenameError, "filename " + sFilename + " does not contain valid extension");
+            }
+            sExtension = sExtension.Substring(1);
 
             MeshFormatReader useReader = null;
             foreach (var reader in Readers) {
