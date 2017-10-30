@@ -326,4 +326,54 @@ namespace g3
 		}
 
 	}
+
+
+
+
+    /// <summary>
+    /// Wrapper for a PolyLine2d that provides minimal IParametricCurve2D interface
+    /// </summary>
+    public class PolyLine2DCurve : IParametricCurve2d
+    {
+        public PolyLine2d Polyline;
+
+        public bool IsClosed { get { return false; } }
+
+        // can call SampleT in range [0,ParamLength]
+        public double ParamLength { get { return Polyline.VertexCount; } }
+        public Vector2d SampleT(double t)
+        {
+            int i = (int)t;
+            if (i >= Polyline.VertexCount - 1)
+                return Polyline[Polyline.VertexCount - 1];
+            Vector2d a = Polyline[i];
+            Vector2d b = Polyline[i + 1];
+            double alpha = t - (double)i;
+            return (1.0 - alpha) * a + (alpha) * b;
+        }
+        public Vector2d TangentT(double t)
+        {
+            throw new NotImplementedException("Polygon2dCurve.TangentT");
+        }
+
+        public bool HasArcLength { get { return false; } }
+        public double ArcLength {
+            get { throw new NotImplementedException("Polygon2dCurve.ArcLength"); }
+        }
+        public Vector2d SampleArcLength(double a)
+        {
+            throw new NotImplementedException("Polygon2dCurve.SampleArcLength");
+        }
+
+        public void Reverse()
+        {
+            Polyline.Reverse();
+        }
+
+        public IParametricCurve2d Clone()
+        {
+            return new PolyLine2DCurve() { Polyline = new PolyLine2d(this.Polyline) };
+        }
+    }
+
 }

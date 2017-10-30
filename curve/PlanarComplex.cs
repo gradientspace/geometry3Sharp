@@ -116,6 +116,15 @@ namespace g3
         }
 
 
+        public void Add(PolyLine2d pline)
+        {
+            SmoothCurveElement e = new SmoothCurveElement();
+            e.ID = id_generator++;
+            e.source = new PolyLine2DCurve() { Polyline = pline };
+            e.polyLine = new PolyLine2d(pline);
+            vElements.Add(e);
+        }
+
 
         public void Remove(Element e)
         {
