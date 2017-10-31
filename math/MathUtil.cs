@@ -553,6 +553,30 @@ namespace g3
 
 
 
+        public static bool SolveQuadratic(double a, double b, double c, out double minT, out double maxT)
+        {
+            minT = maxT = 0;
+            if (a == 0 && b == 0)   // function is constant...
+                return true;
+
+            double discrim = b*b - 4.0*a*c;
+            if (discrim < 0)
+                return false;    // no solution
+
+            // a bit odd but numerically better (says NRIC)
+            double t = -0.5 * (b + Math.Sign(b)*Math.Sqrt(discrim));  
+            minT = t / a;
+            maxT = c / t;
+            if ( minT > maxT ) {
+                a = minT; minT = maxT; maxT = a;   // swap
+            }
+
+            return true;
+        }
+
+
+
+
         static readonly int[] powers_of_10 = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
         public static int PowerOf10(int n) {
             return powers_of_10[n];
