@@ -48,11 +48,13 @@
     <Compile Include="color\Colorb.cs" />
     <Compile Include="color\Colorf.cs" />
     <Compile Include="color\ColorHSV.cs" />
+    <Compile Include="color\ColorMap.cs" />
     <Compile Include="color\ColorMixer.cs" />
     <Compile Include="core\CommandArgumentSet.cs" />
     <Compile Include="core\DijkstraGraphDistance.cs" />
     <Compile Include="core\DVector.cs" />
     <Compile Include="core\FileSystemUtils.cs" />
+    <Compile Include="core\g3Iterators.cs" />
     <Compile Include="core\gParallel.cs" />
     <Compile Include="core\HashUtil.cs" />
     <Compile Include="core\HBitArray.cs" />
@@ -114,6 +116,7 @@
     <Compile Include="math\PrimalQuery2d.cs" />
     <Compile Include="math\Quaternionf.cs" />
     <Compile Include="math\QueryTuple2d.cs" />
+    <Compile Include="math\ScalarMap.cs" />
     <Compile Include="math\TransformSequence.cs" />
     <Compile Include="math\Vector2d.cs" />
     <Compile Include="math\Vector2f.cs" />
@@ -146,6 +149,7 @@
     <Compile Include="io\OBJWriter.cs" />
     <Compile Include="io\StandardMeshReader.cs" />
     <Compile Include="io\StandardMeshWriter.cs" />
+    <Compile Include="mesh_generators\MarchingCubes.cs" />
     <Compile Include="mesh_generators\VoxelSurfaceGenerator.cs" />
     <Compile Include="mesh_ops\MeshExtrudeMesh.cs" />
     <Compile Include="mesh_ops\MeshExtrudeFaces.cs" />
