@@ -20,88 +20,107 @@ namespace g3
         }
     }
 
+
     /// <summary>
     /// Basic implementation of marching cubes mesh generation, which can be applied to
-    /// arbitrary Implicit function
+    /// arbitrary Implicit function. Multi-threading enabled by default.
+    /// 
+    /// [TODO] support locking on Implicit.Value()? May not be thread-safe!!
+    /// [TODO] extension that tracks set of triangles in each cube, so we can do partial updates?
+    /// [TODO] is hash table on vertex x/y/z the best idea?
+    /// [TODO] hash table for edge vtx-indices instead, like old polygonizer? (how did we index edges?!?)
+    /// 
     /// </summary>
     public class MarchingCubes
     {
-
-        // if vert-count or tri-count gets higher than this value,
-        // we start a new mesh
-        public int MaxMeshElementCount = int.MaxValue;
-
-        public DMesh3 Mesh;
-
+        // this is the function we will evaluate
         public ImplicitFunction3d Implicit;
 
-        public AxisAlignedBox3d Bounds;
-        public double CellSize;
-
+        // mesh surface will be at this isovalue. Normally 0 unless you want
+        // offset surface or field is not a distance-field.
         public double IsoValue = 0;
 
+        // bounding-box we will mesh inside of. We use the min-corner and
+        // the width/height/depth, but do not clamp vertices to stay within max-corner,
+        // we may spill one cell over
+        public AxisAlignedBox3d Bounds;
+
+        // Length of edges of cubes that are marching.
+        // currently, # of cells along axis = (int)(bounds_dimension / CellSize) + 1
+        public double CubeSize = 0.1;
+
+        // Use multi-threading? Generally a good idea unless problem is very small or
+        // you are multi-threading at a higher level (which may be more efficient as
+        // we currently use very fine-grained spinlocks to synchronize)
         public bool ParallelCompute = true;
 
-        Vector3i CellDimensions;
-        Dictionary<Vector3d, int> VertexHash;
+
+        /*
+         * Outputs
+         */
+
+        // cube indices range from [Origin,CellDimensions)   
+        public Vector3i CellDimensions;
+
+        // computed mesh
+        public DMesh3 Mesh;
+
+        // Vertices of mesh are stored in this hash table, to ensure uniqueness.
+        // Not sure what you would do with this, but it is exposed anyway.
+        public Dictionary<Vector3d, int> VertexHash;
+
 
 
         public MarchingCubes()
         {
             // initialize w/ a basic sphere example
             Implicit = new ImplicitSphere3d();
-
             Bounds = new AxisAlignedBox3d(Vector3d.Zero, 8);
-            CellSize = 0.05;
+            CubeSize = 0.05;
         }
 
 
 
-
+        /// <summary>
+        /// Run MC algorithm and generate Output mesh
+        /// </summary>
         public void Generate()
         {
             Mesh = new DMesh3();
 
             VertexHash = new Dictionary<Vector3d, int>();
 
-            int nx = (int)(Bounds.Width / CellSize) + 1;
-            int ny = (int)(Bounds.Height / CellSize) + 1;
-            int nz = (int)(Bounds.Depth / CellSize) + 1;
+            int nx = (int)(Bounds.Width / CubeSize) + 1;
+            int ny = (int)(Bounds.Height / CubeSize) + 1;
+            int nz = (int)(Bounds.Depth / CubeSize) + 1;
             CellDimensions = new Vector3i(nx, ny, nz);
-            //System.Console.WriteLine("Dimensions {0}  Parallel {1}", CellDimensions, ParallelCompute);
-
-            //LocalProfiler p = new LocalProfiler();
-            //p.Start("total");
 
             if (ParallelCompute) {
                 generate_parallel();
             } else {
                 generate_basic();
             }
-
-            //p.Stop("total");
-            //System.Console.WriteLine("total: {0}", p.AllTimes());
         }
 
 
-        void GridToPos(int x, int y, int z, ref Vector3d p) {
-            p.x = Bounds.Min.x + CellSize * x;
-            p.y = Bounds.Min.y + CellSize * y;
-            p.z = Bounds.Min.z + CellSize * z;
-        }
-
-
-
+        // we pass Cells around, this makes code cleaner
         class GridCell {
-            public Vector3d[] p;
-            public double[] f;
+            public Vector3d[] p;    // corners of cell
+            public double[] f;      // field values at corners
 
-            public GridCell()
-            {
+            public GridCell() {
                 p = new Vector3d[8];
                 f = new double[8];
             }
         }
+
+        // currently unused
+        void GridToPos(int x, int y, int z, ref Vector3d p) {
+            p.x = Bounds.Min.x + CubeSize * x;
+            p.y = Bounds.Min.y + CubeSize * y;
+            p.z = Bounds.Min.z + CubeSize * z;
+        }
+
 
 
         /// <summary>
@@ -112,12 +131,12 @@ namespace g3
             // [RMS] don't just add CellSize to x0 because then we
             //   get different numerical values for same point at different cells,
             //   which breaks our hash table...
-            double x0 = Bounds.Min.x + CellSize * idx.x;
-            double y0 = Bounds.Min.y + CellSize * idx.y;
-            double z0 = Bounds.Min.z + CellSize * idx.z;
-            double x1 = Bounds.Min.x + CellSize * (idx.x+1);
-            double y1 = Bounds.Min.y + CellSize * (idx.y+1);
-            double z1 = Bounds.Min.y + CellSize * (idx.z+1);
+            double x0 = Bounds.Min.x + CubeSize * idx.x;
+            double y0 = Bounds.Min.y + CubeSize * idx.y;
+            double z0 = Bounds.Min.z + CubeSize * idx.z;
+            double x1 = Bounds.Min.x + CubeSize * (idx.x+1);
+            double y1 = Bounds.Min.y + CubeSize * (idx.y+1);
+            double z1 = Bounds.Min.y + CubeSize * (idx.z+1);
 
             cell.p[0].x = x0; cell.p[0].y = y0; cell.p[0].z = z0;
             cell.p[1].x = x1; cell.p[1].y = y0; cell.p[1].z = z0;
@@ -140,7 +159,7 @@ namespace g3
         void shift_cell_x(GridCell cell, int xi)
         {
             double xPrev = cell.p[1].x;
-            double x1 = Bounds.Min.x + CellSize * (xi + 1);
+            double x1 = Bounds.Min.x + CubeSize * (xi + 1);
 
             cell.p[0].x = xPrev; 
             cell.p[1].x = x1; 
@@ -284,7 +303,9 @@ namespace g3
 
 
 
-
+        /// <summary>
+        /// check if vertex is in hash table, and if not add new one, with locking if computing in-parallel
+        /// </summary>
         int find_or_append_vertex(ref Vector3d pos)
         {
             bool lock_taken = false;
@@ -380,6 +401,10 @@ namespace g3
         }
 
 
+
+        /*
+         * Below here are standard marching-cubes tables. 
+         */
 
 
         static readonly int[,] edge_indices = new int[,] {
