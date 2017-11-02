@@ -50,6 +50,7 @@
     <Compile Include="color\ColorHSV.cs" />
     <Compile Include="color\ColorMap.cs" />
     <Compile Include="color\ColorMixer.cs" />
+    <Compile Include="containment\ContMinCircle2.cs" />
     <Compile Include="core\CommandArgumentSet.cs" />
     <Compile Include="core\DijkstraGraphDistance.cs" />
     <Compile Include="core\DVector.cs" />

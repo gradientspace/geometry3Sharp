@@ -419,9 +419,9 @@ namespace g3
 			int n = vertices.Count;
 
 			int i, k, pv;            // misc counters
-			Vector2d[] vt = new Vector2d[n];  // vertex buffer
-			bool[] mk = new bool[n];
-			for ( i = 0; i < n; ++i )		// marker buffer
+			Vector2d[] vt = new Vector2d[n+1];  // vertex buffer
+			bool[] mk = new bool[n+1];
+			for ( i = 0; i < n+1; ++i )		// marker buffer
 				mk[i] = false;		 
 
 			// STAGE 1.  Vertex Reduction within tolerance of prior vertex cluster
@@ -433,8 +433,10 @@ namespace g3
 				vt[k++] = vertices[i];
 				pv = i;
 			}
-			if (pv < n-1)
-				vt[k++] = vertices[n-1];      // finish at the end
+            // push on start vertex again, because simplifyDP is for polylines, not polygons
+            vt[k++] = vertices[0];
+			//if (pv < n-1)
+			//	vt[k++] = vertices[n-1];      // finish at the end
 
 			// STAGE 2.  Douglas-Peucker polyline simplification
 			if (lineDeviationTol > 0) {
@@ -447,7 +449,7 @@ namespace g3
 
 			// copy marked vertices back to this polygon
 			vertices = new List<Vector2d>();
-			for (i = 0; i < k; ++i) {
+			for (i = 0; i < k-1; ++i) {   // last vtx is copy of first, and definitely marked
 				if (mk[i])
 					vertices.Add( vt[i] );
 			}
