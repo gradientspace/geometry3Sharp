@@ -53,6 +53,12 @@ namespace g3
         }
 
 
+
+        public double this[int r, int c] {
+            get { return (r == 0) ? ((c == 0) ? m00 : m01) : ((c == 0) ? m10 : m11); }
+        }
+
+
         public void SetToDiagonal(double m00, double m11) {
             this.m00 = m00; this.m11 = m11;
             this.m01 = this.m10 = 0;
