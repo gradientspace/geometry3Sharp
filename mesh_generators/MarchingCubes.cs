@@ -7,9 +7,22 @@ using g3;
 
 namespace g3
 {
+
+    public interface ImplicitFunction3d
+    {
+        double Value(ref Vector3d pt);
+    }
+    public class ImplicitSphere3d : ImplicitFunction3d
+    {
+        public double Value(ref Vector3d pt)
+        {
+            return pt.Length - 5.0f;
+        }
+    }
+
     /// <summary>
     /// Basic implementation of marching cubes mesh generation, which can be applied to
-    /// arbitrary function ValueF (you provide the Bounds).
+    /// arbitrary Implicit function
     /// </summary>
     public class MarchingCubes
     {
@@ -20,7 +33,8 @@ namespace g3
 
         public DMesh3 Mesh;
 
-        public Func<Vector3d, double> ValueF;
+        public ImplicitFunction3d Implicit;
+
         public AxisAlignedBox3d Bounds;
         public double CellSize;
 
@@ -31,12 +45,12 @@ namespace g3
         Vector3i CellDimensions;
         Dictionary<Vector3d, int> VertexHash;
 
+
         public MarchingCubes()
         {
             // initialize w/ a basic sphere example
-            ValueF = (v) => {
-                return v.Length - 5.0f;
-            };
+            Implicit = new ImplicitSphere3d();
+
             Bounds = new AxisAlignedBox3d(Vector3d.Zero, 8);
             CellSize = 0.05;
         }
@@ -54,25 +68,22 @@ namespace g3
             int ny = (int)(Bounds.Height / CellSize) + 1;
             int nz = (int)(Bounds.Depth / CellSize) + 1;
             CellDimensions = new Vector3i(nx, ny, nz);
+            //System.Console.WriteLine("Dimensions {0}  Parallel {1}", CellDimensions, ParallelCompute);
+
+            //LocalProfiler p = new LocalProfiler();
+            //p.Start("total");
 
             if (ParallelCompute) {
                 generate_parallel();
             } else {
                 generate_basic();
             }
+
+            //p.Stop("total");
+            //System.Console.WriteLine("total: {0}", p.AllTimes());
         }
 
 
-        Vector3d GridToPos(Vector3i gridPt) {
-            return new Vector3d( Bounds.Min.x + CellSize * gridPt.x,
-                                 Bounds.Min.y + CellSize * gridPt.y,
-                                 Bounds.Min.z + CellSize * gridPt.z);
-        }
-        Vector3d GridToPos(int x, int y, int z) {
-            return new Vector3d( Bounds.Min.x + CellSize * x,
-                                 Bounds.Min.y + CellSize * y,
-                                 Bounds.Min.z + CellSize * z);
-        }
         void GridToPos(int x, int y, int z, ref Vector3d p) {
             p.x = Bounds.Min.x + CellSize * x;
             p.y = Bounds.Min.y + CellSize * y;
@@ -81,10 +92,10 @@ namespace g3
 
 
 
-        class GridCell
-        {
+        class GridCell {
             public Vector3d[] p;
             public double[] f;
+
             public GridCell()
             {
                 p = new Vector3d[8];
@@ -93,25 +104,64 @@ namespace g3
         }
 
 
-        void initialize_cell(GridCell cell, Vector3i idx)
+        /// <summary>
+        /// compute 3D corner-positions and field values for cell at index
+        /// </summary>
+        void initialize_cell(GridCell cell, ref Vector3i idx)
         {
-            // [TODO] could avoid lots of repeat expressions here, not sure
-            //   sure how much it matters though...
-            GridToPos(idx.x, idx.y, idx.z, ref cell.p[0]);
-            GridToPos(idx.x + 1, idx.y, idx.z, ref cell.p[1]);
-            GridToPos(idx.x + 1, idx.y, idx.z + 1, ref cell.p[2]);
-            GridToPos(idx.x, idx.y, idx.z + 1, ref cell.p[3]);
+            // [RMS] don't just add CellSize to x0 because then we
+            //   get different numerical values for same point at different cells,
+            //   which breaks our hash table...
+            double x0 = Bounds.Min.x + CellSize * idx.x;
+            double y0 = Bounds.Min.y + CellSize * idx.y;
+            double z0 = Bounds.Min.z + CellSize * idx.z;
+            double x1 = Bounds.Min.x + CellSize * (idx.x+1);
+            double y1 = Bounds.Min.y + CellSize * (idx.y+1);
+            double z1 = Bounds.Min.y + CellSize * (idx.z+1);
 
-            GridToPos(idx.x, idx.y + 1, idx.z, ref cell.p[4]);
-            GridToPos(idx.x + 1, idx.y + 1, idx.z, ref cell.p[5]);
-            GridToPos(idx.x + 1, idx.y + 1, idx.z + 1, ref cell.p[6]);
-            GridToPos(idx.x, idx.y + 1, idx.z + 1, ref cell.p[7]);
+            cell.p[0].x = x0; cell.p[0].y = y0; cell.p[0].z = z0;
+            cell.p[1].x = x1; cell.p[1].y = y0; cell.p[1].z = z0;
+            cell.p[2].x = x1; cell.p[2].y = y0; cell.p[2].z = z1;
+            cell.p[3].x = x0; cell.p[3].y = y0; cell.p[3].z = z1;
+
+            cell.p[4].x = x0; cell.p[4].y = y1; cell.p[4].z = z0;
+            cell.p[5].x = x1; cell.p[5].y = y1; cell.p[5].z = z0;
+            cell.p[6].x = x1; cell.p[6].y = y1; cell.p[6].z = z1;
+            cell.p[7].x = x0; cell.p[7].y = y1; cell.p[7].z = z1;
 
             for (int i = 0; i < 8; ++i)
-                cell.f[i] = ValueF(cell.p[i]);
+                cell.f[i] = Implicit.Value(ref cell.p[i]);
         }
 
 
+        // assume we just want to slide cell at xi-1 to cell at xi, while keeping
+        // yi and zi constant. Then only x-coords change, and we have already 
+        // computed half the values
+        void shift_cell_x(GridCell cell, int xi)
+        {
+            double xPrev = cell.p[1].x;
+            double x1 = Bounds.Min.x + CellSize * (xi + 1);
+
+            cell.p[0].x = xPrev; 
+            cell.p[1].x = x1; 
+            cell.p[2].x = x1; 
+            cell.p[3].x = xPrev; 
+
+            cell.p[4].x = xPrev; 
+            cell.p[5].x = x1; 
+            cell.p[6].x = x1; 
+            cell.p[7].x = xPrev;
+
+            cell.f[0] = cell.f[1];
+            cell.f[3] = cell.f[2];
+            cell.f[4] = cell.f[5];
+            cell.f[7] = cell.f[6];
+
+            cell.f[1] = Implicit.Value(ref cell.p[1]);
+            cell.f[2] = Implicit.Value(ref cell.p[2]);
+            cell.f[5] = Implicit.Value(ref cell.p[5]);
+            cell.f[6] = Implicit.Value(ref cell.p[6]);
+        }
 
 
         bool bParallel = false;
@@ -119,7 +169,7 @@ namespace g3
         SpinLock mesh_lock;
 
         /// <summary>
-        /// compute mesh by processing slabs in parallel
+        /// processing z-slabs of cells in parallel
         /// </summary>
         void generate_parallel()
         {
@@ -132,9 +182,13 @@ namespace g3
                 GridCell cell = new GridCell();
                 Vector3d[] vertlist = new Vector3d[12];
                 for (int yi = 0; yi < CellDimensions.y; ++yi) {
-                    for (int xi = 0; xi < CellDimensions.x; ++xi) {
-                        initialize_cell(cell, new Vector3i(xi, yi, zi));
-                        polygonize_cell(cell, IsoValue, vertlist);
+                    // compute full cell at x=0, then slide along x row, which saves half of value computes
+                    Vector3i idx = new Vector3i(0, yi, zi);
+                    initialize_cell(cell, ref idx);
+                    polygonize_cell(cell, vertlist);
+                    for (int xi = 1; xi < CellDimensions.x; ++xi) {
+                        shift_cell_x(cell, xi);
+                        polygonize_cell(cell, vertlist);
                     }
                 }
             });
@@ -147,7 +201,7 @@ namespace g3
 
 
         /// <summary>
-        /// non-parallel version
+        /// fully sequential version, no threading
         /// </summary>
         void generate_basic()
         {
@@ -156,21 +210,25 @@ namespace g3
 
             for (int zi = 0; zi < CellDimensions.z; ++zi) {
                 for (int yi = 0; yi < CellDimensions.y; ++yi) {
-                    for (int xi = 0; xi < CellDimensions.x; ++xi) {
-                        initialize_cell(cell, new Vector3i(xi, yi, zi));
-                        polygonize_cell(cell, IsoValue, vertlist);
+                    // compute full cell at x=0, then slide along x row, which saves half of value computes
+                    Vector3i idx = new Vector3i(0, yi, zi);
+                    initialize_cell(cell, ref idx);
+                    polygonize_cell(cell, vertlist);
+                    for (int xi = 1; xi < CellDimensions.x; ++xi) {
+                        shift_cell_x(cell, xi);
+                        polygonize_cell(cell, vertlist);
                     }
+
                 }
             }
         }
 
 
 
-
-
-
-
-        bool polygonize_cell(GridCell cell, double isolevel, Vector3d[] vertList)
+        /// <summary>
+        /// find edge crossings and generate triangles for this cell
+        /// </summary>
+        bool polygonize_cell(GridCell cell, Vector3d[] vertList)
         {
             // construct bits of index into edge table, where bit for each
             // corner is 1 if that value is < isovalue.
@@ -178,7 +236,7 @@ namespace g3
             // of the bitmap is an index into the edge and triangle tables
             int cubeindex = 0, shift = 1;
             for ( int i = 0; i < 8; ++i ) {
-                if (cell.f[i] < isolevel)
+                if (cell.f[i] < IsoValue)
                     cubeindex |= shift;
                 shift <<= 1;
             }
@@ -194,8 +252,7 @@ namespace g3
             for (int i = 0; i <= 11; i++) {
                 if ( (edgeTable[cubeindex] & shift) != 0 ) {
                     int a = edge_indices[i, 0], b = edge_indices[i, 1];
-
-                    vertList[i] = find_iso(isolevel, cell.p[a], cell.p[b], cell.f[a], cell.f[b]);
+                    find_iso(ref cell.p[a], ref cell.p[b], cell.f[a], cell.f[b], ref vertList[i]);
                 }
                 shift <<= 1;
             }
@@ -204,13 +261,14 @@ namespace g3
             // and emit triangles using the vertices we found.
             int tri_count = 0;
             for (int i = 0; triTable[cubeindex,i] != -1; i += 3) {
-                Vector3d va = vertList[triTable[cubeindex, i]];
-                Vector3d vb = vertList[triTable[cubeindex, i + 1]];
-                Vector3d vc = vertList[triTable[cubeindex, i + 2]];
+                int ta = triTable[cubeindex, i];
+                int a = find_or_append_vertex(ref vertList[ta]);
 
-                int a = find_or_append_vertex(ref va);
-                int b = find_or_append_vertex(ref vb);
-                int c = find_or_append_vertex(ref vc);
+                int tb = triTable[cubeindex, i+1];
+                int b = find_or_append_vertex(ref vertList[tb]);
+
+                int tc = triTable[cubeindex, i + 2];
+                int c = find_or_append_vertex(ref vertList[tc]);
 
                 // if a corner is within tolerance of isovalue, then some triangles
                 // will be degenerate, and we can skip them w/o resulting in cracks (right?)
@@ -248,6 +306,9 @@ namespace g3
 
 
 
+        /// <summary>
+        /// add vertex to mesh, with locking if we are computing in parallel
+        /// </summary>
         int append_vertex(Vector3d v)
         {
             bool lock_taken = false;
@@ -265,6 +326,9 @@ namespace g3
 
 
 
+        /// <summary>
+        /// add triangle to mesh, with locking if we are computing in parallel
+        /// </summary>
         int append_triangle(int a, int b, int c)
         {
             bool lock_taken = false;
@@ -282,21 +346,37 @@ namespace g3
 
 
 
-
-        Vector3d find_iso(double isolevel, Vector3d p1, Vector3d p2, double valp1, double valp2)
+        /// <summary>
+        /// estimate intersection along edge from f(p1)=valp1 to f(p2)=valp2, using linear interpolation
+        /// </summary>
+        void find_iso(ref Vector3d p1, ref Vector3d p2, double valp1, double valp2, ref Vector3d pIso)
         {
-            if (Math.Abs(isolevel - valp1) < 0.00001)
-                return (p1);
-            if (Math.Abs(isolevel - valp2) < 0.00001)
-                return (p2);
-            if (Math.Abs(valp1 - valp2) < 0.00001)
-                return (p1);
+            if (Math.Abs(IsoValue - valp1) < 0.00001) {
+                pIso = p1;
+                return;
+            }
+            if (Math.Abs(IsoValue - valp2) < 0.00001) {
+                pIso = p2;
+                return;
+            }
+            if (Math.Abs(valp1 - valp2) < 0.00001) {
+                pIso = p1;
+                return;
+            }
 
-            double mu = (isolevel - valp1) / (valp2 - valp1);
-            return new Vector3d(
-                p1.x + mu * (p2.x - p1.x),
-                p1.y + mu * (p2.y - p1.y),
-                p1.z + mu * (p2.z - p1.z));
+            // [RMS] if we don't maintain min/max order here, then numerical error means
+            //   that hashing on point x/y/z doesn't work
+            if (valp1 < valp2) {
+                double mu = (IsoValue - valp1) / (valp2 - valp1);
+                pIso.x = p1.x + mu * (p2.x - p1.x);
+                pIso.y = p1.y + mu * (p2.y - p1.y);
+                pIso.z = p1.z + mu * (p2.z - p1.z);
+            } else {
+                double mu = (IsoValue - valp2) / (valp1 - valp2);
+                pIso.x = p2.x + mu * (p1.x - p2.x);
+                pIso.y = p2.y + mu * (p1.y - p2.y);
+                pIso.z = p2.z + mu * (p1.z - p2.z);
+            }
         }
 
 
@@ -598,6 +678,269 @@ namespace g3
             {0, 9, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
             {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
             {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
+
+
+
+        // [RMS] alternative triangle table proposed in: http://paulbourke.net/geometry/polygonise/table2.txt
+        //  max row is 3 shorter, so this saves a triangle somewhere? 
+        //  not currently in use (so far have not found a case where it produces a different result)
+        static int[,] triTable2 = new int[256, 13] {
+            {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 3, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 0, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 3, 1, 8, 1, 9,-1,-1,-1,-1,-1,-1,-1},
+            {10, 1, 2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 3, 0, 1, 2,10,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 0, 2, 9, 2,10,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 2, 8, 2,10, 8, 8,10, 9,-1,-1,-1,-1},
+            {11, 2, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            {11, 2, 0,11, 0, 8,-1,-1,-1,-1,-1,-1,-1},
+            {11, 2, 3, 0, 1, 9,-1,-1,-1,-1,-1,-1,-1},
+            { 2, 1,11, 1, 9,11,11, 9, 8,-1,-1,-1,-1},
+            {10, 1, 3,10, 3,11,-1,-1,-1,-1,-1,-1,-1},
+            { 1, 0,10, 0, 8,10,10, 8,11,-1,-1,-1,-1},
+            { 0, 3, 9, 3,11, 9, 9,11,10,-1,-1,-1,-1},
+            { 8,10, 9, 8,11,10,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 4, 7,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 0, 4, 3, 4, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 1, 9, 0, 8, 4, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 4, 1, 4, 7, 1, 1, 7, 3,-1,-1,-1,-1},
+            {10, 1, 2, 8, 4, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 2,10, 1, 0, 4, 7, 0, 7, 3,-1,-1,-1,-1},
+            { 4, 7, 8, 0, 2,10, 0,10, 9,-1,-1,-1,-1},
+            { 2, 7, 3, 2, 9, 7, 7, 9, 4, 2,10, 9,-1},
+            { 2, 3,11, 7, 8, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 7,11, 4,11, 2, 4, 4, 2, 0,-1,-1,-1,-1},
+            { 3,11, 2, 4, 7, 8, 9, 0, 1,-1,-1,-1,-1},
+            { 2, 7,11, 2, 1, 7, 1, 4, 7, 1, 9, 4,-1},
+            { 8, 4, 7,11,10, 1,11, 1, 3,-1,-1,-1,-1},
+            {11, 4, 7, 1, 4,11, 1,11,10, 1, 0, 4,-1},
+            { 3, 8, 0, 7,11, 4,11, 9, 4,11,10, 9,-1},
+            { 7,11, 4, 4,11, 9,11,10, 9,-1,-1,-1,-1},
+            { 9, 5, 4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 0, 8, 4, 9, 5,-1,-1,-1,-1,-1,-1,-1},
+            { 5, 4, 0, 5, 0, 1,-1,-1,-1,-1,-1,-1,-1},
+            { 4, 8, 5, 8, 3, 5, 5, 3, 1,-1,-1,-1,-1},
+            { 2,10, 1, 9, 5, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 0, 8, 3, 5, 4, 9,10, 1, 2,-1,-1,-1,-1},
+            {10, 5, 2, 5, 4, 2, 2, 4, 0,-1,-1,-1,-1},
+            { 3, 4, 8, 3, 2, 4, 2, 5, 4, 2,10, 5,-1},
+            {11, 2, 3, 9, 5, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 5, 4, 8,11, 2, 8, 2, 0,-1,-1,-1,-1},
+            { 3,11, 2, 1, 5, 4, 1, 4, 0,-1,-1,-1,-1},
+            { 8, 5, 4, 2, 5, 8, 2, 8,11, 2, 1, 5,-1},
+            { 5, 4, 9, 1, 3,11, 1,11,10,-1,-1,-1,-1},
+            { 0, 9, 1, 4, 8, 5, 8,10, 5, 8,11,10,-1},
+            { 3, 4, 0, 3,10, 4, 4,10, 5, 3,11,10,-1},
+            { 4, 8, 5, 5, 8,10, 8,11,10,-1,-1,-1,-1},
+            { 9, 5, 7, 9, 7, 8,-1,-1,-1,-1,-1,-1,-1},
+            { 0, 9, 3, 9, 5, 3, 3, 5, 7,-1,-1,-1,-1},
+            { 8, 0, 7, 0, 1, 7, 7, 1, 5,-1,-1,-1,-1},
+            { 1, 7, 3, 1, 5, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 1, 2,10, 5, 7, 8, 5, 8, 9,-1,-1,-1,-1},
+            { 9, 1, 0,10, 5, 2, 5, 3, 2, 5, 7, 3,-1},
+            { 5, 2,10, 8, 2, 5, 8, 5, 7, 8, 0, 2,-1},
+            {10, 5, 2, 2, 5, 3, 5, 7, 3,-1,-1,-1,-1},
+            {11, 2, 3, 8, 9, 5, 8, 5, 7,-1,-1,-1,-1},
+            { 9, 2, 0, 9, 7, 2, 2, 7,11, 9, 5, 7,-1},
+            { 0, 3, 8, 2, 1,11, 1, 7,11, 1, 5, 7,-1},
+            { 2, 1,11,11, 1, 7, 1, 5, 7,-1,-1,-1,-1},
+            { 3, 9, 1, 3, 8, 9, 7,11,10, 7,10, 5,-1},
+            { 9, 1, 0,10, 7,11,10, 5, 7,-1,-1,-1,-1},
+            { 3, 8, 0, 7,10, 5, 7,11,10,-1,-1,-1,-1},
+            {11, 5, 7,11,10, 5,-1,-1,-1,-1,-1,-1,-1},
+            {10, 6, 5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 3, 0,10, 6, 5,-1,-1,-1,-1,-1,-1,-1},
+            { 0, 1, 9, 5,10, 6,-1,-1,-1,-1,-1,-1,-1},
+            {10, 6, 5, 9, 8, 3, 9, 3, 1,-1,-1,-1,-1},
+            { 1, 2, 6, 1, 6, 5,-1,-1,-1,-1,-1,-1,-1},
+            { 0, 8, 3, 2, 6, 5, 2, 5, 1,-1,-1,-1,-1},
+            { 5, 9, 6, 9, 0, 6, 6, 0, 2,-1,-1,-1,-1},
+            { 9, 6, 5, 3, 6, 9, 3, 9, 8, 3, 2, 6,-1},
+            { 3,11, 2,10, 6, 5,-1,-1,-1,-1,-1,-1,-1},
+            { 6, 5,10, 2, 0, 8, 2, 8,11,-1,-1,-1,-1},
+            { 1, 9, 0, 6, 5,10,11, 2, 3,-1,-1,-1,-1},
+            { 1,10, 2, 5, 9, 6, 9,11, 6, 9, 8,11,-1},
+            {11, 6, 3, 6, 5, 3, 3, 5, 1,-1,-1,-1,-1},
+            { 0, 5, 1, 0,11, 5, 5,11, 6, 0, 8,11,-1},
+            { 0, 5, 9, 0, 3, 5, 3, 6, 5, 3,11, 6,-1},
+            { 5, 9, 6, 6, 9,11, 9, 8,11,-1,-1,-1,-1},
+            {10, 6, 5, 4, 7, 8,-1,-1,-1,-1,-1,-1,-1},
+            { 5,10, 6, 7, 3, 0, 7, 0, 4,-1,-1,-1,-1},
+            { 5,10, 6, 0, 1, 9, 8, 4, 7,-1,-1,-1,-1},
+            { 4, 5, 9, 6, 7,10, 7, 1,10, 7, 3, 1,-1},
+            { 7, 8, 4, 5, 1, 2, 5, 2, 6,-1,-1,-1,-1},
+            { 4, 1, 0, 4, 5, 1, 6, 7, 3, 6, 3, 2,-1},
+            { 9, 4, 5, 8, 0, 7, 0, 6, 7, 0, 2, 6,-1},
+            { 4, 5, 9, 6, 3, 2, 6, 7, 3,-1,-1,-1,-1},
+            { 7, 8, 4, 2, 3,11,10, 6, 5,-1,-1,-1,-1},
+            {11, 6, 7,10, 2, 5, 2, 4, 5, 2, 0, 4,-1},
+            {11, 6, 7, 8, 0, 3, 1,10, 2, 9, 4, 5,-1},
+            { 6, 7,11, 1,10, 2, 9, 4, 5,-1,-1,-1,-1},
+            { 6, 7,11, 4, 5, 8, 5, 3, 8, 5, 1, 3,-1},
+            { 6, 7,11, 4, 1, 0, 4, 5, 1,-1,-1,-1,-1},
+            { 4, 5, 9, 3, 8, 0,11, 6, 7,-1,-1,-1,-1},
+            { 9, 4, 5, 7,11, 6,-1,-1,-1,-1,-1,-1,-1},
+            {10, 6, 4,10, 4, 9,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 3, 0, 9,10, 6, 9, 6, 4,-1,-1,-1,-1},
+            { 1,10, 0,10, 6, 0, 0, 6, 4,-1,-1,-1,-1},
+            { 8, 6, 4, 8, 1, 6, 6, 1,10, 8, 3, 1,-1},
+            { 9, 1, 4, 1, 2, 4, 4, 2, 6,-1,-1,-1,-1},
+            { 1, 0, 9, 3, 2, 8, 2, 4, 8, 2, 6, 4,-1},
+            { 2, 4, 0, 2, 6, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 2, 8, 8, 2, 4, 2, 6, 4,-1,-1,-1,-1},
+            { 2, 3,11, 6, 4, 9, 6, 9,10,-1,-1,-1,-1},
+            { 0,10, 2, 0, 9,10, 4, 8,11, 4,11, 6,-1},
+            {10, 2, 1,11, 6, 3, 6, 0, 3, 6, 4, 0,-1},
+            {10, 2, 1,11, 4, 8,11, 6, 4,-1,-1,-1,-1},
+            { 1, 4, 9,11, 4, 1,11, 1, 3,11, 6, 4,-1},
+            { 0, 9, 1, 4,11, 6, 4, 8,11,-1,-1,-1,-1},
+            {11, 6, 3, 3, 6, 0, 6, 4, 0,-1,-1,-1,-1},
+            { 8, 6, 4, 8,11, 6,-1,-1,-1,-1,-1,-1,-1},
+            { 6, 7,10, 7, 8,10,10, 8, 9,-1,-1,-1,-1},
+            { 9, 3, 0, 6, 3, 9, 6, 9,10, 6, 7, 3,-1},
+            { 6, 1,10, 6, 7, 1, 7, 0, 1, 7, 8, 0,-1},
+            { 6, 7,10,10, 7, 1, 7, 3, 1,-1,-1,-1,-1},
+            { 7, 2, 6, 7, 9, 2, 2, 9, 1, 7, 8, 9,-1},
+            { 1, 0, 9, 3, 6, 7, 3, 2, 6,-1,-1,-1,-1},
+            { 8, 0, 7, 7, 0, 6, 0, 2, 6,-1,-1,-1,-1},
+            { 2, 7, 3, 2, 6, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 7,11, 6, 3, 8, 2, 8,10, 2, 8, 9,10,-1},
+            {11, 6, 7,10, 0, 9,10, 2, 0,-1,-1,-1,-1},
+            { 2, 1,10, 7,11, 6, 8, 0, 3,-1,-1,-1,-1},
+            { 1,10, 2, 6, 7,11,-1,-1,-1,-1,-1,-1,-1},
+            { 7,11, 6, 3, 9, 1, 3, 8, 9,-1,-1,-1,-1},
+            { 9, 1, 0,11, 6, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 0, 3, 8,11, 6, 7,-1,-1,-1,-1,-1,-1,-1},
+            {11, 6, 7,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            {11, 7, 6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 0, 8, 3,11, 7, 6,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 0, 1,11, 7, 6,-1,-1,-1,-1,-1,-1,-1},
+            { 7, 6,11, 3, 1, 9, 3, 9, 8,-1,-1,-1,-1},
+            { 1, 2,10, 6,11, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 2,10, 1, 7, 6,11, 8, 3, 0,-1,-1,-1,-1},
+            {11, 7, 6,10, 9, 0,10, 0, 2,-1,-1,-1,-1},
+            { 7, 6,11, 3, 2, 8, 8, 2,10, 8,10, 9,-1},
+            { 2, 3, 7, 2, 7, 6,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 7, 0, 7, 6, 0, 0, 6, 2,-1,-1,-1,-1},
+            { 1, 9, 0, 3, 7, 6, 3, 6, 2,-1,-1,-1,-1},
+            { 7, 6, 2, 7, 2, 9, 2, 1, 9, 7, 9, 8,-1},
+            { 6,10, 7,10, 1, 7, 7, 1, 3,-1,-1,-1,-1},
+            { 6,10, 1, 6, 1, 7, 7, 1, 0, 7, 0, 8,-1},
+            { 9, 0, 3, 6, 9, 3, 6,10, 9, 6, 3, 7,-1},
+            { 6,10, 7, 7,10, 8,10, 9, 8,-1,-1,-1,-1},
+            { 8, 4, 6, 8, 6,11,-1,-1,-1,-1,-1,-1,-1},
+            {11, 3, 6, 3, 0, 6, 6, 0, 4,-1,-1,-1,-1},
+            { 0, 1, 9, 4, 6,11, 4,11, 8,-1,-1,-1,-1},
+            { 1, 9, 4,11, 1, 4,11, 3, 1,11, 4, 6,-1},
+            {10, 1, 2,11, 8, 4,11, 4, 6,-1,-1,-1,-1},
+            {10, 1, 2,11, 3, 6, 6, 3, 0, 6, 0, 4,-1},
+            { 0, 2,10, 0,10, 9, 4,11, 8, 4, 6,11,-1},
+            { 2,11, 3, 6, 9, 4, 6,10, 9,-1,-1,-1,-1},
+            { 3, 8, 2, 8, 4, 2, 2, 4, 6,-1,-1,-1,-1},
+            { 2, 0, 4, 2, 4, 6,-1,-1,-1,-1,-1,-1,-1},
+            { 1, 9, 0, 3, 8, 2, 2, 8, 4, 2, 4, 6,-1},
+            { 9, 4, 1, 1, 4, 2, 4, 6, 2,-1,-1,-1,-1},
+            { 8, 4, 6, 8, 6, 1, 6,10, 1, 8, 1, 3,-1},
+            { 1, 0,10,10, 0, 6, 0, 4, 6,-1,-1,-1,-1},
+            { 8, 0, 3, 9, 6,10, 9, 4, 6,-1,-1,-1,-1},
+            {10, 4, 6,10, 9, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 5, 4, 7, 6,11,-1,-1,-1,-1,-1,-1,-1},
+            { 4, 9, 5, 3, 0, 8,11, 7, 6,-1,-1,-1,-1},
+            { 6,11, 7, 4, 0, 1, 4, 1, 5,-1,-1,-1,-1},
+            { 6,11, 7, 4, 8, 5, 5, 8, 3, 5, 3, 1,-1},
+            { 6,11, 7, 1, 2,10, 9, 5, 4,-1,-1,-1,-1},
+            {11, 7, 6, 8, 3, 0, 1, 2,10, 9, 5, 4,-1},
+            {11, 7, 6,10, 5, 2, 2, 5, 4, 2, 4, 0,-1},
+            { 7, 4, 8, 2,11, 3,10, 5, 6,-1,-1,-1,-1},
+            { 4, 9, 5, 6, 2, 3, 6, 3, 7,-1,-1,-1,-1},
+            { 9, 5, 4, 8, 7, 0, 0, 7, 6, 0, 6, 2,-1},
+            { 4, 0, 1, 4, 1, 5, 6, 3, 7, 6, 2, 3,-1},
+            { 7, 4, 8, 5, 2, 1, 5, 6, 2,-1,-1,-1,-1},
+            { 4, 9, 5, 6,10, 7, 7,10, 1, 7, 1, 3,-1},
+            { 5, 6,10, 0, 9, 1, 8, 7, 4,-1,-1,-1,-1},
+            { 5, 6,10, 7, 0, 3, 7, 4, 0,-1,-1,-1,-1},
+            {10, 5, 6, 4, 8, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 5, 6, 9, 6,11, 9, 9,11, 8,-1,-1,-1,-1},
+            { 0, 9, 5, 0, 5, 3, 3, 5, 6, 3, 6,11,-1},
+            { 0, 1, 5, 0, 5,11, 5, 6,11, 0,11, 8,-1},
+            {11, 3, 6, 6, 3, 5, 3, 1, 5,-1,-1,-1,-1},
+            { 1, 2,10, 5, 6, 9, 9, 6,11, 9,11, 8,-1},
+            { 1, 0, 9, 6,10, 5,11, 3, 2,-1,-1,-1,-1},
+            { 6,10, 5, 2, 8, 0, 2,11, 8,-1,-1,-1,-1},
+            { 3, 2,11,10, 5, 6,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 5, 6, 3, 9, 6, 3, 8, 9, 3, 6, 2,-1},
+            { 5, 6, 9, 9, 6, 0, 6, 2, 0,-1,-1,-1,-1},
+            { 0, 3, 8, 2, 5, 6, 2, 1, 5,-1,-1,-1,-1},
+            { 1, 6, 2, 1, 5, 6,-1,-1,-1,-1,-1,-1,-1},
+            {10, 5, 6, 9, 3, 8, 9, 1, 3,-1,-1,-1,-1},
+            { 0, 9, 1, 5, 6,10,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 0, 3,10, 5, 6,-1,-1,-1,-1,-1,-1,-1},
+            {10, 5, 6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            {11, 7, 5,11, 5,10,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 0, 8, 7, 5,10, 7,10,11,-1,-1,-1,-1},
+            { 9, 0, 1,10,11, 7,10, 7, 5,-1,-1,-1,-1},
+            { 3, 1, 9, 3, 9, 8, 7,10,11, 7, 5,10,-1},
+            { 2,11, 1,11, 7, 1, 1, 7, 5,-1,-1,-1,-1},
+            { 0, 8, 3, 2,11, 1, 1,11, 7, 1, 7, 5,-1},
+            { 9, 0, 2, 9, 2, 7, 2,11, 7, 9, 7, 5,-1},
+            {11, 3, 2, 8, 5, 9, 8, 7, 5,-1,-1,-1,-1},
+            {10, 2, 5, 2, 3, 5, 5, 3, 7,-1,-1,-1,-1},
+            { 5,10, 2, 8, 5, 2, 8, 7, 5, 8, 2, 0,-1},
+            { 9, 0, 1,10, 2, 5, 5, 2, 3, 5, 3, 7,-1},
+            { 1,10, 2, 5, 8, 7, 5, 9, 8,-1,-1,-1,-1},
+            { 1, 3, 7, 1, 7, 5,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 7, 0, 0, 7, 1, 7, 5, 1,-1,-1,-1,-1},
+            { 0, 3, 9, 9, 3, 5, 3, 7, 5,-1,-1,-1,-1},
+            { 9, 7, 5, 9, 8, 7,-1,-1,-1,-1,-1,-1,-1},
+            { 4, 5, 8, 5,10, 8, 8,10,11,-1,-1,-1,-1},
+            { 3, 0, 4, 3, 4,10, 4, 5,10, 3,10,11,-1},
+            { 0, 1, 9, 4, 5, 8, 8, 5,10, 8,10,11,-1},
+            { 5, 9, 4, 1,11, 3, 1,10,11,-1,-1,-1,-1},
+            { 8, 4, 5, 2, 8, 5, 2,11, 8, 2, 5, 1,-1},
+            { 3, 2,11, 1, 4, 5, 1, 0, 4,-1,-1,-1,-1},
+            { 9, 4, 5, 8, 2,11, 8, 0, 2,-1,-1,-1,-1},
+            {11, 3, 2, 9, 4, 5,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 8, 4, 3, 4, 2, 2, 4, 5, 2, 5,10,-1},
+            {10, 2, 5, 5, 2, 4, 2, 0, 4,-1,-1,-1,-1},
+            { 0, 3, 8, 5, 9, 4,10, 2, 1,-1,-1,-1,-1},
+            { 2, 1,10, 9, 4, 5,-1,-1,-1,-1,-1,-1,-1},
+            { 4, 5, 8, 8, 5, 3, 5, 1, 3,-1,-1,-1,-1},
+            { 5, 0, 4, 5, 1, 0,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 8, 0, 4, 5, 9,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 4, 5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 7, 4,11, 4, 9,11,11, 9,10,-1,-1,-1,-1},
+            { 3, 0, 8, 7, 4,11,11, 4, 9,11, 9,10,-1},
+            {11, 7, 4, 1,11, 4, 1,10,11, 1, 4, 0,-1},
+            { 8, 7, 4,11, 1,10,11, 3, 1,-1,-1,-1,-1},
+            { 2,11, 7, 2, 7, 1, 1, 7, 4, 1, 4, 9,-1},
+            { 3, 2,11, 4, 8, 7, 9, 1, 0,-1,-1,-1,-1},
+            { 7, 4,11,11, 4, 2, 4, 0, 2,-1,-1,-1,-1},
+            { 2,11, 3, 7, 4, 8,-1,-1,-1,-1,-1,-1,-1},
+            { 2, 3, 7, 2, 7, 9, 7, 4, 9, 2, 9,10,-1},
+            { 4, 8, 7, 0,10, 2, 0, 9,10,-1,-1,-1,-1},
+            { 2, 1,10, 0, 7, 4, 0, 3, 7,-1,-1,-1,-1},
+            {10, 2, 1, 8, 7, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 1, 4, 4, 1, 7, 1, 3, 7,-1,-1,-1,-1},
+            { 1, 0, 9, 8, 7, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 4, 0, 3, 7, 4,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 7, 4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 9,10, 8,10,11,-1,-1,-1,-1,-1,-1,-1},
+            { 0, 9, 3, 3, 9,11, 9,10,11,-1,-1,-1,-1},
+            { 1,10, 0, 0,10, 8,10,11, 8,-1,-1,-1,-1},
+            {10, 3, 1,10,11, 3,-1,-1,-1,-1,-1,-1,-1},
+            { 2,11, 1, 1,11, 9,11, 8, 9,-1,-1,-1,-1},
+            {11, 3, 2, 0, 9, 1,-1,-1,-1,-1,-1,-1,-1},
+            {11, 0, 2,11, 8, 0,-1,-1,-1,-1,-1,-1,-1},
+            {11, 3, 2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 3, 8, 2, 2, 8,10, 8, 9,10,-1,-1,-1,-1},
+            { 9, 2, 0, 9,10, 2,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 0, 3, 1,10, 2,-1,-1,-1,-1,-1,-1,-1},
+            {10, 2, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 1, 3, 8, 9, 1,-1,-1,-1,-1,-1,-1,-1},
+            { 9, 1, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            { 8, 0, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+            {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
 
 
 

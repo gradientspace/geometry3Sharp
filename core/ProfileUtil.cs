@@ -21,11 +21,11 @@ namespace g3
                 Watch.Start();
             Accumulated = TimeSpan.Zero;
         }
-        public virtual void Start()
+        public void Start()
         {
             Watch.Start();
         }
-        public virtual void Stop()
+        public void Stop()
         {
             Watch.Stop();
         }
@@ -34,22 +34,30 @@ namespace g3
             get { return Watch.IsRunning; }
         }
 
-        public virtual void Accumulate()
+        public void Accumulate(bool bReset = false)
         {
             Watch.Stop();
             Accumulated += Watch.Elapsed;
+            if (bReset)
+                Watch.Reset();
         }
-        public virtual void Reset()
+        public void Reset()
         {
             Watch.Stop();
             Watch.Reset();
             Watch.Start();
+        }
+
+        public string AccumulatedString
+        {
+            get { return string.Format("{0:ss}.{0:fffffff}", Accumulated); }
         }
         public override string ToString()
         {
             TimeSpan t = Watch.Elapsed;
             return string.Format("{0:ss}.{0:fffffff}", Watch.Elapsed);
         }
+
     }
 
 
