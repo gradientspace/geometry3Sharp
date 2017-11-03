@@ -97,6 +97,17 @@ namespace g3
         }
 
 
+        public static Vector3d QuickCompute(DMesh3 mesh, int vid, NormalsTypes type = NormalsTypes.Vertex_OneRingFaceAverage_AreaWeighted)
+        {
+            Vector3d sum = Vector3d.Zero;
+            Vector3d n, c; double a;
+            foreach ( int tid in mesh.VtxTrianglesItr(vid)) {
+                mesh.GetTriInfo(tid, out n, out a, out c);
+                sum += a * n;
+            }
+            return sum.Normalized;
+        }
+
 
     }
 }
