@@ -51,6 +51,7 @@
     <Compile Include="color\ColorMap.cs" />
     <Compile Include="color\ColorMixer.cs" />
     <Compile Include="containment\ContMinCircle2.cs" />
+    <Compile Include="containment\ConvexHull2.cs" />
     <Compile Include="core\CommandArgumentSet.cs" />
     <Compile Include="core\DijkstraGraphDistance.cs" />
     <Compile Include="core\DVector.cs" />
@@ -116,6 +117,8 @@
     <Compile Include="math\Plane3.cs" />
     <Compile Include="math\PrimalQuery2d.cs" />
     <Compile Include="math\Quaternionf.cs" />
+    <Compile Include="math\Query2.cs" />
+    <Compile Include="math\Query2Integer.cs" />
     <Compile Include="math\QueryTuple2d.cs" />
     <Compile Include="math\ScalarMap.cs" />
     <Compile Include="math\TransformSequence.cs" />
