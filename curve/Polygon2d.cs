@@ -326,7 +326,10 @@ namespace g3
 			}
 			return dist;
 		}
-
+        public double DistanceSquared(Vector2d p) {
+            int seg; double segt;
+            return DistanceSquared(p, out seg, out segt);
+        }
 
 
         public double AverageEdgeLength

@@ -274,5 +274,139 @@ namespace g3
 #endif
 
 
+
+
+
+
+
+
+        // from WildMagic5 Vector2, used in ConvexHull2
+
+        public struct Information
+        {
+            // The intrinsic dimension of the input set.  The parameter 'epsilon'
+            // to the GetInformation function is used to provide a tolerance when
+            // determining the dimension.
+            public int mDimension;
+
+            // Axis-aligned bounding box of the input set.  The maximum range is
+            // the larger of max[0]-min[0] and max[1]-min[1].
+            public Vector2d mMin;
+            public Vector2d mMax;
+            public double mMaxRange;
+
+            // Coordinate system.  The origin is valid for any dimension d.  The
+            // unit-length direction vector is valid only for 0 <= i < d.  The
+            // extreme index is relative to the array of input points, and is also
+            // valid only for 0 <= i < d.  If d = 0, all points are effectively
+            // the same, but the use of an epsilon may lead to an extreme index
+            // that is not zero.  If d = 1, all points effectively lie on a line
+            // segment.  If d = 2, the points are not collinear.
+            public Vector2d mOrigin;
+            public Vector2d mDirection0;
+            public Vector2d mDirection1;
+
+            // The indices that define the maximum dimensional extents.  The
+            // values mExtreme[0] and mExtreme[1] are the indices for the points
+            // that define the largest extent in one of the coordinate axis
+            // directions.  If the dimension is 2, then mExtreme[2] is the index
+            // for the point that generates the largest extent in the direction
+            // perpendicular to the line through the points corresponding to
+            // mExtreme[0] and mExtreme[1].  The triangle formed by the points
+            // V[extreme0], V[extreme1], and V[extreme2] is clockwise or
+            // counterclockwise, the condition stored in mExtremeCCW.
+            public Vector3i mExtreme;
+            public bool mExtremeCCW;
+        };
+
+
+        // The value of epsilon is used as a relative error when computing the
+        // dimension of the point set.
+        public static void GetInformation(IList<Vector2d> points, double epsilon, out Information info) {
+            info = new Information();
+            int numPoints = points.Count;
+            System.Diagnostics.Debug.Assert(numPoints > 0 && points != null && epsilon >= (double)0);
+
+            info.mExtremeCCW = false;
+
+            // Compute the axis-aligned bounding box for the input points.  Keep track
+            // of the indices into 'points' for the current min and max.
+            int j;
+            Vector2i indexMin = Vector2i.Zero;
+            Vector2i indexMax = Vector2i.Zero;
+            for (j = 0; j < 2; ++j) {
+                info.mMin[j] = points[0][j];
+                info.mMax[j] = info.mMin[j];
+                indexMin[j] = 0;
+                indexMax[j] = 0;
+            }
+
+            int i;
+            for (i = 1; i < numPoints; ++i) {
+                for (j = 0; j < 2; ++j) {
+                    if (points[i][j] < info.mMin[j]) {
+                        info.mMin[j] = points[i][j];
+                        indexMin[j] = i;
+                    } else if (points[i][j] > info.mMax[j]) {
+                        info.mMax[j] = points[i][j];
+                        indexMax[j] = i;
+                    }
+                }
+            }
+
+            // Determine the maximum range for the bounding box.
+            info.mMaxRange = info.mMax[0] - info.mMin[0];
+            info.mExtreme[0] = indexMin[0];
+            info.mExtreme[1] = indexMax[0];
+            double range = info.mMax[1] - info.mMin[1];
+            if (range > info.mMaxRange) {
+                info.mMaxRange = range;
+                info.mExtreme[0] = indexMin[1];
+                info.mExtreme[1] = indexMax[1];
+            }
+
+            // The origin is either the point of minimum x-value or point of
+            // minimum y-value.
+            info.mOrigin = points[info.mExtreme[0]];
+
+            // Test whether the point set is (nearly) a point.
+            if (info.mMaxRange < epsilon) {
+                info.mDimension = 0;
+                info.mDirection0 = Vector2d.Zero;
+                info.mDirection1 = Vector2d.Zero;
+                for (j = 0; j < 2; ++j) 
+                    info.mExtreme[j + 1] = info.mExtreme[0];
+                return;
+            }
+
+            // Test whether the point set is (nearly) a line segment.
+            info.mDirection0 = points[info.mExtreme[1]] - info.mOrigin;
+            info.mDirection0.Normalize();
+            info.mDirection1 = -info.mDirection0.Perp;
+            double maxDistance = (double)0;
+            double maxSign = (double)0;
+            info.mExtreme[2] = info.mExtreme[0];
+            for (i = 0; i < numPoints; ++i) {
+                Vector2d diff = points[i] - info.mOrigin;
+                double distance = info.mDirection1.Dot(diff);
+                double sign = Math.Sign(distance);
+                distance = Math.Abs(distance);
+                if (distance > maxDistance) {
+                    maxDistance = distance;
+                    maxSign = sign;
+                    info.mExtreme[2] = i;
+                }
+            }
+
+            if (maxDistance < epsilon * info.mMaxRange) {
+                info.mDimension = 1;
+                info.mExtreme[2] = info.mExtreme[1];
+                return;
+            }
+
+            info.mDimension = 2;
+            info.mExtremeCCW = (maxSign > (double)0);
+        }
     }
+
 }
