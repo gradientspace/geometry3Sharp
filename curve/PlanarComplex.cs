@@ -424,10 +424,33 @@ namespace g3
 
 
 
+		public struct FindSolidsOptions
+		{
+			public double SimplifyDeviationTolerance;
+			public bool WantCurveSolids;
+			public bool TrustOrientations;
+			public bool AllowOverlappingHoles;
+
+			public static readonly FindSolidsOptions Default = new FindSolidsOptions() {
+				SimplifyDeviationTolerance = 0.1,
+				WantCurveSolids = true,
+				TrustOrientations = false,
+				AllowOverlappingHoles = false
+			};
+		}
+
+
+		public SolidRegionInfo FindSolidRegions(double fSimplifyDeviationTol = 0.1, bool bWantCurveSolids = true)
+		{
+			FindSolidsOptions opt = FindSolidsOptions.Default;
+			opt.SimplifyDeviationTolerance = fSimplifyDeviationTol;
+			opt.WantCurveSolids = bWantCurveSolids;
+			return FindSolidRegions(opt);
+		}
 
         // Finds set of "solid" regions - eg boundary loops with interior holes.
         // Result has outer loops being clockwise, and holes counter-clockwise
-		public SolidRegionInfo FindSolidRegions(double fSimplifyDeviationTol = 0.1, bool bWantCurveSolids = true) 
+		public SolidRegionInfo FindSolidRegions(FindSolidsOptions options) 
 		{
 			List<SmoothLoopElement> validLoops = new List<SmoothLoopElement>(LoopsItr());
 			int N = validLoops.Count;
@@ -442,7 +465,7 @@ namespace g3
 
 			// copy polygons, simplify if desired
 			double fClusterTol = 0.0;		// don't do simple clustering, can lose corners
-			double fDeviationTol = fSimplifyDeviationTol;
+			double fDeviationTol = options.SimplifyDeviationTolerance;
 			Polygon2d[] polygons = new Polygon2d[maxid];
 			foreach ( var v in validLoops ) {
 				Polygon2d p = new Polygon2d(v.polygon);
@@ -461,6 +484,10 @@ namespace g3
 			Dictionary<int, List<int>> ContainSets = new Dictionary<int, List<int>>();
             Dictionary<int, List<int>> ContainedParents = new Dictionary<int, List<int>>();
 
+			bool bUseOrient = options.TrustOrientations;
+			bool bWantCurveSolids = options.WantCurveSolids;
+			bool bCheckHoles = ! options.AllowOverlappingHoles;
+
             // construct containment sets
 			for ( int i = 0; i < N; ++i ) {
 				SmoothLoopElement loopi = validLoops[i];
@@ -471,6 +498,11 @@ namespace g3
 						continue;
 					SmoothLoopElement loopj = validLoops[j];
 					Polygon2d polyj = polygons[loopj.ID];
+
+					// if we are preserving orientations, holes cannot contain holes and
+					// outers cannot contain outers!
+					if (bUseOrient && loopj.polygon.IsClockwise == loopi.polygon.IsClockwise)
+						continue;
 
 					// cannot be contained if bounds are not contained
 					if ( bounds[loopi.ID].Contains( bounds[loopj.ID] ) == false )
@@ -575,7 +607,7 @@ namespace g3
                         }
 
                         try {
-                            polysolids[outer_idx].AddHole(hole_poly);
+							polysolids[outer_idx].AddHole(hole_poly, bCheckHoles);
                             if ( hole_loop != null )
                                 solids[outer_idx].AddHole(hole_loop);
                         } catch {
