@@ -19,13 +19,13 @@ namespace g3
         double mEpsilon;
         Func<int, int[], Support, Circle>[] mUpdate = new Func<int, int[], Support, Circle>[4];
 
-        Vector2d[] Points;
+        IList<Vector2d> Points;
 
         Circle[] circle_buf = new Circle[6];
 
         public Circle2d Result;
 
-        public ContMinCircle2(Vector2d[] pointsIn, double epsilon = 1e-05) {
+        public ContMinCircle2(IList<Vector2d> pointsIn, double epsilon = 1e-05) {
             mEpsilon = epsilon;
 
             mUpdate[0] = null;
@@ -39,7 +39,7 @@ namespace g3
             double distDiff = 0;
 
             Points = pointsIn;
-            int numPoints = pointsIn.Length;
+            int numPoints = pointsIn.Count;
 
             int[] permutation = null;
             Random r = new Random();
@@ -97,7 +97,7 @@ namespace g3
                 // growth of the bounding circle.
                 for (int i = 1 % numPoints, n = 0; i != n; i = (i + 1) % numPoints) {
                     if (!support.Contains(i, Points, permutation, mEpsilon)) {
-                        if (!Contains(ref Points[permutation[i]], ref minimal, ref distDiff)) {
+                        if (!Contains(Points[permutation[i]], ref minimal, ref distDiff)) {
                             var updateF = mUpdate[support.Quantity];
                             Circle circle = updateF(i, permutation, support);
                             if (circle.Radius > minimal.Radius) {
@@ -117,10 +117,6 @@ namespace g3
         }
 
         bool Contains(Vector2d point, ref Circle circle, ref double distDiff)
-        {
-            return Contains(ref point, ref circle, ref distDiff);
-        }
-        bool Contains(ref Vector2d point, ref Circle circle, ref double distDiff)
         {
             Vector2d diff = point - circle.Center;
             double test = diff.LengthSquared;
@@ -387,7 +383,7 @@ namespace g3
         // Indices of points that support current minimum area circle.
         protected class Support
         {
-            public bool Contains(int index, Vector2d[] Points, int[] permutation, double epsilon)
+            public bool Contains(int index, IList<Vector2d> Points, int[] permutation, double epsilon)
             {
                 for (int i = 0; i < Quantity; ++i) {
                     Vector2d diff = Points[permutation[index]] - Points[permutation[Index[i]]];
