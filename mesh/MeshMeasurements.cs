@@ -244,6 +244,25 @@ namespace g3
 
 
 
+
+        public static Interval1d ExtentsOnAxis(DMesh3 mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            Interval1d extent = Interval1d.Empty;
+            if (TransformF == null) {
+                foreach (Vector3d v in mesh.Vertices()) 
+                    extent.Contain(v.Dot(axis));
+            } else {
+                foreach (Vector3d v in mesh.Vertices()) {
+                    Vector3d vT = TransformF(v);
+                    extent.Contain(vT.Dot(axis));
+                }
+            }
+            return extent;
+        }
+
+
+
+
         public struct GenusResult
         {
             public bool Valid;

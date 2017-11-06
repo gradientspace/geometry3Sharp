@@ -326,6 +326,15 @@ namespace g3
             return (1.0 - t) * a + (t) * b;
         }
 
+        public static float SmoothStep(float a, float b, float t) {
+            t = t * t * (3.0f - 2.0f * t);
+            return (1.0f - t) * a + (t) * b;
+        }
+        public static double SmoothStep(double a, double b, double t) {
+            t = t * t * (3.0 - 2.0 * t);
+            return (1.0-t) * a + (t) * b;
+        }
+
 
         public static float SmoothInterp(float a, float b, float t) {
             float tt = WyvillRise01(t);
