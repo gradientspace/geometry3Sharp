@@ -112,10 +112,10 @@ namespace g3
             // [TODO] subtract Center from test?
             Vector2d vec0 = Center + Extent * Direction;
             Vector2d vec1 = Center - Extent * Direction;
-            double x0 = test[0] - vec0[0];
-            double y0 = test[1] - vec0[1];
-            double x1 = vec1[0] - vec0[0];
-            double y1 = vec1[1] - vec0[1];
+            double x0 = test.x - vec0.x;
+            double y0 = test.y - vec0.y;
+            double x1 = vec1.x - vec0.x;
+            double y1 = vec1.y - vec0.y;
             double det = x0 * y1 - x1 * y0;
             return (det > tol ? +1 : (det < -tol ? -1 : 0));
         }
@@ -177,6 +177,24 @@ namespace g3
             dy = pt.y - (a.y + ((t * vy)/len2));
             return dx * dx + dy * dy;
         }
+
+
+        /// <summary>
+        /// Returns:
+        ///   +1, on right of line
+        ///   -1, on left of line
+        ///    0, on the line
+        /// </summary>
+        public static int WhichSide(ref Vector2d a, ref Vector2d b, ref Vector2d test, double tol = 0)
+        {
+            double x0 = test.x - a.x;
+            double y0 = test.y - a.y;
+            double x1 = b.x - a.x;
+            double y1 = b.y - a.y;
+            double det = x0 * y1 - x1 * y0;
+            return (det > tol ? +1 : (det < -tol ? -1 : 0));
+        }
+
 
     }
 

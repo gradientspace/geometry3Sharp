@@ -34,6 +34,9 @@ namespace g3
             this.invalidValue = invalidValue;
         }
 
+        public T InvalidValue {
+            get { return invalidValue; }
+        }
 
         /// <summary>
         /// Insert point at position. This function is thread-safe, uses a SpinLock internally
