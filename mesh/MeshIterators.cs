@@ -44,7 +44,9 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Boundary vertices of mesh
+        /// </summary>
         public static IEnumerable<int> BoundaryVertices(DMesh3 mesh)
         {
             int N = mesh.MaxVertexID;
@@ -52,6 +54,22 @@ namespace g3
                 if ( mesh.IsVertex(i) ) {
                     if (mesh.IsBoundaryVertex(i))
                         yield return i;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// boundary vertices of mesh, but based on edges, so returns each vertex twice!
+        /// </summary>
+        public static IEnumerable<int> BoundaryEdgeVertices(DMesh3 mesh)
+        {
+            int N = mesh.MaxEdgeID;
+            for (int i = 0; i < N; ++i) {
+                if (mesh.IsEdge(i) && mesh.IsBoundaryEdge(i)) {
+                    Index2i ev = mesh.GetEdgeV(i);
+                    yield return ev.a;
+                    yield return ev.b;
                 }
             }
         }

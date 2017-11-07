@@ -157,7 +157,33 @@ namespace g3
             return bOK;
         }
 
-        
+
+
+
+
+        // transfer vertex positions in submesh back to base mesh
+        public bool BackPropropagateVertices(bool bRecomputeBoundaryNormals = false)
+        {
+            bool bNormals = (Region.SubMesh.HasVertexNormals && Region.BaseMesh.HasVertexNormals);
+            foreach ( int subvid in Region.SubMesh.VertexIndices() ) {
+                int basevid = Region.SubToBaseV[subvid];
+                Vector3d v = Region.SubMesh.GetVertex(subvid);
+                Region.BaseMesh.SetVertex(basevid, v);
+                if (bNormals)
+                    Region.BaseMesh.SetVertexNormal(basevid, Region.SubMesh.GetVertexNormal(subvid));
+            }
+
+            if (bRecomputeBoundaryNormals) {
+                foreach ( int basevid in Region.BaseBorderV ) {
+                    Vector3d n = MeshNormals.QuickCompute(Region.BaseMesh, basevid);
+                    Region.BaseMesh.SetVertexNormal(basevid, (Vector3f)n);
+                }
+            }
+
+            return true;
+        }
+
+
 
     }
 }
