@@ -41,6 +41,19 @@ namespace g3
 			max_group_id = 0;
 		}
 
+        public DGraph2(DGraph2 copy)
+        {
+            vertices = new DVector<double>();
+            vertex_edges = new DVector<List<int>>();
+            vertices_refcount = new RefCountVector();
+
+            edges = new DVector<int>();
+            edges_refcount = new RefCountVector();
+            max_group_id = 0;
+
+            AppendGraph(copy);
+        }
+
 
 		void updateTimeStamp(bool bShapeChange) {
 			timestamp++;
@@ -283,6 +296,20 @@ namespace g3
 			}
 			AppendEdge(prev, first, gid);
 		}
+
+
+        public void AppendGraph(DGraph2 graph, int gid = -1)
+        {
+            int[] mapV = new int[graph.MaxVertexID];
+            foreach ( int vid in graph.VertexIndices()) {
+                    mapV[vid] = this.AppendVertex(graph.GetVertex(vid));
+            }
+            foreach ( int eid in graph.EdgeIndices()) {
+                Index2i ev = graph.GetEdgeV(eid);
+                int use_gid = (gid == -1) ? graph.GetEdgeGroup(eid) : gid;
+                this.AppendEdge(mapV[ev.a], mapV[ev.b], gid);
+            }
+        }
 
 
 

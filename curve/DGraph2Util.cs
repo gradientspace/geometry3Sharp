@@ -184,6 +184,23 @@ namespace g3
 
 
 
+        public static void DisconnectJunction(DGraph2 graph, int vid, double shrinkFactor = 1.0)
+        {
+            Vector2d v = graph.GetVertex(vid);
+            int[] nbr_verts = graph.VtxVerticesItr(vid).ToArray();
+            for (int k = 0; k < nbr_verts.Length; ++k) {
+                int eid = graph.FindEdge(vid, nbr_verts[k]);
+                graph.RemoveEdge(eid, true);
+                if (graph.IsVertex(nbr_verts[k])) {
+                    Vector2d newpos = Vector2d.Lerp(graph.GetVertex(nbr_verts[k]), v, shrinkFactor);
+                    int newv = graph.AppendVertex(newpos);
+                    graph.AppendEdge(nbr_verts[k], newv);
+                }
+            }
+        }
+
+
+
 
 
         /// <summary>
@@ -205,6 +222,35 @@ namespace g3
             }
             isValid = false;
             return v;
+        }
+
+
+
+
+
+        public static bool FindRayIntersection(Vector2d o, Vector2d d, out int hit_eid, out double hit_ray_t, DGraph2 graph)
+        {
+            Line2d line = new Line2d(o, d);
+            Vector2d a = Vector2d.Zero, b = Vector2d.Zero;
+
+            int near_eid = DGraph2.InvalidID;
+            double near_t = double.MaxValue;
+
+            IntrLine2Segment2 intr = new IntrLine2Segment2(line, new Segment2d(a, b));
+            foreach ( int eid in graph.VertexIndices() ) {
+                graph.GetEdgeV(eid, ref a, ref b);
+                intr.Segment = new Segment2d(a, b);
+                if ( intr.Find() && intr.IsSimpleIntersection && intr.Parameter > 0) {
+                    if ( intr.Parameter < near_t ) {
+                        near_eid = eid;
+                        near_t = intr.Parameter;
+                    }
+                }
+            }
+
+            hit_eid = near_eid;
+            hit_ray_t = near_t;
+            return (hit_ray_t < double.MaxValue);
         }
 
 
