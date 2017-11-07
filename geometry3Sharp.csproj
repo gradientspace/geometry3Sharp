@@ -97,6 +97,7 @@
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="intersection\IntrLine3AxisAlignedBox3.cs" />
     <Compile Include="intersection\IntrRay3AxisAlignedBox3.cs" />
+    <Compile Include="intersection\IntrLine2Segment2.cs" />
     <Compile Include="intersection\IntrTriangle3Triangle3.cs" />
     <Compile Include="io\MaterialTypes.cs" />
     <Compile Include="io\OFFReader.cs" />
