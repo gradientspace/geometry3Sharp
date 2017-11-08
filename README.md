@@ -104,7 +104,7 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 # Intersection Queries    
     
 - 2D: 
-    - linear/linear: **IntrLine2Line2**, **IntrSegment2Segment2**
+    - linear/linear: **IntrLine2Line2**, **IntrLine2Segment2**, **IntrSegment2Segment2**
     - linear/area: **IntrLine2Triangle2**, **IntrSegment2Triangle2**
     - area/area: **IntrTriangle2Triangle2**
 - 3D: 
@@ -115,9 +115,13 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 
 
 # Containment
+- 2D:
+	- **ConvexHull2**: 2D convex hull, compute w/ doubles or 64-bit integers
+	- **ContMinCircle2**: compute minimal-area circle containing input point set
+	- **ContMinBox2**: minimal-area box containing input point set, double & 64-bit integer
+	- **TilingUtil**: rectilinear and hexagonal 2D tilings
 - 3D:
-	- *ContBox3*: fit oriented bounding-box to (possibly weighted) point set
-	- *TilingUtil*: basic 2D tilings
+	- **ContBox3**: fit oriented bounding-box to (possibly weighted) point set
 	
 
 
@@ -254,7 +258,7 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 - **DGraph2Util**: utilities for DGraph2, ExtractCurves, DisconnectJunctions, ...
 - **Hexagon2**: hexagon type w/ hex-math
 - **PolygonFont2d**: GPolygon2d representation of font outlines, generate fonts with **gsPolyFontGenerator** tool in [gsMeshUtilities](https://github.com/gradientspace/gsMeshUtilities).
-
+- **Arrangement2d**: compute 2D line-segmenent *arrangement*, ie find split inserted line segments at intersection points
 
 # 3D Curves
 
@@ -282,7 +286,7 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 - **STLReader/Writer**: STL format, basic vertex welding to reconstruct topology
 - **OFFReader/Writer**: OFF file format
 - **gSerialization**: binary Store/Restore functions for many g3 types / data structures
-
+- **SVGWriter**: write 2D geometric elements in svg format
 
 
 
