@@ -35,11 +35,12 @@ namespace g3
 
 		public Style DefaultPolygonStyle;
 		public Style DefaultPolylineStyle;
-		public Style DefaultCircleStyle;
+        public Style DefaultDGraphStyle;
+        public Style DefaultCircleStyle;
 		public Style DefaultLineStyle;
 
 
-		List<object> Objects;
+        List<object> Objects;
 
 
 		AxisAlignedBox2d Bounds;
@@ -53,9 +54,11 @@ namespace g3
 			Bounds = AxisAlignedBox2d.Empty;
 
 			DefaultPolygonStyle = Style.Outline("black", 1);
-			DefaultPolylineStyle = Style.Outline("black", 1);
+			DefaultPolylineStyle = Style.Outline("cyan", 1);
 			DefaultCircleStyle = Style.Filled("green", "black", 1);
-		}
+            DefaultLineStyle = Style.Outline("black", 1);
+            DefaultDGraphStyle = Style.Outline("blue", 1);
+        }
 
 
 		public void AddPolygon(Polygon2d poly) {
@@ -80,7 +83,20 @@ namespace g3
 		}
 
 
-		public void AddCircle(Circle2d circle) {
+        public void AddGraph(DGraph2 graph)
+        {
+            Objects.Add(graph);
+            Bounds.Contain(graph.GetBounds());
+        }
+        public void AddGraph(DGraph2 graph, Style style)
+        {
+            Objects.Add(graph);
+            Styles[graph] = style;
+            Bounds.Contain(graph.GetBounds());
+        }
+
+
+        public void AddCircle(Circle2d circle) {
 			Objects.Add(circle);
 			Bounds.Contain(circle.Bounds);
 		}
@@ -113,16 +129,18 @@ namespace g3
 				write_header_1_1(w);
 
 				foreach (var o in Objects) {
-					if (o is Polygon2d)
-						write_polygon(o as Polygon2d, w);
-					else if (o is PolyLine2d)
-						write_polyline(o as PolyLine2d, w);
-					else if (o is Circle2d)
-						write_circle(o as Circle2d, w);
-					else if (o is Segment2dBox)
-						write_line(o as Segment2dBox, w);					
-					else
-						throw new Exception("SVGWriter.Write: unknown object type " + o.GetType().ToString());
+                    if (o is Polygon2d)
+                        write_polygon(o as Polygon2d, w);
+                    else if (o is PolyLine2d)
+                        write_polyline(o as PolyLine2d, w);
+                    else if (o is Circle2d)
+                        write_circle(o as Circle2d, w);
+                    else if (o is Segment2dBox)
+                        write_line(o as Segment2dBox, w);
+                    else if (o is DGraph2)
+                        write_graph(o as DGraph2, w);
+                    else
+                        throw new Exception("SVGWriter.Write: unknown object type " + o.GetType().ToString());
 				}
 
 
@@ -194,7 +212,27 @@ namespace g3
 
 
 
-		void write_circle(Circle2d circle, StreamWriter w)
+        void write_graph(DGraph2 graph, StreamWriter w)
+        {
+            string style = get_style(graph, ref DefaultDGraphStyle);
+
+            StringBuilder b = new StringBuilder();
+            foreach ( int eid in graph.EdgeIndices()) {
+                Segment2d seg = graph.GetEdgeSegment(eid);
+                b.Append("<line ");
+                append_property("x1", seg.P0.x, b, true);
+                append_property("y1", seg.P0.y, b, true);
+                append_property("x2", seg.P1.x, b, true);
+                append_property("y2", seg.P1.y, b, true);
+                b.Append(style);
+                b.Append(" />");
+                b.AppendLine();
+            }
+            w.WriteLine(b);
+        }
+
+
+        void write_circle(Circle2d circle, StreamWriter w)
 		{
 			StringBuilder b = new StringBuilder();
 			b.Append("<circle ");
@@ -241,8 +279,14 @@ namespace g3
 			b.Append(style.ToString());
 			b.Append("\"");			
 		}
+        string get_style(object o, ref Style defaultStyle) {
+            Style style;
+            if (Styles.TryGetValue(o, out style) == false)
+                style = defaultStyle;
+            return "style=\"" + style.ToString() + "\"";
+        }
 
 
 
-	}
+    }
 }

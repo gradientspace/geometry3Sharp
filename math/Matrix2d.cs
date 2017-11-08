@@ -28,8 +28,11 @@ namespace g3
         }
 
         // Create a rotation matrix (positive angle -> counterclockwise).
-        public Matrix2d(double radians) {
-            SetToRotationRad(radians);
+        public Matrix2d(double angle, bool bDegrees = false) {
+            if (bDegrees)
+                SetToRotationDeg(angle);
+            else
+                SetToRotationRad(angle);
         }
 
         // Create matrices based on vector input.  The bool is interpreted as
