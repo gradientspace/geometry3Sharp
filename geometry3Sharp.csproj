@@ -78,6 +78,7 @@
     <Compile Include="curve\BSplineBasis.cs" />
     <Compile Include="curve\Circle2.cs" />
     <Compile Include="curve\CurveResampler.cs" />
+    <Compile Include="curve\Arrangement2d.cs" />
     <Compile Include="curve\DGraph2Resampler.cs" />
     <Compile Include="curve\DGraph2Util.cs" />
     <Compile Include="curve\Ellipse2.cs" />
