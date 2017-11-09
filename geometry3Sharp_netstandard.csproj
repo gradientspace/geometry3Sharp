@@ -16,8 +16,10 @@
     <OutputType>Library</OutputType>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <RootNamespace>g3</RootNamespace>
-    <AssemblyName>geometry3</AssemblyName>
+    <AssemblyName>geometry3Sharp</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Product>geometry3Sharp</Product>
+    <PackageId>geometry3Sharp</PackageId>
   </PropertyGroup>
 
   <ItemGroup>

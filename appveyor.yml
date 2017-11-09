@@ -10,4 +10,11 @@ build_script:
 test: off
 artifacts:
 - path: bin\Release\*.nupkg
-deploy: off
+deploy:
+  provider: NuGet
+#  server:                  # remove to push to NuGet.org
+  api_key:
+    secure: NwCvdkjy/Jpu+Cev4PeXnCdyEtf5F5O4bDtBoXisEKkez6R+U5Wk12hdHNa1NTFT
+  skip_symbols: false
+  symbol_server:           # remove to push symbols to SymbolSource.org
+  artifact: /.*\.nupkg/
