@@ -6,8 +6,8 @@
     <Company>Ryan Schmidt/gradientspace</Company>
     <Description>C# library for 3D geometric computation, mesh algorithms, etc.</Description>
     <Copyright>Copyright © Ryan Schmidt/gradientspace 2016</Copyright>
-    <PackageLicenseUrl>https://github.com/wieslawsoltes/geometry3Sharp/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/wieslawsoltes/geometry3Sharp</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/gradientspace/geometry3Sharp/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/gradientspace/geometry3Sharp</PackageProjectUrl>
     <PackageTags>geometry3;graphics;math;approximation;solvers;color;convexhull;meshes;spatial;curves;solids;3d;unity</PackageTags>
   </PropertyGroup>
 
