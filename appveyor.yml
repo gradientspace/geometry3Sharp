@@ -26,6 +26,8 @@ deploy:
 #  server:                  # remove to push to NuGet.org
   api_key:
     secure: NwCvdkjy/Jpu+Cev4PeXnCdyEtf5F5O4bDtBoXisEKkez6R+U5Wk12hdHNa1NTFT
+  on:
+    appveyor_repo_tag: true	
   skip_symbols: false
   symbol_server:           # remove to push symbols to SymbolSource.org
   artifact: /.*\.nupkg/
