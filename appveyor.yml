@@ -2,7 +2,7 @@ version: '{build}'
 image: Visual Studio 2017
 build_script:
 - cmd: >-
-    dotnet restore
+    dotnet restore geometry3Sharp_netstandard.csproj
 
     dotnet build geometry3Sharp_netstandard.csproj -c Release
 
