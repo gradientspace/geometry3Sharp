@@ -1,0 +1,13 @@
+version: '{build}'
+image: Visual Studio 2017
+build_script:
+- cmd: >-
+    dotnet restore
+
+    dotnet build geometry3Sharp_netstandard.csproj -c Release
+
+    dotnet pack geometry3Sharp_netstandard.csproj -c Release
+test: off
+artifacts:
+- path: bin\Release\*.nupkg
+deploy: off

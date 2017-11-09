@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>1.0.0.0</Version>
+    <Authors>Ryan Schmidt/gradientspace</Authors>
+    <Company>Ryan Schmidt/gradientspace</Company>
+    <Description>C# library for 3D geometric computation, mesh algorithms, etc.</Description>
+    <Copyright>Copyright © Ryan Schmidt/gradientspace 2016</Copyright>
+    <PackageLicenseUrl>https://github.com/gradientspace/geometry3Sharp/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/gradientspace/geometry3Sharp</PackageProjectUrl>
+    <PackageTags>geometry3;graphics;math;approximation;solvers;color;convexhull;meshes;spatial;curves;solids;3d;unity</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
+    <OutputType>Library</OutputType>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <RootNamespace>g3</RootNamespace>
+    <AssemblyName>geometry3</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+</Project>
