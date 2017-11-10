@@ -231,7 +231,6 @@ namespace g3
         {
             Index2i ev = Graph.GetEdgeV(eid);
             Segment2d seg = new Segment2d(Graph.GetVertex(ev.a), Graph.GetVertex(ev.b));
-            double extent = seg.Extent;
 
             int use_vid = -1;
             int new_eid = -1;

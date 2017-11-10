@@ -294,7 +294,7 @@ namespace g3
                 if (a == b || a == c || b == c)
                     continue;  
 
-                int tid = append_triangle(a, b, c);
+                /*int tid = */append_triangle(a, b, c);
                 tri_count++;
             }
 
@@ -709,6 +709,7 @@ namespace g3
         // [RMS] alternative triangle table proposed in: http://paulbourke.net/geometry/polygonise/table2.txt
         //  max row is 3 shorter, so this saves a triangle somewhere? 
         //  not currently in use (so far have not found a case where it produces a different result)
+/*
         static int[,] triTable2 = new int[256, 13] {
             {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
             { 8, 3, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
@@ -966,7 +967,7 @@ namespace g3
             { 9, 1, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
             { 8, 0, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
             {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
-
+*/
 
 
     }

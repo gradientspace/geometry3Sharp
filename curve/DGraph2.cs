@@ -307,7 +307,7 @@ namespace g3
             foreach ( int eid in graph.EdgeIndices()) {
                 Index2i ev = graph.GetEdgeV(eid);
                 int use_gid = (gid == -1) ? graph.GetEdgeGroup(eid) : gid;
-                this.AppendEdge(mapV[ev.a], mapV[ev.b], gid);
+                this.AppendEdge(mapV[ev.a], mapV[ev.b], use_gid);
             }
         }
 
