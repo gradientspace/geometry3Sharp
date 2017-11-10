@@ -181,6 +181,10 @@ namespace g3
             }
             return dist;
         }
+        public double DistanceSquared(Vector3d p) {
+            int iseg; double segt;
+            return DistanceSquared(p, out iseg, out segt);
+        }
 
     }
 }
