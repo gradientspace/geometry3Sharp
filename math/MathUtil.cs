@@ -509,7 +509,10 @@ namespace g3
 		{
 			return Math.Sign( ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y) ) );
 		}
-
+		public static double IsLeft(ref Vector2d P0, ref Vector2d P1, ref Vector2d P2)
+		{
+			return Math.Sign(((P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y)));
+		}
 
 
         /// <summary>

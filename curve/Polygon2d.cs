@@ -112,11 +112,8 @@ namespace g3
 
 
 		public AxisAlignedBox2d GetBounds() {
-			if ( vertices.Count == 0 )
-				return AxisAlignedBox2d.Empty;
-			AxisAlignedBox2d box = new AxisAlignedBox2d(vertices[0]);
-			for ( int i = 1; i < vertices.Count; ++i )
-				box.Contain(vertices[i]);
+			AxisAlignedBox2d box = AxisAlignedBox2d.Empty;
+			box.Contain(vertices);
 			return box;
 		}
         public AxisAlignedBox2d Bounds {
@@ -150,14 +147,16 @@ namespace g3
 			get {
 				double fArea = 0;
 				int N = vertices.Count;
+				Vector2d v1 = vertices[0], v2 = Vector2d.Zero;
 				for (int i = 0; i < N; ++i) {
-					Vector2d v1 = vertices[i];
-					Vector2d v2 = vertices[(i+1) % N];
+					v2 = vertices[(i + 1) % N];
 					fArea += v1.x * v2.y - v1.y * v2.x;
+					v1 = v2;
 				}
 				return fArea * 0.5;	
 			}
 		}
+
 
 
         public double Perimeter
@@ -198,31 +197,50 @@ namespace g3
         }
 
 
-
-		public bool Contains( Vector2d vTest )
+		/// <summary>
+		/// Compute winding integral at point P
+		/// </summary>
+		public double WindingIntegral(Vector2d P)
 		{
-			int nWindingNumber = 0;   // winding number counter
+			double sum = 0;
+			int N = vertices.Count;
+			Vector2d a = vertices[0] - P, b = Vector2d.Zero;
+			for (int i = 0; i < N; ++i) {
+				b = vertices[(i + 1) % N] - P;
+				sum += Math.Atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
+				a = b;
+			}
+			return sum / MathUtil.TwoPI;
+		}
+
+
+
+		/// <summary>
+		/// Returns true if point inside polygon, using fast winding-number computation
+		/// </summary>
+		public bool Contains(Vector2d P)
+		{
+			// based on http://geomalgorithms.com/a03-_inclusion.html	
+			int nWindingNumber = 0;
 
 			int N = vertices.Count;
+			Vector2d a = vertices[0], b = Vector2d.Zero;
 			for (int i = 0; i < N; ++i) {
+				b = vertices[(i + 1) % N];
 
-				int iNext = (i+1) % N;
-
-				if (vertices[i].y <= vTest.y) {         
-					// start y <= P.y
-					if (vertices[iNext].y > vTest.y) {                         // an upward crossing
-						if (MathUtil.IsLeft( vertices[i], vertices[iNext], vTest) > 0)  // P left of edge
+				if (a.y <= P.y) {   // y <= P.y (below)
+					if (b.y > P.y) {                         // an upward crossing
+						if (MathUtil.IsLeft(ref a, ref b, ref P) > 0)  // P left of edge
 							++nWindingNumber;                                      // have a valid up intersect
 					}
-				} else {                       
-					// start y > P.y (no test needed)
-					if (vertices[iNext].y <= vTest.y) {                        // a downward crossing
-						if (MathUtil.IsLeft( vertices[i], vertices[iNext], vTest) < 0)  // P right of edge
+				} else {    // y > P.y  (above)
+					if (b.y <= P.y) {                        // a downward crossing
+						if (MathUtil.IsLeft(ref a, ref b, ref P) < 0)  // P right of edge
 							--nWindingNumber;                                      // have a valid down intersect
 					}
 				}
+				a = b;
 			}
-
 			return nWindingNumber != 0;
 		}
 

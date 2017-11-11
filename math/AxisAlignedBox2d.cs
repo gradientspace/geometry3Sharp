@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace g3
 {
@@ -169,18 +170,56 @@ namespace g3
         }
 
         public void Contain(Vector2d v) {
-            Min.x = Math.Min(Min.x, v.x);
-            Min.y = Math.Min(Min.y, v.y);
-            Max.x = Math.Max(Max.x, v.x);
-            Max.y = Math.Max(Max.y, v.y);
+			if (v.x < Min.x) Min.x = v.x;
+			if (v.x > Max.x) Max.x = v.x;
+			if (v.y < Min.y) Min.y = v.y;
+			if (v.y > Max.y) Max.y = v.y;
         }
+		public void Contain(ref Vector2d v) {
+			if (v.x < Min.x) Min.x = v.x;
+			if (v.x > Max.x) Max.x = v.x;
+			if (v.y < Min.y) Min.y = v.y;
+			if (v.y > Max.y) Max.y = v.y;
+		}
+
 
         public void Contain(AxisAlignedBox2d box) {
-            Min.x = Math.Min(Min.x, box.Min.x);
-            Min.y = Math.Min(Min.y, box.Min.y);
-            Max.x = Math.Max(Max.x, box.Max.x);
-            Max.y = Math.Max(Max.y, box.Max.y);
+			if (box.Min.x < Min.x) Min.x = box.Min.x;
+			if (box.Max.x > Max.x) Max.x = box.Max.x;
+			if (box.Min.y < Min.y) Min.y = box.Min.y;
+			if (box.Max.y > Max.y) Max.y = box.Max.y;
         }
+		public void Contain(ref AxisAlignedBox2d box) {
+			if (box.Min.x < Min.x) Min.x = box.Min.x;
+			if (box.Max.x > Max.x) Max.x = box.Max.x;
+			if (box.Min.y < Min.y) Min.y = box.Min.y;
+			if (box.Max.y > Max.y) Max.y = box.Max.y;
+		}
+
+
+		public void Contain(IList<Vector2d> points)
+		{
+			int N = points.Count;
+			if (N > 0) {
+				Vector2d v = points[0];
+				Contain(ref v);
+				// once we are sure we have initialized min/max, we can use if/else
+				for (int i = 1; i < N; ++i) {
+					v = points[i];
+					if (v.x < Min.x) 
+						Min.x = v.x;
+					else if (v.x > Max.x) 
+						Max.x = v.x;
+
+					if (v.y < Min.y) 
+						Min.y = v.y;
+					else if (v.y > Max.y) 
+						Max.y = v.y;
+				}
+			}
+		}
+
+
 
         public AxisAlignedBox2d Intersect(AxisAlignedBox2d box) {
             AxisAlignedBox2d intersect = new AxisAlignedBox2d(
@@ -197,14 +236,23 @@ namespace g3
         public bool Contains(Vector2d v) {
             return (Min.x < v.x) && (Min.y < v.y) && (Max.x > v.x) && (Max.y > v.y);
         }
+		public bool Contains(ref Vector2d v) {
+			return (Min.x < v.x) && (Min.y < v.y) && (Max.x > v.x) && (Max.y > v.y);
+		}
+
 		public bool Contains(AxisAlignedBox2d box2) {
+			return Contains(box2.Min) && Contains(box2.Max);
+		}
+		public bool Contains(ref AxisAlignedBox2d box2) {
 			return Contains(box2.Min) && Contains(box2.Max);
 		}
 
         public bool Intersects(AxisAlignedBox2d box) {
             return !((box.Max.x < Min.x) || (box.Min.x > Max.x) || (box.Max.y < Min.y) || (box.Min.y > Max.y));
         }
-
+		public bool Intersects(ref AxisAlignedBox2d box) {
+			return !((box.Max.x < Min.x) || (box.Min.x > Max.x) || (box.Max.y < Min.y) || (box.Min.y > Max.y));
+		}
 
 
         public double Distance(Vector2d v)
