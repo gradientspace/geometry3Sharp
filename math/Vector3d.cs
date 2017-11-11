@@ -300,8 +300,11 @@ namespace g3
         }
 
 
-        public static Vector3d Lerp(Vector3d a, Vector3d b, double t)
-        {
+        public static Vector3d Lerp(Vector3d a, Vector3d b, double t) {
+            double s = 1 - t;
+            return new Vector3d(s * a.x + t * b.x, s * a.y + t * b.y, s * a.z + t * b.z);
+        }
+        public static Vector3d Lerp(ref Vector3d a, ref Vector3d b, double t) {
             double s = 1 - t;
             return new Vector3d(s * a.x + t * b.x, s * a.y + t * b.y, s * a.z + t * b.z);
         }

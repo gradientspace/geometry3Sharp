@@ -144,6 +144,7 @@
     <Compile Include="mesh\MeshUVSet.cs" />
     <Compile Include="mesh\RegionRemesher.cs" />
     <Compile Include="mesh_generators\ArrowGenerators.cs" />
+    <Compile Include="mesh_generators\SphereGenerators.cs" />
     <Compile Include="mesh_generators\BoxGenerators.cs" />
     <Compile Include="mesh_generators\CylinderGenerators.cs" />
     <Compile Include="mesh_generators\DiscGenerators.cs" />
