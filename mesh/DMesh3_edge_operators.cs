@@ -83,7 +83,7 @@ namespace g3
 
             vertices_refcount.decrement(vID);
             Debug.Assert(vertices_refcount.isValid(vID) == false);
-            vertex_edges[vID] = null;
+            free_edge_list(vID);
 
             updateTimeStamp(true);
             return MeshResult.Ok;
@@ -127,12 +127,10 @@ namespace g3
                 replace_edge_triangle(eid, tID, InvalidID);
                 if (edges[4 * eid + 2] == InvalidID) {
                     int a = edges[4 * eid];
-                    List<int> edges_a = vertex_edges[a];
-                    edges_a.Remove(eid);
+                    remove_from_edge_list(a, eid);
 
                     int b = edges[4 * eid + 1];
-                    List<int> edges_b = vertex_edges[b];
-                    edges_b.Remove(eid);
+                    remove_from_edge_list(b, eid);
 
                     edges_refcount.decrement(eid);
                 }
@@ -150,7 +148,7 @@ namespace g3
                 if ( bRemoveIsolatedVertices && vertices_refcount.refCount(vid) == 1) {
                     vertices_refcount.decrement(vid);
                     Debug.Assert(vertices_refcount.isValid(vid) == false);
-                    vertex_edges[vid] = null;
+                    free_edge_list(vid);
                 }
             }
 
@@ -208,12 +206,10 @@ namespace g3
                 replace_edge_triangle(eid, tID, InvalidID);
                 if (edges[4 * eid + 2] == InvalidID) {
                     int a = edges[4 * eid];
-                    List<int> edges_a = vertex_edges[a];
-                    edges_a.Remove(eid);
+                    remove_from_edge_list(a, eid);
 
                     int b = edges[4 * eid + 1];
-                    List<int> edges_b = vertex_edges[b];
-                    edges_b.Remove(eid);
+                    remove_from_edge_list(b, eid);
 
                     edges_refcount.decrement(eid);
                 }
@@ -229,7 +225,7 @@ namespace g3
                 if (bRemoveIsolatedVertices && vertices_refcount.refCount(vid) == 1) {
                     vertices_refcount.decrement(vid);
                     Debug.Assert(vertices_refcount.isValid(vid) == false);
-                    vertex_edges[vid] = null;
+                    free_edge_list(vid);
                 }
             }
 
@@ -323,8 +319,8 @@ namespace g3
 				replace_edge_triangle(ebc, t0, t2);
 				int eaf = eab; 
 				replace_edge_vertex(eaf, b, f);
-				vertex_edges[b].Remove(eab);
-				vertex_edges[f].Add(eaf);
+                remove_from_edge_list(b, eab);
+                add_to_edge_list(f, eaf);
 
 				// create new edges fb and fc 
 				int efb = add_edge(f, b, t2);
@@ -382,9 +378,9 @@ namespace g3
 				int eaf = eab; //Edge * eAF = eAB;
 				replace_edge_vertex(eaf, b, f);
 
-				// update a/b/f vertex-edges
-				vertex_edges[b].Remove( eab );
-				vertex_edges[f].Add( eaf );
+                // update a/b/f vertex-edges
+                remove_from_edge_list(b, eab);
+                add_to_edge_list(f, eaf);
 
 				// create new edges connected to f  (also updates vertex-edges)
 				int efb = add_edge( f, b, t2, t3 );
@@ -483,18 +479,18 @@ namespace g3
 			set_triangle_edges(t1, ecd, eca, ead);
 
 			// remove old eab from verts a and b, and decrement ref counts
-			if ( vertex_edges[a].Remove(eab) == false ) 
-				throw new ArgumentException("DMesh3.FlipEdge: first vertex_edges remove failed");
-			if ( vertex_edges[b].Remove(eab) == false ) 
-				throw new ArgumentException("DMesh3.FlipEdge: second vertex_edges remove failed");
+			if ( remove_from_edge_list(a, eab) == false ) 
+				throw new ArgumentException("DMesh3.FlipEdge: first edge list remove failed");
+			if ( remove_from_edge_list(b, eab) == false ) 
+				throw new ArgumentException("DMesh3.FlipEdge: second edge list remove failed");
 			vertices_refcount.decrement(a);
 			vertices_refcount.decrement(b);
 			if ( IsVertex(a) == false || IsVertex(b) == false )
 				throw new ArgumentException("DMesh3.FlipEdge: either a or b is not a vertex?");
 
-			// add new edge ecd to verts c and d, and increment ref counts
-			vertex_edges[c].Add(ecd);
-			vertex_edges[d].Add(ecd);
+            // add new edge ecd to verts c and d, and increment ref counts
+            add_to_edge_list(c, ecd);
+            add_to_edge_list(d, ecd);
 			vertices_refcount.increment(c);
 			vertices_refcount.increment(d);
 
@@ -650,20 +646,20 @@ namespace g3
                 int eid = edges_a[ai];
 				int o = edge_other_v(eid, a);
 				if (o == b) {
-					if (edges_b.Remove(eid) != true )
+					if ( remove_from_edge_list(b,eid) != true )
 						debug_fail("remove case o == b");
 				} else if (o == c) {
-					if ( vertex_edges[c].Remove(eid) != true )
+					if ( remove_from_edge_list(c, eid) != true )
 						debug_fail("remove case o == c");
 					tac = edge_other_t(eid, t0);
 				} else if (o == d) {
-					if ( vertex_edges[d].Remove(eid) != true )
+					if (remove_from_edge_list(d, eid) != true )
 						debug_fail("remove case o == c, step 1");
 					tad = edge_other_t(eid, t1);
 				} else {
 					if ( replace_edge_vertex(eid, a, b) == -1 )
 						debug_fail("remove case else");
-					edges_b.Add(eid);
+                    add_to_edge_list(b, eid);
 				}
 
 				// [TODO] perhaps we can already have unique tri list because of the manifold-nbrhood check we need to do...
@@ -831,7 +827,6 @@ namespace g3
 
 			// [TODO] this acts on each interior tri twice. could avoid using vtx-tri iterator?
 
-			List<int> edges_a = vertex_edges[a];
 			if (a != c) {
 				// replace c w/ a in edges and tris connected to c, and move edges to a
 				List<int> edges_c = vertex_edges[c];
@@ -847,22 +842,21 @@ namespace g3
 						if (replace_tri_vertex(edges[4 * eid + 3], c, a) >= 0)
 							rc++;
 					}
-					edges_a.Add(eid);
+                    add_to_edge_list(a, eid);
 					if (rc > 0) {
 						vertices_refcount.increment(a, rc);
 						vertices_refcount.decrement(c, rc);
 					}
 				}
-				vertex_edges[c] = null;
+                free_edge_list(c);
 				vertices_refcount.decrement(c);
 				merge_info.vRemoved[0] = c;
 			} else {
-				edges_a.Remove(ecd);
+                remove_from_edge_list(a, ecd);
 				merge_info.vRemoved[0] = InvalidID;
 			}
 			merge_info.vKept[0] = a;
 
-			List<int> edges_b = vertex_edges[b];
 			if (d != b) {
 				// replace d w/ b in edges and tris connected to d, and move edges to b
 				List<int> edges_d = vertex_edges[d];
@@ -878,18 +872,18 @@ namespace g3
 						if (replace_tri_vertex(edges[4 * eid + 3], d, b) >= 0)
 							rc++;
 					}
-					edges_b.Add(eid);
+                    add_to_edge_list(b, eid);
 					if (rc > 0) {
 						vertices_refcount.increment(b, rc);
 						vertices_refcount.decrement(d, rc);
 					}
 
 				}
-				vertex_edges[d] = null;
+                free_edge_list(d);
 				vertices_refcount.decrement(d);
 				merge_info.vRemoved[1] = d;
 			} else {
-				edges_b.Remove(ecd);
+                remove_from_edge_list(b, ecd);
 				merge_info.vRemoved[1] = InvalidID;
 			}
 			merge_info.vKept[1] = b;
@@ -935,8 +929,8 @@ namespace g3
 							int tri_2 = edges[4 * edge_2 + 2];
 							replace_triangle_edge(tri_2, edge_2, edge_1);
 							set_edge_triangles(edge_1, tri_1, tri_2);
-							vertex_edges[v1].Remove(edge_2);
-							vertex_edges[vert_1].Remove(edge_2);
+                            remove_from_edge_list(v1, edge_2);
+                            remove_from_edge_list(vert_1, edge_2);
 							edges_refcount.decrement(edge_2);
 							merge_info.eRemovedExtra[vi] = edge_2;
 							merge_info.eKeptExtra[vi] = edge_1;
@@ -1060,8 +1054,8 @@ namespace g3
             edges.insert(tA, i + 2);
             edges.insert(tB, i + 3);
 
-            vertex_edges[vA].Add(eid);
-            vertex_edges[vB].Add(eid);
+            add_to_edge_list(vA, eid);
+            add_to_edge_list(vB, eid);
             return eid;
         }
 
@@ -1087,10 +1081,31 @@ namespace g3
 
 
 
+        void allocate_edge_list(int vid)
+        {
+            if (vid >= vertex_edges.Length) {
+                vertex_edges.insert(new List<int>(), vid);
+                return;
+            }
+            if (vertex_edges[vid] == null)
+                vertex_edges[vid] = new List<int>();
+        }
+        void free_edge_list(int vid)
+        {
+            vertex_edges[vid] = null;
+        }
+        void add_to_edge_list(int vid, int eid)
+        {
+            vertex_edges[vid].Add(eid);
+        }
+        bool remove_from_edge_list(int vid, int eid)
+        {
+            return vertex_edges[vid].Remove(eid);
+        }
 
 
 
-		void set_edge_vertices(int eID, int a, int b) {
+        void set_edge_vertices(int eID, int a, int b) {
 			int i = 4*eID;
 			edges[i] = Math.Min(a,b);
 			edges[i + 1] = Math.Max(a,b);

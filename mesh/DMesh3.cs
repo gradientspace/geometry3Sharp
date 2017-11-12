@@ -907,7 +907,7 @@ namespace g3
 				uv.insert(u[0], j);
 			}
 
-            vertex_edges.insert(new List<int>(), vid);
+            allocate_edge_list(vid);
 
             updateTimeStamp(true);
             return vid;
@@ -959,7 +959,7 @@ namespace g3
                 }
 			}
 
-            vertex_edges.insert(new List<int>(), vid);
+            allocate_edge_list(vid);
 
             updateTimeStamp(true);
             return vid;
@@ -1873,14 +1873,10 @@ namespace g3
                 }
 
                 // add this edge to both vertices
-
-                if ( vertex_edges[va] == null ) 
-                    vertex_edges[va] = new List<int>();
-                vertex_edges[va].Add(eid);
-
-                if (vertex_edges[vb] == null)
-                    vertex_edges[vb] = new List<int>();
-                vertex_edges[vb].Add(eid);
+                allocate_edge_list(va);
+                add_to_edge_list(va, eid);
+                allocate_edge_list(vb);
+                add_to_edge_list(vb, eid);
             }
 
             // iterate over triangles and increment vtx refcount for each tri
