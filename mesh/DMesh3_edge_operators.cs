@@ -1074,55 +1074,38 @@ namespace g3
 
         void allocate_edges_list(int vid)
         {
-            if (vid < vertex_edges.Length) {
-                SmallListSet.List list = vertex_edges[vid];
-                vertex_edges_store.Clear(ref list);
-                vertex_edges_store.AllocateList(out list);
-                vertex_edges[vid] = list;
-            } else {
-                SmallListSet.List newlist;
-                vertex_edges_store.AllocateList(out newlist);
-                vertex_edges.insert(newlist, vid);
-            }
+            if ( vid < vertex_edges.Size )
+                vertex_edges.Clear(vid);
+            vertex_edges.AllocateAt(vid);
         }
         void free_edges_list(int vid)
         {
-            SmallListSet.List list = vertex_edges[vid];
-            vertex_edges_store.Clear(ref list);
-            vertex_edges[vid] = list;
+            vertex_edges.Clear(vid);
         }
         void add_to_edges_list(int vid, int eid)
         {
-            SmallListSet.List list = vertex_edges[vid];
-            vertex_edges_store.Prepend(ref list, eid);
-            vertex_edges[vid] = list;
+            vertex_edges.Prepend(vid, eid);
         }
         bool remove_from_edges_list(int vid, int eid)
         {
-            SmallListSet.List list = vertex_edges[vid];
-            bool removed = vertex_edges_store.Remove(ref list, eid);
-            vertex_edges[vid] = list;
+            bool removed = vertex_edges.Remove(vid, eid);
             return removed;
         }
         void clear_edges_list(int vid)
         {
-            SmallListSet.List list = vertex_edges[vid];
-            vertex_edges_store.Clear(ref list);
-            vertex_edges[vid] = list;
+            vertex_edges.Clear(vid);
         }
         int vertex_edges_count(int vid)
         {
-            SmallListSet.List list = vertex_edges[vid];
-            return vertex_edges_store.Count(ref list);
+            return vertex_edges.Count(vid);
         }
         IEnumerable<int> vertex_edges_itr(int vid)
         {
-            return vertex_edges_store.ValueItr(vertex_edges[vid]);
+            return vertex_edges.ValueItr(vid);
         }
         List<int> vertex_edges_list(int vid)
         {
-            var list = vertex_edges[vid];
-            return new List<int>( vertex_edges_store.ValueItr(list) );
+            return new List<int>( vertex_edges.ValueItr(vid) );
         }
 
 
