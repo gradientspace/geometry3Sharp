@@ -31,12 +31,12 @@ namespace g3
 			System.Console.WriteLine("Vertex " + v.ToString());
 			List<int> tris = new List<int>();
 			GetVtxTriangles(v, tris, false);
-			System.Console.WriteLine(string.Format("  Tris {0}  Edges {1}  refcount {2}", tris.Count, GetVtxEdges(v).Count, vertices_refcount.refCount(v) ));
+			System.Console.WriteLine(string.Format("  Tris {0}  Edges {1}  refcount {2}", tris.Count, GetVtxEdgeCount(v), vertices_refcount.refCount(v) ));
 			foreach ( int t in tris ) {
 				Index3i tv = GetTriangle(t), te = GetTriEdges(t);
 				System.Console.WriteLine(string.Format("  t{6} {0} {1} {2}   te {3} {4} {5}", tv[0],tv[1],tv[2], te[0],te[1],te[2],t));
 			}
-			foreach ( int e in GetVtxEdges(v) ) {
+			foreach ( int e in VtxEdgesItr(v) ) {
 				Index2i ev = GetEdgeV(e), et = GetEdgeT(e);
 				System.Console.WriteLine(string.Format("  e{4} {0} {1} / {2} {3}", ev[0],ev[1], et[0],et[1], e));
 			}
@@ -255,9 +255,9 @@ namespace g3
 				CheckOrFailF(vTris.Count == vTris2.Count);
 				//System.Console.WriteLine(string.Format("{0} {1} {2}", vID, vTris.Count, GetVtxEdges(vID).Count));
                 if ( bAllowNonManifoldVertices )
-    				CheckOrFailF(vTris.Count <= GetVtxEdges(vID).Count);
+    				CheckOrFailF(vTris.Count <= GetVtxEdgeCount(vID));
                 else
-    				CheckOrFailF(vTris.Count == GetVtxEdges(vID).Count || vTris.Count == GetVtxEdges(vID).Count-1);
+    				CheckOrFailF(vTris.Count == GetVtxEdgeCount(vID) || vTris.Count == GetVtxEdgeCount(vID) - 1);
                 CheckOrFailF(vertices_refcount.refCount(vID) == vTris.Count + 1);
                 CheckOrFailF(triToVtxRefs[vID] == vTris.Count);
                 foreach( int tID in vTris) {

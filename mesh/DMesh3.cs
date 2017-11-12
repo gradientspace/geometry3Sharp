@@ -491,6 +491,7 @@ namespace g3
         }
 
 
+        [System.Obsolete("GetVtxEdges will be removed in future, use VtxEdgesItr instead")]
         public ReadOnlyCollection<int> GetVtxEdges(int vID) {
             return vertices_refcount.isValid(vID) ?
                 vertex_edges[vID].AsReadOnly() : null;
@@ -1666,8 +1667,8 @@ namespace g3
         {
             if (vertices_refcount.isValid(vID)) {
                 int nTris = GetVtxTriangleCount(vID);
-                List<int> edges = vertex_edges[vID];
-                if (!(nTris == GetVtxEdges(vID).Count || nTris == GetVtxEdges(vID).Count - 1))
+                int vtx_edge_count = GetVtxEdgeCount(vID);
+                if (!(nTris == vtx_edge_count || nTris == vtx_edge_count - 1))
                     return true;
                 return false;
             } else

@@ -33,7 +33,7 @@ namespace g3
 			int v_j = DMesh3.InvalidID, opp_v1 = DMesh3.InvalidID, opp_v2 = DMesh3.InvalidID;
 			int t1 = DMesh3.InvalidID, t2 = DMesh3.InvalidID;
 			bool bAborted = false;
-			foreach ( int eid in mesh.GetVtxEdges(v_i) ) {
+			foreach ( int eid in mesh.VtxEdgesItr(v_i) ) {
 				opp_v2 = DMesh3.InvalidID;
 				mesh.GetVtxNbrhood(eid, v_i, ref v_j, ref opp_v1, ref opp_v2, ref t1, ref t2);
 				Vector3d Vj = mesh.GetVertex(v_j);
@@ -117,7 +117,7 @@ namespace g3
 
 			int v_j = DMesh3.InvalidID, opp_v1 = DMesh3.InvalidID, opp_v2 = DMesh3.InvalidID;
 			int t1 = DMesh3.InvalidID, t2 = DMesh3.InvalidID;	
-			foreach ( int eid in mesh.GetVtxEdges(v_i) ) {
+			foreach ( int eid in mesh.VtxEdgesItr(v_i) ) {
 				opp_v2 = DMesh3.InvalidID;
 				mesh.GetVtxNbrhood(eid, v_i, ref v_j, ref opp_v1, ref opp_v2, ref t1, ref t2);
 
