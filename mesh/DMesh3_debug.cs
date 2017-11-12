@@ -235,8 +235,7 @@ namespace g3
                 CheckOrFailF(double.IsNaN(v.LengthSquared) == false);
                 CheckOrFailF(double.IsInfinity(v.LengthSquared) == false);
 
-                List<int> l = vertex_edges[vID];
-                foreach(int edgeid in l) { 
+                foreach(int edgeid in vertex_edges_itr(vID)) { 
                     CheckOrFailF(IsEdge(edgeid));
                     CheckOrFailF(edge_has_v(edgeid, vID));
 
@@ -266,7 +265,7 @@ namespace g3
 
 				// check that edges around vert only references tris above, and reference all of them!
 				List<int> vRemoveTris = new List<int>(vTris);
-				foreach ( int edgeid in l ) {
+				foreach ( int edgeid in vertex_edges_itr(vID)) {
 					Index2i edget = GetEdgeT(edgeid);
 					CheckOrFailF( vTris.Contains(edget[0]) );
 					if ( edget[1] != InvalidID )

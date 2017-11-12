@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace g3
 {
@@ -498,21 +499,20 @@ namespace g3
         }
 
         public int GetVtxEdgeCount(int vID) {
-            return vertices_refcount.isValid(vID) ?
-                vertex_edges[vID].Count : -1;
+            return vertices_refcount.isValid(vID) ? vertex_edges_count(vID) : -1;
         }
 
 
         [System.Obsolete("GetVtxEdgeValence will be removed in future, use GetVtxEdgeCount instead")]
         public int GetVtxEdgeValence(int vID) {
-            return vertex_edges[vID].Count;
+            return vertex_edges_count(vID);
         }
 
 
         public int GetMaxVtxEdgeCount() {
             int max = 0;
             foreach (int vid in vertices_refcount)
-                max = Math.Max(max, vertex_edges[vid].Count);
+                max = Math.Max(max, vertex_edges_count(vid));
             return max;
         }
 
@@ -907,7 +907,7 @@ namespace g3
 				uv.insert(u[0], j);
 			}
 
-            allocate_edge_list(vid);
+            allocate_edges_list(vid);
 
             updateTimeStamp(true);
             return vid;
@@ -959,7 +959,7 @@ namespace g3
                 }
 			}
 
-            allocate_edge_list(vid);
+            allocate_edges_list(vid);
 
             updateTimeStamp(true);
             return vid;
@@ -1204,22 +1204,18 @@ namespace g3
 
 		public IEnumerable<int> VtxVerticesItr(int vID) {
 			if ( vertices_refcount.isValid(vID) ) {
-				List<int> edges = vertex_edges[vID];
-				int N = edges.Count;
-				for ( int i = 0; i < N; ++i )
-					yield return edge_other_v(edges[i], vID);
+                foreach ( int eid in vertex_edges_itr(vID) )
+                    yield return edge_other_v(eid, vID);
 			}
 		}
 
 
 		public IEnumerable<int> VtxEdgesItr(int vID) {
 			if ( vertices_refcount.isValid(vID) ) {
-				List<int> edges = vertex_edges[vID];
-				int N = edges.Count;
-                for (int i = 0; i < N; ++i)
-                    yield return edges[i];
+                return vertex_edges_itr(vID);
 			}
-		}
+            return Enumerable.Empty<int>();
+        }
 
 
         /// <summary>
@@ -1231,10 +1227,7 @@ namespace g3
         {
             if ( vertices_refcount.isValid(vID) ) {
                 int count = 0;
-				List<int> vtx_edges = vertex_edges[vID];
-				int N = vtx_edges.Count;
-                for (int i = 0; i < N; ++i) {
-                    int eid = vtx_edges[i];
+                foreach (int eid in vertex_edges_itr(vID)) {
                     int ei = 4 * eid;
                     if ( edges[ei+3] == InvalidID ) {
                         if (count == 0)
@@ -1258,10 +1251,7 @@ namespace g3
         {
             if (vertices_refcount.isValid(vID)) {
                 int count = 0;
-				List<int> vtx_edges = vertex_edges[vID];
-				int N = vtx_edges.Count;
-                for (int i = 0; i < N; ++i) {
-                    int eid = vtx_edges[i];
+                foreach (int eid in vertex_edges_itr(vID)) {
                     int ei = 4 * eid;
                     if ( edges[ei+3] == InvalidID ) 
                         e[count++] = eid;
@@ -1278,10 +1268,9 @@ namespace g3
         {
             if (!IsVertex(vID))
                 return MeshResult.Failed_NotAVertex;
-            List<int> vedges = vertex_edges[vID];
 
             if (bUseOrientation) {
-                foreach (int eid in vedges) {
+                foreach (int eid in vertex_edges_itr(vID)) {
                     int vOther = edge_other_v(eid, vID);
 					int i = 4*eid;
                     int et0 = edges[i + 2];
@@ -1293,7 +1282,7 @@ namespace g3
                 }
             } else {
                 // brute-force method
-                foreach (int eid in vedges) {
+                foreach (int eid in vertex_edges_itr(vID)) {
 					int i = 4*eid;					
                     int t0 = edges[i + 2];
                     if (vTriangles.Contains(t0) == false)
@@ -1323,9 +1312,8 @@ namespace g3
 
             if (!IsVertex(vID))
                 return -1;
-            List<int> vedges = vertex_edges[vID];
             int N = 0;
-            foreach (int eid in vedges) {
+            foreach (int eid in vertex_edges_itr(vID)) {
                 int vOther = edge_other_v(eid, vID);
 				int i = 4*eid;
                 int et0 = edges[i + 2];
@@ -1341,8 +1329,7 @@ namespace g3
 
 		public IEnumerable<int> VtxTrianglesItr(int vID) {
 			if ( IsVertex(vID) ) {
-				List<int> vedges = vertex_edges[vID];
-				foreach (int eid in vedges) {
+				foreach (int eid in vertex_edges_itr(vID)) {
 					int vOther = edge_other_v(eid, vID);
 					int i = 4*eid;
 					int et0 = edges[i + 2];
@@ -1456,11 +1443,11 @@ namespace g3
 
 
         // ugh need to deprecate this...weird API!
-		public bool vertex_is_boundary(int vid) {
-            return IsBoundaryVertex(vid);
+		public bool vertex_is_boundary(int vID) {
+            return IsBoundaryVertex(vID);
 		}
-        public bool IsBoundaryVertex(int vid) {
-            foreach (int e in vertex_edges[vid]) {
+        public bool IsBoundaryVertex(int vID) {
+            foreach (int e in vertex_edges_itr(vID)) {
                 if (edges[4 * e + 3] == InvalidID)
                     return true;
             }
@@ -1483,12 +1470,8 @@ namespace g3
             //   that means we only need one index-check in inner loop.
             //   commented out code is robust to incorrect ordering, but slower.
             int vO = Math.Max(vA, vB);
-            List<int> e0 = vertex_edges[Math.Min(vA, vB)];
-            //int vO = vA;
-            //List<int> e0 = vertex_edges[vB];
-            int N = e0.Count;
-            for (int i = 0; i < N; ++i) {
-                int eid = e0[i];
+            int vI = Math.Min(vA, vB);
+            foreach ( int eid in vertex_edges_itr(vI)) { 
                 if (edges[4 * eid + 1] == vO)
                     //if (edge_has_v(eid, vO))
                     return eid;
@@ -1538,9 +1521,8 @@ namespace g3
                 throw new Exception("DMesh3.IsGroupBoundaryVertex: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
                 return false;
-			List<int> vedges = vertex_edges[vID];
             int group_id = int.MinValue;
-            foreach (int eID in vedges) {
+            foreach (int eID in vertex_edges_itr(vID)) {
                 int et0 = edges[4 * eID + 2];
                 int g0 = triangle_groups[et0];
                 if (group_id != g0) {
@@ -1568,9 +1550,8 @@ namespace g3
                 throw new Exception("DMesh3.IsGroupJunctionVertex: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
                 return false;
-			List<int> vedges = vertex_edges[vID];
             Index2i groups = Index2i.Max;
-            foreach (int eID in vedges) {
+            foreach (int eID in vertex_edges_itr(vID)) {
                 Index2i et = new Index2i(edges[4 * eID + 2], edges[4 * eID + 3]);
                 for (int k = 0; k < 2; ++k) {
                     if (et[k] == InvalidID)
@@ -1602,10 +1583,7 @@ namespace g3
                 throw new Exception("DMesh3.GetVertexGroups: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
                 return false;
-			List<int> vedges = vertex_edges[vID];
-            int ne = vedges.Count;
-            for ( int ei = 0; ei < ne; ++ei ) {
-                int eID = vedges[ei];
+            foreach (int eID in vertex_edges_itr(vID)) {
                 int et0 = edges[4 * eID + 2];
                 int g0 = triangle_groups[et0];
                 if ( groups.Contains(g0) == false )
@@ -1635,10 +1613,7 @@ namespace g3
                 throw new Exception("DMesh3.GetAllVertexGroups: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
                 return false;
-			List<int> vedges = vertex_edges[vID];
-            int ne = vedges.Count;
-            for ( int ei = 0; ei < ne; ++ei ) {
-                int eID = vedges[ei];
+            foreach (int eID in vertex_edges_itr(vID)) {
                 int et0 = edges[4 * eID + 2];
                 int g0 = triangle_groups[et0];
                 if (groups.Contains(g0) == false)
@@ -1873,10 +1848,10 @@ namespace g3
                 }
 
                 // add this edge to both vertices
-                allocate_edge_list(va);
-                add_to_edge_list(va, eid);
-                allocate_edge_list(vb);
-                add_to_edge_list(vb, eid);
+                allocate_edges_list(va);
+                add_to_edges_list(va, eid);
+                allocate_edges_list(vb);
+                add_to_edges_list(vb, eid);
             }
 
             // iterate over triangles and increment vtx refcount for each tri
