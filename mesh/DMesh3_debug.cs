@@ -248,6 +248,12 @@ namespace g3
                     CheckOrFailF(e2 == edgeid);
                 }
 
+                foreach ( int nbr_vid in VtxVerticesItr(vID) ) {
+                    CheckOrFailF(IsVertex(nbr_vid));
+                    int edge = find_edge(vID, nbr_vid);
+                    CheckOrFailF(IsEdge(edge));
+                }
+
 				List<int> vTris = new List<int>(), vTris2 = new List<int>();
                 GetVtxTriangles(vID, vTris, false);
 				GetVtxTriangles(vID, vTris2, true);

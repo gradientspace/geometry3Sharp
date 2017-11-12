@@ -1084,7 +1084,7 @@ namespace g3
         }
         void add_to_edges_list(int vid, int eid)
         {
-            vertex_edges.Prepend(vid, eid);
+            vertex_edges.Insert(vid, eid);
         }
         bool remove_from_edges_list(int vid, int eid)
         {
