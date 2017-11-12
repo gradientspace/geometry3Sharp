@@ -360,8 +360,8 @@ namespace g3 {
 				bool b_is_boundary_vtx = (MeshIsClosed) ? false : (bIsBoundaryEdge || mesh.vertex_is_boundary(b));
 				bool c_is_boundary_vtx = (MeshIsClosed) ? false : mesh.vertex_is_boundary(c);
 				bool d_is_boundary_vtx = (MeshIsClosed) ? false :  mesh.vertex_is_boundary(d);
-				int valence_a = mesh.GetVtxEdgeValence(a), valence_b = mesh.GetVtxEdgeValence(b);
-				int valence_c = mesh.GetVtxEdgeValence(c), valence_d = mesh.GetVtxEdgeValence(d);
+				int valence_a = mesh.GetVtxEdgeCount(a), valence_b = mesh.GetVtxEdgeCount(b);
+				int valence_c = mesh.GetVtxEdgeCount(c), valence_d = mesh.GetVtxEdgeCount(d);
 				int valence_a_target = (a_is_boundary_vtx) ? valence_a : 6;
 				int valence_b_target = (b_is_boundary_vtx) ? valence_b : 6;
 				int valence_c_target = (c_is_boundary_vtx) ? valence_c : 6;

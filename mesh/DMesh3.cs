@@ -503,6 +503,12 @@ namespace g3
         }
 
 
+        [System.Obsolete("GetVtxEdgeValence will be removed in future, use GetVtxEdgeCount instead")]
+        public int GetVtxEdgeValence(int vID) {
+            return vertex_edges[vID].Count;
+        }
+
+
         public int GetMaxVtxEdgeCount() {
             int max = 0;
             foreach (int vid in vertices_refcount)
@@ -1350,9 +1356,6 @@ namespace g3
 		}
 
 
-		public int GetVtxEdgeValence(int vID) {
-			return vertex_edges[vID].Count;
-		}
 
 		// from edge and vert, returns other vert, two opposing verts, and two triangles
 		public void GetVtxNbrhood(int eID, int vID, ref int vOther, ref int oppV1, ref int oppV2, ref int t1, ref int t2)
@@ -1454,10 +1457,7 @@ namespace g3
 
         // ugh need to deprecate this...weird API!
 		public bool vertex_is_boundary(int vid) {
-			foreach ( int e in vertex_edges[vid] )
-				if ( edge_is_boundary(e) )
-					return true;
-			return false;
+            return IsBoundaryVertex(vid);
 		}
         public bool IsBoundaryVertex(int vid) {
             foreach (int e in vertex_edges[vid]) {
