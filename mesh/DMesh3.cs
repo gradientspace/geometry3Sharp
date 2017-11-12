@@ -114,7 +114,8 @@ namespace g3
         //   do our own short_list backed my a memory pool?
         // [TODO] this is optional if we only want to use this class as an iterable mesh-with-nbrs
         //   make it optional with a flag? (however find_edge depends on it...)
-        DVector<List<int>> vertex_edges;
+        DVector<SmallListSet.List> vertex_edges;
+        SmallListSet vertex_edges_store;
 
         RefCountVector triangles_refcount;
         DVector<int> triangles;
@@ -146,7 +147,10 @@ namespace g3
 				colors = new DVector<float>();
 			if ( bWantUVs )
 				uv = new DVector<float>();
-            vertex_edges = new DVector<List<int>>();
+
+            vertex_edges = new DVector<SmallListSet.List>();
+            vertex_edges_store = new SmallListSet();
+
             vertices_refcount = new RefCountVector();
 
             triangles = new DVector<int>();
@@ -204,7 +208,8 @@ namespace g3
             }
 
             vertices = new DVector<double>();
-            vertex_edges = new DVector<List<int>>();
+            vertex_edges = new DVector<SmallListSet.List>();
+            vertex_edges_store = new SmallListSet();
             vertices_refcount = new RefCountVector();
             triangles = new DVector<int>();
             triangle_edges = new DVector<int>();
@@ -252,14 +257,9 @@ namespace g3
             uv = (bUVs && copy.uv != null) ? new DVector<float>(copy.uv) : null;
 
             vertices_refcount = new RefCountVector(copy.vertices_refcount);
-            vertex_edges = new DVector<List<int>>(copy.vertex_edges);
-            int N = vertex_edges.Length;
-            for ( int i = 0; i < N; ++i ) {
-                if (vertices_refcount.isValid(i))
-                    vertex_edges[i] = new List<int>(copy.vertex_edges[i]);
-                else
-                    vertex_edges[i] = null;
-            }
+
+            vertex_edges_store = new SmallListSet(copy.vertex_edges_store);
+            vertex_edges = new DVector<SmallListSet.List>(copy.vertex_edges);
 
             triangles = new DVector<int>(copy.triangles);
             triangle_edges = new DVector<int>(copy.triangle_edges);
@@ -280,7 +280,8 @@ namespace g3
         public CompactInfo Copy(IMesh copy, MeshHints hints, bool bNormals = true, bool bColors = true, bool bUVs = true)
         {
             vertices = new DVector<double>();
-            vertex_edges = new DVector<List<int>>();
+            vertex_edges = new DVector<SmallListSet.List>();
+            vertex_edges_store = new SmallListSet();
             vertices_refcount = new RefCountVector();
             triangles = new DVector<int>();
             triangle_edges = new DVector<int>();
@@ -494,8 +495,9 @@ namespace g3
 
         [System.Obsolete("GetVtxEdges will be removed in future, use VtxEdgesItr instead")]
         public ReadOnlyCollection<int> GetVtxEdges(int vID) {
-            return vertices_refcount.isValid(vID) ?
-                vertex_edges[vID].AsReadOnly() : null;
+            if (vertices_refcount.isValid(vID) == false)
+                return null;
+            return vertex_edges_list(vID).AsReadOnly();
         }
 
         public int GetVtxEdgeCount(int vID) {
@@ -551,7 +553,7 @@ namespace g3
             int vi = 3 * vID;
             Vector3d v = new Vector3d(vertices[vi], vertices[vi + 1], vertices[vi + 2]);
             Vector3d normal = new Vector3d(normals[vi], normals[vi + 1], normals[vi + 2]);
-            int eid = vertex_edges[vID][0];
+            int eid = vertex_edges_store.First(vertex_edges[vID]);
             int ovi = 3 * edge_other_v(eid, vID);
             Vector3d ov = new Vector3d(vertices[ovi], vertices[ovi + 1], vertices[ovi + 2]);
             Vector3d edge = (ov - v);

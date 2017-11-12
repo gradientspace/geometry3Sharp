@@ -901,8 +901,8 @@ namespace g3
 				}
 				if (v1 == v2)
 					continue;
-				List<int> edges_v = vertex_edges[v1];
-				int Nedges = edges_v.Count;
+                List<int> edges_v = vertex_edges_list(v1);
+                int Nedges = edges_v.Count;
 				bool found = false;
 				// in this loop, we compare 'other' vert_1 and vert_2 of edges around v1.
 				// problem case is when vert_1 == vert_2  (ie two edges w/ same other vtx).
@@ -1074,36 +1074,55 @@ namespace g3
 
         void allocate_edges_list(int vid)
         {
-            if (vid >= vertex_edges.Length) {
-                vertex_edges.insert(new List<int>(), vid);
-                return;
+            if (vid < vertex_edges.Length) {
+                SmallListSet.List list = vertex_edges[vid];
+                vertex_edges_store.Clear(ref list);
+                vertex_edges_store.AllocateList(out list);
+                vertex_edges[vid] = list;
+            } else {
+                SmallListSet.List newlist;
+                vertex_edges_store.AllocateList(out newlist);
+                vertex_edges.insert(newlist, vid);
             }
-            if (vertex_edges[vid] == null)
-                vertex_edges[vid] = new List<int>();
         }
         void free_edges_list(int vid)
         {
-            vertex_edges[vid] = null;
+            SmallListSet.List list = vertex_edges[vid];
+            vertex_edges_store.Clear(ref list);
+            vertex_edges[vid] = list;
         }
         void add_to_edges_list(int vid, int eid)
         {
-            vertex_edges[vid].Add(eid);
+            SmallListSet.List list = vertex_edges[vid];
+            vertex_edges_store.Prepend(ref list, eid);
+            vertex_edges[vid] = list;
         }
         bool remove_from_edges_list(int vid, int eid)
         {
-            return vertex_edges[vid].Remove(eid);
+            SmallListSet.List list = vertex_edges[vid];
+            bool removed = vertex_edges_store.Remove(ref list, eid);
+            vertex_edges[vid] = list;
+            return removed;
         }
         void clear_edges_list(int vid)
         {
-            vertex_edges[vid].Clear();
+            SmallListSet.List list = vertex_edges[vid];
+            vertex_edges_store.Clear(ref list);
+            vertex_edges[vid] = list;
         }
         int vertex_edges_count(int vid)
         {
-            return vertex_edges[vid].Count;
+            SmallListSet.List list = vertex_edges[vid];
+            return vertex_edges_store.Count(ref list);
         }
         IEnumerable<int> vertex_edges_itr(int vid)
         {
-            return vertex_edges[vid];
+            return vertex_edges_store.ValueItr(vertex_edges[vid]);
+        }
+        List<int> vertex_edges_list(int vid)
+        {
+            var list = vertex_edges[vid];
+            return new List<int>( vertex_edges_store.ValueItr(list) );
         }
 
 

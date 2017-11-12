@@ -68,6 +68,7 @@
     <Compile Include="core\ProfileUtil.cs" />
     <Compile Include="core\RefCountVector.cs" />
     <Compile Include="core\SafeCollections.cs" />
+    <Compile Include="core\SmallListSet.cs" />
     <Compile Include="core\Snapping.cs" />
     <Compile Include="core\SparseList.cs" />
     <Compile Include="core\TagSet.cs" />
