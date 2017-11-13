@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Text;
 using System.Collections.Generic;
 
 namespace g3
@@ -51,6 +52,18 @@ namespace g3
 					debug_print_vertex(k);
 			}
 		}
+
+        public string MeshInfoString()
+        {
+            StringBuilder b = new StringBuilder();
+            b.AppendFormat("Vertices  count {0} max {1}", VertexCount, MaxVertexID);  b.AppendLine();
+            b.AppendFormat("Triangles count {0} max {1}", TriangleCount, MaxTriangleID); b.AppendLine();
+            b.AppendFormat("Edges     count {0} max {1}", EdgeCount, MaxEdgeID); b.AppendLine();
+            b.AppendFormat("Normals {0}  Colors {1}  UVs {2}  Groups {3}", HasVertexNormals, HasVertexColors, HasVertexUVs, HasTriangleGroups); b.AppendLine();
+            b.AppendFormat("Closed {0} Compact {1} timestamp {2} shape_timestamp {3}  MaxGroupID {4}", CachedIsClosed, IsCompact, timestamp, shape_timestamp, max_group_id); b.AppendLine();
+            b.AppendFormat("VertexEdges " + vertex_edges.MemoryUsage); b.AppendLine();
+            return b.ToString();
+        }
 
 
 

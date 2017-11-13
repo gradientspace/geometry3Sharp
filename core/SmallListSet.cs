@@ -10,9 +10,12 @@ namespace g3
 
         DVector<int> list_heads;
 
-        const int BLOCKSIZE = 64;
+        const int BLOCKSIZE = 8;
+        const int BLOCK_LIST_OFFSET = BLOCKSIZE + 1;
+
         DVector<int> block_store;
         DVector<int> free_blocks;
+        int allocated_count = 0;
 
         DVector<int> linked_store;
         int free_head;
@@ -37,16 +40,6 @@ namespace g3
         }
 
 
-        public void AllocateAt(int idx)
-        {
-            if ( idx >= list_heads.size ) {
-                list_heads.insert(Null, idx);
-            } else {
-                if (list_heads[idx] != Null)
-                    throw new Exception("SmallListSet: list at " + idx + " is not empty!");
-            }
-        }
-
         public int Size {
             get { return list_heads.size; }
         }
@@ -62,6 +55,18 @@ namespace g3
         }
 
 
+        public void AllocateAt(int idx)
+        {
+            if (idx >= list_heads.size) {
+                list_heads.insert(Null, idx);
+            } else {
+                if (list_heads[idx] != Null)
+                    throw new Exception("SmallListSet: list at " + idx + " is not empty!");
+            }
+        }
+
+
+
         public void Insert(int list_index, int val)
         {
             int block_ptr = list_heads[list_index];
@@ -72,23 +77,30 @@ namespace g3
             }
 
             int N = block_store[block_ptr];
-            Util.gDevAssert(N < BLOCKSIZE - 2);
-            block_store[block_ptr + N + 1] = val;
+            if (N < BLOCKSIZE) {
+                block_store[block_ptr + N + 1] = val;
+            } else {
+                // spill to linked list
+                int cur_head = block_store[block_ptr + BLOCK_LIST_OFFSET];
+
+                if (free_head == Null) {
+                    // allocate new linkedlist node
+                    int new_ptr = linked_store.size;
+                    linked_store.Add(val);
+                    linked_store.Add(cur_head);
+                    block_store[block_ptr + BLOCK_LIST_OFFSET] = new_ptr;
+                } else {
+                    // pull from free list
+                    int free_ptr = free_head;
+                    free_head = linked_store[free_ptr + 1];
+                    linked_store[free_ptr] = val;
+                    linked_store[free_ptr + 1] = cur_head;
+                    block_store[block_ptr + BLOCK_LIST_OFFSET] = free_ptr;
+                }
+            }
+
+            // count new element
             block_store[block_ptr] += 1;
-
-            //if ( free_head == Null ) {
-            //    int new_ptr = linked_store.size;
-            //    linked_store.Add(val);
-            //    linked_store.Add(list_heads[list_index]);
-            //    list_heads[list_index] = new_ptr;
-            //} else { 
-            //    int free_ptr = free_head;
-            //    free_head = linked_store[free_ptr+1];
-
-            //    linked_store[free_ptr] = val;
-            //    linked_store[free_ptr+1] = list_heads[list_index];
-            //    list_heads[list_index] = free_ptr;
-            //}
         }
 
 
@@ -96,36 +108,60 @@ namespace g3
         {
             int block_ptr = list_heads[list_index];
             int N = block_store[block_ptr];
-            int iEnd = block_ptr + N;
+
+
+            int iEnd = block_ptr + Math.Min(N, BLOCKSIZE);
             for ( int i = block_ptr+1; i <= iEnd; ++i ) {
+
                 if ( block_store[i] == val ) {
                     for ( int j = i+1; j <= iEnd; ++j )     // shift left
                         block_store[j-1] = block_store[j];
                     //block_store[iEnd] = -2;     // OPTIONAL
+
+                    if (N > BLOCKSIZE) {
+                        int cur_ptr = block_store[block_ptr + BLOCK_LIST_OFFSET];
+                        block_store[block_ptr + BLOCK_LIST_OFFSET] = linked_store[cur_ptr + 1];  // point to cur->next
+                        block_store[iEnd] = linked_store[cur_ptr];
+                        add_free_link(cur_ptr); 
+                    }
+
+                    block_store[block_ptr] -= 1;
+                    return true;
+                }
+
+            }
+
+            // search list
+            if ( N > BLOCKSIZE ) {
+                int cur_ptr = block_store[block_ptr + BLOCK_LIST_OFFSET];
+                if ( remove_from_list(block_ptr, cur_ptr, val) ) {
                     block_store[block_ptr] -= 1;
                     return true;
                 }
             }
+
             return false;
+        }
 
-            //int cur_ptr = list_heads[list_index];
-            //int prev_ptr = Null;
-            //while ( cur_ptr != Null ) {
-            //    if ( linked_store[cur_ptr] == val ) {
-            //        int next_ptr = linked_store[cur_ptr + 1];
 
-            //        if ( prev_ptr == Null ) {
-            //            list_heads[list_index] = next_ptr;
-            //        } else {
-            //            linked_store[prev_ptr + 1] = next_ptr;
-            //        }
-            //        add_free_link(cur_ptr);
-            //        return true;
-            //    }
-            //    prev_ptr = cur_ptr;
-            //    cur_ptr = linked_store[cur_ptr + 1];
-            //}
-            //return false;
+        bool remove_from_list(int block_ptr, int cur_ptr, int val)
+        {
+            int prev_ptr = Null;
+            while (cur_ptr != Null) {
+                if (linked_store[cur_ptr] == val) {
+                    int next_ptr = linked_store[cur_ptr + 1];
+                    if (prev_ptr == Null) {
+                        block_store[block_ptr + BLOCK_LIST_OFFSET] = next_ptr;
+                    } else {
+                        linked_store[prev_ptr + 1] = next_ptr;
+                    }
+                    add_free_link(cur_ptr);
+                    return true;
+                }
+                prev_ptr = cur_ptr;
+                cur_ptr = linked_store[cur_ptr + 1];
+            }
+            return false;
         }
 
 
@@ -134,18 +170,25 @@ namespace g3
         {
             int block_ptr = list_heads[list_index];
             if (block_ptr != Null) {
+                int N = block_store[block_ptr];
+
+                // if we have spilled to linked-list, free nodes
+                if ( N > BLOCKSIZE ) {
+                    int cur_ptr = block_store[block_ptr + BLOCK_LIST_OFFSET];
+                    while (cur_ptr != Null) {
+                        int free_ptr = cur_ptr;
+                        cur_ptr = linked_store[cur_ptr + 1];
+                        add_free_link(free_ptr);
+                    }
+                    block_store[block_ptr + BLOCK_LIST_OFFSET] = Null;
+                }
+
+                // free our block
                 block_store[block_ptr] = 0;
                 free_blocks.push_back(block_ptr);
                 list_heads[list_index] = Null;
             }
 
-            //int cur_ptr = list_heads[list_index];
-            //while (cur_ptr != Null) {
-            //    int free_ptr = cur_ptr; 
-            //    cur_ptr = linked_store[cur_ptr + 1];
-            //    add_free_link(free_ptr);
-            //}
-            //list_heads[list_index] = Null;
         }
 
 
@@ -153,14 +196,6 @@ namespace g3
         {
             int block_ptr = list_heads[list_index];
             return (block_ptr == Null) ? 0 : block_store[block_ptr];
-
-            //int cur_ptr = list_heads[list_index];
-            //int n = 0;
-            //while (cur_ptr != Null) {
-            //    n++;
-            //    cur_ptr = linked_store[cur_ptr + 1];
-            //}
-            //return n;
         }
 
 
@@ -190,16 +225,24 @@ namespace g3
             int block_ptr = list_heads[list_index];
             if (block_ptr != Null) {
                 int N = block_store[block_ptr];
-                int iEnd = block_ptr + N;
-                for (int i = block_ptr + 1; i <= iEnd; ++i)
-                    yield return block_store[i];
+                if ( N < BLOCKSIZE ) {
+                    int iEnd = block_ptr + N;
+                    for (int i = block_ptr + 1; i <= iEnd; ++i)
+                        yield return block_store[i];
+                } else {
+                    // we spilled to linked list, have to iterate through it as well
+                    int iEnd = block_ptr + BLOCKSIZE;
+                    for (int i = block_ptr + 1; i <= iEnd; ++i)
+                        yield return block_store[i];
+                    int cur_ptr = block_store[block_ptr + BLOCK_LIST_OFFSET];
+                    while (cur_ptr != Null) {
+                        yield return linked_store[cur_ptr];
+                        cur_ptr = linked_store[cur_ptr + 1];
+                    }
+                }
             }
 
-            //int cur_ptr = list_heads[list_index];
-            //while (cur_ptr != Null) {
-            //    yield return linked_store[cur_ptr];
-            //    cur_ptr = linked_store[cur_ptr + 1];
-            //}
+
         }
 
 
@@ -212,8 +255,9 @@ namespace g3
                 return ptr;
             }
             int nsize = block_store.size;
-            block_store.insert(Null, nsize + BLOCKSIZE + 2);
+            block_store.insert(Null, nsize + BLOCK_LIST_OFFSET);
             block_store[nsize] = 0;
+            allocated_count++;
             return nsize;
         }
 
@@ -224,6 +268,16 @@ namespace g3
             free_head = ptr;
         }
 
+
+
+
+        public string MemoryUsage
+        {
+            get {
+                return string.Format("ListSize {0}  Blocks Count {1} Free {2} Mem {3}kb  Linked Mem {4}kb",
+                    list_heads.size, allocated_count, free_blocks.size * sizeof(int) / 1024, block_store.size, linked_store.size * sizeof(int) / 1024);
+            }
+        }
 
 
     }
