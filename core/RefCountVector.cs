@@ -146,6 +146,11 @@ namespace g3
         }
 
 
+        public string UsageStats {
+            get { return string.Format("RefCountSize {0}  FreeSize {1} FreeMem {2}kb", ref_counts.size, free_indices.size, free_indices.MemoryUsageBytes/1024); }
+        }
+
+
 
         public string debug_print()
         {

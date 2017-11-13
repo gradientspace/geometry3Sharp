@@ -80,7 +80,10 @@ namespace g3
         {
             get { return iCurBlock == 0 && iCurBlockUsed == 0; }
         }
-            
+        
+        public int MemoryUsageBytes {
+            get { return (Blocks.Count == 0) ? 0 : Blocks.Count * nBlockSize * System.Runtime.InteropServices.Marshal.SizeOf(Blocks[0][0]); }
+        }
 
         public void Add(T value)
         {
