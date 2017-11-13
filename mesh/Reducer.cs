@@ -183,7 +183,7 @@ namespace g3
 			gParallel.ForEach(mesh.TriangleIndices(), (tid) => {
 				Vector3d c, n;
 				mesh.GetTriInfo(tid, out n, out triAreas[tid], out c);
-				triQuadrics[tid] = new QuadricError(n, c);
+				triQuadrics[tid] = new QuadricError(ref n, ref c);
 			});
 
 
@@ -206,7 +206,7 @@ namespace g3
 			public QuadricError q;
 			public Vector3d collapse_pt;
 
-			public QEdge(int edge_id, QuadricError qin, Vector3d pt) {
+			public QEdge(int edge_id, ref QuadricError qin, ref Vector3d pt) {
 				eid = edge_id;
 				q = qin;
 				collapse_pt = pt;
@@ -230,8 +230,8 @@ namespace g3
 				Index2i ev = mesh.GetEdgeV(eid);
 				QuadricError Q = new QuadricError(ref vertQuadrics[ev.a], ref vertQuadrics[ev.b]);
 				Vector3d opt = OptimalPoint(eid, ref Q, ev.a, ev.b);
-				edgeErrors[eid] = (float)Q.Evaluate(opt);
-                EdgeQuadrics[eid] = new QEdge(eid, Q, opt);
+				edgeErrors[eid] = (float)Q.Evaluate(ref opt);
+                EdgeQuadrics[eid] = new QEdge(eid, ref Q, ref opt);
             });
 
             // sorted pq insert is faster, so sort edge errors array and index map
@@ -297,9 +297,9 @@ namespace g3
 				Vector3d va = mesh.GetVertex(ea);
 				Vector3d vb = mesh.GetVertex(eb);
 				Vector3d c = project((va + vb) * 0.5);
-				double fa = q.Evaluate(va);
-				double fb = q.Evaluate(vb);
-				double fc = q.Evaluate(c);
+				double fa = q.Evaluate(ref va);
+				double fb = q.Evaluate(ref vb);
+				double fc = q.Evaluate(ref c);
 				double m = MathUtil.Min(fa, fb, fc);
 				if (m == fa) return va;
 				else if (m == fb) return vb;
@@ -324,8 +324,8 @@ namespace g3
 				Index2i nev = mesh.GetEdgeV(eid);
 				QuadricError Q = new QuadricError(ref vertQuadrics[nev.a], ref vertQuadrics[nev.b]);
 				Vector3d opt = OptimalPoint(eid, ref Q, nev.a, nev.b);
-				double err = Q.Evaluate(opt);
-                EdgeQuadrics[eid] = new QEdge(eid, Q, opt);
+				double err = Q.Evaluate(ref opt);
+                EdgeQuadrics[eid] = new QEdge(eid, ref Q, ref opt);
 				if ( EdgeQueue.Contains(eid) ) {
 					EdgeQueue.Update(eid, (float)err);
 				} else {
@@ -490,7 +490,7 @@ namespace g3
             // check if this collapse will create a normal flip. Also checks
             // for invalid collapse nbrhood, since we are doing one-ring iter anyway.
             // [TODO] could we skip this one-ring check in CollapseEdge? pass in hints?
-			if ( creates_flip_or_invalid(a, b, vNewPos, t0, t1) ||  creates_flip_or_invalid(b, a, vNewPos, t0,t1) ) {
+			if ( creates_flip_or_invalid(a, b, ref vNewPos, t0, t1) ||  creates_flip_or_invalid(b, a, ref vNewPos, t0,t1) ) {
 				retVal = ProcessResult.Ignored_CreatesFlip;
 				goto skip_to_end;
 			}
@@ -523,27 +523,26 @@ skip_to_end:
 
 
 
-		bool creates_flip_or_invalid(int vid, int vother, Vector3d newv, int tc, int td) {
+		bool creates_flip_or_invalid(int vid, int vother, ref Vector3d newv, int tc, int td) {
+            Vector3d va = Vector3d.Zero, vb = Vector3d.Zero, vc = Vector3d.Zero;
 			foreach ( int tid in mesh.VtxTrianglesItr(vid)) {
 				if (tid == tc || tid == td)
 					continue;
 				Index3i curt = mesh.GetTriangle(tid);
 				if (curt.a == vother || curt.b == vother || curt.c == vother)
 					return true;		// invalid nbrhood for collapse
-				Vector3d va = mesh.GetVertex(curt.a);
-				Vector3d vb = mesh.GetVertex(curt.b);
-				Vector3d vc = mesh.GetVertex(curt.c);
+                mesh.GetTriVertices(tid, ref va, ref vb, ref vc);
 				Vector3d ncur = (vb - va).Cross(vc - va);
 				double sign = 0;
 				if (curt.a == vid) {
 					Vector3d nnew = (vb - newv).Cross(vc - newv);
-					sign = ncur.Dot(nnew);
+					sign = ncur.Dot(ref nnew);
 				} else if (curt.b == vid) {
 					Vector3d nnew = (newv - va).Cross(vc - va);
-					sign = ncur.Dot(nnew);
+					sign = ncur.Dot(ref nnew);
 				} else if (curt.c == vid) {
 					Vector3d nnew = (vb - va).Cross(newv - va);
-					sign = ncur.Dot(nnew);
+					sign = ncur.Dot(ref nnew);
 				} else
 					throw new Exception("should never be here!");
 				if (sign <= 0.0)
@@ -839,7 +838,7 @@ skip_to_end:
 			Axx = 0, Axy = 0, Axz = 0, Ayy = 0, Ayz = 0, Azz = 0, bx = 0, by = 0, bz = 0, c = 0
 		};
 
-		public QuadricError(Vector3d n, Vector3d p) {
+		public QuadricError(ref Vector3d n, ref Vector3d p) {
 			Axx = n.x * n.x;
 			Axy = n.x * n.y;
 			Axz = n.x * n.z;
@@ -847,9 +846,9 @@ skip_to_end:
 			Ayz = n.y * n.z;
 			Azz = n.z * n.z;
 			bx = by = bz = c = 0;
-			Vector3d v = multiplyA(p);
+			Vector3d v = multiplyA(ref p);
 			bx = -v.x; by = -v.y; bz = -v.z;
-			c = p.Dot(v);
+			c = p.Dot(ref v);
 		}
 		public QuadricError(ref QuadricError a, ref QuadricError b) {
 			Axx = a.Axx + b.Axx;
@@ -882,7 +881,7 @@ skip_to_end:
 		/// <summary>
 		/// returns pAp + 2*dot(p,b) + c
 		/// </summary>
-		public double Evaluate(Vector3d pt) {
+		public double Evaluate(ref Vector3d pt) {
 			double x = Axx * pt.x + Axy * pt.y + Axz * pt.z;
 			double y = Axy * pt.x + Ayy * pt.y + Ayz * pt.z;
 			double z = Axz * pt.x + Ayz * pt.y + Azz * pt.z;
@@ -891,7 +890,7 @@ skip_to_end:
 		}
 
 
-		Vector3d multiplyA(Vector3d pt) {
+		Vector3d multiplyA(ref Vector3d pt) {
 			double x = Axx * pt.x + Axy * pt.y + Axz * pt.z;
 			double y = Axy * pt.x + Ayy * pt.y + Ayz * pt.z;
 			double z = Axz * pt.x + Ayz * pt.y + Azz * pt.z;

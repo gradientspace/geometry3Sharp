@@ -117,10 +117,13 @@ namespace g3
         }
 
 
-        public double Dot(Vector3d v2)
-        {
+        public double Dot(Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
         }
+        public double Dot(ref Vector3d v2) {
+            return x * v2.x + y * v2.y + z * v2.z;
+        }
+
         public static double Dot(Vector3d v1, Vector3d v2)
         {
             return v1.Dot(v2);
