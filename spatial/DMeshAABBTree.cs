@@ -1448,29 +1448,28 @@ namespace g3
         }
 
 
+        const float box_eps = 50.0f * MathUtil.Epsilonf;
+
         AxisAlignedBox3f get_box(int iBox)
         {
             Vector3f c = box_centers[iBox];
             Vector3f e = box_extents[iBox];
-            e += 10.0f*MathUtil.Epsilonf;      // because of float/double casts, box may drift to the point
-                                               // where mesh vertex will be slightly outside box
-            return new AxisAlignedBox3f(c - e, c + e);
+            return new AxisAlignedBox3f(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
         }
         AxisAlignedBox3d get_boxd(int iBox)
         {
-            Vector3f c = box_centers[iBox];
+            Vector3d c = (Vector3d)box_centers[iBox];
             Vector3f e = box_extents[iBox];
-            e += 10.0f*MathUtil.Epsilonf;      // because of float/double casts, box may drift to the point
-                                               // where mesh vertex will be slightly outside box
-            return new AxisAlignedBox3d(c - e, c + e);
+            return new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
         }
 
 
         double box_ray_intersect_t(int iBox, Ray3d ray)
         {
-            Vector3d c = box_centers[iBox];
-            Vector3d e = box_extents[iBox];
-            AxisAlignedBox3d box = new AxisAlignedBox3d(c - e, c + e);
+            Vector3d c = (Vector3d)box_centers[iBox];
+            Vector3f e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
+
             IntrRay3AxisAlignedBox3 intr = new IntrRay3AxisAlignedBox3(ray, box);
             if (intr.Find()) {
                 return intr.RayParam0;
@@ -1482,18 +1481,20 @@ namespace g3
 
         bool box_box_intersect(int iBox, ref AxisAlignedBox3d testBox)
         {
-            Vector3d c = box_centers[iBox];
-            Vector3d e = box_extents[iBox];
-            AxisAlignedBox3d box = new AxisAlignedBox3d(c - e, c + e);
+            Vector3d c = (Vector3d)box_centers[iBox];
+            Vector3f e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
+
             return box.Intersects(testBox);
         }
 
 
         double box_distance_sqr(int iBox, Vector3d p)
         {
-            Vector3d c = box_centers[iBox];
-            Vector3d e = box_extents[iBox];
-            AxisAlignedBox3d box = new AxisAlignedBox3d(c - e, c + e);
+            Vector3d c = (Vector3d)box_centers[iBox];
+            Vector3f e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
+
             return box.DistanceSquared(p);
         }
 
