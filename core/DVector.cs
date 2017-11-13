@@ -88,7 +88,8 @@ namespace g3
         public void Add(T value)
         {
             if ( iCurBlockUsed == nBlockSize ) {
-                Blocks.Add(new T[nBlockSize]);
+                if ( iCurBlock == Blocks.Count-1 )
+                    Blocks.Add(new T[nBlockSize]);
                 iCurBlock++;
                 iCurBlockUsed = 0;
             }
