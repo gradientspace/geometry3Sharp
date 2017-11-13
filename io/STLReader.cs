@@ -226,7 +226,6 @@ namespace g3
 
 
 
-        // [TODO] is there any way we could use a HashSet<Vector3f> here, instead of Dictionary?
         protected virtual void BuildMesh_IdenticalWeld(STLSolid solid, IMeshBuilder builder)
         {
             /*int meshID = */builder.AppendNewMesh(false, false, false, false);
@@ -255,6 +254,8 @@ namespace g3
                 int a = mapV[3 * ti];
                 int b = mapV[3 * ti + 1];
                 int c = mapV[3 * ti + 2];
+                if (a == b || a == c || b == c)     // don't try to add degenerate triangles
+                    continue;
                 builder.AppendTriangle(a, b, c);
             }
         }
