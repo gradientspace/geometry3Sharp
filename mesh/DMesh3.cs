@@ -1836,8 +1836,14 @@ namespace g3
                 // set vertex and tri refcounts to 1
                 // find edges [a,b] in each triangle and set its tri-edge to this edge
 
-                vertices_refcount.set_Unsafe(va, 1);
-                vertices_refcount.set_Unsafe(vb, 1);
+                if (vertices_refcount.isValidUnsafe(va) == false) {
+                    allocate_edges_list(va);
+                    vertices_refcount.set_Unsafe(va, 1);
+                }
+                if (vertices_refcount.isValidUnsafe(vb) == false) {
+                    allocate_edges_list(vb);
+                    vertices_refcount.set_Unsafe(vb, 1);
+                }
                 triangles_refcount.set_Unsafe(t0, 1);
                 Index3i tri0 = GetTriangle(t0);
                 int idx0 = IndexUtil.find_edge_index_in_tri(va, vb, ref tri0);
@@ -1851,13 +1857,13 @@ namespace g3
                 }
 
                 // add this edge to both vertices
-                allocate_edges_list(va);
                 vertex_edges.Insert(va, eid);
-                allocate_edges_list(vb);
                 vertex_edges.Insert(vb, eid);
             }
 
             // iterate over triangles and increment vtx refcount for each tri
+            bool has_groups = HasTriangleGroups;
+            max_group_id = 0;
             for ( int tid = 0; tid < MaxTID; ++tid ) {
                 if (triangles_refcount.isValid(tid) == false)
                     continue;
@@ -1865,7 +1871,11 @@ namespace g3
                 vertices_refcount.increment(a);
                 vertices_refcount.increment(b);
                 vertices_refcount.increment(c);
+
+                if (has_groups)
+                    max_group_id = Math.Max(max_group_id, triangle_groups[tid]);
             }
+            max_group_id++;
 
             vertices_refcount.rebuild_free_list();
             triangles_refcount.rebuild_free_list();

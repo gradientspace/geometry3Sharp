@@ -71,7 +71,7 @@ namespace g3
         /// Check if this m2 is the same as this mesh. By default only checks
         /// vertices and triangles, turn on other parameters w/ flags
         /// </summary>
-        public bool IsSameMesh(DMesh3 m2, bool bCheckEdges = false, 
+        public bool IsSameMesh(DMesh3 m2, bool bCheckConnectivity, bool bCheckEdgeIDs = false, 
             bool bCheckNormals = false, bool bCheckColors = false, bool bCheckUVs = false,
             bool bCheckGroups = false,
             float Epsilon = MathUtil.Epsilonf )
@@ -88,7 +88,18 @@ namespace g3
                 if (m2.IsTriangle(tid) == false || GetTriangle(tid).Equals(m2.GetTriangle(tid)) == false)
                     return false;
             }
-            if (bCheckEdges) {
+            if (bCheckConnectivity) {
+                foreach (int eid in EdgeIndices()) {
+                    Index4i e = GetEdge(eid);
+                    int other_eid = m2.FindEdge(e.a, e.b);
+                    if (other_eid == InvalidID)
+                        return false;
+                    Index4i oe = m2.GetEdge(other_eid);
+                    if (Math.Min(e.c, e.d) != Math.Min(oe.c, oe.d) || Math.Max(e.c, e.d) != Math.Max(oe.c, oe.d))
+                        return false;
+                }
+            }
+            if (bCheckEdgeIDs) {
                 if (EdgeCount != m2.EdgeCount)
                     return false;
                 foreach (int eid in EdgeIndices()) {

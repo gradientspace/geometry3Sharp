@@ -22,8 +22,8 @@ namespace g3
         {
             zeroValue = ZeroValue;
 
-            bool bSmall = MaxIndex < 1024;
-            float fPercent = (float)SubsetCountEst / (float)MaxIndex;
+            bool bSmall = MaxIndex > 0 && MaxIndex < 1024;
+            float fPercent = (MaxIndex == 0) ? 0 : (float)SubsetCountEst / (float)MaxIndex;
             float fPercentThresh = 0.1f;
 
             if (bSmall || fPercent > fPercentThresh) {
