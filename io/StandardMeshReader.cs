@@ -49,6 +49,7 @@ namespace g3
                 Readers.Add(new OBJFormatReader());
                 Readers.Add(new STLFormatReader());
                 Readers.Add(new OFFFormatReader());
+                Readers.Add(new BinaryG3FormatReader());
             }
         }
 
@@ -248,6 +249,36 @@ namespace g3
             return result;
         }
     }
+
+
+
+
+    // MeshFormatReader impl for g3mesh
+    public class BinaryG3FormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions {
+            get {
+                return new List<string>() { "g3mesh" };
+            }
+        }
+
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            // detect binary STL
+            FileStream stream = null;
+            try {
+                stream = File.Open(sFilename, FileMode.Open, FileAccess.Read);
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
+            }
+            BinaryG3Reader reader = new BinaryG3Reader();
+            //reader.warningEvent += messages;
+            IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
+            stream.Close();
+            return result;
+        }
+    }
+
 
 
 

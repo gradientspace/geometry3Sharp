@@ -1804,6 +1804,9 @@ namespace g3
         public RefCountVector EdgesRefCounts {
             get { return edges_refcount; }
         }
+        public SmallListSet VertexEdges {
+            get { return vertex_edges; }
+        }
 
 
 

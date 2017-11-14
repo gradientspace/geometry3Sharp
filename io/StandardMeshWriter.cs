@@ -37,6 +37,8 @@ namespace g3
                 writeFunc = Write_STL;
             else if (sExtension.Equals(".off", StringComparison.OrdinalIgnoreCase))
                 writeFunc = Write_OFF;
+            else if (sExtension.Equals(".g3mesh", StringComparison.OrdinalIgnoreCase))
+                writeFunc = Write_G3Mesh;
 
             if (writeFunc == null)
                 return new IOWriteResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
@@ -99,6 +101,20 @@ namespace g3
                 return result;
             }
         }
+
+
+        IOWriteResult Write_G3Mesh(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            FileStream file_stream = File.Open(sFilename, FileMode.Create);
+            BinaryWriter w = new BinaryWriter(file_stream);
+            if (w.BaseStream == null)
+                return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
+            BinaryG3Writer writer = new BinaryG3Writer();
+            var result = writer.Write(w, vMeshes, options);
+            w.Close();
+            return result;
+        }
+
 
 
     }

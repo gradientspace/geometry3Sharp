@@ -10,11 +10,11 @@ namespace g3
         public List<DMesh3> Meshes;
         public List<GenericMaterial> Materials;
 
-		// this is a map from index into Meshes to index into Materials (-1 if no material)
-		//  (so, currently we can only have 1 material per mesh!)
+        // this is a map from index into Meshes to index into Materials (-1 if no material)
+        //  (so, currently we can only have 1 material per mesh!)
         public List<int> MaterialAssignment;
 
-        public List<Dictionary<string, object> > Metadata;
+        public List<Dictionary<string, object>> Metadata;
 
         int nActiveMesh;
 
@@ -30,13 +30,24 @@ namespace g3
         public int AppendNewMesh(bool bHaveVtxNormals, bool bHaveVtxColors, bool bHaveVtxUVs, bool bHaveFaceGroups)
         {
             int index = Meshes.Count;
-			DMesh3 m = new DMesh3(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
+            DMesh3 m = new DMesh3(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
             Meshes.Add(m);
             MaterialAssignment.Add(-1);     // no material is known
             Metadata.Add(new Dictionary<string, object>());
             nActiveMesh = index;
             return index;
         }
+
+        public int AppendNewMesh(DMesh3 existingMesh)
+        {
+            int index = Meshes.Count;
+            Meshes.Add(existingMesh);
+            MaterialAssignment.Add(-1);     // no material is known
+            Metadata.Add(new Dictionary<string, object>());
+            nActiveMesh = index;
+            return index;
+        }
+
 
         public void SetActiveMesh(int id)
         {

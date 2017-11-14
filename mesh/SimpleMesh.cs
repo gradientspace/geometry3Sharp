@@ -517,6 +517,16 @@ namespace g3
             return index;
         }
 
+        public int AppendNewMesh(DMesh3 existingMesh)
+        {
+            int index = Meshes.Count;
+            SimpleMesh m = new SimpleMesh(existingMesh);
+            Meshes.Add(m);
+            MaterialAssignment.Add(-1);     // no material is known
+            nActiveMesh = index;
+            return index;
+        }
+
         public void SetActiveMesh(int id)
         {
             if (id >= 0 && id < Meshes.Count)
