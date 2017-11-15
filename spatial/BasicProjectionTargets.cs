@@ -17,11 +17,28 @@ namespace g3
             Spatial = spatial;
         }
 
+        public MeshProjectionTarget(DMesh3 mesh)
+        {
+            Mesh = mesh;
+            Spatial = new DMeshAABBTree3(mesh, true);
+        }
+
         public Vector3d Project(Vector3d vPoint, int identifier = -1)
         {
             int tNearestID = Spatial.FindNearestTriangle(vPoint);
             DistPoint3Triangle3 q = MeshQueries.TriangleDistance(Mesh, tNearestID, vPoint);
             return q.TriangleClosest;
+        }
+
+        /// <summary>
+        /// Automatically construct fastest projection target for mesh
+        /// </summary>
+        public static MeshProjectionTarget Auto(DMesh3 mesh, bool bForceCopy = true)
+        {
+            if ( bForceCopy )
+                return new MeshProjectionTarget(new DMesh3(mesh, false, MeshComponents.None));
+            else
+                return new MeshProjectionTarget(mesh);
         }
     }
 

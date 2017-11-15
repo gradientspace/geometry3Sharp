@@ -209,6 +209,40 @@ namespace g3
 
 
 
+        /// <summary>
+        /// find set of tris just outside border of selection
+        /// </summary>
+        public List<int> FindNeighbourTris()
+        {
+            List<int> result = new List<int>();
+            foreach (int tid in Selected) {
+                Index3i nbr_tris = Mesh.GetTriNeighbourTris(tid);
+                for (int j = 0; j < 3; ++j) {
+                    if (nbr_tris[j] != DMesh3.InvalidID && IsSelected(nbr_tris[j]) == false)
+                        result.Add(nbr_tris[j]);
+                }
+            }
+            return result;
+        }
+
+
+        /// <summary>
+        /// find set of tris just inside border of selection
+        /// </summary>
+        public List<int> FindBorderTris()
+        {
+            List<int> result = new List<int>();
+            foreach (int tid in Selected) {
+                Index3i nbr_tris = Mesh.GetTriNeighbourTris(tid);
+                if (IsSelected(nbr_tris.a) == false || IsSelected(nbr_tris.b) == false || IsSelected(nbr_tris.c) == false)
+                    result.Add(tid);
+            }
+            return result;
+        }
+
+
+
+
         public void ExpandToFaceNeighbours(Func<int, bool> FilterF = null)
         {
             temp.Clear();

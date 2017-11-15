@@ -11,9 +11,11 @@ namespace g3
         DMesh3 mesh;
         int mesh_timestamp;
 
-        public DMeshAABBTree3(DMesh3 m)
+        public DMeshAABBTree3(DMesh3 m, bool autoBuild = false)
         {
             mesh = m;
+            if (autoBuild)
+                Build();
         }
 
 

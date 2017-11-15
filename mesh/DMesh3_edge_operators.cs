@@ -575,7 +575,6 @@ namespace g3
 			//  Unfortunately I cannot see a way to do this more efficiently than brute-force search
 			//  [TODO] if we had tri iterator for a, couldn't we check each tri for b  (skipping t0 and t1) ?
             int edges_a_count = vertex_edges.Count(a); 
-            int edges_b_count = vertex_edges.Count(b);
             int eac = InvalidID, ead = InvalidID, ebc = InvalidID, ebd = InvalidID;
             foreach ( int eid_a in vertex_edges.ValueItr(a) ) { 
 				int vax =  edge_other_v(eid_a, a);
