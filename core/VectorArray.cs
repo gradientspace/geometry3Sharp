@@ -264,4 +264,81 @@ namespace g3
     };
 
 
+
+
+
+
+
+
+
+
+
+    public class VectorArray4<T> : IEnumerable<T>
+    {
+        public T[] array;
+
+        public VectorArray4(int nCount = 0)
+        {
+            array = new T[nCount * 4];
+        }
+
+        public VectorArray4(T[] data)
+        {
+            array = data;
+        }
+
+        public int Count {
+            get { return array.Length / 4; }
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (int i = 0; i < array.Length; ++i)
+                yield return array[i];
+        }
+
+        public void Resize(int Count)
+        {
+            array = new T[4 * Count];
+        }
+
+        public void Set(int i, T a, T b, T c, T d)
+        {
+            int j = 4 * i;
+            array[j] = a;
+            array[j+1] = b;
+            array[j+2] = c;
+            array[j+3] = d;
+        }
+
+        public void Set(int iStart, int iCount, VectorArray4<T> source)
+        {
+            Array.Copy(source.array, 0, array, 4 * iStart, 4 * iCount);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return array.GetEnumerator();
+        }
+    }
+
+
+
+    public class IndexArray4i : VectorArray4<int>
+    {
+        public IndexArray4i(int nCount) : base(nCount) { }
+        public IndexArray4i(int[] data) : base(data) { }
+        public Index4i this[int i] {
+            get { int j = 4 * i;  return new Index4i(array[j], array[j + 1], array[j + 2], array[j+3]); }
+            set { Set(i, value[0], value[1], value[2], value[4]); }
+        }
+        public IEnumerable<Index4i> AsIndex4i()
+        {
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
+        }
+    };
+
+
+
 }

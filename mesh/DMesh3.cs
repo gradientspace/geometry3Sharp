@@ -1774,38 +1774,49 @@ namespace g3
 
         public DVector<double> VerticesBuffer {
             get { return vertices; }
+            set { vertices = value; }
         }
         public RefCountVector VerticesRefCounts {
             get { return vertices_refcount; }
+            set { vertices_refcount = value; }
         }
         public DVector<float> NormalsBuffer {
             get { return normals; }
+            set { normals = value; }
         }
         public DVector<float> ColorsBuffer {
             get { return colors; }
+            set { colors = value; }
         }
         public DVector<float> UVBuffer {
             get { return uv; }
+            set { uv = value; }
         }
 
         public DVector<int> TrianglesBuffer {
             get { return triangles; }
+            set { triangles = value; }
         }
         public RefCountVector TrianglesRefCounts {
             get { return triangles_refcount; }
+            set { triangles_refcount = value; }
         }
         public DVector<int> GroupsBuffer {
             get { return triangle_groups; }
+            set { triangle_groups = value; }
         }
 
         public DVector<int> EdgesBuffer{
             get { return edges; }
+            set { edges = value; }
         }
         public RefCountVector EdgesRefCounts {
             get { return edges_refcount; }
+            set { edges_refcount = value; }
         }
         public SmallListSet VertexEdges {
             get { return vertex_edges; }
+            set { vertex_edges = value; }
         }
 
 

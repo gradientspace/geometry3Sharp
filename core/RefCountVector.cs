@@ -32,6 +32,15 @@ namespace g3
             used_count = copy.used_count;
         }
 
+        public RefCountVector(short[] raw_ref_counts, bool build_free_list = false)
+        {
+            ref_counts = new DVector<short>(raw_ref_counts);
+            free_indices = new DVector<int>();
+            used_count = 0;
+            if (build_free_list)
+                rebuild_free_list();
+        }
+
         public DVector<short> RawRefCounts {
             get { return ref_counts; }
         }
