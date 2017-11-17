@@ -19,7 +19,12 @@ namespace g3
             validRange = Interval1d.Empty;
         }
 
-
+        public ColorMap(float[] t, Colorf[] c)
+        {
+            validRange = Interval1d.Empty;
+            for (int i = 0; i < t.Length; ++i)
+                AddPoint(t[i], c[i]);
+        }
 
         public void AddPoint(float t, Colorf c)
         {
