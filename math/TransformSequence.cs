@@ -82,7 +82,7 @@ namespace g3
         public void AppendRotation(Quaternionf q, Vector3d aroundPt)
         {
             Operations.Add(new XForm() {
-                type = XFormType.QuaterionRotation,
+                type = XFormType.QuaternionRotateAroundPoint,
                 data = new Vector3dTuple3(new Vector3d(q.x, q.y, q.z), new Vector3d(q.w, 0, 0), aroundPt)
             });
         }

@@ -139,8 +139,7 @@ namespace g3
 		}
 
 
-
-		public bool IsClockwise {
+        public bool IsClockwise {
 			get { return SignedArea < 0; }
 		}
 		public double SignedArea {
@@ -169,6 +168,7 @@ namespace g3
                 return fPerim;
             }
         }
+        public double ArcLength { get { return Perimeter; } }
 
 
 
@@ -391,6 +391,13 @@ namespace g3
             return this;
         }
 
+        public Polygon2d Transform(ITransform2 xform)
+        {
+            int N = vertices.Count;
+            for (int k = 0; k < N; ++k)
+                vertices[k] = xform.TransformP(vertices[k]);
+            return this;
+        }
 
 
         // Polygon simplification
@@ -543,10 +550,8 @@ namespace g3
             throw new NotImplementedException("Polygon2dCurve.TangentT");
         }
 
-        public bool HasArcLength { get { return false; } }
-        public double ArcLength {
-            get { throw new NotImplementedException("Polygon2dCurve.ArcLength"); }
-        }
+        public bool HasArcLength { get { return true; } }
+        public double ArcLength { get { return Polygon.ArcLength; } }
         public Vector2d SampleArcLength(double a)
         {
             throw new NotImplementedException("Polygon2dCurve.SampleArcLength");
@@ -561,6 +566,12 @@ namespace g3
         {
             return new Polygon2DCurve() { Polygon = new Polygon2d(this.Polygon) };
         }
+
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform) {
+            Polygon.Transform(xform);
+        }
+
     }
 
 

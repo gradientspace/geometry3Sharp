@@ -54,7 +54,7 @@ namespace g3
 		{
 			Vector2d oshift = -element.Min;
 			double w = element.Width; double h = element.Height;
-			if (MathUtil.EpsilonEqual(w, h) == false)
+			if (MathUtil.EpsilonEqual(w, h, MathUtil.Epsilonf) == false)
 				throw new Exception("BoundedHexTiling2: input box is not square");
 
 			// note: this is a circle tiling, not a hex tiling, so even though we are

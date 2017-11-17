@@ -227,6 +227,18 @@ namespace g3
         }
 
 
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform)
+        {
+            Center = xform.TransformP(Center);
+            Axis0 = xform.TransformN(Axis0);
+            Axis1 = xform.TransformN(Axis1);
+            Extent.x = xform.TransformScalar(Extent.x);
+            Extent.y = xform.TransformScalar(Extent.y);
+        }
+
+
+
         // angle in range [-2pi,2pi]
         public Vector2d SampleDeg(double degrees)
         {

@@ -147,5 +147,16 @@ namespace g3 {
                 { IsReversed = this.IsReversed };
         }
 
-	}
+
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform)
+        {
+            Center = xform.TransformP(Center);
+            Axis0 = xform.TransformN(Axis0);
+            Axis1 = xform.TransformN(Axis1);
+            Extent.x = xform.TransformScalar(Extent.x);
+            Extent.y = xform.TransformScalar(Extent.y);
+        }
+
+    }
 }

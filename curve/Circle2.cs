@@ -39,7 +39,16 @@ namespace g3
                 { IsReversed = this.IsReversed };
         }
 
-		// angle in range [0,360] (but works for any value, obviously)
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform)
+        {
+            Center = xform.TransformP(Center);
+            Radius = xform.TransformScalar(Radius);
+        }
+
+
+
+        // angle in range [0,360] (but works for any value, obviously)
         public Vector2d SampleDeg(double degrees)
         {
             double theta = degrees * MathUtil.Deg2Rad;

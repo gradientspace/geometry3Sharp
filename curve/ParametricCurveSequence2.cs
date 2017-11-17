@@ -126,5 +126,12 @@ namespace g3
         }
 
 
-	}
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform)
+        {
+            foreach (var c in this.curves)
+                c.Transform(xform);
+        }
+
+    }
 }

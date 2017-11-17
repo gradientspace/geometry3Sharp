@@ -57,6 +57,9 @@ namespace g3
 
 		void Reverse();
 
+        bool IsTransformable { get; }
+        void Transform(ITransform2 xform);
+
         IParametricCurve2d Clone();
 	}
 

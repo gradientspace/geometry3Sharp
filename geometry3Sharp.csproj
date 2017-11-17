@@ -127,6 +127,7 @@
     <Compile Include="math\Query2Integer.cs" />
     <Compile Include="math\QueryTuple2d.cs" />
     <Compile Include="math\ScalarMap.cs" />
+    <Compile Include="math\TransformSequence2.cs" />
     <Compile Include="math\TransformSequence.cs" />
     <Compile Include="math\Vector2d.cs" />
     <Compile Include="math\Vector2f.cs" />

@@ -436,9 +436,17 @@ namespace g3
         }
 
 
-		// returned list is set of unique knot values in range [0,1], ie
-		// with no duplicates at repeated knots
-		public List<double> GetParamIntervals() {
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform)
+        {
+            for (int k = 0; k < mCtrlPoint.Length; ++k)
+                mCtrlPoint[k] = xform.TransformP(mCtrlPoint[k]);
+        }
+
+
+        // returned list is set of unique knot values in range [0,1], ie
+        // with no duplicates at repeated knots
+        public List<double> GetParamIntervals() {
 			List<double> l = new List<double>();
 			l.Add(0);
 			for ( int i = 0; i < mBasis.KnotCount; ++i ) {

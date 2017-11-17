@@ -152,15 +152,17 @@ namespace g3
 		}
 
 
-		public double Length {
-			get {
-				double fLength = 0;
-				int N = vertices.Count;
-				for (int i = 0; i < N-1; ++i)
-					fLength += vertices[i].Distance(vertices[i + 1]);
-				return fLength;
-			}
-		}
+        [System.Obsolete("This method name is confusing. Will remove in future. Use ArcLength instead")]
+        public double Length { get { return ArcLength; } }
+        public double ArcLength {
+            get {
+                double fLength = 0;
+                int N = vertices.Count;
+                for (int i = 0; i < N - 1; ++i)
+                    fLength += vertices[i].Distance(vertices[i + 1]);
+                return fLength;
+            }
+        }
 
 
         /// <summary>
@@ -229,7 +231,7 @@ namespace g3
         /// </summary>
         public bool Trim(double each_end_dist)
         {
-            if (Length < 2 * each_end_dist)
+            if (ArcLength < 2 * each_end_dist)
                 return false;
             return (TrimEnd(each_end_dist) == false) 
                 ? false : TrimStart(each_end_dist);
@@ -325,7 +327,17 @@ namespace g3
 			return;
 		}
 
-	}
+
+        public PolyLine2d Transform(ITransform2 xform)
+        {
+            int N = vertices.Count;
+            for (int k = 0; k < N; ++k)
+                vertices[k] = xform.TransformP(vertices[k]);
+            return this;
+        }
+
+
+    }
 
 
 
@@ -356,10 +368,11 @@ namespace g3
             throw new NotImplementedException("Polygon2dCurve.TangentT");
         }
 
-        public bool HasArcLength { get { return false; } }
+        public bool HasArcLength { get { return true; } }
         public double ArcLength {
-            get { throw new NotImplementedException("Polygon2dCurve.ArcLength"); }
+            get { return Polyline.ArcLength; }
         }
+
         public Vector2d SampleArcLength(double a)
         {
             throw new NotImplementedException("Polygon2dCurve.SampleArcLength");
@@ -373,6 +386,11 @@ namespace g3
         public IParametricCurve2d Clone()
         {
             return new PolyLine2DCurve() { Polyline = new PolyLine2d(this.Polyline) };
+        }
+
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform) {
+            Polyline.Transform(xform);
         }
     }
 

@@ -110,6 +110,21 @@ namespace g3 {
         }
 
 
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform)
+        {
+            Center = xform.TransformP(Center);
+            Vector2d new_P0 = xform.TransformP(P0) - Center;
+            AngleStartDeg = Math.Atan2(new_P0.y, new_P0.x);
+            Vector2d new_P1 = xform.TransformP(P1) - Center;
+            AngleEndDeg = Math.Atan2(new_P1.y, new_P1.x);
+            if (AngleEndDeg < AngleStartDeg)
+                AngleEndDeg += 360;
+
+            Radius = xform.TransformScalar(Radius);
+        }
+
+
 
         public double Distance(Vector2d point)
         {

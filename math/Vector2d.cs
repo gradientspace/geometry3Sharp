@@ -325,7 +325,10 @@ namespace g3
         public static void GetInformation(IList<Vector2d> points, double epsilon, out Information info) {
             info = new Information();
             int numPoints = points.Count;
-            System.Diagnostics.Debug.Assert(numPoints > 0 && points != null && epsilon >= (double)0);
+            if (numPoints == 0 || points == null || epsilon <= 0) {
+                System.Diagnostics.Debug.Assert(false);
+                return;
+            }
 
             info.mExtremeCCW = false;
 

@@ -152,6 +152,14 @@ namespace g3
             return new Segment2d(this.Center, this.Direction, this.Extent);
         }
 
+        public bool IsTransformable { get { return true; } }
+        public void Transform(ITransform2 xform)
+        {
+            Center = xform.TransformP(Center);
+            Direction = xform.TransformN(Direction);
+            Extent = xform.TransformScalar(Extent);
+        }
+
 
 
         /// <summary>
