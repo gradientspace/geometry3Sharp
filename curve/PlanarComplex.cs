@@ -43,8 +43,18 @@ namespace g3
                 get { return has_set_color; }
             }
 
+            protected void copy_to(Element new_element)
+            {
+                new_element.ID = this.ID;
+                new_element.color = this.color;
+                new_element.has_set_color = this.has_set_color;
+                if (source != null)
+                    new_element.source = this.source.Clone();
+            }
+
 			public abstract IEnumerable<Segment2d> SegmentItr();
 			public abstract AxisAlignedBox2d Bounds();
+            public abstract Element Clone();
 		}
 
 		public class SmoothCurveElement : Element 
@@ -57,6 +67,13 @@ namespace g3
 			public override AxisAlignedBox2d Bounds() {
 				return polyLine.GetBounds();
 			}
+
+            public override Element Clone() {
+                SmoothCurveElement curve = new SmoothCurveElement();
+                this.copy_to(curve);
+                curve.polyLine = (this.polyLine == this.source) ? curve.source as PolyLine2d : new PolyLine2d(this.polyLine);
+                return curve;
+            }
 		}
 
 		public class SmoothLoopElement : Element 
@@ -69,12 +86,20 @@ namespace g3
 			public override AxisAlignedBox2d Bounds() {
 				return polygon.GetBounds();
 			}
-		}
+
+            public override Element Clone()
+            {
+                SmoothLoopElement loop = new SmoothLoopElement();
+                this.copy_to(loop);
+                loop.polygon = (this.polygon == this.source) ? loop.source as Polygon2d : new Polygon2d(this.polygon);
+                return loop;
+            }
+        }
 
 
 
 
-		List<Element> vElements;
+        List<Element> vElements;
 
 
 		public PlanarComplex() {
@@ -824,6 +849,66 @@ namespace g3
 
 			return ci;
 		}
+
+
+
+
+
+
+        public PlanarComplex Clone()
+        {
+            PlanarComplex clone = new PlanarComplex();
+            clone.DistanceAccuracy = this.DistanceAccuracy;
+            clone.AngleAccuracyDeg = this.AngleAccuracyDeg;
+            clone.SpacingT = this.SpacingT;
+            clone.MinimizeSampling = this.MinimizeSampling;
+            clone.id_generator = this.id_generator;
+
+            clone.vElements = new List<Element>(vElements.Count);
+            foreach ( var element in vElements )
+                clone.vElements.Add(element.Clone());
+
+            return clone;
+        }
+
+
+
+
+        public void Append(PlanarComplex append)
+        {
+            foreach ( var element in append.vElements ) {
+                element.ID = this.id_generator++;
+                vElements.Add(element);
+            }
+
+            // clear elements in other so we don't make any mistakes...
+            append.vElements.Clear();
+        }
+
+
+
+        public void Transform(ITransform2 xform, bool bApplyToSources)
+        {
+            foreach ( var element in vElements ) {
+                if ( element is SmoothLoopElement ) {
+                    var loop = element as SmoothLoopElement;
+                    loop.polygon.Transform(xform);
+                    if (bApplyToSources && loop.source != loop.polygon)
+                        loop.source.Transform(xform);
+
+                } else if (element is SmoothCurveElement) {
+                    var curve = element as SmoothCurveElement;
+                    curve.polyLine.Transform(xform);
+                    if (bApplyToSources && curve.source != curve.polyLine)
+                        curve.source.Transform(xform);
+                }
+            }
+        }
+
+
+
+
+
 
 
 
