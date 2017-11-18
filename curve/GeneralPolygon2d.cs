@@ -240,10 +240,10 @@ namespace g3
 
 		public IEnumerable<Vector2d> AllVerticesItr()
 		{
-			foreach (Vector2d v in outer)
+			foreach (Vector2d v in outer.Vertices)
 				yield return v;
 			foreach (var hole in holes) {
-				foreach (Vector2d v in hole)
+				foreach (Vector2d v in hole.Vertices)
 					yield return v;
 			}
 		}

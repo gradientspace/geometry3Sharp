@@ -283,11 +283,12 @@ namespace g3
 
 
 
-		public void AppendPolygon(IEnumerable<Vector2d> poly, int gid = -1) {
+		public void AppendPolygon(Polygon2d poly, int gid = -1) {
 			int first = -1;
 			int prev = -1;
-			foreach(Vector2d v in poly) {
-				int cur = AppendVertex(v);
+            int N = poly.VertexCount;
+            for ( int i = 0; i < N; ++i ) {
+				int cur = AppendVertex(poly[i]);
 				if (prev == -1)
 					first = cur;
 				else
@@ -296,6 +297,12 @@ namespace g3
 			}
 			AppendEdge(prev, first, gid);
 		}
+        public void AppendPolygon(GeneralPolygon2d poly, int gid = -1)
+        {
+            AppendPolygon(poly.Outer, gid);
+            foreach ( var hole in poly.Holes )
+                AppendPolygon(hole, gid);
+        }
 
 
         public void AppendGraph(DGraph2 graph, int gid = -1)

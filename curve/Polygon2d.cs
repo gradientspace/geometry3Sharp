@@ -7,7 +7,7 @@ using System.Text;
 
 namespace g3
 {
-	public class Polygon2d : IEnumerable<Vector2d>, IDuplicatable<Polygon2d>
+	public class Polygon2d : IDuplicatable<Polygon2d>
     {
         protected List<Vector2d> vertices;
 		public int Timestamp;
@@ -64,10 +64,6 @@ namespace g3
 		public Vector2d Start {
 			get { return vertices[0]; }
 		}
-		public Vector2d End {
-			get { return vertices.Last(); }
-		}
-
 
         public ReadOnlyCollection<Vector2d> Vertices {
             get { return vertices.AsReadOnly(); }
@@ -127,16 +123,27 @@ namespace g3
 				yield return new Segment2d( vertices[i], vertices[ (i+1) % vertices.Count ] );
 		}
 
-		public IEnumerator<Vector2d> GetEnumerator() {
-			for ( int i = 0; i < vertices.Count; ++i )
-				yield return vertices[i];
-			yield return vertices[0];
-		}
-		IEnumerator IEnumerable.GetEnumerator() {
-			for ( int i = 0; i < vertices.Count; ++i )
-				yield return vertices[i];
-			yield return vertices[0];
-		}
+        public IEnumerable<Vector2d> VerticesItr(bool bRepeatFirstAtEnd)
+        {
+            int N = vertices.Count;
+            for (int i = 0; i < N; ++i)
+                yield return vertices[i];
+            if (bRepeatFirstAtEnd)
+                yield return vertices[0];
+        }
+
+        // [RMS] have removed IEnumerable interface because these are ambiguous - should
+        //  first vertex be repeated? Has caused too many bugs!
+		//public IEnumerator<Vector2d> GetEnumerator() {
+		//	for ( int i = 0; i < vertices.Count; ++i )
+		//		yield return vertices[i];
+		//	yield return vertices[0];
+		//}
+		//IEnumerator IEnumerable.GetEnumerator() {
+		//	for ( int i = 0; i < vertices.Count; ++i )
+		//		yield return vertices[i];
+		//	yield return vertices[0];
+		//}
 
 
         public bool IsClockwise {

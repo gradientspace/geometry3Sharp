@@ -24,10 +24,7 @@ namespace g3
 
         public PolyLine2d(Polygon2d copy, bool bDuplicateFirstLast)
 		{
-            if (bDuplicateFirstLast)
-			    vertices = new List<Vector2d>(copy);        // Polygon2d iterator outputs first vtx again at end...
-            else
-                vertices = new List<Vector2d>(copy.Vertices);        // Polygon2d iterator outputs first vtx again at end...
+            vertices = new List<Vector2d>(copy.VerticesItr(bDuplicateFirstLast));
             Timestamp = 0;
 		}
 
