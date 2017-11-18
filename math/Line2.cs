@@ -33,6 +33,36 @@ namespace g3
             return (proj - p).LengthSquared;
         }
 
+
+
+        /// <summary>
+        /// Returns:
+        ///   +1, on right of line
+        ///   -1, on left of line
+        ///    0, on the line
+        /// </summary>
+        public int WhichSide(Vector2d test, double tol = 0)
+        {
+            double x0 = test.x - Origin.x;
+            double y0 = test.y - Origin.y;
+            double x1 = Direction.x;
+            double y1 = Direction.y;
+            double det = x0 * y1 - x1 * y0;
+            return (det > tol ? +1 : (det < -tol ? -1 : 0));
+        }
+        public int WhichSide(ref Vector2d test, double tol = 0)
+        {
+            double x0 = test.x - Origin.x;
+            double y0 = test.y - Origin.y;
+            double x1 = Direction.x;
+            double y1 = Direction.y;
+            double det = x0 * y1 - x1 * y0;
+            return (det > tol ? +1 : (det < -tol ? -1 : 0));
+        }
+
+
+
+
         // conversion operators
         public static implicit operator Line2d(Line2f v)
         {

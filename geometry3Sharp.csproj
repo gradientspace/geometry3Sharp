@@ -51,9 +51,10 @@
     <Compile Include="color\ColorHSV.cs" />
     <Compile Include="color\ColorMap.cs" />
     <Compile Include="color\ColorMixer.cs" />
+    <Compile Include="comp_geom\GraphSplitter2d.cs" />
     <Compile Include="containment\ContMinBox2.cs" />
     <Compile Include="containment\ContMinCircle2.cs" />
-    <Compile Include="containment\ConvexHull2.cs" />
+    <Compile Include="comp_geom\ConvexHull2.cs" />
     <Compile Include="core\CommandArgumentSet.cs" />
     <Compile Include="core\DijkstraGraphDistance.cs" />
     <Compile Include="core\DVector.cs" />
@@ -79,7 +80,7 @@
     <Compile Include="curve\BSplineBasis.cs" />
     <Compile Include="curve\Circle2.cs" />
     <Compile Include="curve\CurveResampler.cs" />
-    <Compile Include="curve\Arrangement2d.cs" />
+    <Compile Include="comp_geom\Arrangement2d.cs" />
     <Compile Include="curve\DGraph2Resampler.cs" />
     <Compile Include="curve\DGraph2Util.cs" />
     <Compile Include="curve\Ellipse2.cs" />

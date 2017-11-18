@@ -67,9 +67,11 @@ namespace g3
             get { return Result == IntersectionResult.Intersects && Type == IntersectionType.Point; }
         }
 
-        // these values are on the line
-        public Vector2d Point;      // only set if Quantity = 1
-        public double Parameter;    // only set if Quantity = 1
+        /// <summary> Point on line, only set if Quantity = 1    </summary>
+        public Vector2d Point;
+
+        /// <summary>Parameter along line, only set if Quanityt = 1    </summary>
+        public double Parameter;
 
         public IntrLine2Segment2(Line2d line, Segment2d seg)
         {
