@@ -5,23 +5,57 @@ using System.Text;
 
 namespace g3
 {
+    /// <summary>
+    /// This class is used to bisect an existing DGraph2 with infinite lines.
+    /// This is easier than inserting new segments, which can be done using Arrangement2d.
+    /// 
+    /// Computations are done in double precision. Use at your own risk.
+    /// 
+    /// [TODO]
+    ///   - computation of signs for a split-line is currently O(N). If inserting many
+    ///     parallel lines, can improve this using standard sorting.
+    /// </summary>
     public class GraphSplitter2d
     {
         public DGraph2 Graph;
 
+        /// <summary>
+        /// tolerance for WhichSide(vtx) tests
+        /// </summary>
         public double OnVertexTol = MathUtil.Epsilonf;
+
+        /// <summary>
+        /// default ID for new edges, can override in specific functions
+        /// </summary>
         public int InsertedEdgesID = 1;
 
+        /// <summary>
+        /// when inserting new segments, we check if their midpoint passes this test
+        /// </summary>
         public Func<Vector2d, bool> InsideTestF = null;
+
 
         public GraphSplitter2d(DGraph2 graph)
         {
             Graph = graph;
         }
 
+        /// <summary>
+        /// split all graph edges that intersect line, and insert segments
+        /// connecting these points
+        /// </summary>
+        public void InsertLine(Line2d line, int insert_edges_id = -1)
+        {
+            if (insert_edges_id == -1)
+                insert_edges_id = InsertedEdgesID;
+            do_split(line, true, insert_edges_id);
+        }
+
+
+
+
 
         DVector<int> EdgeSigns = new DVector<int>();
-
 
         struct edge_hit
         {
@@ -32,10 +66,9 @@ namespace g3
             public double line_t;
         }
 
-
         List<edge_hit> hits = new List<edge_hit>();
 
-        public void InsertCutEdges(Line2d line)
+        protected virtual void do_split(Line2d line, bool insert_edges, int insert_gid)
         {
             if (EdgeSigns.Length < Graph.MaxVertexID)
                 EdgeSigns.resize(Graph.MaxVertexID);
@@ -87,12 +120,12 @@ namespace g3
                 } else {
                     IntrLine2Segment2 intr = new IntrLine2Segment2(line, new Segment2d(a, b));
                     if (intr.Find() == false)
-                        throw new Exception("GraphSplitter2d.InsertCutEdges: signs are different but ray did not it?");
+                        throw new Exception("GraphSplitter2d.Split: signs are different but ray did not it?");
                     if ( intr.IsSimpleIntersection ) {
                         hit.hit_pos = intr.Point;
                         hit.line_t = intr.Parameter;
                     } else {
-                        throw new Exception("GraphSplitter2d.InsertCutEdges: got parallel edge case!");
+                        throw new Exception("GraphSplitter2d.Split: got parallel edge case!");
                     }
                 }
                 hits.Add(hit);
@@ -110,23 +143,34 @@ namespace g3
                     continue;
 
                 int vi = hits[i].hit_vid;
+                int vj = hits[j].hit_vid;
+                if (vi == vj && vi >= 0)
+                    continue;
+
+                if (vi >= 0 && vj >= 0) { 
+                    int existing = Graph.FindEdge(vi, vj);
+                    if (existing >= 0 )
+                        continue;
+                }
+
                 if (vi == -1) {
                     DGraph2.EdgeSplitInfo split;
                     var result = Graph.SplitEdge(hits[i].hit_eid, out split);
                     if (result != MeshResult.Ok)
-                        throw new Exception("GraphSplitter2d.InsertCutEdges: first edge split failed!");
+                        throw new Exception("GraphSplitter2d.Split: first edge split failed!");
                     vi = split.vNew;
                     Graph.SetVertex(vi, hits[i].hit_pos);
+                    edge_hit tmp = hits[i]; tmp.hit_vid = vi; hits[i] = tmp;
                 }
 
-                int vj = hits[j].hit_vid;
                 if ( vj == -1) {
                     DGraph2.EdgeSplitInfo split;
                     var result = Graph.SplitEdge(hits[j].hit_eid, out split);
                     if (result != MeshResult.Ok)
-                        throw new Exception("GraphSplitter2d.InsertCutEdges: second edge split failed!");
+                        throw new Exception("GraphSplitter2d.Split: second edge split failed!");
                     vj = split.vNew;
                     Graph.SetVertex(vj, hits[j].hit_pos);
+                    edge_hit tmp = hits[j]; tmp.hit_vid = vj; hits[j] = tmp;
                 }
 
                 // check if we actually want to add this segment
@@ -136,7 +180,8 @@ namespace g3
                         continue;
                 }
 
-                Graph.AppendEdge(vi, vj, InsertedEdgesID);
+                if (insert_edges)
+                    Graph.AppendEdge(vi, vj, insert_gid);
             }
 
 
