@@ -51,6 +51,7 @@
     <Compile Include="color\ColorHSV.cs" />
     <Compile Include="color\ColorMap.cs" />
     <Compile Include="color\ColorMixer.cs" />
+    <Compile Include="comp_geom\GraphCells2d.cs" />
     <Compile Include="comp_geom\GraphSplitter2d.cs" />
     <Compile Include="containment\ContMinBox2.cs" />
     <Compile Include="containment\ContMinCircle2.cs" />
