@@ -132,8 +132,10 @@ namespace g3
             }
         }
 
-
         public void insert(T value, int index) {
+            insertAt(value, index);
+        }
+        public void insertAt(T value, int index) {
             int s = size;
             if (index == s) {
                 push_back( value );

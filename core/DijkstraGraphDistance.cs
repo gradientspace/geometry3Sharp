@@ -301,7 +301,7 @@ namespace g3
         {
             GraphNodeStruct g = new GraphNodeStruct(id, -1, dist);
             DenseNodes[id] = g;
-            DenseQueue.Enqueue(id, dist);
+            DenseQueue.Insert(id, dist);
         }
 
         void update_neighbours_dense(int parent_id)

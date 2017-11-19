@@ -245,7 +245,7 @@ namespace g3
                 int eid = indices[i];
                 if ( mesh.IsEdge(eid) ) {
                     QEdge edge = EdgeQuadrics[eid];
-                    EdgeQueue.Enqueue(edge.eid, edgeErrors[i]);
+                    EdgeQueue.Insert(edge.eid, edgeErrors[i]);
                 }
             }
 
@@ -329,7 +329,7 @@ namespace g3
 				if ( EdgeQueue.Contains(eid) ) {
 					EdgeQueue.Update(eid, (float)err);
 				} else {
-					EdgeQueue.Enqueue(eid, (float)err);
+					EdgeQueue.Insert(eid, (float)err);
 				}
 			}			
 		}
