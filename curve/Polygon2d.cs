@@ -100,14 +100,38 @@ namespace g3
 			return (next-prev).Normalized;
         }
 
+        /// <summary>
+        /// Normal at vertex i, which is perp to tangent direction, which is not so 
+        /// intuitive if edges have very different lengths. 
+        /// Points "inward" for clockwise polygon, outward for counter-clockwise
+        /// </summary>
 		public Vector2d GetNormal(int i)
 		{
 			return GetTangent(i).Perp;
 		}
 
+        /// <summary>
+        /// Construct normal at poly vertex by averaging face normals. This is
+        /// equivalent (?) to angle-based normal, ie is local/independent of segment lengths.
+        /// Points "inward" for clockwise polygon, outward for counter-clockwise
+        /// </summary>
+        public Vector2d GetNormal_FaceAvg(int i)
+        {
+            Vector2d next = vertices[(i + 1) % vertices.Count];
+            Vector2d prev = vertices[i == 0 ? vertices.Count - 1 : i - 1];
+            next -= vertices[i]; next.Normalize();
+            prev -= vertices[i]; prev.Normalize();
 
+            Vector2d n = (next.Perp - prev.Perp);
+            double len = n.Normalize();
+            if ( len == 0 ) {
+                return (next + prev).Normalized;   // this gives right direction for degenerate angle
+            } else {
+                return n;
+            }
+        }
 
-		public AxisAlignedBox2d GetBounds() {
+        public AxisAlignedBox2d GetBounds() {
 			AxisAlignedBox2d box = AxisAlignedBox2d.Empty;
 			box.Contain(vertices);
 			return box;
@@ -276,8 +300,7 @@ namespace g3
 
 			foreach ( Segment2d seg in SegmentItr() ) {
 				foreach ( Segment2d oseg in o.SegmentItr() ) {
-					IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, oseg);
-					if ( intr.Find() )
+                    if ( seg.Intersects(oseg) )
 						return true;
 				}
 			}
@@ -292,13 +315,16 @@ namespace g3
 
 			foreach ( Segment2d seg in SegmentItr() ) {
 				foreach ( Segment2d oseg in o.SegmentItr() ) {
-					IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, oseg);
-					if ( intr.Find() ) {
-						v.Add( intr.Point0 );
-						if ( intr.Quantity == 2 )
-							v.Add( intr.Point1 );
-						break;
-					}
+                    // this computes test twice for intersections, but seg.intersects doesn't
+                    // create any new objects so it should be much faster for majority of segments (should profile!)
+                    if (seg.Intersects(oseg)) {
+                        IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, oseg);
+                        if (intr.Find()) {
+                            v.Add(intr.Point0);
+                            if (intr.Quantity == 2)
+                                v.Add(intr.Point1);
+                        }
+                    }
 				}
 			}
 			return v;
@@ -405,6 +431,54 @@ namespace g3
                 vertices[k] = xform.TransformP(vertices[k]);
             return this;
         }
+
+
+        /// <summary>
+        /// Offset each point by dist along vertex normal direction (ie tangent-perp)
+        /// CCW polygon offsets "outwards", CW "inwards".
+        /// </summary>
+        public void VtxNormalOffset(double dist, bool bUseFaceAvg = false)
+        {
+            Vector2d[] newv = new Vector2d[vertices.Count];
+            if (bUseFaceAvg) {
+                for (int k = 0; k < vertices.Count; ++k)
+                    newv[k] = vertices[k] + dist * GetNormal_FaceAvg(k);
+            } else {
+                for (int k = 0; k < vertices.Count; ++k)
+                    newv[k] = vertices[k] + dist * GetNormal(k);
+            }
+            for (int k = 0; k < vertices.Count; ++k)
+                vertices[k] = newv[k];
+        }
+
+
+        /// <summary>
+        /// offset polygon by fixed distance, by offsetting and intersecting edges.
+        /// CCW polygon offsets "outwards", CW "inwards".
+        /// </summary>
+        public void PolyOffset(double dist)
+        {
+            // [TODO] possibly can do with half as many normalizes if we do w/ sequential edges,
+            //  rather than centering on each v?
+            Vector2d[] newv = new Vector2d[vertices.Count];
+            for ( int k = 0; k < vertices.Count; ++k ) {
+                Vector2d v = vertices[k];
+                Vector2d next = vertices[(k + 1) % vertices.Count];
+                Vector2d prev = vertices[k == 0 ? vertices.Count - 1 : k - 1];
+                Vector2d dn = (next - v).Normalized;
+                Vector2d dp = (prev - v).Normalized;
+                Line2d ln = new Line2d(v + dist * dn.Perp, dn);
+                Line2d lp = new Line2d(v - dist * dp.Perp, dp);
+
+                newv[k] = ln.IntersectionPoint(ref lp);
+                if (newv[k] == Vector2d.MaxValue) {
+                    newv[k] = vertices[k] + dist * GetNormal_FaceAvg(k);
+                }
+            }
+            for (int k = 0; k < vertices.Count; ++k)
+                vertices[k] = newv[k];
+        }
+
 
 
         // Polygon simplification
