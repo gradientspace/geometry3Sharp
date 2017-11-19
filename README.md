@@ -6,6 +6,8 @@ geometry3Sharp only uses C# language features available in .NET 3.5, so it works
 
 Currently there is a small amount of unsafe code, however this code is only used in the OBJ reader and a few fast-buffer-copy routines, which can be deleted if you need a safe version (eg for Unity web player).
 
+A Nuget package is available: [Nuget](https://www.nuget.org/packages/geometry3Sharp). This package is updated roughly monthly from the github master branch. So, it's "more" stable.
+
 Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradientspace](http://www.gradientspace.com)
 
 
@@ -31,7 +33,7 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 - **DynamicPriorityQueue**: min-heap priority queue for sparse situations (ie subset of large graph). 
 - **IndexPriorityQueue**: min-heap priority queue for dense situations (ie small or large number of items in queue)
 - **DijkstraGraphDistance**: compute shortest-path distances between nodes in graph, from seed points. Graph is defined externally by iterators and Func's, so this class can easily be applied to many situations.
-
+- **SmallListSet**: efficient allocation of a large number of small lists, with initial fixed-size buffer and "spilling" into linked list.
 
 # Math
 
@@ -116,7 +118,6 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 
 # Containment
 - 2D:
-	- **ConvexHull2**: 2D convex hull, compute w/ doubles or 64-bit integers
 	- **ContMinCircle2**: compute minimal-area circle containing input point set
 	- **ContMinBox2**: minimal-area box containing input point set, double & 64-bit integer
 	- **TilingUtil**: rectilinear and hexagonal 2D tilings
@@ -178,7 +179,8 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 - various mesh generators in **/mesh_generators**
     - most mesh generators support generating shared or not-shared vertices along sharp edges, UV seams, etc
     - some support generating sections of shape (eg wedge-shaped portion of cylinder)
-    - **TrivialBox3Generator**
+    - **TrivialBox3Generator**, **GridBox3Generator** (subdivided box)
+    - **SphereGenerator** (normalized gridded box)
     - **OpenCylinderGenerator**, **CappedCylinderGenerator**, **ConeGenerator**  (support start/end angles)
     - **TrivialDiscGenerator**, **PuncturedDiscGenerator**, **TrivialRectGenerator**, **RoundRectGenerator**
     - **VerticalGeneralizedCylinderGenerator**
@@ -258,7 +260,14 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 - **DGraph2Util**: utilities for DGraph2, ExtractCurves, DisconnectJunctions, ...
 - **Hexagon2**: hexagon type w/ hex-math
 - **PolygonFont2d**: GPolygon2d representation of font outlines, generate fonts with **gsPolyFontGenerator** tool in [gsMeshUtilities](https://github.com/gradientspace/gsMeshUtilities).
+
+# 2D Computational Geometry
+
+- **ConvexHull2**: 2D convex hull, compute w/ doubles or 64-bit integers
 - **Arrangement2d**: compute 2D line-segmenent *arrangement*, ie find split inserted line segments at intersection points
+- **GraphSplitter2D**: Bisect existing DGraph w/ infinite lines (simpler than Arrangment2d)
+- **GraphCells2D**: extract enclosed regions ("cells") from a DGraph2, as boundary loops
+
 
 # 3D Curves
 
