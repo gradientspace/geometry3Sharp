@@ -63,7 +63,7 @@ namespace g3
 
 
 		bool HasHoles {
-			get { return Holes.Count > 0; }
+			get { return holes.Count > 0; }
 		}
 
 		public ReadOnlyCollection<Polygon2d> Holes {
@@ -77,7 +77,7 @@ namespace g3
             get {
                 double sign = (bOuterIsCW) ? -1.0 : 1.0;
                 double dArea = sign * Outer.SignedArea;
-                foreach (var h in Holes)
+                foreach (var h in holes)
                     dArea += sign * h.SignedArea;
                 return dArea;
             }
@@ -99,7 +99,7 @@ namespace g3
         {
             get {
                 double dPerim = outer.Perimeter;
-                foreach (var h in Holes)
+                foreach (var h in holes)
                     dPerim += h.Perimeter;
                 return dPerim;
             }
@@ -110,9 +110,18 @@ namespace g3
         {
             get {
                 AxisAlignedBox2d box = outer.GetBounds();
-                foreach (var h in Holes)
+                foreach (var h in holes)
                     box.Contain(h.GetBounds());
                 return box;
+            }
+        }
+
+        public int VertexCount {
+            get {
+                int NV = outer.VertexCount;
+                foreach (var h in holes)
+                    NV += h.VertexCount;
+                return NV;
             }
         }
 

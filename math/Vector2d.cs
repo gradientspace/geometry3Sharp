@@ -19,13 +19,20 @@ namespace g3
         public Vector2d(Vector2d copy) { x = copy.x; y = copy.y; }
         public Vector2d(Vector2f copy) { x = copy.x; y = copy.y; }
 
-
         static public readonly Vector2d Zero = new Vector2d(0.0f, 0.0f);
         static public readonly Vector2d One = new Vector2d(1.0f, 1.0f);
         static public readonly Vector2d AxisX = new Vector2d(1.0f, 0.0f);
         static public readonly Vector2d AxisY = new Vector2d(0.0f, 1.0f);
 		static public readonly Vector2d MaxValue = new Vector2d(double.MaxValue,double.MaxValue);
 		static public readonly Vector2d MinValue = new Vector2d(double.MinValue,double.MinValue);
+
+        public static Vector2d FromAngleRad(double angle) {
+            return new Vector2d(Math.Cos(angle), Math.Sin(angle));
+        }
+        public static Vector2d FromAngleDeg(double angle) {
+            angle *= MathUtil.Deg2Rad;
+            return new Vector2d(Math.Cos(angle), Math.Sin(angle));
+        }
 
 
         public double this[int key]

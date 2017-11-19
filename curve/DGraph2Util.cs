@@ -183,7 +183,10 @@ namespace g3
 
 
 
-
+        /// <summary>
+        /// foreach edge [vid,b] connected to junction vertex vid, remove, add new vertex c, 
+        /// and then add new edge [b,c]. Optionally move c a bit back along edge from vid.
+        /// </summary>
         public static void DisconnectJunction(DGraph2 graph, int vid, double shrinkFactor = 1.0)
         {
             Vector2d v = graph.GetVertex(vid);
@@ -276,6 +279,59 @@ namespace g3
                     return new Index2i(next_eid, next_vid);
             }
             return Index2i.Max;
+        }
+
+
+
+
+        /// <summary>
+        /// walk through graph from fromVtx, in direction of eid, until we hit the next junction vertex
+        /// </summary>
+        public static List<int> WalkToNextNonRegularVtx(DGraph2 graph, int fromVtx, int eid)
+        {
+            List<int> path = new List<int>();
+            path.Add(fromVtx);
+            int cur_vid = fromVtx;
+            int cur_eid = eid;
+            bool bContinue = true;
+            while (bContinue) {
+                Index2i next = DGraph2Util.NextEdgeAndVtx(cur_eid, cur_vid, graph);
+                int next_eid = next.a;
+                int next_vtx = next.b;
+                if (next_eid == int.MaxValue) {
+                    if (graph.IsRegularVertex(next_vtx) == false ) {
+                        path.Add(next_vtx);
+                        bContinue = false;
+                    } else {
+                        throw new Exception("WalkToNextNonRegularVtx: have no next edge but vtx is regular - how?");
+                    }
+                } else {
+                    path.Add(next_vtx);
+                    cur_vid = next_vtx;
+                    cur_eid = next_eid;
+                }
+            }
+            return path;
+        }
+
+
+
+
+
+        /// <summary>
+        /// compute length of path through graph
+        /// </summary>
+        public static double PathLength(DGraph2 graph, IList<int> pathVertices)
+        {
+            double len = 0;
+            int N = pathVertices.Count;
+            Vector2d prev = graph.GetVertex(pathVertices[0]), next = Vector2d.Zero;
+            for (int i = 1; i < N; ++i) {
+                next = graph.GetVertex(pathVertices[i]);
+                len += prev.Distance(next);
+                prev = next;
+            }
+            return len;
         }
 
 

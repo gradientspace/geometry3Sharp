@@ -13,10 +13,11 @@ namespace g3
 		public const int DuplicateEdgeID = -1;
 
 		public static readonly Vector2d InvalidVertex = new Vector2d(Double.MaxValue, 0);
-		public static readonly Index2i InvalidEdge = new Index2i(InvalidID, InvalidID);
+		public static readonly Index2i InvalidEdgeV = new Index2i(InvalidID, InvalidID);
+        public static readonly Index3i InvalidEdge3 = new Index3i(InvalidID, InvalidID, InvalidID);
 
 
-		RefCountVector vertices_refcount;
+        RefCountVector vertices_refcount;
 		DVector<double> vertices;
         DVector<float> colors;
 
@@ -177,7 +178,7 @@ namespace g3
 		public Index2i GetEdgeV(int eID)
 		{
 			return edges_refcount.isValid(eID) ?
-				new Index2i(edges[3 * eID], edges[3 * eID + 1]) : InvalidEdge;
+				new Index2i(edges[3 * eID], edges[3 * eID + 1]) : InvalidEdgeV;
 		}
 		public bool GetEdgeV(int eID, ref Vector2d a, ref Vector2d b)
 		{
@@ -189,6 +190,13 @@ namespace g3
 				return true;
 			}
 			return false;
+		}
+
+		public Index3i GetEdge(int eID)
+		{
+            int j = 3 * eID;
+			return edges_refcount.isValid(eID) ?
+				new Index3i(edges[j], edges[j + 1], edges[j + 2]) : InvalidEdge3;
 		}
 
         public Segment2d GetEdgeSegment(int eID)
@@ -393,6 +401,29 @@ namespace g3
 					yield return vedges[i];
 			}
 		}
+
+
+
+        public int[] SortedVtxEdges(int vID)
+        {
+
+            if (vertices_refcount.isValid(vID) == false)
+                return null;
+            List<int> vedges = vertex_edges[vID];
+            int N = vedges.Count;
+            int[] sorted = new int[N];
+            double[] angles = new double[N];
+            Vector2d v = new Vector2d(vertices[2*vID], vertices[2 * vID + 1]);
+            for (int i = 0; i < N; ++i) {
+                int nbr_vid = edge_other_v(vedges[i], vID);
+                double dx = vertices[2 * nbr_vid] - v.x;
+                double dy = vertices[2 * nbr_vid + 1] - v.y;
+                angles[i] = Math.Atan2(dy, dx);
+                sorted[i] = vedges[i];
+            }
+            Array.Sort(angles, sorted);
+            return sorted;
+        }
 
 
 
@@ -659,16 +690,17 @@ namespace g3
 
 
 
-        public bool IsBoundaryVertex(int vID)
-        {
+        public bool IsBoundaryVertex(int vID) {
             return vertices_refcount.isValid(vID) && vertex_edges[vID].Count == 1;
         }
 
-        public bool IsJunctionVertex(int vID)
-        {
+        public bool IsJunctionVertex(int vID) {
             return vertices_refcount.isValid(vID) && vertex_edges[vID].Count > 2;
         }
 
+        public bool IsRegularVertex(int vID) {
+            return vertices_refcount.isValid(vID) && vertex_edges[vID].Count == 2;
+        }
 
 
 
