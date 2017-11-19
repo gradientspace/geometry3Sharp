@@ -403,7 +403,9 @@ namespace g3
 		}
 
 
-
+        /// <summary>
+        /// return edges around vID sorted by angle, in clockwise order
+        /// </summary>
         public int[] SortedVtxEdges(int vID)
         {
 
@@ -418,7 +420,8 @@ namespace g3
                 int nbr_vid = edge_other_v(vedges[i], vID);
                 double dx = vertices[2 * nbr_vid] - v.x;
                 double dy = vertices[2 * nbr_vid + 1] - v.y;
-                angles[i] = Math.Atan2(dy, dx);
+                //angles[i] = Math.Atan2(dy, dx) + Math.PI;   // shift to range [0,2pi]
+                angles[i] = MathUtil.Atan2Positive(dy, dx);
                 sorted[i] = vedges[i];
             }
             Array.Sort(angles, sorted);
