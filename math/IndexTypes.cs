@@ -175,6 +175,7 @@ namespace g3
         static public readonly Index2i Zero = new Index2i(0, 0);
         static public readonly Index2i One = new Index2i(1, 1);
         static public readonly Index2i Max = new Index2i(int.MaxValue, int.MaxValue);
+        static public readonly Index2i Min = new Index2i(int.MinValue, int.MinValue);
 
 
         public int this[int key]

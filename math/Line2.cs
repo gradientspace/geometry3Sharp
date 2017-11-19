@@ -62,6 +62,29 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Calculate intersection point between this line and another one.
+        /// Returns Vector2d.MaxValue if lines are parallel.
+        /// </summary>
+        /// <returns></returns>
+        public Vector2d IntersectionPoint(ref Line2d other, double dotThresh = MathUtil.ZeroTolerance)
+        {
+            // see IntrLine2Line2 for explanation of algorithm
+            Vector2d diff = other.Origin - Origin;
+            double D0DotPerpD1 = Direction.DotPerp(other.Direction);
+            if (Math.Abs(D0DotPerpD1) > dotThresh) {                    // Lines intersect in a single point.
+                double invD0DotPerpD1 = ((double)1) / D0DotPerpD1;
+                double diffDotPerpD1 = diff.DotPerp(other.Direction);
+                double s = diffDotPerpD1 * invD0DotPerpD1;
+                return Origin + s * Direction;
+            }
+            // Lines are parallel.
+            return Vector2d.MaxValue;
+        }
+
+
+
+
 
         // conversion operators
         public static implicit operator Line2d(Line2f v)

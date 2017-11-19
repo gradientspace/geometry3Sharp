@@ -204,7 +204,56 @@ namespace g3
         }
 
 
+
+
+        /// <summary>
+        /// Test if segments intersect. Returns true for parallel-line overlaps.
+        /// Returns same result as IntrSegment2Segment2.
+        /// </summary>
+        public bool Intersects(ref Segment2d seg2, double dotThresh = double.Epsilon, double intervalThresh = 0)
+        {
+            // see IntrLine2Line2 and IntrSegment2Segment2 for details on this code
+
+            Vector2d diff = seg2.Center - Center;
+            double D0DotPerpD1 = Direction.DotPerp(seg2.Direction);
+            if (Math.Abs(D0DotPerpD1) > dotThresh) {   // Lines intersect in a single point.
+                double invD0DotPerpD1 = ((double)1) / D0DotPerpD1;
+                double diffDotPerpD0 = diff.DotPerp(Direction);
+                double diffDotPerpD1 = diff.DotPerp(seg2.Direction);
+                double s = diffDotPerpD1 * invD0DotPerpD1;
+                double s2 = diffDotPerpD0 * invD0DotPerpD1;
+                return Math.Abs(s) <= (Extent + intervalThresh) 
+                        && Math.Abs(s2) <= (seg2.Extent + intervalThresh);
+            }
+
+            // Lines are parallel.
+            diff.Normalize();
+            double diffNDotPerpD1 = diff.DotPerp(seg2.Direction);
+            if (Math.Abs(diffNDotPerpD1) <= dotThresh) {
+                // Compute the location of segment1 endpoints relative to segment0.
+                diff = seg2.Center - Center;
+                double t1 = Direction.Dot(diff);
+                double tmin = t1 - seg2.Extent;
+                double tmax = t1 + seg2.Extent;
+                Interval1d extents = new Interval1d(-Extent, Extent);
+                if (extents.Overlaps(new Interval1d(tmin, tmax)))
+                    return true;
+                return false;
+            }
+
+            // lines are parallel but not collinear
+            return false;
+        }
+        public bool Intersects(Segment2d seg2, double dotThresh = double.Epsilon, double intervalThresh = 0) {
+            return Intersects(ref seg2, dotThresh, intervalThresh);
+        }
+
+
     }
+
+
+
+
 
 
 
