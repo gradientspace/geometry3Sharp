@@ -1730,6 +1730,34 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Compute mesh winding number, from Jacobson et al, Robust Inside-Outside Segmentation using Generalized Winding Numbers
+        /// http://igl.ethz.ch/projects/winding-number/
+        /// returns ~0 for points outside a closed, consistently oriented mesh, and a positive or negative integer
+        /// for points inside, with value > 1 depending on how many "times" the point inside the mesh (like in 2D polygon winding)
+        /// </summary>
+        public double WindingNumber(Vector3d v)
+        {
+            double sum = 0;
+            foreach ( int tid in triangles_refcount ) {
+                int ti = 3 * tid;
+                int ta = 3*triangles[ti];
+                Vector3d a = new Vector3d(vertices[ta]-v.x, vertices[ta + 1]-v.y, vertices[ta + 2]-v.z);
+                int tb = 3 * triangles[ti + 1];
+                Vector3d b = new Vector3d(vertices[tb]-v.x, vertices[tb + 1]-v.y, vertices[tb + 2]-v.z);
+                int tc = 3 * triangles[ti + 2];
+                Vector3d c = new Vector3d(vertices[tc]-v.x, vertices[tc + 1]-v.y, vertices[tc + 2]-v.z);
+                // note: top and bottom are reversed here from formula in the paper? but it doesn't work otherwise...
+                double la = a.Length, lb = b.Length, lc = c.Length;
+                double bottom = (la * lb * lc) + a.Dot(ref b) * lc + b.Dot(ref c) * la + c.Dot(ref a) * lb;
+                double top = a.x * (b.y * c.z - c.y * b.z) - a.y * (b.x * c.z - c.x * b.z) + a.z * (b.x * c.y - c.x * b.y);
+                sum += 2.0 * Math.Atan2(top, bottom);
+            }
+            return sum / (4.0 * Math.PI);
+        }
+
+
+
 
         // Metadata support
 

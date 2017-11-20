@@ -563,6 +563,19 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// signed winding angle of oriented triangle [a,b,c] wrt point p
+        /// formula from Jacobson et al 13 http://igl.ethz.ch/projects/winding-number/
+        /// </summary>
+        public static double TetSolidAngle(Vector3d a, Vector3d b, Vector3d c, ref Vector3d p)
+        {
+            a -= p; b -= p; c -= p;
+            double la = a.Length, lb = b.Length, lc = c.Length;
+            double bottom = (la * lb * lc) + a.Dot(ref b) * lc + b.Dot(ref c) * la + c.Dot(ref a) * lb;
+            double top = a.x * (b.y * c.z - c.y * b.z) - a.y * (b.x * c.z - c.x * b.z) + a.z * (b.x * c.y - c.x * b.y);
+            return 2.0 * Math.Atan2(top, bottom);
+        }
+
 
 
         public static bool SolveQuadratic(double a, double b, double c, out double minT, out double maxT)
