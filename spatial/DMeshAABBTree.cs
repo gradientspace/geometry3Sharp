@@ -781,6 +781,195 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Evaluate the mesh winding number at point. To do this, we must construct additional
+        /// information to short-circuit tree branches. This happens on the first evaluation.
+        /// Note that it consumes significant additional memory. If you don't want this, just use 
+        /// Mesh.WindingNumber() directly.
+        /// </summary>
+        public double WindingNumber(Vector3d p)
+        {
+            if (mesh_timestamp != mesh.ShapeTimestamp)
+                throw new Exception("DMeshAABBTree3.WindingNumber: mesh has been modified since tree construction");
+
+            if (WindingCache == null || winding_cache_timestamp != mesh.ShapeTimestamp) {
+                BuildWindingCache();
+                winding_cache_timestamp = mesh.ShapeTimestamp;
+            }
+
+            double sum = branch_winding_num(root_index, p);
+            return sum / (4.0 * Math.PI);
+        }
+
+        // evaluate winding number contribution for all triangles below iBox
+        double branch_winding_num(int iBox, Vector3d p)
+        {
+            Vector3d a = Vector3d.Zero, b = Vector3d.Zero, c = Vector3d.Zero;
+            double branch_sum = 0;
+
+            int idx = box_to_index[iBox];
+            if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i) {
+                    int ti = index_list[idx + i];
+                    mesh.GetTriVertices(ti, ref a, ref b, ref c);
+                    branch_sum += MathUtil.TriSolidAngle(a, b, c, ref p);
+                }
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+
+                    // if we have winding cache, we can more efficiently compute contribution of all triangles
+                    // below this box. Otherwise, recursively descend tree.
+                    bool contained = box_contains(iChild1, p);
+                    if (contained == false && WindingCache.ContainsKey(iChild1))
+                        branch_sum += evaluate_box_winding_cache(iChild1, p);
+                    else
+                        branch_sum += branch_winding_num(iChild1, p);
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    bool contained1 = box_contains(iChild1, p);
+                    if (contained1 == false && WindingCache.ContainsKey(iChild1))
+                        branch_sum += evaluate_box_winding_cache(iChild1, p);
+                    else
+                        branch_sum += branch_winding_num(iChild1, p);
+
+                    bool contained2 = box_contains(iChild2, p);
+                    if (contained2 == false && WindingCache.ContainsKey(iChild2))
+                        branch_sum += evaluate_box_winding_cache(iChild2, p);
+                    else
+                        branch_sum += branch_winding_num(iChild2, p);
+                }
+            }
+
+            return branch_sum;
+        }
+
+
+
+        Dictionary<int, List<int>> WindingCache;
+        int winding_cache_timestamp = -1;
+
+        void BuildWindingCache()
+        {
+            WindingCache = new Dictionary<int, List<int>>();
+            build_winding_cache(root_index, 100);
+        }
+        int build_winding_cache(int iBox, int tri_count_thresh)
+        {
+            int idx = box_to_index[iBox];
+            if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                return num_tris;
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    int num_child_tris = build_winding_cache(iChild1, tri_count_thresh);
+                    if (num_child_tris < 0) {
+                        return -1;
+                    } else if ( num_child_tris < tri_count_thresh ) {
+                        return num_child_tris;
+                    } else {
+                        make_box_winding_cache(iChild1);
+                        return -1;
+                    }
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    int num_tris_1 = build_winding_cache(iChild1, tri_count_thresh);
+                    int num_tris_2 = build_winding_cache(iChild2, tri_count_thresh);
+                    if (num_tris_1 < 0 && num_tris_2 < 0)
+                        return -1;
+
+                    bool make_caches = num_tris_1 > tri_count_thresh || num_tris_2 > tri_count_thresh
+                        || num_tris_1 < 0 || num_tris_2 < 0;
+
+                    if (make_caches) {
+                        if (num_tris_1 > 0) 
+                            make_box_winding_cache(iChild1);
+                        if (num_tris_2 > 0) 
+                            make_box_winding_cache(iChild2);
+                        return -1;
+                    } else {
+                        return num_tris_1 + num_tris_2;
+                    }
+                }
+            }
+        }
+
+        /// collect all triangles under iBox, find open edges [a,b],
+        /// and add them all to a list associated with iBox
+        void make_box_winding_cache(int iBox)
+        {
+            Util.gDevAssert(WindingCache.ContainsKey(iBox) == false);
+
+            List<int> edges = new List<int>();
+
+            HashSet<int> triangles = new HashSet<int>();
+            collect_triangles(iBox, triangles);
+
+            foreach ( int tid in triangles ) {
+                Index3i tri = Mesh.GetTriangle(tid);
+                Index3i nbr_tris = Mesh.GetTriNeighbourTris(tid);
+                for ( int j = 0; j < 3; ++j) {
+                    if ( nbr_tris[j] == DMesh3.InvalidID || triangles.Contains(nbr_tris[j]) == false ) {
+                        edges.Add(tri[(j+1) % 3]);
+                        edges.Add(tri[j]);
+                    }
+                }
+            }
+
+            WindingCache[iBox] = edges;
+        }
+
+        // evaluate the winding cache for iBox
+        double evaluate_box_winding_cache(int iBox, Vector3d p)
+        {
+            List<int> boxcache = WindingCache[iBox];
+            int N = boxcache.Count / 2;
+            // evaluate winding calc over arbitrary triangle fan that "closes" 
+            // the open mesh below this box. 
+            Vector3d c = box_centers[iBox];
+            double cluster_sum = 0;
+            for (int i = 0; i < N; ++i) {
+                Vector3d a = Mesh.GetVertex(boxcache[2 * i]);
+                Vector3d b = Mesh.GetVertex(boxcache[2 * i + 1]);
+                cluster_sum += MathUtil.TriSolidAngle(a, b, c, ref p);
+            }
+            // contribution of open mesh is -sum over fan
+            return -cluster_sum;
+        }
+
+
+        // collect all the triangles below iBox in a hash
+        void collect_triangles(int iBox, HashSet<int> triangles)
+        {
+            int idx = box_to_index[iBox];
+            if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i)
+                    triangles.Add(index_list[idx + i]);
+            } else {
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    collect_triangles((-iChild1) - 1, triangles);
+                } else {                           // 2 children, descend closest first
+                    collect_triangles(iChild1 - 1, triangles);
+                    collect_triangles(index_list[idx + 1] - 1, triangles);
+                }
+            }
+        }
+
+
         //
         // Internals - data structures, construction, etc
         //
@@ -1483,6 +1672,7 @@ namespace g3
 
         bool box_box_intersect(int iBox, ref AxisAlignedBox3d testBox)
         {
+            // [TODO] could compute this w/o constructing box
             Vector3d c = (Vector3d)box_centers[iBox];
             Vector3f e = box_extents[iBox];
             AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
@@ -1493,11 +1683,22 @@ namespace g3
 
         double box_distance_sqr(int iBox, Vector3d p)
         {
+            // [TODO] could compute this w/o constructing box
             Vector3d c = (Vector3d)box_centers[iBox];
             Vector3f e = box_extents[iBox];
             AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
 
             return box.DistanceSquared(p);
+        }
+
+
+        bool box_contains(int iBox, Vector3d p)
+        {
+            // [TODO] this could be way faster...
+            Vector3d c = (Vector3d)box_centers[iBox];
+            Vector3f e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
+            return box.Contains(p);
         }
 
 
