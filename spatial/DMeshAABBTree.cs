@@ -780,12 +780,19 @@ namespace g3
 
 
 
+        /*
+         *  Hierarchical Mesh Winding Number computation
+         */
+
 
         /// <summary>
         /// Evaluate the mesh winding number at point. To do this, we must construct additional
         /// information to short-circuit tree branches. This happens on the first evaluation.
-        /// Note that it consumes significant additional memory. If you don't want this, just use 
-        /// Mesh.WindingNumber() directly.
+        /// This does consume some additional memory, mainly temporary memory during construction.
+        /// (eg on a 500k sphere, about 30mb to construct, but then only 2-5mb is stored at the end)
+        /// If you don't want this, just use Mesh.WindingNumber() directly. Also note that if you
+        /// are only evaluating a few times, it is not sensible - assume you need at least 
+        /// hundreds of evaluations to see speed improvements.
         /// </summary>
         public double WindingNumber(Vector3d p)
         {
@@ -851,23 +858,36 @@ namespace g3
         }
 
 
-
         Dictionary<int, List<int>> WindingCache;
         int winding_cache_timestamp = -1;
 
         void BuildWindingCache()
         {
+            // The basic strategy to build the winding cache is to descend the tree until we hit a node with N
+            // triangles below it, then build a cache for those triangles. We also (currently) build all caches
+            // above such a node, because it makes a big speed difference. Changing this threshold does not appear
+            // to make a big difference in query speed, but it does affect the build time and memory usage.
+            // If the mesh is large, we can use larger caches, but on a small mesh it may result in
+            // not actually getting that many caches, which is les compute-efficient. 
+            // So, we step up as the threshold the mesh gets larger.
+            // [TODO] profile this? would be nice to have a functional relationship, but it is not linear...
+            int WINDING_CACHE_THRESH = 100;
+            if (Mesh.TriangleCount > 250000)
+                WINDING_CACHE_THRESH = 500;
+            if (Mesh.TriangleCount > 1000000)
+                WINDING_CACHE_THRESH = 1000;
+
             WindingCache = new Dictionary<int, List<int>>();
             HashSet<int> root_hash;
-            build_winding_cache(root_index, 100, out root_hash);
+            build_winding_cache(root_index, 0, WINDING_CACHE_THRESH, out root_hash);
 
-            int cache_count = 0;
-            foreach (var value in WindingCache.Values)
-                cache_count += value.Count;
-            System.Console.WriteLine("total cached kb: {0}  tricount {1}", cache_count*sizeof(int)/1024, Mesh.TriangleCount);
-
+            // [RMS] some debugging info
+            //int cache_count = 0;
+            //foreach (var value in WindingCache.Values)
+            //    cache_count += value.Count;
+            //System.Console.WriteLine("total cached kb: {0}  tricount {1} caches {2} boxes {3}  ", cache_count*sizeof(int)/1024, Mesh.TriangleCount, WindingCache.Count, box_centers.size);
         }
-        int build_winding_cache(int iBox, int tri_count_thresh, out HashSet<int> tri_hash)
+        int build_winding_cache(int iBox, int depth, int tri_count_thresh, out HashSet<int> tri_hash)
         {
             tri_hash = null;
 
@@ -880,7 +900,7 @@ namespace g3
                 int iChild1 = index_list[idx];
                 if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
                     iChild1 = (-iChild1) - 1;
-                    int num_child_tris = build_winding_cache(iChild1, tri_count_thresh, out tri_hash);
+                    int num_child_tris = build_winding_cache(iChild1, depth+1, tri_count_thresh, out tri_hash);
 
                     // if count in child is large enough, we already built a cache at lower node
                     return num_child_tris;
@@ -889,11 +909,14 @@ namespace g3
                     iChild1 = iChild1 - 1;
                     int iChild2 = index_list[idx + 1] - 1;
 
+                    // let each child build its own cache if it wants. If so, it will return the
+                    // list of its child tris
                     HashSet<int> child2_hash;
-                    int num_tris_1 = build_winding_cache(iChild1, tri_count_thresh, out tri_hash);
-                    int num_tris_2 = build_winding_cache(iChild2, tri_count_thresh, out child2_hash);
-
+                    int num_tris_1 = build_winding_cache(iChild1, depth+1, tri_count_thresh, out tri_hash);
+                    int num_tris_2 = build_winding_cache(iChild2, depth+1, tri_count_thresh, out child2_hash);
                     bool build_cache = (num_tris_1 + num_tris_2 > tri_count_thresh);
+
+                    // collect up the triangles we need. there are various cases depending on what children already did
                     if ( tri_hash != null || child2_hash != null || build_cache ) {
                         if ( tri_hash == null && child2_hash != null ) {
                             collect_triangles(iChild1, child2_hash);
@@ -908,9 +931,9 @@ namespace g3
                             else
                                 tri_hash.UnionWith(child2_hash);
                         }
-
-                        make_box_winding_cache(iBox, tri_hash);
                     }
+                    if ( build_cache )
+                        make_box_winding_cache(iBox, tri_hash);
 
                     return (num_tris_1 + num_tris_2);
                 }
@@ -924,7 +947,6 @@ namespace g3
             Util.gDevAssert(WindingCache.ContainsKey(iBox) == false);
 
             List<int> edges = new List<int>();
-
             foreach ( int tid in triangles ) {
                 Index3i tri = Mesh.GetTriangle(tid);
                 Index3i nbr_tris = Mesh.GetTriNeighbourTris(tid);
@@ -935,7 +957,6 @@ namespace g3
                     }
                 }
             }
-
             WindingCache[iBox] = edges;
         }
 
@@ -976,6 +997,9 @@ namespace g3
                 }
             }
         }
+
+
+
 
 
         //
