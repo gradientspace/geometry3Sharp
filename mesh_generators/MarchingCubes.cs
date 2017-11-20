@@ -76,7 +76,7 @@ namespace g3
             // initialize w/ a basic sphere example
             Implicit = new ImplicitSphere3d();
             Bounds = new AxisAlignedBox3d(Vector3d.Zero, 8);
-            CubeSize = 0.05;
+            CubeSize = 0.25;
         }
 
 
@@ -136,7 +136,7 @@ namespace g3
             double z0 = Bounds.Min.z + CubeSize * idx.z;
             double x1 = Bounds.Min.x + CubeSize * (idx.x+1);
             double y1 = Bounds.Min.y + CubeSize * (idx.y+1);
-            double z1 = Bounds.Min.y + CubeSize * (idx.z+1);
+            double z1 = Bounds.Min.z + CubeSize * (idx.z+1);
 
             cell.p[0].x = x0; cell.p[0].y = y0; cell.p[0].z = z0;
             cell.p[1].x = x1; cell.p[1].y = y0; cell.p[1].z = z0;
