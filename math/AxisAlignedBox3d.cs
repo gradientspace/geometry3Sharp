@@ -213,6 +213,18 @@ namespace g3
             return Math.Sqrt(DistanceSquared(v));
         }
 
+        public double SignedDistance(Vector3d v)
+        {
+            if ( Contains(v) == false ) {
+                return Distance(v);
+            } else {
+                double dx = Math.Min(Math.Abs(v.x - Min.x), Math.Abs(v.x - Max.x));
+                double dy = Math.Min(Math.Abs(v.y - Min.y), Math.Abs(v.y - Max.y));
+                double dz = Math.Min(Math.Abs(v.z - Min.z), Math.Abs(v.z - Max.z));
+                return -MathUtil.Min(dx, dy, dz);
+            }
+        }
+
 
         // [TODO] we have handled corner cases, but not edge cases!
         //   those are 2D, so it would be like (dx > width && dy > height)
