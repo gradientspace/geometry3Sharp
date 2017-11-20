@@ -567,7 +567,7 @@ namespace g3
         /// signed winding angle of oriented triangle [a,b,c] wrt point p
         /// formula from Jacobson et al 13 http://igl.ethz.ch/projects/winding-number/
         /// </summary>
-        public static double TetSolidAngle(Vector3d a, Vector3d b, Vector3d c, ref Vector3d p)
+        public static double TriSolidAngle(Vector3d a, Vector3d b, Vector3d c, ref Vector3d p)
         {
             a -= p; b -= p; c -= p;
             double la = a.Length, lb = b.Length, lc = c.Length;
