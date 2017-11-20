@@ -858,10 +858,19 @@ namespace g3
         void BuildWindingCache()
         {
             WindingCache = new Dictionary<int, List<int>>();
-            build_winding_cache(root_index, 100);
+            HashSet<int> root_hash;
+            build_winding_cache(root_index, 100, out root_hash);
+
+            int cache_count = 0;
+            foreach (var value in WindingCache.Values)
+                cache_count += value.Count;
+            System.Console.WriteLine("total cached kb: {0}  tricount {1}", cache_count*sizeof(int)/1024, Mesh.TriangleCount);
+
         }
-        int build_winding_cache(int iBox, int tri_count_thresh)
+        int build_winding_cache(int iBox, int tri_count_thresh, out HashSet<int> tri_hash)
         {
+            tri_hash = null;
+
             int idx = box_to_index[iBox];
             if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
                 int num_tris = index_list[idx];
@@ -871,51 +880,50 @@ namespace g3
                 int iChild1 = index_list[idx];
                 if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
                     iChild1 = (-iChild1) - 1;
-                    int num_child_tris = build_winding_cache(iChild1, tri_count_thresh);
-                    if (num_child_tris < 0) {
-                        return -1;
-                    } else if ( num_child_tris < tri_count_thresh ) {
-                        return num_child_tris;
-                    } else {
-                        make_box_winding_cache(iChild1);
-                        return -1;
-                    }
+                    int num_child_tris = build_winding_cache(iChild1, tri_count_thresh, out tri_hash);
+
+                    // if count in child is large enough, we already built a cache at lower node
+                    return num_child_tris;
 
                 } else {                            // 2 children, descend closest first
                     iChild1 = iChild1 - 1;
                     int iChild2 = index_list[idx + 1] - 1;
 
-                    int num_tris_1 = build_winding_cache(iChild1, tri_count_thresh);
-                    int num_tris_2 = build_winding_cache(iChild2, tri_count_thresh);
-                    if (num_tris_1 < 0 && num_tris_2 < 0)
-                        return -1;
+                    HashSet<int> child2_hash;
+                    int num_tris_1 = build_winding_cache(iChild1, tri_count_thresh, out tri_hash);
+                    int num_tris_2 = build_winding_cache(iChild2, tri_count_thresh, out child2_hash);
 
-                    bool make_caches = num_tris_1 > tri_count_thresh || num_tris_2 > tri_count_thresh
-                        || num_tris_1 < 0 || num_tris_2 < 0;
+                    bool build_cache = (num_tris_1 + num_tris_2 > tri_count_thresh);
+                    if ( tri_hash != null || child2_hash != null || build_cache ) {
+                        if ( tri_hash == null && child2_hash != null ) {
+                            collect_triangles(iChild1, child2_hash);
+                            tri_hash = child2_hash;
+                        } else {
+                            if (tri_hash == null) {
+                                tri_hash = new HashSet<int>();
+                                collect_triangles(iChild1, tri_hash);
+                            }
+                            if (child2_hash == null)
+                                collect_triangles(iChild2, tri_hash);
+                            else
+                                tri_hash.UnionWith(child2_hash);
+                        }
 
-                    if (make_caches) {
-                        if (num_tris_1 > 0) 
-                            make_box_winding_cache(iChild1);
-                        if (num_tris_2 > 0) 
-                            make_box_winding_cache(iChild2);
-                        return -1;
-                    } else {
-                        return num_tris_1 + num_tris_2;
+                        make_box_winding_cache(iBox, tri_hash);
                     }
+
+                    return (num_tris_1 + num_tris_2);
                 }
             }
         }
 
         /// collect all triangles under iBox, find open edges [a,b],
         /// and add them all to a list associated with iBox
-        void make_box_winding_cache(int iBox)
+        void make_box_winding_cache(int iBox, HashSet<int> triangles)
         {
             Util.gDevAssert(WindingCache.ContainsKey(iBox) == false);
 
             List<int> edges = new List<int>();
-
-            HashSet<int> triangles = new HashSet<int>();
-            collect_triangles(iBox, triangles);
 
             foreach ( int tid in triangles ) {
                 Index3i tri = Mesh.GetTriangle(tid);
