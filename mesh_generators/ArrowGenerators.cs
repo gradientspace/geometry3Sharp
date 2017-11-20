@@ -14,7 +14,7 @@ namespace g3
         public float TipRadius = 0.0f;
         public float HeadLength = 0.5f;
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             Sections = new CircularSection[4];
             Sections[0] = new CircularSection(StickRadius, 0.0f);
@@ -25,6 +25,8 @@ namespace g3
             Capped = true;
             NoSharedVertices = true;
             base.Generate();
+
+            return this;
         }
 
     }

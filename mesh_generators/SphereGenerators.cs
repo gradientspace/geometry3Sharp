@@ -14,7 +14,7 @@ namespace g3
     {
         public double Radius = 1.0;
 
-        public override void Generate()
+        public override MeshGenerator Generate()
         {
             base.Generate();
             for ( int i = 0; i < vertices.Count; ++i ) {
@@ -24,6 +24,7 @@ namespace g3
                 normals[i] = (Vector3f)v;
             }
 
+            return this;
         }
 
     }

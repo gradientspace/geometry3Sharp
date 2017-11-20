@@ -18,7 +18,7 @@ namespace g3
         public int startCapCenterIndex = -1;
         public int endCapCenterIndex = -1;
 
-        public override void Generate()
+        public override MeshGenerator Generate()
         {
             int nRings = Curve.Length;
             int nRingSize = (NoSharedVertices) ? Slices + 1 : Slices;
@@ -152,6 +152,7 @@ namespace g3
                 }
             }
 
+            return this;
         }
     }
 
@@ -171,7 +172,7 @@ namespace g3
         public int startCapCenterIndex = -1;
         public int endCapCenterIndex = -1;
 
-        public override void Generate()
+        public override MeshGenerator Generate()
         {
             double tCurveLen = CurveUtils.ArcLength(Curve);
             SampledArcLengthParam pAxis = new SampledArcLengthParam(Axis, Axis.Length);
@@ -320,8 +321,7 @@ namespace g3
                 }
             }
 
-
-
+            return this;
         }
 
 

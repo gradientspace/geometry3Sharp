@@ -12,7 +12,7 @@ namespace g3
         public Box3d Box = Box3d.UnitZeroCentered;
         public bool NoSharedVertices = false;
 
-        public override void Generate()
+        public override MeshGenerator Generate()
         {
             vertices = new VectorArray3d((NoSharedVertices) ? (4 * 6) : 8);
             uv = new VectorArray2f(vertices.Count);
@@ -50,6 +50,8 @@ namespace g3
                     triangles.Set(ti++, v0, v0 + 2, v0 + 3, Clockwise);
                 }
             }
+
+            return this;
         }
     }
 
@@ -72,7 +74,7 @@ namespace g3
         public int EdgeVertices = 8;
         public bool NoSharedVertices = false;
 
-        public override void Generate()
+        public override MeshGenerator Generate()
         {
             int N = EdgeVertices;   int Nm2 = N - 2;
             int NT = N - 1;
@@ -219,6 +221,8 @@ namespace g3
 
 
             }
+
+            return this;
 
         }
 

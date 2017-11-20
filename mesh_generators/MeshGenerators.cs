@@ -23,7 +23,7 @@ namespace g3
 
 
 
-        abstract public void Generate();
+        abstract public MeshGenerator Generate();
 
 
         public virtual void MakeMesh(SimpleMesh m)

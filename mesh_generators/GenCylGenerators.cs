@@ -20,7 +20,7 @@ namespace g3
         public int startCapCenterIndex = -1;
         public int endCapCenterIndex = -1;
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             if (Polygon == null)
                 Polygon = Polygon2d.MakeCircle(1.0f, 8);
@@ -132,6 +132,7 @@ namespace g3
                 }
             }
 
+            return this;
         }
     }
 }

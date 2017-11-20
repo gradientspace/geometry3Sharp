@@ -19,7 +19,7 @@ namespace g3
         // last panel will not have UVs going from 1 to 0
         public bool NoSharedVertices = false;
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             bool bClosed = ((EndAngleDeg - StartAngleDeg) > 359.99f);
             int nRingSize = (NoSharedVertices && bClosed) ? Slices + 1 : Slices;
@@ -53,6 +53,8 @@ namespace g3
                 triangles.Set(ti++, nRingSize - 1, 0, nRingSize, Clockwise);
                 triangles.Set(ti++, nRingSize - 1, nRingSize, 2 * nRingSize - 1, Clockwise);
             }
+
+            return this;
         }
     }
 
@@ -74,7 +76,7 @@ namespace g3
         // set to true if you are going to texture this cylinder or want sharp edges
         public bool NoSharedVertices = false;
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             bool bClosed = ((EndAngleDeg - StartAngleDeg) > 359.99f);
             int nRingSize = (NoSharedVertices && bClosed) ? Slices + 1 : Slices;
@@ -186,7 +188,7 @@ namespace g3
                 }
             }
 
-
+            return this;
         }
     }
 
@@ -211,7 +213,7 @@ namespace g3
         public bool NoSharedVertices = false;
 
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             bool bClosed = ((EndAngleDeg - StartAngleDeg) > 359.99f);
             int nRingSize = (NoSharedVertices && bClosed) ? Slices + 1 : Slices;
@@ -307,6 +309,8 @@ namespace g3
                     triangles.Set(ti++, nBottomC, nRingSize, nRingSize - 1, Clockwise);
                 }
             }
+
+            return this;
         }
     }
 
@@ -324,7 +328,7 @@ namespace g3
         public int startCapCenterIndex = -1;
         public int endCapCenterIndex = -1;
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             int nRings = (NoSharedVertices) ? 2 * (Sections.Length-1) : Sections.Length;
             int nRingSize = (NoSharedVertices) ? Slices + 1 : Slices;
@@ -428,6 +432,8 @@ namespace g3
                     append_disc(Slices, nTopC, nRingSize * (Sections.Length - 1), true, !Clockwise, ref ti);
                 }
             }
+
+            return this;
         }
     }
 

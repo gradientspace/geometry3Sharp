@@ -35,7 +35,7 @@ namespace g3
             return v;
         }
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             if (MathUtil.InRange(IndicesMap.a, 1, 3) == false || MathUtil.InRange(IndicesMap.b, 1, 3) == false)
                 throw new Exception("TrivialRectGenerator: Invalid IndicesMap!");
@@ -85,6 +85,8 @@ namespace g3
                 triangles.Set(0, 0, 2, 1);
                 triangles.Set(1, 0, 3, 2);
             }
+
+            return this;
         }
     }
 
@@ -126,7 +128,7 @@ namespace g3
         // order is [inner_corner, outer_1, outer_2]
         static int[] corner_spans = new int[] { 0, 11, 4,   1, 5, 6,   2, 7, 8,   3, 9, 10 };
 
-        override public void Generate()
+        override public MeshGenerator Generate()
         {
             int corner_v = 0, corner_t = 0;
             for (int k = 0; k < 4; ++k) {
@@ -220,6 +222,7 @@ namespace g3
                                       (1 - ty) * uvbottom + (ty) * uvtop);
             }
 
+            return this;
         }
 
 
