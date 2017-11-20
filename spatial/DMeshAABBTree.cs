@@ -916,6 +916,9 @@ namespace g3
                     int num_tris_2 = build_winding_cache(iChild2, depth+1, tri_count_thresh, out child2_hash);
                     bool build_cache = (num_tris_1 + num_tris_2 > tri_count_thresh);
 
+                    if (depth == 0)
+                        return num_tris_1 + num_tris_2;  // cannot build cache at level 0...
+
                     // collect up the triangles we need. there are various cases depending on what children already did
                     if ( tri_hash != null || child2_hash != null || build_cache ) {
                         if ( tri_hash == null && child2_hash != null ) {

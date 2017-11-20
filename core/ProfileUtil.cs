@@ -85,6 +85,12 @@ namespace g3
             return Start(label);
         }
 
+        public BlockTimer Get(string label)
+        {
+            return Timers[label];
+        }
+
+
         public void Stop(string label)
         {
             Timers[label].Stop();
