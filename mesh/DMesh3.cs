@@ -665,6 +665,29 @@ namespace g3
             GetTriVertices(tID, ref v0, ref v1, ref v2);
             return MathUtil.Area(v0, v1, v2);
         }
+		
+        public Vector3d GetTriangleAnglesD(int tID)
+        {
+            Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
+            GetTriVertices(tID, ref v0, ref v1, ref v2);
+
+            Vector3d result = Vector3d.Zero;
+
+            Vector3d e00 = (v1 - v0);
+            e00.Normalize();
+            Vector3d e01 = (v2 - v0);
+            e01.Normalize();
+            result.x = Vector3d.AngleD(e00, e01);
+
+            Vector3d e10 = (v0 - v1);
+            e10.Normalize();
+            Vector3d e11 = (v2 - v1);
+            result.y = Vector3d.AngleD(e10, e11);
+
+            result.z = 180 - result.x - result.y;
+
+            return result;
+        }
 
 		/// <summary>
 		/// Compute triangle normal, area, and centroid all at once. Re-uses vertex
