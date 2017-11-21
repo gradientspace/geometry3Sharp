@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-#if G3_USING_UNITY
-using UnityEngine;
-#endif
-
 namespace g3
 {
     public struct AxisAlignedBox3i : IComparable<AxisAlignedBox3i>, IEquatable<AxisAlignedBox3i>
@@ -300,7 +296,7 @@ namespace g3
 
         public override string ToString()
         {
-            return string.Format("x[{0:F8},{1:F8}] y[{2:F8},{3:F8}] z[{4:F8},{5:F8}]", Min.x, Max.x, Min.y, Max.y, Min.z, Max.z);
+            return string.Format("x[{0},{1}] y[{2},{3}] z[{4},{5}]", Min.x, Max.x, Min.y, Max.y, Min.z, Max.z);
         }
 
 

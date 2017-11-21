@@ -11,6 +11,9 @@ namespace g3
         // map "world" coords to integer coords
         Vector3i ToGrid(Vector3d pointf);
 
+        // map "world" coords to real-valued grid coords
+        Vector3d ToGridf(Vector3d pointf);
+
         // map integer coords back to "world"
         Vector3d FromGrid(Vector3i gridpoint);
 
@@ -79,7 +82,14 @@ namespace g3
 				(int)(point.z / CellSize));
 		}
 
-		public Vector3d FromGrid(Vector3i gridpoint) {
+        public Vector3d ToGridf(Vector3d point) {
+            return new Vector3d(
+                (point.x / CellSize),
+                (point.y / CellSize),
+                (point.z / CellSize));
+        }
+
+        public Vector3d FromGrid(Vector3i gridpoint) {
 			return new Vector3d(
 				((double)gridpoint.x * CellSize),
 				((double)gridpoint.y * CellSize),
@@ -88,9 +98,9 @@ namespace g3
 
 		public Vector3d FromGrid(Vector3d gridpointf) {
 			return new Vector3d(
-				((double)gridpointf.x * CellSize),
-				((double)gridpointf.y * CellSize),
-				((double)gridpointf.z * CellSize));
+				(gridpointf.x * CellSize),
+				(gridpointf.y * CellSize),
+				(gridpointf.z * CellSize));
 		}
 	}
 
@@ -116,7 +126,14 @@ namespace g3
 				(int)((point.z - Origin.z) / CellSize) );
 		}
 
-		public Vector3d FromGrid(Vector3i gridpoint) {
+        public Vector3d ToGridf(Vector3d point) {
+            return new Vector3d(
+                ((point.x - Origin.x) / CellSize),
+                ((point.y - Origin.y) / CellSize),
+                ((point.z - Origin.z) / CellSize));
+        }
+
+        public Vector3d FromGrid(Vector3i gridpoint) {
 			return new Vector3d(
 				((double)gridpoint.x * CellSize) + Origin.x,
 				((double)gridpoint.y * CellSize) + Origin.y,
@@ -125,9 +142,9 @@ namespace g3
 
 		public Vector3d FromGrid(Vector3d gridpointf) {
 			return new Vector3d(
-				((double)gridpointf.x * CellSize) + Origin.x,
-				((double)gridpointf.y * CellSize) + Origin.y,
-				((double)gridpointf.z * CellSize) + Origin.z);
+				(gridpointf.x * CellSize) + Origin.x,
+				(gridpointf.y * CellSize) + Origin.y,
+				(gridpointf.z * CellSize) + Origin.z);
 		}
 	}
 
@@ -152,6 +169,12 @@ namespace g3
             Vector3f pointf = (Vector3f)point;
             pointf = GridFrame.ToFrameP(pointf);
             return (Vector3i)(pointf / CellSize);
+        }
+
+        public Vector3d ToGridf(Vector3d point) {
+            Vector3f pointf = (Vector3f)point;
+            pointf = GridFrame.ToFrameP(pointf);
+            return (pointf / CellSize);
         }
 
         public Vector3d FromGrid(Vector3i gridpoint)

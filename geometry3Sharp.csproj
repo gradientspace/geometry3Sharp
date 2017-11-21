@@ -110,6 +110,7 @@
     <Compile Include="io\STLReader.cs" />
     <Compile Include="io\STLWriter.cs" />
     <Compile Include="io\gSerialization.cs" />
+    <Compile Include="math\AxisAlignedBox2i.cs" />
     <Compile Include="math\AxisAlignedBox3i.cs" />
     <Compile Include="math\BoundsUtil.cs" />
     <Compile Include="math\Frame3f.cs" />
@@ -268,11 +269,13 @@
     <Compile Include="spatial\BiGrid3.cs" />
     <Compile Include="spatial\Bitmap3.cs" />
     <Compile Include="spatial\DCurveProjection.cs" />
+    <Compile Include="spatial\DenseGrid3.cs" />
     <Compile Include="spatial\DMeshAABBTree.cs" />
     <Compile Include="spatial\DSparseGrid3.cs" />
     <Compile Include="spatial\GridIndexing2.cs" />
     <Compile Include="spatial\GridIndexing.cs" />
-    <Compile Include="spatial\NarrowBandLevelSet.cs" />
+    <Compile Include="spatial\MeshSignedDistanceGrid.cs" />
+    <Compile Include="spatial\NormalHistogram.cs" />
     <Compile Include="spatial\PointHashGrid.cs" />
     <Compile Include="spatial\Polygon2dBoxTree.cs" />
     <Compile Include="spatial\SegmentHashGrid.cs" />
