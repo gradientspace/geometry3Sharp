@@ -15,7 +15,7 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 
 Many, many data structures and algorithms have been ported from the WildMagic5 and GTEngine C++ libraries, which are developed by David Eberly at [Geometric Tools](https://www.geometrictools.com/). WildMagic5 and GTEngine are distributed under the Boost license as well, available [here](https://www.geometrictools.com/Downloads/Downloads.html). Any errors in code marked as ported from WildMagic5/GTEngine are most certainly ours!
 
-The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https://github.com/christopherbatty/SDFGen) code written by [Christopher Batty](https://cs.uwaterloo.ca/~c2batty/) and [Robert Bridson](http://www.cs.ubc.ca/~rbridson/). 
+The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](https://github.com/christopherbatty/SDFGen) code written by [Christopher Batty](https://cs.uwaterloo.ca/~c2batty/) and [Robert Bridson](http://www.cs.ubc.ca/~rbridson/). 
 
 
 # Core
@@ -188,7 +188,7 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
     - **Curve3Axis3RevolveGenerator**: 3D polyline revolved around 3D axis
     - **Curve3Curve3RevolveGenerator**: 3D polyline revolved around 3D polyline (!)
     - **VoxelSurfaceGenerator**: generates minecraft-y voxel mesh surface
-    - **MarchingCubess**: multi-threaded triangulation of implicit functions / scalar fields
+    - **MarchingCubes**: multi-threaded triangulation of implicit functions / scalar fields
     
 
 # Mesh Selections
@@ -237,7 +237,7 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 - **DSparseGrid3**: allocate-on-demand sparse 3D grid
 - **Bitmap3**: 3D dense bitmap
 - **BiGrid3**: two-level DSparseGrid3
-- **NarrowBandLevelSet**: 3D fast-marching construction of narrow-band level set / voxel-distance-field for mesh
+- **MeshSignedDistanceGrid**: 3D fast-marching construction of narrow-band level set / voxel-distance-field for mesh
 - **IProjectionTarget** implementations for DCurve3, DMesh3, Plane3, Circle3d, Cylinder3d, etc, for use w/ reprojection in Remesher and other algorithms
 - **IIntersectionTarget** implementations for DMesh3, transformed DMesh3, Plane3
 
@@ -281,6 +281,7 @@ The **NarrowBandLevelSet** class was implemented based on the C++ [SDFGen](https
 # 3D Solids
 
 - **Cylinder3d**
+- **DenseGridTrilinearImplicit**: trilinear interpolant of 3D grid
 
 
 # I/O    
