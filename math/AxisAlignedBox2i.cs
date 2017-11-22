@@ -203,11 +203,25 @@ namespace g3
 
 
 
-        public bool Contains(Vector2i v)
-        {
+        public bool Contains(Vector2i v) {
             return (Min.x <= v.x) && (Min.y <= v.y)
                 && (Max.x >= v.x) && (Max.y >= v.y);
         }
+        public bool Contains(ref Vector2i v) {
+            return (Min.x <= v.x) && (Min.y <= v.y)
+                && (Max.x >= v.x) && (Max.y >= v.y);
+        }
+
+
+        public bool Contains(AxisAlignedBox2i box) {
+            return Contains(ref box.Min) && Contains(ref box.Max);
+        }
+        public bool Contains(ref AxisAlignedBox2i box) {
+            return Contains(ref box.Min) && Contains(ref box.Max);
+        }
+
+
+
         public bool Intersects(AxisAlignedBox2i box)
         {
             return !((box.Max.x <= Min.x) || (box.Min.x >= Max.x)

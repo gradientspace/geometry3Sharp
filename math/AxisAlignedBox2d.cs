@@ -241,10 +241,10 @@ namespace g3
 		}
 
 		public bool Contains(AxisAlignedBox2d box2) {
-			return Contains(box2.Min) && Contains(box2.Max);
+			return Contains(ref box2.Min) && Contains(ref box2.Max);
 		}
 		public bool Contains(ref AxisAlignedBox2d box2) {
-			return Contains(box2.Min) && Contains(box2.Max);
+			return Contains(ref box2.Min) && Contains(ref box2.Max);
 		}
 
         public bool Intersects(AxisAlignedBox2d box) {
