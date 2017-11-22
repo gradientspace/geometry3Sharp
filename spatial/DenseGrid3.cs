@@ -76,10 +76,26 @@ namespace g3
         {
             Buffer[i + ni * (j + nj * k)]++;
         }
+        public void decrement(int i, int j, int k)
+        {
+            Buffer[i + ni * (j + nj * k)]--;
+        }
 
         public void atomic_increment(int i, int j, int k)
         {
             System.Threading.Interlocked.Increment(ref Buffer[i + ni * (j + nj * k)]);
+        }
+
+        public void atomic_decrement(int i, int j, int k)
+        {
+            System.Threading.Interlocked.Decrement(ref Buffer[i + ni * (j + nj * k)]);
+        }
+
+        public void atomic_incdec(int i, int j, int k, bool decrement = false) {
+            if ( decrement )
+                System.Threading.Interlocked.Decrement(ref Buffer[i + ni * (j + nj * k)]);
+            else
+                System.Threading.Interlocked.Increment(ref Buffer[i + ni * (j + nj * k)]);
         }
     }
 

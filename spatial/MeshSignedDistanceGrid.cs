@@ -44,6 +44,14 @@ namespace g3
         public ComputeModes ComputeMode = ComputeModes.FullGrid;
 
 
+        public enum InsideModes
+        {
+            CrossingCount = 0,
+            ParityCount = 1
+        }
+        public InsideModes InsideMode = InsideModes.ParityCount;
+
+
         public bool DebugPrint = false;
 
 
@@ -371,6 +379,12 @@ namespace g3
                 Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
                 Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
 
+                bool neg_x = false;
+                if (InsideMode == InsideModes.ParityCount) {
+                    Vector3d n = MathUtil.FastNormalDirection(ref xp, ref xq, ref xr);
+                    neg_x = n.x > 0;
+                }
+
                 // real ijk coordinates of xp/xq/xr
                 double fip = (xp[0] - ox) * invdx, fjp = (xp[1] - oy) * invdx, fkp = (xp[2] - oz) * invdx;
                 double fiq = (xq[0] - ox) * invdx, fjq = (xq[1] - oy) * invdx, fkq = (xq[2] - oz) * invdx;
@@ -389,11 +403,13 @@ namespace g3
                         if (point_in_triangle_2d(j, k, fjp, fkp, fjq, fkq, fjr, fkr, out a, out b, out c)) {
                             double fi = a * fip + b * fiq + c * fir; // intersection i coordinate
                             int i_interval = (int)(Math.Ceiling(fi)); // intersection is in (i_interval-1,i_interval]
-                            if (i_interval < 0)
-                                intersection_count.atomic_increment(0, j, k); // we enlarge the first interval to include everything to the -x direction
-                            else if (i_interval < ni)
-                                intersection_count.atomic_increment(i_interval, j, k);
-                            // we ignore intersections that are beyond the +x side of the grid
+                            if (i_interval < 0) {
+                                intersection_count.atomic_incdec(0, j, k, neg_x);
+                            } else if (i_interval < ni) {
+                                intersection_count.atomic_incdec(i_interval, j, k, neg_x);
+                            } else {
+                                // we ignore intersections that are beyond the +x side of the grid
+                            }
                         }
                     }
                 }
@@ -417,6 +433,10 @@ namespace g3
         // inside the mesh, based on the intersection_counts
         void compute_signs(int ni, int nj, int nk, DenseGrid3f distances, DenseGrid3i intersection_counts)
         {
+            Func<int, bool> isInsideF = (count) => { return count % 2 == 1; };
+            if (InsideMode == InsideModes.ParityCount)
+                isInsideF = (count) => { return count > 0; };
+
             if (UseParallel) {
                 // can process each x-row in parallel
                 AxisAlignedBox2i box = new AxisAlignedBox2i(0, 0, nj, nk);
@@ -425,7 +445,7 @@ namespace g3
                     int total_count = 0;
                     for (int i = 0; i < ni; ++i) {
                         total_count += intersection_counts[i, j, k];
-                        if (total_count % 2 == 1) { // if parity of intersections so far is odd,
+                        if (isInsideF(total_count)) { // if parity of intersections so far is odd,
                             distances[i, j, k] = -distances[i, j, k]; // we are inside the mesh
                         }
                     }
@@ -438,7 +458,7 @@ namespace g3
                         int total_count = 0;
                         for (int i = 0; i < ni; ++i) {
                             total_count += intersection_counts[i, j, k];
-                            if (total_count % 2 == 1) { // if parity of intersections so far is odd,
+                            if (isInsideF(total_count)) { // if parity of intersections so far is odd,
                                 distances[i, j, k] = -distances[i, j, k]; // we are inside the mesh
                             }
                         }
