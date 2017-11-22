@@ -65,7 +65,7 @@ namespace g3
 
 		ArrayList m_seedPoints;
 
-		IImplicitField2D m_field;
+		ImplicitField2d m_field;
 
 		ArrayList m_cellStack;
 
@@ -123,7 +123,7 @@ namespace g3
             m_stroke.Clear();
 		}
 
-		public void Polygonize( IImplicitField2D field ) {
+		public void Polygonize( ImplicitField2d field ) {
 
 			m_field = field;
 

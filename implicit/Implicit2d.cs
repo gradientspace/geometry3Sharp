@@ -6,7 +6,7 @@ namespace g3
 	/// <summary>
 	/// Summary description for ImplicitField2D.
 	/// </summary>
-	public interface IImplicitField2D
+	public interface ImplicitField2d
 	{
 		float Value( float fX, float fY );
 
@@ -15,26 +15,24 @@ namespace g3
 		AxisAlignedBox2f Bounds { get; }
 	}
 
-	public interface IImplicitOperator2D : IImplicitField2D 
+	public interface ImplicitOperator2d : ImplicitField2d 
 	{
-		void AddChild( IImplicitField2D field );
+		void AddChild( ImplicitField2d field );
 	}
 
 
 
 
-
-
-	public class ImplicitPoint : IImplicitField2D 
+	public class ImplicitPoint2d : ImplicitField2d 
 	{
         Vector2f m_vCenter;
 		private float m_radius;
 
-		public ImplicitPoint( float x, float y ) {
+		public ImplicitPoint2d( float x, float y ) {
             m_vCenter = new Vector2f(x, y);
 			m_radius = 1;
 		}
-		public ImplicitPoint( float x, float y, float radius ) {
+		public ImplicitPoint2d( float x, float y, float radius ) {
             m_vCenter = new Vector2f(x, y);
             m_radius = radius;
 		}

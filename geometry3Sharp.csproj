@@ -96,7 +96,9 @@
     <Compile Include="distance\DistPoint2Circle2.cs" />
     <Compile Include="distance\DistPoint3Cylinder3.cs" />
     <Compile Include="distance\DistPoint3Circle3.cs" />
-    <Compile Include="implicit\ImplicitField.cs" />
+    <Compile Include="implicit\GridImplicits3d.cs" />
+    <Compile Include="implicit\Implicit2d.cs" />
+    <Compile Include="implicit\Implicit3d.cs" />
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="intersection\IntrLine3AxisAlignedBox3.cs" />

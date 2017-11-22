@@ -7,20 +7,6 @@ using g3;
 
 namespace g3
 {
-
-    public interface ImplicitFunction3d
-    {
-        double Value(ref Vector3d pt);
-    }
-    public class ImplicitSphere3d : ImplicitFunction3d
-    {
-        public double Value(ref Vector3d pt)
-        {
-            return pt.Length - 5.0f;
-        }
-    }
-
-
     /// <summary>
     /// Basic implementation of marching cubes mesh generation, which can be applied to
     /// arbitrary Implicit function. Multi-threading enabled by default.

@@ -32,24 +32,44 @@ namespace g3
     {
         public DMesh3 Mesh;
         public float CellSize;
+
+        // Width of the band around triangles for which exact distances are computed
+        // (In fact this is conservative, the band is often larger locally)
         public int ExactBandWidth = 1;
+
+        // Most of this parallelizes very well, makes a huge speed difference
         public bool UseParallel = true;
 
-
+        // The narrow band is always computed exactly, and the full grid is always signed.
+        // Can also fill in the rest of the full grid with fast sweeping. This is 
+        // quite computationally intensive, though, and not parallelizable 
+        // (time only depends on grid resolution)
         public enum ComputeModes
         {
             FullGrid = 0,
             NarrowBandOnly = 1
         }
-        public ComputeModes ComputeMode = ComputeModes.FullGrid;
+        public ComputeModes ComputeMode = ComputeModes.NarrowBandOnly;
 
-
+        // What counts as "inside" the mesh. Crossing count does not use triangle
+        // orientation, so inverted faces are fine, but overlapping shells or self intersections
+        // will be filled using even/odd rules (as seen along X axis...)
+        // Parity count is basically mesh winding number, handles overlap shells and
+        // self-intersections, but inverted shells are 'subtracted', and inverted faces are a disaster.
+        // Both modes handle internal cavities, neither handles open sheets.
         public enum InsideModes
         {
             CrossingCount = 0,
             ParityCount = 1
         }
         public InsideModes InsideMode = InsideModes.ParityCount;
+
+        // Implementation computes the triangle closest to each grid cell, can
+        // return this grid if desired (only reason not to is avoid hanging onto memory)
+        public bool WantClosestTriGrid = false;
+
+        // grid of per-cell crossing or parity counts
+        public bool WantIntersectionsGrid = false;
 
 
         public bool DebugPrint = false;
@@ -58,7 +78,8 @@ namespace g3
         // computed results
         Vector3f grid_origin;
         DenseGrid3f grid;
-
+        DenseGrid3i closest_tri_grid;
+        DenseGrid3i intersections_grid;
 
         public MeshSignedDistanceGrid(DMesh3 mesh, double cellSize)
         {
@@ -104,6 +125,22 @@ namespace g3
         /// </summary>
         public Vector3f GridOrigin {
             get { return grid_origin; }
+        }
+
+
+        public DenseGrid3i ClosestTriGrid {
+            get {
+                if ( WantClosestTriGrid == false)
+                    throw new Exception("Set WantClosestTriGrid=true to return this value");
+                return closest_tri_grid;
+            }
+        }
+        public DenseGrid3i IntersectionsGrid {
+            get {
+                if (WantIntersectionsGrid == false)
+                    throw new Exception("Set WantIntersectionsGrid=true to return this value");
+                return intersections_grid;
+            }
         }
 
 
@@ -195,6 +232,11 @@ namespace g3
             compute_signs(ni, nj, nk, distances, intersection_count);
 
             if (DebugPrint) System.Console.WriteLine("done signs");
+
+            if (WantClosestTriGrid)
+                closest_tri_grid = closest_tri;
+            if (WantIntersectionsGrid)
+                intersections_grid = intersection_count;
 
         }   // end make_level_set_3
 
@@ -300,6 +342,11 @@ namespace g3
             compute_signs(ni, nj, nk, distances, intersection_count);
 
             if (DebugPrint) System.Console.WriteLine("done signs");
+
+            if (WantClosestTriGrid)
+                closest_tri_grid = closest_tri;
+            if (WantIntersectionsGrid)
+                intersections_grid = intersection_count;
 
         }   // end make_level_set_3
 

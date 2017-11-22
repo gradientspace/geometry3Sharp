@@ -5,16 +5,16 @@ using System.Text;
 
 namespace g3
 {
-    abstract public class CompositionOperator2D : IImplicitOperator2D
+    abstract public class ImplicitNAryOp2d : ImplicitOperator2d
     {
-        protected List<IImplicitField2D> m_vChildren;
+        protected List<ImplicitField2d> m_vChildren;
 
-        public CompositionOperator2D()
+        public ImplicitNAryOp2d()
         {
-            m_vChildren = new List<IImplicitField2D>();
+            m_vChildren = new List<ImplicitField2d>();
         }
 
-        public void AddChild(IImplicitField2D pField)
+        public void AddChild(ImplicitField2d pField)
         {
             m_vChildren.Add(pField);
         }
@@ -43,16 +43,16 @@ namespace g3
         }
     }
 
-    public class ImplicitBlend : CompositionOperator2D
+    public class ImplicitBlend2d : ImplicitNAryOp2d
     {
-        public ImplicitBlend() : base()
+        public ImplicitBlend2d() : base()
         {
         }
 
         override public float Value(float fX, float fY)
         {
             float fSumValue = 0.0f;
-            foreach (IImplicitField2D child in m_vChildren)
+            foreach (ImplicitField2d child in m_vChildren)
                 fSumValue += child.Value(fX, fY);
             return fSumValue;
         }
@@ -61,7 +61,7 @@ namespace g3
         {
             fGX = fGY = 0;
             float fTempX = 0, fTempY = 0;
-            foreach (IImplicitField2D child in m_vChildren) {
+            foreach (ImplicitField2d child in m_vChildren) {
                 child.Gradient(fX, fY, ref fTempX, ref fTempY);
                 fGX += fTempX;
                 fGY += fTempY;
@@ -69,16 +69,16 @@ namespace g3
         }
     }
 
-    public class ImplicitUnion : CompositionOperator2D
+    public class ImplicitUnion2d : ImplicitNAryOp2d
     {
-        public ImplicitUnion() : base()
+        public ImplicitUnion2d() : base()
         {
         }
 
         override public float Value(float fX, float fY)
         {
             float fMaxValue = 0.0f;
-            foreach (IImplicitField2D child in m_vChildren)
+            foreach (ImplicitField2d child in m_vChildren)
                 fMaxValue = Math.Max(fMaxValue, child.Value(fX, fY));
             return fMaxValue;
         }
@@ -103,16 +103,16 @@ namespace g3
     }
 
 
-    public class ImplicitIntersection : CompositionOperator2D
+    public class ImplicitIntersection2d : ImplicitNAryOp2d
     {
-        public ImplicitIntersection()
+        public ImplicitIntersection2d()
         {
         }
 
         override public float Value(float fX, float fY)
         {
             float fMinValue = 9999999999.0f;
-            foreach (IImplicitField2D child in m_vChildren)
+            foreach (ImplicitField2d child in m_vChildren)
                 fMinValue = Math.Min(fMinValue, child.Value(fX, fY));
             return fMinValue;
         }
@@ -136,9 +136,9 @@ namespace g3
     }
 
 
-    public class ImplicitDifference : CompositionOperator2D
+    public class ImplicitDifference2d : ImplicitNAryOp2d
     {
-        public ImplicitDifference()
+        public ImplicitDifference2d()
         {
         }
 
