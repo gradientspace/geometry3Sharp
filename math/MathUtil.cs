@@ -421,13 +421,15 @@ namespace g3
 
 
 
-		public static double Area(Vector3d v1, Vector3d v2, Vector3d v3) {
+		public static double Area(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3) {
 			return 0.5 * (v2 - v1).Cross(v3 - v1).Length;
 		}
+        public static double Area(Vector3d v1, Vector3d v2, Vector3d v3) {
+            return 0.5 * (v2 - v1).Cross(v3 - v1).Length;
+        }
 
 
-
-        public static Vector3d Normal(Vector3d v1, Vector3d v2, Vector3d v3) {
+        public static Vector3d Normal(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3) {
             Vector3d edge1 = v2 - v1;
             Vector3d edge2 = v3 - v2;
             edge1.Normalize();
@@ -436,13 +438,16 @@ namespace g3
             vCross.Normalize();
             return vCross;
         }
+        public static Vector3d Normal(Vector3d v1, Vector3d v2, Vector3d v3) {
+            return Normal(ref v1, ref v2, ref v3);
+        }
 
 
 		/// <summary>
 		/// compute vector in direction of triangle normal (cross-product). No normalization.
 		/// </summary>
 		/// <returns>The normal direction.</returns>
-		public static Vector3d FastNormalDirection(Vector3d v1, Vector3d v2, Vector3d v3)
+		public static Vector3d FastNormalDirection(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3)
 		{
 			Vector3d edge1 = v2 - v1;
 			Vector3d edge2 = v3 - v1;
@@ -454,7 +459,7 @@ namespace g3
 		/// simultaneously compute triangle normal and area, and only normalize after
 		/// cross-product, not before (so, fewer normalizes then Normal())
 		/// </summary>
-		public static Vector3d FastNormalArea(Vector3d v1, Vector3d v2, Vector3d v3, out double area)
+		public static Vector3d FastNormalArea(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3, out double area)
 		{
 			Vector3d edge1 = v2 - v1;
 			Vector3d edge2 = v3 - v1;

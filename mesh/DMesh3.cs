@@ -656,14 +656,14 @@ namespace g3
         {
             Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
             GetTriVertices(tID, ref v0, ref v1, ref v2);
-            return MathUtil.Normal(v0, v1, v2);
+            return MathUtil.Normal(ref v0, ref v1, ref v2);
         }
 
         public double GetTriArea(int tID)
         {
             Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
             GetTriVertices(tID, ref v0, ref v1, ref v2);
-            return MathUtil.Area(v0, v1, v2);
+            return MathUtil.Area(ref v0, ref v1, ref v2);
         }
 
 		/// <summary>
@@ -676,7 +676,7 @@ namespace g3
 			Vector3d v0 = Vector3d.Zero, v1 = Vector3d.Zero, v2 = Vector3d.Zero;
 			GetTriVertices(tID, ref v0, ref v1, ref v2);
 			vCentroid = (1.0 / 3.0) * (v0 + v1 + v2);
-			normal = MathUtil.FastNormalArea(v0, v1, v2, out fArea);
+			normal = MathUtil.FastNormalArea(ref v0, ref v1, ref v2, out fArea);
 		}
 
 
@@ -772,7 +772,7 @@ namespace g3
             Vector3d v1 = new Vector3d(vertices[3 * b], vertices[3 * b + 1], vertices[3 * b + 2]);
             Vector3d v2 = new Vector3d(vertices[3 * c], vertices[3 * c + 1], vertices[3 * c + 2]);
             Vector3f edge = (Vector3f)(v1 - v0).Normalized;
-            Vector3f normal = (Vector3f)MathUtil.Normal(v0, v1, v2);
+            Vector3f normal = (Vector3f)MathUtil.Normal(ref v0, ref v1, ref v2);
             Vector3f other = edge.Cross(normal);
             Vector3f center = (Vector3f)(v0 + v1 + v2) / 3;
             return new Frame3f(center, edge, other, normal);

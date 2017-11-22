@@ -73,8 +73,8 @@ namespace g3
                 Vector3d va = Mesh.GetVertex(tri.a);
                 Vector3d vb = Mesh.GetVertex(tri.b);
                 Vector3d vc = Mesh.GetVertex(tri.c);
-                Vector3d N = MathUtil.Normal(va, vb, vc);
-                double a = MathUtil.Area(va, vb, vc);
+                Vector3d N = MathUtil.Normal(ref va, ref vb, ref vc);
+                double a = MathUtil.Area(ref va, ref vb, ref vc);
                 Normals[tri.a] += a * N;
                 Normals[tri.b] += a * N;
                 Normals[tri.c] += a * N;
