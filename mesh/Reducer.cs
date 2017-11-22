@@ -173,6 +173,71 @@ namespace g3
 
 
 
+
+
+
+
+
+        public virtual void FastCollapsePass(double fMinEdgeLength)
+        {
+            if (mesh.TriangleCount == 0)    // badness if we don't catch this...
+                return;
+
+            MinEdgeLength = fMinEdgeLength;
+            double min_sqr = MinEdgeLength * MinEdgeLength;
+
+            // we don't collapse on the boundary
+            HaveBoundary = false;
+
+            begin_pass();
+
+            begin_setup();
+            Precompute();
+            end_setup();
+
+            begin_ops();
+
+            begin_collapse();
+
+            int N = mesh.MaxEdgeID;
+            Vector3d va = Vector3d.Zero, vb = Vector3d.Zero;
+            for ( int eid = 0; eid < N; ++eid) {
+                if (!mesh.IsEdge(eid))
+                    continue;
+                if (mesh.IsBoundaryEdge(eid))
+                    continue;
+
+                mesh.GetEdgeV(eid, ref va, ref vb);
+                if (va.DistanceSquared(ref vb) > min_sqr)
+                    continue;
+
+                COUNT_ITERATIONS++;
+
+                Vector3d midpoint = (va + vb) * 0.5;
+                int vKept;
+                ProcessResult result = CollapseEdge(eid, midpoint, out vKept);
+                if (result == ProcessResult.Ok_Collapsed) {
+                    // do nothing?
+                }
+            }
+            end_collapse();
+            end_ops();
+
+            Reproject();
+
+            end_pass();
+        }
+
+
+
+
+
+
+
+
+
+
+
         QuadricError[] vertQuadrics;
 		protected virtual void InitializeVertexQuadrics()
 		{

@@ -174,7 +174,16 @@ namespace g3
 			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return dx*dx + dy*dy + dz*dz;
 		}
+		public double DistanceSquared(ref Vector3d v2) {
+			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
+			return dx*dx + dy*dy + dz*dz;
+		}
+
         public double Distance(Vector3d v2) {
+            double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
+			return Math.Sqrt(dx*dx + dy*dy + dz*dz);
+		}
+        public double Distance(ref Vector3d v2) {
             double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return Math.Sqrt(dx*dx + dy*dy + dz*dz);
 		}

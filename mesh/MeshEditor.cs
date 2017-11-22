@@ -601,8 +601,12 @@ namespace g3
 
         public void AppendBox(Frame3f frame, float size)
         {
+            AppendBox(frame, size * Vector3f.One);
+        }
+        public void AppendBox(Frame3f frame, Vector3f size)
+        {
             TrivialBox3Generator boxgen = new TrivialBox3Generator() {
-                Box = new Box3d(frame, size * 0.5 * Vector3d.One),
+                Box = new Box3d(frame, size),
                 NoSharedVertices = false
             };
             boxgen.Generate();
@@ -610,7 +614,6 @@ namespace g3
             boxgen.MakeMesh(mesh);
             AppendMesh(mesh, Mesh.AllocateTriangleGroup());
         }
-
 
 
 
