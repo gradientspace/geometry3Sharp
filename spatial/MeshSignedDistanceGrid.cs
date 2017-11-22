@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 
 
@@ -71,7 +72,10 @@ namespace g3
             int nk = (int)((max.z - grid_origin.z) / CellSize) + 1;
 
             grid = new DenseGrid3f();
-            make_level_set3(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+            if ( UseParallel )
+                make_level_set3_parallel(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+            else
+                make_level_set3(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
         }
 
 
@@ -160,39 +164,126 @@ namespace g3
                         }
                     }
                 }
-
-                // recompute j/k integer bounds of triangle w/o exact band
-                j0 = MathUtil.Clamp((int)Math.Ceiling(MathUtil.Min(fjp, fjq, fjr)), 0, nj - 1);
-                j1 = MathUtil.Clamp((int)Math.Floor(MathUtil.Max(fjp, fjq, fjr)), 0, nj - 1);
-                k0 = MathUtil.Clamp((int)Math.Ceiling(MathUtil.Min(fkp, fkq, fkr)), 0, nk - 1);
-                k1 = MathUtil.Clamp((int)Math.Floor(MathUtil.Max(fkp, fkq, fkr)), 0, nk - 1);
-
-                // and do intersection counts
-                for (int k = k0; k <= k1; ++k) {
-                    for (int j = j0; j <= j1; ++j) {
-                        double a, b, c;
-                        if (point_in_triangle_2d(j, k, fjp, fkp, fjq, fkq, fjr, fkr, out a, out b, out c)) {
-                            double fi = a * fip + b * fiq + c * fir; // intersection i coordinate
-                            int i_interval = (int)(Math.Ceiling(fi)); // intersection is in (i_interval-1,i_interval]
-                            if (i_interval < 0)
-                                intersection_count.increment(0, j, k); // we enlarge the first interval to include everything to the -x direction
-                            else if (i_interval < ni)
-                                intersection_count.increment(i_interval, j, k);
-                            // we ignore intersections that are beyond the +x side of the grid
-                        }
-                    }
-                }
             }
 
             if (DebugPrint) System.Console.WriteLine("done narrow-band");
+
+            compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+
+            if (DebugPrint) System.Console.WriteLine("done intersections");
 
             if (ComputeMode == ComputeModes.FullGrid) {
                 // and now we fill in the rest of the distances with fast sweeping
                 for (int pass = 0; pass < 2; ++pass) 
                     sweep_pass(origin, dx, distances, closest_tri);
-
+                if (DebugPrint) System.Console.WriteLine("done sweeping");
             } else {
                 // nothing!
+                if (DebugPrint) System.Console.WriteLine("skipped sweeping");
+            }
+
+
+            // then figure out signs (inside/outside) from intersection counts
+            compute_signs(ni, nj, nk, distances, intersection_count);
+
+            if (DebugPrint) System.Console.WriteLine("done signs");
+
+        }   // end make_level_set_3
+
+
+
+
+
+
+
+
+        void make_level_set3_parallel(Vector3f origin, float dx,
+                             int ni, int nj, int nk,
+                             DenseGrid3f distances, int exact_band)
+        {
+            distances.resize(ni, nj, nk);
+            distances.assign((float)((ni + nj + nk) * dx)); // upper bound on distance
+
+            // closest triangle id for each grid cell
+            DenseGrid3i closest_tri = new DenseGrid3i(ni, nj, nk, -1);
+
+            // intersection_count(i,j,k) is # of tri intersections in (i-1,i]x{j}x{k}
+            DenseGrid3i intersection_count = new DenseGrid3i(ni, nj, nk, 0);
+
+            if (DebugPrint) System.Console.WriteLine("start");
+
+            double ox = (double)origin[0], oy = (double)origin[1], oz = (double)origin[2];
+            double invdx = 1.0 / dx;
+
+            // Compute narrow-band distances. For each triangle, we find its grid-coord-bbox,
+            // and compute exact distances within that box.
+
+            // To compute in parallel, we need to safely update grid cells. Current strategy is
+            // to use a spinlock to control access to grid. Partitioning the grid into a few regions,
+            // each w/ a separate spinlock, improves performance somewhat. Have also tried having a
+            // separate spinlock per-row, this resulted in a few-percent performance improvement.
+            // Also tried pre-sorting triangles into disjoint regions, this did not help much except
+            // on "perfect" cases like a sphere. 
+            int wi = ni / 2, wj = nj / 2, wk = nk / 2;
+            SpinLock[] grid_locks = new SpinLock[8];
+
+            gParallel.ForEach(Mesh.TriangleIndices(), (tid) => {
+                Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
+                Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
+
+                // real ijk coordinates of xp/xq/xr
+                double fip = (xp[0] - ox) * invdx, fjp = (xp[1] - oy) * invdx, fkp = (xp[2] - oz) * invdx;
+                double fiq = (xq[0] - ox) * invdx, fjq = (xq[1] - oy) * invdx, fkq = (xq[2] - oz) * invdx;
+                double fir = (xr[0] - ox) * invdx, fjr = (xr[1] - oy) * invdx, fkr = (xr[2] - oz) * invdx;
+
+                // clamped integer bounding box of triangle plus exact-band
+                int i0 = MathUtil.Clamp(((int)MathUtil.Min(fip, fiq, fir)) - exact_band, 0, ni - 1);
+                int i1 = MathUtil.Clamp(((int)MathUtil.Max(fip, fiq, fir)) + exact_band + 1, 0, ni - 1);
+                int j0 = MathUtil.Clamp(((int)MathUtil.Min(fjp, fjq, fjr)) - exact_band, 0, nj - 1);
+                int j1 = MathUtil.Clamp(((int)MathUtil.Max(fjp, fjq, fjr)) + exact_band + 1, 0, nj - 1);
+                int k0 = MathUtil.Clamp(((int)MathUtil.Min(fkp, fkq, fkr)) - exact_band, 0, nk - 1);
+                int k1 = MathUtil.Clamp(((int)MathUtil.Max(fkp, fkq, fkr)) + exact_band + 1, 0, nk - 1);
+
+                // compute distance for each tri inside this bounding box
+                // note: this can be very conservative if the triangle is large and on diagonal to grid axes
+                for (int k = k0; k <= k1; ++k) {
+                    for (int j = j0; j <= j1; ++j) {
+                        int base_idx = ((j < wj) ? 0 : 1) | ((k < wk) ? 0 : 2);    // construct index into spinlocks array
+
+                        for (int i = i0; i <= i1; ++i) {
+                            Vector3d gx = new Vector3d((float)i * dx + origin[0], (float)j * dx + origin[1], (float)k * dx + origin[2]);
+                            float d = (float)point_triangle_distance(ref gx, ref xp, ref xq, ref xr);
+                            if (d < distances[i, j, k]) {
+                                int lock_idx = base_idx | ((i < wi) ? 0 : 4);
+                                bool taken = false;
+                                grid_locks[lock_idx].Enter(ref taken);
+                                if (d < distances[i, j, k]  ) {    // have to check again in case grid changed in another thread...
+                                    distances[i, j, k] = d;
+                                    closest_tri[i, j, k] = tid;
+                                }
+                                grid_locks[lock_idx].Exit();
+                            }
+                        }
+
+                    }
+                }
+            });
+
+
+            if (DebugPrint) System.Console.WriteLine("done narrow-band");
+
+            compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+
+            if (DebugPrint) System.Console.WriteLine("done intersections");
+
+            if (ComputeMode == ComputeModes.FullGrid) {
+                // and now we fill in the rest of the distances with fast sweeping
+                for (int pass = 0; pass < 2; ++pass)
+                    sweep_pass(origin, dx, distances, closest_tri);
+                if (DebugPrint) System.Console.WriteLine("done sweeping");
+            } else {
+                // nothing!
+                if (DebugPrint) System.Console.WriteLine("skipped sweeping");
             }
 
             if (DebugPrint) System.Console.WriteLine("done sweeping");
@@ -222,6 +313,7 @@ namespace g3
         }
 
 
+        // single sweep pass
         void sweep(DenseGrid3f phi, DenseGrid3i closest_tri, 
                    Vector3f origin, float dx,
                    int di, int dj, int dk)
@@ -265,6 +357,57 @@ namespace g3
         }
 
 
+
+
+        // fill the intersection grid w/ number of intersections in each cell
+        void compute_intersections(Vector3f origin, float dx, int ni, int nj, int nk, DenseGrid3i intersection_count)
+        {
+            double ox = (double)origin[0], oy = (double)origin[1], oz = (double)origin[2];
+            double invdx = 1.0 / dx;
+
+            // this is what we will do for each triangle. There are no grid-reads, only grid-writes, 
+            // since we use atomic_increment, it is always thread-safe
+            Action<int> ProcessTriangleF = (tid) => {
+                Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
+                Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
+
+                // real ijk coordinates of xp/xq/xr
+                double fip = (xp[0] - ox) * invdx, fjp = (xp[1] - oy) * invdx, fkp = (xp[2] - oz) * invdx;
+                double fiq = (xq[0] - ox) * invdx, fjq = (xq[1] - oy) * invdx, fkq = (xq[2] - oz) * invdx;
+                double fir = (xr[0] - ox) * invdx, fjr = (xr[1] - oy) * invdx, fkr = (xr[2] - oz) * invdx;
+
+                // recompute j/k integer bounds of triangle w/o exact band
+                int j0 = MathUtil.Clamp((int)Math.Ceiling(MathUtil.Min(fjp, fjq, fjr)), 0, nj - 1);
+                int j1 = MathUtil.Clamp((int)Math.Floor(MathUtil.Max(fjp, fjq, fjr)), 0, nj - 1);
+                int k0 = MathUtil.Clamp((int)Math.Ceiling(MathUtil.Min(fkp, fkq, fkr)), 0, nk - 1);
+                int k1 = MathUtil.Clamp((int)Math.Floor(MathUtil.Max(fkp, fkq, fkr)), 0, nk - 1);
+
+                // and do intersection counts
+                for (int k = k0; k <= k1; ++k) {
+                    for (int j = j0; j <= j1; ++j) {
+                        double a, b, c;
+                        if (point_in_triangle_2d(j, k, fjp, fkp, fjq, fkq, fjr, fkr, out a, out b, out c)) {
+                            double fi = a * fip + b * fiq + c * fir; // intersection i coordinate
+                            int i_interval = (int)(Math.Ceiling(fi)); // intersection is in (i_interval-1,i_interval]
+                            if (i_interval < 0)
+                                intersection_count.atomic_increment(0, j, k); // we enlarge the first interval to include everything to the -x direction
+                            else if (i_interval < ni)
+                                intersection_count.atomic_increment(i_interval, j, k);
+                            // we ignore intersections that are beyond the +x side of the grid
+                        }
+                    }
+                }
+            };
+
+            if (UseParallel) {
+                gParallel.ForEach(Mesh.TriangleIndices(), ProcessTriangleF);
+            } else {
+                foreach (int tid in Mesh.TriangleIndices()) {
+                    ProcessTriangleF(tid);
+                }
+            }
+
+        }
 
 
 

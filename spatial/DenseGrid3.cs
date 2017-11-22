@@ -76,6 +76,11 @@ namespace g3
         {
             Buffer[i + ni * (j + nj * k)]++;
         }
+
+        public void atomic_increment(int i, int j, int k)
+        {
+            System.Threading.Interlocked.Increment(ref Buffer[i + ni * (j + nj * k)]);
+        }
     }
 
 
