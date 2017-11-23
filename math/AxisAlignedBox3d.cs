@@ -226,6 +226,27 @@ namespace g3
         }
 
 
+        public double DistanceSquared(ref AxisAlignedBox3d box2)
+        {
+            int neg_count = 0;
+            Vector3d deltas = Vector3d.Zero;
+            for ( int j = 0; j < 3; ++j ) {
+                double c = (Min[j] + Max[j]) * 0.5;
+                double c2 = (box2.Min[j] + box2.Max[j]) * 0.5;
+                double e = (Max[j] - Min[j]) * 0.5;
+                double e2 = (box2.Max[j] - box2.Min[j]) * 0.5;
+                deltas[j] = Math.Abs(c2 - c) + (e + e2);
+                if ( deltas[j] < 0 ) {
+                    deltas[j] = 0;
+                    neg_count++;
+                }
+            }
+            if (neg_count == 3)
+                return 0.0;
+            return deltas.LengthSquared;
+        }
+
+
         // [TODO] we have handled corner cases, but not edge cases!
         //   those are 2D, so it would be like (dx > width && dy > height)
         //public double Distance(Vector3d v)

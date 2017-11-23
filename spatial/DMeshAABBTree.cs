@@ -616,7 +616,7 @@ namespace g3
                     if ( TransformF != null )
                         oChild1Box = BoundsUtil.Bounds(ref oChild1Box, TransformF);
                     if ( box_box_intersect(oChild1, ref bounds) )
-                        find_intersections(oChild1, otherTree, TransformF, oBox, depth + 1, result);
+                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, result);
 
                 } else {                            // 2 children
                     oChild1 = oChild1 - 1;
@@ -654,6 +654,138 @@ namespace g3
                     int iChild2 = index_list[idx + 1] - 1;
                     if ( box_box_intersect(iChild2, ref oBounds) )
                         find_intersections(iChild2, otherTree, TransformF, oBox, depth + 1, result);
+                }
+
+            }
+        }
+
+
+
+
+
+
+
+
+
+        // Returns true if there is any intersection between our mesh and 'other' mesh, via AABBs
+        // TransformF takes vertices of otherTree to our tree - can be null if in same coord space
+        public Index2i FindNearestTriangles(DMeshAABBTree3 otherTree, Func<Vector3d, Vector3d> TransformF, out double distance, double max_dist = double.MaxValue)
+        {
+            if (mesh_timestamp != mesh.ShapeTimestamp)
+                throw new Exception("DMeshAABBTree3.TestIntersection: mesh has been modified since tree construction");
+
+            double nearest_sqr = double.MaxValue;
+            if (max_dist < double.MaxValue)
+                nearest_sqr = max_dist * max_dist;
+            Index2i nearest_pair = Index2i.Max;
+
+            find_nearest_triangles(root_index, otherTree, TransformF, otherTree.root_index, 0, ref nearest_sqr, ref nearest_pair);
+            distance = (nearest_sqr < double.MaxValue) ? Math.Sqrt(nearest_sqr) : double.MaxValue;
+            return nearest_pair;
+        }
+        void find_nearest_triangles(int iBox, DMeshAABBTree3 otherTree, Func<Vector3d, Vector3d> TransformF, int oBox, int depth, ref double nearest_sqr, ref Index2i nearest_pair)
+        {
+            int idx = box_to_index[iBox];
+            int odx = otherTree.box_to_index[oBox];
+
+            if (idx < triangles_end && odx < otherTree.triangles_end) {
+                // ok we are at triangles for both trees, do triangle-level testing
+                Triangle3d tri = new Triangle3d(), otri = new Triangle3d();
+                int num_tris = index_list[idx], onum_tris = otherTree.index_list[odx];
+
+                DistTriangle3Triangle3 dist = new DistTriangle3Triangle3(new Triangle3d(), new Triangle3d());
+
+                // outer iteration is "other" tris that need to be transformed (more expensive)
+                for (int j = 1; j <= onum_tris; ++j) {
+                    int tj = otherTree.index_list[odx + j];
+                    if (otherTree.TriangleFilterF != null && otherTree.TriangleFilterF(tj) == false)
+                        continue;
+                    otherTree.mesh.GetTriVertices(tj, ref otri.V0, ref otri.V1, ref otri.V2);
+                    if (TransformF != null) {
+                        otri.V0 = TransformF(otri.V0);
+                        otri.V1 = TransformF(otri.V1);
+                        otri.V2 = TransformF(otri.V2);
+                    }
+                    dist.Triangle0 = otri;
+
+                    // inner iteration over "our" triangles
+                    for (int i = 1; i <= num_tris; ++i) {
+                        int ti = index_list[idx + i];
+                        if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                            continue;
+                        mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
+                        dist.Triangle1 = tri;
+                        double dist_sqr = dist.GetSquared();
+                        if ( dist_sqr < nearest_sqr ) {
+                            nearest_sqr = dist_sqr;
+                            nearest_pair = new Index2i(ti, tj);
+                        }
+                    }
+                }
+            }
+
+            // we either descend "our" tree or the other tree
+            //   - if we have hit triangles on "our" tree, we have to descend other
+            //   - if we hit triangles on "other", we have to descend ours
+            //   - otherwise, we alternate at each depth. This produces wider
+            //     branching but is significantly faster (~10x) for both hits and misses
+            bool bDescendOther = (idx < triangles_end || depth % 2 == 0);
+            if (bDescendOther && odx < otherTree.triangles_end)
+                bDescendOther = false;      // can't
+
+            if (bDescendOther) {
+                // ok we hit triangles on our side but we need to still reach triangles on
+                // the other side, so we descend "their" children
+
+                AxisAlignedBox3d bounds = get_boxd(iBox);
+
+                int oChild1 = otherTree.index_list[odx];
+                if (oChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    oChild1 = (-oChild1) - 1;
+                    AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1);
+                    if (TransformF != null)
+                        oChild1Box = BoundsUtil.Bounds(ref oChild1Box, TransformF);
+                    if (oChild1Box.DistanceSquared(ref bounds) < nearest_sqr)
+                        find_nearest_triangles(iBox, otherTree, TransformF, oChild1, depth + 1, ref nearest_sqr, ref nearest_pair);
+
+                } else {                            // 2 children
+                    oChild1 = oChild1 - 1;          // [TODO] could descend one w/ larger overlap volume first??
+                    int oChild2 = otherTree.index_list[odx + 1] - 1;
+
+                    AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1);
+                    if (TransformF != null)
+                        oChild1Box = BoundsUtil.Bounds(ref oChild1Box, TransformF);
+                    if (oChild1Box.DistanceSquared(ref bounds) < nearest_sqr)
+                        find_nearest_triangles(iBox, otherTree, TransformF, oChild1, depth + 1, ref nearest_sqr, ref nearest_pair);
+
+                    AxisAlignedBox3d oChild2Box = otherTree.get_boxd(oChild2);
+                    if (TransformF != null)
+                        oChild2Box = BoundsUtil.Bounds(ref oChild2Box, TransformF);
+                    if (oChild2Box.Intersects(bounds))
+                        find_nearest_triangles(iBox, otherTree, TransformF, oChild2, depth + 1, ref nearest_sqr, ref nearest_pair);
+                }
+
+
+            } else {
+
+                // descend our tree nodes if they intersect w/ current bounds of other tree
+                AxisAlignedBox3d oBounds = otherTree.get_boxd(oBox);
+                oBounds = BoundsUtil.Bounds(ref oBounds, TransformF);
+
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    if (box_box_distsqr(iChild1, ref oBounds) < nearest_sqr)
+                        find_nearest_triangles(iChild1, otherTree, TransformF, oBox, depth + 1, ref nearest_sqr, ref nearest_pair);
+
+                } else {                            // 2 children
+                    iChild1 = iChild1 - 1;          // [TODO] could descend one w/ larger overlap volume first??
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    if (box_box_distsqr(iChild1, ref oBounds) < nearest_sqr)
+                        find_nearest_triangles(iChild1, otherTree, TransformF, oBox, depth + 1, ref nearest_sqr, ref nearest_pair);
+                    if (box_box_distsqr(iChild2, ref oBounds) < nearest_sqr)
+                        find_nearest_triangles(iChild2, otherTree, TransformF, oBox, depth + 1, ref nearest_sqr, ref nearest_pair);
                 }
 
             }
@@ -1713,6 +1845,15 @@ namespace g3
             AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
 
             return box.Intersects(testBox);
+        }
+
+        double box_box_distsqr(int iBox, ref AxisAlignedBox3d testBox)
+        {
+            // [TODO] could compute this w/o constructing box
+            Vector3d c = (Vector3d)box_centers[iBox];
+            Vector3f e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
+            return box.DistanceSquared(ref testBox);
         }
 
 
