@@ -228,22 +228,20 @@ namespace g3
 
         public double DistanceSquared(ref AxisAlignedBox3d box2)
         {
-            int neg_count = 0;
-            Vector3d deltas = Vector3d.Zero;
-            for ( int j = 0; j < 3; ++j ) {
-                double c = (Min[j] + Max[j]) * 0.5;
-                double c2 = (box2.Min[j] + box2.Max[j]) * 0.5;
-                double e = (Max[j] - Min[j]) * 0.5;
-                double e2 = (box2.Max[j] - box2.Min[j]) * 0.5;
-                deltas[j] = Math.Abs(c2 - c) + (e + e2);
-                if ( deltas[j] < 0 ) {
-                    deltas[j] = 0;
-                    neg_count++;
-                }
-            }
-            if (neg_count == 3)
-                return 0.0;
-            return deltas.LengthSquared;
+            // compute lensqr( max(0, abs(center1-center2) - (extent1+extent2)) )
+            double delta_x = Math.Abs((box2.Min.x + box2.Max.x) - (Min.x + Max.x))
+                    - ((Max.x - Min.x) + (box2.Max.x - box2.Min.x));
+            if ( delta_x < 0 )
+                delta_x = 0;
+            double delta_y = Math.Abs((box2.Min.y + box2.Max.y) - (Min.y + Max.y))
+                    - ((Max.y - Min.y) + (box2.Max.y - box2.Min.y));
+            if (delta_y < 0)
+                delta_y = 0;
+            double delta_z = Math.Abs((box2.Min.z + box2.Max.z) - (Min.z + Max.z))
+                    - ((Max.z - Min.z) + (box2.Max.z - box2.Min.z));
+            if (delta_z < 0)
+                delta_z = 0;
+            return 0.25 * (delta_x * delta_x + delta_y * delta_y + delta_z * delta_z);
         }
 
 
