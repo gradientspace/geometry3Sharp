@@ -14,6 +14,7 @@ namespace g3
     {
         List<string> SupportedExtensions { get; }
         IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler warnings);
+        IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler warnings);
     }
 
 
@@ -82,8 +83,7 @@ namespace g3
 
 
         /// <summary>
-        /// Read mesh file at path, with given Options. Result is stored
-        /// in MeshBuilder parameter
+        /// Read mesh file at path, with given Options. Result is stored in MeshBuilder parameter
         /// </summary>
         public IOReadResult Read(string sFilename, ReadOptions options)
         {
@@ -113,8 +113,37 @@ namespace g3
             } catch (Exception e) {
                 return new IOReadResult(IOCode.GenericReaderError, "Unknown error : exception : " + e.Message);
             }
-
         }
+
+
+        /// <summary>
+        /// Read mesh file at path, with given Options. Result is stored in MeshBuilder parameter
+        /// </summary>
+        public IOReadResult Read(Stream stream, string sExtension, ReadOptions options)
+        {
+            if (MeshBuilder == null)
+                return new IOReadResult(IOCode.GenericReaderError, "MeshBuilder is null!");
+            MeshFormatReader useReader = null;
+            foreach (var reader in Readers) {
+                foreach (string ext in reader.SupportedExtensions) {
+                    if (ext.Equals(sExtension, StringComparison.OrdinalIgnoreCase))
+                        useReader = reader;
+                }
+                if (useReader != null)
+                    break;
+            }
+            if (useReader == null)
+                return new IOReadResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
+
+            try {
+                return useReader.ReadFile(stream, MeshBuilder, options, on_warning);
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.GenericReaderError, "Unknown error : exception : " + e.Message);
+            }
+        }
+
+
+
 
 
         /// <summary>
@@ -128,6 +157,19 @@ namespace g3
             return reader.Read(sFilename, options);
         }
 
+        /// <summary>
+        /// Read mesh file using options and builder. You must provide our own Builder
+        /// here because the reader is not returned
+        /// </summary>
+        static public IOReadResult ReadFile(Stream stream, string sExtension, ReadOptions options, IMeshBuilder builder)
+        {
+            StandardMeshReader reader = new StandardMeshReader();
+            reader.MeshBuilder = builder;
+            return reader.Read(stream, sExtension, options);
+        }
+
+
+
 
         /// <summary>
         /// This is basically a utility function, returns first mesh in file, with default options.
@@ -136,6 +178,17 @@ namespace g3
         {
             DMesh3Builder builder = new DMesh3Builder();
             IOReadResult result = ReadFile(sFilename, ReadOptions.Defaults, builder);
+            return (result.code == IOCode.Ok) ? builder.Meshes[0] : null;
+        }
+
+
+        /// <summary>
+        /// This is basically a utility function, returns first mesh in file, with default options.
+        /// </summary>
+        static public DMesh3 ReadMesh(Stream stream, string sExtension)
+        {
+            DMesh3Builder builder = new DMesh3Builder();
+            IOReadResult result = ReadFile(stream, sExtension, ReadOptions.Defaults, builder);
             return (result.code == IOCode.Ok) ? builder.Meshes[0] : null;
         }
 
@@ -160,17 +213,26 @@ namespace g3
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
-            StreamReader stream = new StreamReader(sFilename);
-            if (stream.BaseStream == null)
-                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading");
+            try {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read)) {
+                    OBJReader reader = new OBJReader();
+                    if (options.ReadMaterials)
+                        reader.MTLFileSearchPaths.Add(Path.GetDirectoryName(sFilename));
+                    reader.warningEvent += messages;
 
+                    var result = reader.Read(new StreamReader(stream), options, builder);
+                    return result;
+                }
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
+            }
+        }
+
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
             OBJReader reader = new OBJReader();
-            if (options.ReadMaterials)
-                reader.MTLFileSearchPaths.Add(Path.GetDirectoryName(sFilename));
             reader.warningEvent += messages;
-
-            var result = reader.Read(stream, options, builder);
-            stream.Close();
+            var result = reader.Read(new StreamReader(stream), options, builder);
             return result;
         }
     }
@@ -188,14 +250,18 @@ namespace g3
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
-            // detect binary STL
-            FileStream stream = null;
             try {
-                stream = File.Open(sFilename, FileMode.Open, FileAccess.Read);
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read)) {
+                    return ReadFile(stream, builder, options, messages);
+                }
             } catch (Exception e) {
                 return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
             }
+        }
 
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            // detect binary STL
             BinaryReader binReader = new BinaryReader(stream);
             byte[] header = binReader.ReadBytes(80);
             bool bIsBinary = false;
@@ -204,7 +270,7 @@ namespace g3
             if (Util.IsTextString(header) == false)
                 bIsBinary = true;
             // if we don't see "solid" string in first 80 chars, probably binary
-            if ( bIsBinary == false ) {
+            if (bIsBinary == false) {
                 string sText = System.Text.Encoding.ASCII.GetString(header);
                 if (sText.Contains("solid") == false)
                     bIsBinary = true;
@@ -218,9 +284,9 @@ namespace g3
                 reader.Read(new BinaryReader(stream), options, builder) :
                 reader.Read(new StreamReader(stream), options, builder);
 
-            stream.Close();
             return result;
         }
+
     }
 
 
@@ -237,19 +303,23 @@ namespace g3
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
-            StreamReader stream = new StreamReader(sFilename);
-            if (stream.BaseStream == null)
-                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading");
+            try {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read)) {
+                    return ReadFile(stream, builder, options, messages);
+                }
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
+            }
+        }
 
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
             OFFReader reader = new OFFReader();
             reader.warningEvent += messages;
-
-            var result = reader.Read(stream, options, builder);
-            stream.Close();
+            var result = reader.Read(new StreamReader(stream), options, builder);
             return result;
         }
     }
-
 
 
 
@@ -264,19 +334,23 @@ namespace g3
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
-            // detect binary STL
-            FileStream stream = null;
             try {
-                stream = File.Open(sFilename, FileMode.Open, FileAccess.Read);
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read)) {
+                    return ReadFile(stream, builder, options, messages);
+                }
             } catch (Exception e) {
                 return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
             }
+        }
+
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
             BinaryG3Reader reader = new BinaryG3Reader();
             //reader.warningEvent += messages;
             IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
-            stream.Close();
             return result;
         }
+
     }
 
 
