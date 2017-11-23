@@ -99,7 +99,6 @@ namespace g3
                         hit.hit_vid = ev.a;
                         hit.line_t = line.Project(a);
                         hits.Add(hit);
-                        edge_hit hit2 = hit;
                         hit.hit_vid = ev.b;
                         hit.line_t = line.Project(b);
                         hits.Add(hit);

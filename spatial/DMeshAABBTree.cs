@@ -504,7 +504,7 @@ namespace g3
                 if ( oChild1 < 0 ) {                 // 1 child, descend if nearer than cur min-dist
                     oChild1 = (-oChild1) - 1;
                     AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1, TransformF);
-                    if ( box_box_intersect(oChild1, ref bounds) )
+                    if (oChild1Box.Intersects(bounds) )
                         return find_any_intersection(iBox, otherTree, TransformF, oBox, depth + 1);
 
                 } else {                            // 2 children
@@ -666,7 +666,7 @@ namespace g3
                 if ( oChild1 < 0 ) {                 // 1 child, descend if nearer than cur min-dist
                     oChild1 = (-oChild1) - 1;
                     AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1, TransformF);
-                    if ( box_box_intersect(oChild1, ref bounds) )
+                    if (oChild1Box.Intersects(bounds) )
                         find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, result);
 
                 } else {                            // 2 children
