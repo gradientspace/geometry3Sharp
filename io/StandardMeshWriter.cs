@@ -13,6 +13,14 @@ namespace g3
         }
 
 
+        static public IOWriteResult WriteMeshes(string sFilename, List<DMesh3> vMeshes, WriteOptions options)
+        {
+            List<WriteMesh> meshes = new List<g3.WriteMesh>();
+            foreach (var m in vMeshes)
+                meshes.Add(new WriteMesh(m));
+            StandardMeshWriter writer = new StandardMeshWriter();
+            return writer.Write(sFilename, meshes, options);
+        }
         static public IOWriteResult WriteFile(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
             StandardMeshWriter writer = new StandardMeshWriter();

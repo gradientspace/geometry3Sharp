@@ -116,6 +116,18 @@ namespace g3
         }
 
 
+        public Segment3d Segment(int iSegment)
+        {
+            return new Segment3d(vertices[iSegment], vertices[iSegment + 1]);
+        }
+
+        public IEnumerable<Segment3d> SegmentItr()
+        {
+            for (int i = 0; i < vertices.Count - 1; ++i)
+                yield return new Segment3d(vertices[i], vertices[i + 1]);
+        }
+
+
         public AxisAlignedBox3d GetBoundingBox()
         {
             // [RMS] problem w/ readonly because vector is a class...

@@ -74,6 +74,9 @@ namespace g3
 			get { return Math.Min(Math.Abs(x), Math.Min(Math.Abs(y), Math.Abs(z))); }
 		}
 
+        public Vector3d Abs {
+            get { return new Vector3d(Math.Abs(x), Math.Abs(y), Math.Abs(z)); }
+        }
 
         public double Normalize(double epsilon = MathUtil.Epsilon)
         {
