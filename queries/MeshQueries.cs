@@ -53,6 +53,50 @@ namespace g3
 
 
         /// <summary>
+        /// convenience function to construct a IntrTriangle3Triangle3 object for two mesh triangles
+        /// </summary>
+        public static IntrTriangle3Triangle3 TrianglesIntersection(DMesh3 mesh1, int ti, DMesh3 mesh2, int tj, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            if (mesh1.IsTriangle(ti) == false || mesh2.IsTriangle(tj) == false)
+                return null;
+            Triangle3d tri1 = new Triangle3d(), tri2 = new Triangle3d();
+            mesh1.GetTriVertices(ti, ref tri1.V0, ref tri1.V1, ref tri1.V2);
+            mesh2.GetTriVertices(tj, ref tri2.V0, ref tri2.V1, ref tri2.V2);
+            if (TransformF != null) {
+                tri2.V0 = TransformF(tri2.V0);
+                tri2.V1 = TransformF(tri2.V1);
+                tri2.V2 = TransformF(tri2.V2);
+            }
+            IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(tri1, tri2);
+            intr.Find();
+            return intr;
+        }
+
+
+        /// <summary>
+        /// convenience function to construct a DistTriangle3Triangle3 object for two mesh triangles
+        /// </summary>
+        public static DistTriangle3Triangle3 TrianglesDistance(DMesh3 mesh1, int ti, DMesh3 mesh2, int tj, Func<Vector3d,Vector3d> TransformF = null)
+        {
+            if (mesh1.IsTriangle(ti) == false || mesh2.IsTriangle(tj) == false)
+                return null;
+            Triangle3d tri1 = new Triangle3d(), tri2 = new Triangle3d();
+            mesh1.GetTriVertices(ti, ref tri1.V0, ref tri1.V1, ref tri1.V2);
+            mesh2.GetTriVertices(tj, ref tri2.V0, ref tri2.V1, ref tri2.V2);
+            if (TransformF != null) {
+                tri2.V0 = TransformF(tri2.V0);
+                tri2.V1 = TransformF(tri2.V1);
+                tri2.V2 = TransformF(tri2.V2);
+            }
+            DistTriangle3Triangle3 dist = new DistTriangle3Triangle3(tri1, tri2);
+            dist.GetSquared();
+            return dist;
+        }
+
+
+
+
+        /// <summary>
         /// Find point-normal frame at ray-intersection point on mesh, or return false if no hit.
         /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
@@ -320,6 +364,53 @@ namespace g3
             return tNearestID;
         }
 
+
+
+        /// <summary>
+        /// brute force search for any intersecting triangles on two meshes
+        /// </summary>
+        public static Index2i FindIntersectingTriangles_LinearSearch(DMesh3 mesh1, DMesh3 mesh2)
+        {
+            foreach (int ti in mesh1.TriangleIndices()) {
+                Vector3d a = Vector3d.Zero, b = Vector3d.Zero, c = Vector3d.Zero;
+                mesh1.GetTriVertices(ti, ref a, ref b, ref c);
+                foreach (int tj in mesh2.TriangleIndices()) {
+                    Vector3d e = Vector3d.Zero, f = Vector3d.Zero, g = Vector3d.Zero;
+                    mesh2.GetTriVertices(tj, ref e, ref f, ref g);
+                    IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(a, b, c), new Triangle3d(e, f, g));
+                    if (intr.Test()) {
+                        return new Index2i(ti, tj);
+                    }
+                }
+            }
+            return Index2i.Max;
+        }
+
+
+        /// <summary>
+        /// Brute-force search for closest pair of triangles on two meshes
+        /// </summary>
+        public static Index2i FindNearestTriangles_LinearSearch(DMesh3 mesh1, DMesh3 mesh2, out double fNearestSqr)
+        {
+            Index2i nearPair = Index2i.Max;
+            fNearestSqr = double.MaxValue;
+            foreach (int ti in mesh1.TriangleIndices()) {
+                Vector3d a = Vector3d.Zero, b = Vector3d.Zero, c = Vector3d.Zero;
+                mesh1.GetTriVertices(ti, ref a, ref b, ref c);
+                foreach ( int tj in mesh2.TriangleIndices() ) {
+                    Vector3d e = Vector3d.Zero, f = Vector3d.Zero, g = Vector3d.Zero;
+                    mesh2.GetTriVertices(tj, ref e, ref f, ref g);
+
+                    DistTriangle3Triangle3 dist = new DistTriangle3Triangle3(new Triangle3d(a, b, c), new Triangle3d(e, f, g));
+                    if ( dist.GetSquared() < fNearestSqr ) {
+                        fNearestSqr = dist.GetSquared();
+                        nearPair = new Index2i(ti, tj);
+                    }
+                }
+            }
+            fNearestSqr = Math.Sqrt(fNearestSqr);
+            return nearPair;
+        }
 
 
 
