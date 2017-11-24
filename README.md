@@ -195,6 +195,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 
 - **MeshVertexSelection**: create/manipulate set of vertices. grow by one-rings, tris-to-verts, etc
 - **MeshFaceSelection**: similiar. *LocalOptimize()* 'cleans up' irregular selection boundaries.
+- **MeshEdgeSelection**: also similar. 
 - **MeshConnectedComponents**: find connected components, with configurable seed and filter functions
 - **MeshBoundaryLoops**: find set of closed boundary edge loops in DMesh3, output as **EdgeLoop** objects
 	- will find smallest loops in cases where boundary has "bowtie" vertices
