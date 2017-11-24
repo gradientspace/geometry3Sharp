@@ -21,6 +21,24 @@ namespace g3
             temp = new List<int>();
         }
 
+        // convert face selection to vertex selection. 
+        public MeshVertexSelection(DMesh3 mesh, MeshFaceSelection convertT) : this(mesh)
+        {
+            foreach (int tid in convertT) {
+                Index3i tv = mesh.GetTriangle(tid);
+                add(tv.a); add(tv.b); add(tv.c);
+            }
+        }
+
+        // convert edge selection to vertex selection. 
+        public MeshVertexSelection(DMesh3 mesh, MeshEdgeSelection convertE) : this(mesh)
+        {
+            foreach (int eid in convertE) {
+                Index2i ev = mesh.GetEdgeV(eid);
+                add(ev.a); add(ev.b);
+            }
+        }
+
 
         public IEnumerator<int> GetEnumerator() {
             return Selected.GetEnumerator();

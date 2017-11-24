@@ -41,6 +41,10 @@ namespace g3
         public virtual void MakeMesh(DMesh3 m)
         {
             int nV = vertices.Count;
+            if (WantNormals)
+                m.EnableVertexNormals(Vector3f.AxisY);
+            if (WantUVs)
+                m.EnableVertexUVs(Vector2f.Zero);
             for (int i = 0; i < nV; ++i) {
 				NewVertexInfo ni = new NewVertexInfo() { v = vertices[i] };
 				if ( WantNormals ) {
@@ -56,6 +60,7 @@ namespace g3
             }
             int nT = triangles.Count;
             if (WantGroups && groups != null && groups.Length == nT) {
+                m.EnableTriangleGroups();
                 for (int i = 0; i < nT; ++i)
                     m.AppendTriangle(triangles[i], groups[i]);
             } else {
