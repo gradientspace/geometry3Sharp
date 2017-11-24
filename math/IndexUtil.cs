@@ -276,6 +276,13 @@ namespace g3
                 indices[i] = map[indices[i]];
         }
 
+        public static void Apply(int[] indices, IList<int> map)
+        {
+            int N = indices.Length;
+            for (int i = 0; i < N; ++i)
+                indices[i] = map[indices[i]];
+        }
+
     }
 
 

@@ -227,6 +227,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Apply TransformF to vertices of mesh
+        /// </summary>
         public static void PerVertexTransform(IDeformableMesh mesh, Func<Vector3d,Vector3d> TransformF )
         {
             int NV = mesh.MaxVertexID;
@@ -244,6 +247,34 @@ namespace g3
                 if (mesh.IsVertex(vid)) {
                     Vector3d newPos = TransformF(mesh.GetVertex(vid), mesh.GetVertexNormal(vid));
                     mesh.SetVertex(vid, newPos);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Apply TransformF to subset of vertices of mesh
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh mesh, IEnumerable<int> vertices, Func<Vector3d, int, Vector3d> TransformF)
+        {
+            foreach (int vid in vertices) { 
+                if (mesh.IsVertex(vid)) {
+                    Vector3d newPos = TransformF(mesh.GetVertex(vid), vid);
+                    mesh.SetVertex(vid, newPos);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Apply TransformF to subset of mesh vertices defined by MapV[vertices] 
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh mesh, IEnumerable<int> vertices, Func<int,int> MapV, Func<Vector3d, int, int, Vector3d> TransformF)
+        {
+            foreach ( int vid in vertices ) {
+                int map_vid = MapV(vid);
+                if (mesh.IsVertex(map_vid)) {
+                    Vector3d newPos = TransformF(mesh.GetVertex(map_vid), vid, map_vid);
+                    mesh.SetVertex(map_vid, newPos);
                 }
             }
         }

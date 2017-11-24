@@ -173,6 +173,22 @@ namespace g3
 
 
 
+        public int NearestVertex(Vector3d p)
+        {
+            double nearSqr = double.MaxValue;
+            int i = -1;
+            int N = vertices.Count;
+            for ( int vi = 0; vi < N; ++vi ) {
+                double distSqr = vertices[vi].DistanceSquared(ref p);
+                if ( distSqr < nearSqr ) {
+                    nearSqr = distSqr;
+                    i = vi;
+                }
+            }
+            return i;
+        }
+
+
         public double DistanceSquared(Vector3d p, out int iNearSeg, out double fNearSegT)
         {
             iNearSeg = -1;

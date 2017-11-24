@@ -61,9 +61,14 @@ namespace g3
 
 
 
-
-    // Generate a Cylinder with caps. Supports sections of cylinder as well (eg wedges).
-    // Curently UV islands are overlapping for different mesh components, if NoSharedVertices
+    /// <summary>
+    /// Generate a Cylinder with caps. Supports sections of cylinder as well (eg wedges).
+    /// Curently UV islands are overlapping for different mesh components, if NoSharedVertices
+    /// Positioned along Y axis such that base-center is at Origin, and top is at Y=Height
+    /// You get a cone unless BaseRadius = TopRadius
+    /// No subdivisions along top/base rings or height steps.
+    /// cylinder triangles have groupid = 1, top cap = 2, bottom cap = 3, wedge faces 5 and 6
+    /// </summary>
     public class CappedCylinderGenerator : MeshGenerator
     {
         public float BaseRadius = 1.0f;
