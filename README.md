@@ -221,6 +221,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **MeshPlaneCut**: cut a mesh with a plane, return new **EdgeLoop**s and **EdgeSpans**, and optionally fill holes
 - **RegionOperator**: support class that makes it easy to extract a submesh and safely re-integrate it back into base mesh. IE like RegionRemesher, but you can do arbitrary changes to the submesh (as long as you preserve boundary).
 - **SimpleHoleFiller**: topological filling of an open boundary edge loop. No attempt to preserve shape whatsoever!
+- **MeshIsoCurve**: compute piecewise-linear iso-curves of a function on a mesh, as a **DGraph3**
 
 
 # Spatial Data Structures
@@ -232,7 +233,8 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 	- TestIntersection(triangle), TestIntersection(other_tree), FindIntersections(other_tree)
 	- IsInside(point)
 - **Polygon2dBoxTree**: 2D segment bbox-tree, distance query
-- **PointHashGrid2d**, **SegmentHashGrid2d**: hash tables for geometry elements
+- **PointHashGrid2d**, **SegmentHashGrid2d**: hash tables for 2D geometry elements
+- **PointHashGrid3d**: hash tables for 3D geometry elements
 - **GridIndexing**/**GridIndexing2**: various interfaces/classes for mapping between 3D spaces and uniform grid indices
 - **DSparseGrid3**: allocate-on-demand sparse 3D grid
 - **Bitmap3**: 3D dense bitmap
@@ -277,6 +279,8 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **CurveResampler**: edge split/collapses resampling of a 3D polyline 
 - **Circle3d**
 - **SampledArcLengthParam**: arc-length parameterization discrete-sampled 3D curve
+- **DGraph3**: dynamic arbitrary-topology 3D graph (nodes and edges), 3D variant of DGraph2
+- **DGraph3Util**: ExtractCurves, DisconnectJunctions, etc
 
 # 3D Solids
 
