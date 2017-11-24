@@ -24,10 +24,15 @@ namespace g3
 	/// </summary>
 	public class MeshPlaneCut
 	{
+        // Inputs
 		public DMesh3 Mesh;
 		public Vector3d PlaneOrigin;
 		public Vector3d PlaneNormal;
 
+        // if non-null, we will only iterate through these edges
+        public MeshFaceSelection CutFaceSet = null;
+
+        // Outputs
 		public List<EdgeLoop> CutLoops;
         public List<EdgeSpan> CutSpans;
         public bool CutLoopsFailed = false;		// set to true if we could not compute cut loops/spans
@@ -57,6 +62,13 @@ namespace g3
 		{
 			double invalidDist = double.MinValue;
 
+            MeshEdgeSelection CutEdgeSet = null;
+            MeshVertexSelection CutVertexSet = null;
+            if (CutFaceSet != null) {
+                CutEdgeSet = new MeshEdgeSelection(Mesh, CutFaceSet);
+                CutVertexSet = new MeshVertexSelection(Mesh, CutEdgeSet);
+            }
+
 			// compute signs
 			int MaxVID = Mesh.MaxVertexID;
 			double[] signs = new double[MaxVID];
@@ -77,8 +89,12 @@ namespace g3
 			int MaxEID = Mesh.MaxEdgeID;
 			HashSet<int> NewEdges = new HashSet<int>();
 
-			// cut existing edges with plane, using edge split
-			for (int eid = 0; eid < MaxEID; ++eid) {
+            IEnumerable<int> edgeItr = Interval1i.Range(MaxEID);
+            if (CutEdgeSet != null)
+                edgeItr = CutEdgeSet;
+
+            // cut existing edges with plane, using edge split
+            foreach (int eid in edgeItr) { 
 				if (Mesh.IsEdge(eid) == false)
 					continue;
 				if (eid >= MaxEID || NewEdges.Contains(eid))
@@ -124,10 +140,13 @@ namespace g3
 				}
 			}
 
-			// remove one-rings of all positive-side vertices. 
-			for (int i = 0; i < signs.Length; ++i ) {
-				if (signs[i] > 0 && Mesh.IsVertex(i))
-					Mesh.RemoveVertex(i, true, false);
+            // remove one-rings of all positive-side vertices. 
+            IEnumerable<int> vertexSet = Interval1i.Range(MaxVID);
+            if (CutVertexSet != null)
+                vertexSet = CutVertexSet;
+            foreach ( int vid in vertexSet ) { 
+				if (signs[vid] > 0 && Mesh.IsVertex(vid))
+					Mesh.RemoveVertex(vid, true, false);
 			}
 
 			// ok now we extract boundary loops, but restricted
