@@ -5,6 +5,11 @@ using System.Linq;
 
 namespace g3
 {
+    /// <summary>
+    /// Find mesh triangles enclosed by a curve embedded in the mesh
+    /// If a seed triangle in the enclosed region is not provided, then the
+    /// smaller of the two largest connected-components is chosen as the "inside".
+    /// </summary>
     public class MeshFacesFromLoop
     {
         public DMesh3 Mesh;

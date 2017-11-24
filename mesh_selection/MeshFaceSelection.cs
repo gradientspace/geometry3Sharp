@@ -46,21 +46,24 @@ namespace g3
         {
             minCount = MathUtil.Clamp(minCount, 1, 3);
 
-            foreach ( int tid in mesh.TriangleIndices() ) {
-                Index3i tri = mesh.GetTriangle(tid);
-
-                if (minCount == 1) {
-                    if (convertV.IsSelected(tri.a) || convertV.IsSelected(tri.b) || convertV.IsSelected(tri.c))
+            if (minCount == 1) {
+                foreach ( int vid in convertV ) {
+                    foreach (int tid in mesh.VtxTrianglesItr(vid))
                         add(tid);
-                } else if (minCount == 3) {
-                    if (convertV.IsSelected(tri.a) && convertV.IsSelected(tri.b) && convertV.IsSelected(tri.c))
-                        add(tid);
-                } else {
-                    int n = (convertV.IsSelected(tri.a) ? 1 : 0) +
-                            (convertV.IsSelected(tri.b) ? 1 : 0) +
-                            (convertV.IsSelected(tri.c) ? 1 : 0);
-                    if (n >= minCount)
-                        add(tid);
+                }
+            } else {
+                foreach (int tid in mesh.TriangleIndices()) {
+                    Index3i tri = mesh.GetTriangle(tid);
+                    if (minCount == 3) {
+                        if (convertV.IsSelected(tri.a) && convertV.IsSelected(tri.b) && convertV.IsSelected(tri.c))
+                            add(tid);
+                    } else {
+                        int n = (convertV.IsSelected(tri.a) ? 1 : 0) +
+                                (convertV.IsSelected(tri.b) ? 1 : 0) +
+                                (convertV.IsSelected(tri.c) ? 1 : 0);
+                        if (n >= minCount)
+                            add(tid);
+                    }
                 }
             }
         }
@@ -259,6 +262,11 @@ namespace g3
 
             for (int i = 0; i < temp.Count; ++i)
                 add(temp[i]);
+        }
+        public void ExpandToFaceNeighbours(int rounds, Func<int, bool> FilterF = null)
+        {
+            for (int k = 0; k < rounds; ++k)
+                ExpandToFaceNeighbours(FilterF);
         }
 
 
@@ -473,6 +481,9 @@ namespace g3
                     bModified = true;
             }
             return bModified;
+        }
+        public bool LocalOptimize() {
+            return LocalOptimize(true, true, true, true);
         }
 
 

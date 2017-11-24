@@ -276,5 +276,65 @@ namespace g3
             return true;
         }
 
+
+
+
+        /// <summary>
+        /// Apply LaplacianMeshSmoother to subset of mesh triangles. 
+        /// border of subset always has soft constraint with borderWeight, 
+        /// but is then snapped back to original vtx pos after solve.
+        /// nConstrainLoops inner loops are also soft-constrained, with weight falloff via square roots.
+        /// interiorWeight is soft constraint added to all vertices
+        /// </summary>
+        public static void RegionSmooth(DMesh3 mesh, IEnumerable<int> triangles, int nConstrainLoops, 
+            double borderWeight = 10.0, double interiorWeight = 0.0)
+        {
+            RegionOperator region = new RegionOperator(mesh, triangles);
+            DSubmesh3 submesh = region.Region;
+            DMesh3 smoothMesh = submesh.SubMesh;
+            LaplacianMeshSmoother smoother = new LaplacianMeshSmoother(smoothMesh);
+
+            // soft constraint on all interior vertices, if requested
+            if (interiorWeight > 0) {
+                foreach (int vid in smoothMesh.VertexIndices())
+                    smoother.SetConstraint(vid, smoothMesh.GetVertex(vid), interiorWeight, false);
+            }
+
+            // now constrain borders
+            double w = borderWeight;
+
+            HashSet<int> constrained = (region.Region.BaseBorderV.Count > 0) ? new HashSet<int>() : null;
+            foreach (int base_vid in region.Region.BaseBorderV) {
+                int sub_vid = submesh.BaseToSubV[base_vid];
+                smoother.SetConstraint(sub_vid, smoothMesh.GetVertex(sub_vid), w, true);
+                if (constrained != null)
+                    constrained.Add(sub_vid);
+            }
+
+            if (constrained.Count > 0) {
+                w = Math.Sqrt(w);
+                for (int k = 0; k < nConstrainLoops; ++k) {
+                    HashSet<int> next_layer = new HashSet<int>();
+
+                    foreach (int sub_vid in constrained) {
+                        foreach (int nbr_vid in smoothMesh.VtxVerticesItr(sub_vid)) {
+                            if (constrained.Contains(nbr_vid) == false) {
+                                smoother.SetConstraint(nbr_vid, smoothMesh.GetVertex(nbr_vid), w, false);
+                                next_layer.Add(nbr_vid);
+                            }
+                        }
+                    }
+
+                    constrained.UnionWith(next_layer);
+                    w = Math.Sqrt(w);
+                }
+            }
+
+
+            smoother.SolveAndUpdateMesh();
+            region.BackPropropagateVertices(true);
+        }
+
+
     }
 }
