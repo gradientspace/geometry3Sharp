@@ -24,6 +24,7 @@ namespace g3
         static public readonly Index3i Zero = new Index3i(0, 0, 0);
         static public readonly Index3i One = new Index3i(1, 1, 1);
         static public readonly Index3i Max = new Index3i(int.MaxValue, int.MaxValue, int.MaxValue);
+        static public readonly Index3i Min = new Index3i(int.MinValue, int.MinValue, int.MinValue);
 
 
         public int this[int key]

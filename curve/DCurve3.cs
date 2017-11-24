@@ -97,6 +97,12 @@ namespace g3
             Timestamp++;
         }
 
+        public void RemoveVertex(int idx)
+        {
+            vertices.RemoveAt(idx);
+            Timestamp++;
+        }
+
 
         public Vector3d this[int key]
         {
