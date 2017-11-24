@@ -1527,6 +1527,8 @@ namespace g3
         {
             if ( IsEdge(eID) == false )
                 throw new Exception("DMesh3.IsGroupBoundaryEdge: " + eID + " is not a valid edge");
+            if (triangle_groups == null)
+                throw new Exception("DMesh3.IsGroupBoundaryEdge: no triangle groups!");
             int et1 = edges[4 * eID + 3];
             if (et1 == InvalidID)
                 return false;
@@ -1543,7 +1545,7 @@ namespace g3
             if (IsVertex(vID) == false)
                 throw new Exception("DMesh3.IsGroupBoundaryVertex: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
-                return false;
+                throw new Exception("DMesh3.IsGroupBoundaryVertex: no triangle groups!");
             int group_id = int.MinValue;
             foreach (int eID in vertex_edges.ValueItr(vID)) {
                 int et0 = edges[4 * eID + 2];
@@ -1572,7 +1574,7 @@ namespace g3
             if (IsVertex(vID) == false)
                 throw new Exception("DMesh3.IsGroupJunctionVertex: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
-                return false;
+                throw new Exception("DMesh3.IsGroupJunctionVertex: no triangle groups!");
             Index2i groups = Index2i.Max;
             foreach (int eID in vertex_edges.ValueItr(vID)) {
                 Index2i et = new Index2i(edges[4 * eID + 2], edges[4 * eID + 3]);
@@ -1605,7 +1607,7 @@ namespace g3
             if (IsVertex(vID) == false)
                 throw new Exception("DMesh3.GetVertexGroups: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
-                return false;
+                throw new Exception("DMesh3.GetVertexGroups: no triangle groups!");
             foreach (int eID in vertex_edges.ValueItr(vID)) {
                 int et0 = edges[4 * eID + 2];
                 int g0 = triangle_groups[et0];
@@ -1635,7 +1637,7 @@ namespace g3
             if (IsVertex(vID) == false)
                 throw new Exception("DMesh3.GetAllVertexGroups: " + vID + " is not a valid vertex");
             if (triangle_groups == null)
-                return false;
+                throw new Exception("DMesh3.GetAllVertexGroups: no triangle groups!");
             foreach (int eID in vertex_edges.ValueItr(vID)) {
                 int et0 = edges[4 * eID + 2];
                 int g0 = triangle_groups[et0];

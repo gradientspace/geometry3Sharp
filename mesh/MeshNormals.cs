@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace g3
 {
@@ -65,20 +66,22 @@ namespace g3
             for (int i = 0; i < NV; ++i)
                 Normals[i] = Vector3d.Zero;
 
-            int NT = Mesh.MaxTriangleID;
-            for (int ti = 0; ti < NT; ++ti) {
-                if (Mesh.IsTriangle(ti) == false)
-                    continue;
+            SpinLock Normals_lock = new SpinLock();
+
+            gParallel.ForEach(Mesh.TriangleIndices(), (ti) => {
                 Index3i tri = Mesh.GetTriangle(ti);
                 Vector3d va = Mesh.GetVertex(tri.a);
                 Vector3d vb = Mesh.GetVertex(tri.b);
                 Vector3d vc = Mesh.GetVertex(tri.c);
                 Vector3d N = MathUtil.Normal(ref va, ref vb, ref vc);
                 double a = MathUtil.Area(ref va, ref vb, ref vc);
+                bool taken = false;
+                Normals_lock.Enter(ref taken);
                 Normals[tri.a] += a * N;
                 Normals[tri.b] += a * N;
                 Normals[tri.c] += a * N;
-            }
+                Normals_lock.Exit();
+            });
 
             gParallel.ForEach(Interval1i.Range(NV), (vi) => {
                 if (Normals[vi].LengthSquared > MathUtil.ZeroTolerancef)

@@ -65,6 +65,8 @@ namespace g3 {
         // this just lets us write more concise tests below
         bool EnableInlineProjection { get { return ProjectionMode == TargetProjectionMode.Inline; } }
 
+        // enable parallel projection. Only applied in AfterRefinement mode
+        public bool EnableParallelProjection = true;
 
         // Enable parallel smoothing. This will produce slightly different results
         // across runs because we smooth in-place and hence there will be order side-effects.
@@ -687,7 +689,12 @@ namespace g3 {
                 mesh.SetVertex(vID, projected);
             };
 
-            gParallel.ForEach<int>(project_vertices(), project);
+            if (EnableParallelProjection) {
+                gParallel.ForEach<int>(project_vertices(), project);
+            } else {
+                foreach (int vid in project_vertices())
+                    project(vid);
+            }
         }
 
 
@@ -730,7 +737,12 @@ namespace g3 {
                 };
             }
 
-            gParallel.ForEach<int>(project_vertices(), project);
+            if (EnableParallelProjection) {
+                gParallel.ForEach<int>(project_vertices(), project);
+            } else {
+                foreach (int vid in project_vertices())
+                    project(vid);
+            }
         }
 
 
