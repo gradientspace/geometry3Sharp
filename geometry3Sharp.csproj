@@ -84,6 +84,8 @@
     <Compile Include="comp_geom\Arrangement2d.cs" />
     <Compile Include="curve\DGraph2Resampler.cs" />
     <Compile Include="curve\DGraph2Util.cs" />
+    <Compile Include="curve\DGraph3.cs" />
+    <Compile Include="curve\DGraph3Util.cs" />
     <Compile Include="curve\Ellipse2.cs" />
     <Compile Include="curve\PlanarSolid2d.cs" />
     <Compile Include="curve\NURBSCurve2.cs" />
@@ -171,6 +173,7 @@
     <Compile Include="mesh_ops\MeshExtrudeMesh.cs" />
     <Compile Include="mesh_ops\MeshExtrudeFaces.cs" />
     <Compile Include="mesh_ops\MeshInsertUVPolyCurve.cs" />
+    <Compile Include="mesh_ops\MeshIsoCurves.cs" />
     <Compile Include="mesh_ops\MeshLocalParam.cs" />
     <Compile Include="mesh_ops\LaplacianMeshSmoother.cs" />
     <Compile Include="mesh_ops\LaplacianMeshDeformer.cs" />
@@ -189,6 +192,7 @@
     <Compile Include="mesh_ops\SimpleHoleFiller.cs" />
     <Compile Include="mesh_selection\MeshBoundaryLoops.cs" />
     <Compile Include="mesh_selection\MeshConnectedComponents.cs" />
+    <Compile Include="mesh_selection\MeshEdgeSelection.cs" />
     <Compile Include="mesh_selection\MeshFaceSelection.cs" />
     <Compile Include="mesh_selection\MeshFacesFromLoop.cs" />
     <Compile Include="mesh_selection\MeshRegionBoundaryLoops.cs" />
@@ -278,7 +282,8 @@
     <Compile Include="spatial\GridIndexing.cs" />
     <Compile Include="spatial\MeshSignedDistanceGrid.cs" />
     <Compile Include="spatial\NormalHistogram.cs" />
-    <Compile Include="spatial\PointHashGrid.cs" />
+    <Compile Include="spatial\PointHashGrid2d.cs" />
+    <Compile Include="spatial\PointHashGrid3d.cs" />
     <Compile Include="spatial\Polygon2dBoxTree.cs" />
     <Compile Include="spatial\SegmentHashGrid.cs" />
     <Compile Include="spatial\SpatialFunctions.cs" />
