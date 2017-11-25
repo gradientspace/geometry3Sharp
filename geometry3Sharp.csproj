@@ -82,6 +82,7 @@
     <Compile Include="curve\Circle2.cs" />
     <Compile Include="curve\CurveResampler.cs" />
     <Compile Include="comp_geom\Arrangement2d.cs" />
+    <Compile Include="curve\DGraph.cs" />
     <Compile Include="curve\DGraph2Resampler.cs" />
     <Compile Include="curve\DGraph2Util.cs" />
     <Compile Include="curve\DGraph3.cs" />
