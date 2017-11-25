@@ -78,6 +78,40 @@ namespace g3
 
 
 
+
+
+        public virtual void MakeMesh(NTMesh3 m)
+        {
+            int nV = vertices.Count;
+            for (int i = 0; i < nV; ++i) {
+                int vID = m.AppendVertex(vertices[i]);
+                Util.gDevAssert(vID == i);
+            }
+            int nT = triangles.Count;
+            if (WantGroups && groups != null && groups.Length == nT) {
+                m.EnableTriangleGroups();
+                for (int i = 0; i < nT; ++i)
+                    m.AppendTriangle(triangles[i], groups[i]);
+            } else {
+                for (int i = 0; i < nT; ++i)
+                    m.AppendTriangle(triangles[i]);
+            }
+        }
+        public virtual NTMesh3 MakeNTMesh()
+        {
+            NTMesh3 m = new NTMesh3();
+            MakeMesh(m);
+            return m;
+        }
+
+
+
+
+
+
+
+
+
         public struct CircularSection
         {
             public float Radius;

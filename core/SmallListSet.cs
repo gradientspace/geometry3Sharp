@@ -216,9 +216,37 @@ namespace g3
         }
 
 
-        //public bool Contains(int list_index, int val)
-        //{
-        //}
+        /// <summary>
+        /// search for val in list at list_index
+        /// </summary>
+        public bool Contains(int list_index, int val)
+        {
+            int block_ptr = list_heads[list_index];
+            if (block_ptr != Null) {
+                int N = block_store[block_ptr];
+                if (N < BLOCKSIZE) {
+                    int iEnd = block_ptr + N;
+                    for (int i = block_ptr + 1; i <= iEnd; ++i) {
+                        if (block_store[i] == val)
+                            return true;
+                    }
+                } else {
+                    // we spilled to linked list, have to iterate through it as well
+                    int iEnd = block_ptr + BLOCKSIZE;
+                    for (int i = block_ptr + 1; i <= iEnd; ++i) {
+                        if (block_store[i] == val)
+                            return true;
+                    }
+                    int cur_ptr = block_store[block_ptr + BLOCK_LIST_OFFSET];
+                    while (cur_ptr != Null) {
+                        if (linked_store[cur_ptr] == val)
+                            return true;
+                        cur_ptr = linked_store[cur_ptr + 1];
+                    }
+                }
+            }
+            return false;
+        }
 
 
         /// <summary>
