@@ -7,46 +7,18 @@ using System.Linq;
 
 namespace g3
 {
- 
-	//
-	// NTMesh3 is a dynamic triangle mesh class. The mesh has has connectivity, 
-	//  is an indexed mesh, and allows for gaps in the index space.
-	//
-	// internally, all data is stored in POD-type buffers, except for the vertex->edge
-	// links, which are stored as List<int>'s. The arrays of POD data are stored in
-	// DVector's, so they grow in chunks, which is relatively efficient. The actual
-	// blocks are arrays, so they can be efficiently mem-copied into larger buffers
-	// if necessary.
-	//
-	// Reference counts for verts/tris/edges are stored as separate RefCountVector
-	// instances. 
-	//
-	// Vertices are stored as doubles, although this should be easily changed
-	// if necessary, as the internal data structure is not exposed
-	//
-	// Per-vertex Vertex Normals, Colors, and UVs are optional and stored as floats.
-	//
-	// For each vertex, vertex_edges[i] is the unordered list of connected edges. The
-	// elements of the list are indices into the edges list.
-	// This list is unsorted but can be traversed in-order (ie cw/ccw) at some additional cost. 
-	//
-	// Triangles are stored as 3 ints, with optionally a per-triangle integer group id.
-	//
-	// The edges of a triangle are similarly stored as 3 ints, in triangle_edes. If the 
-	// triangle is [v1,v2,v3], then the triangle edges [e1,e2,e3] are 
-	// e1=edge(v1,v2), e2=edge(v2,v3), e3=edge(v3,v1), where the e# are indexes into edges.
-	//
-	// Edges are stored as tuples of 4 ints. If the edge is between v1 and v2, with neighbour
-	// tris t1 and t2, then the edge is [min(v1,v2), max(v1,v2), t1, t2]. For a boundary
-	// edge, t2 is InvalidID. t1 is never InvalidID.
-	//
-	// Most of the class assumes that the mesh is manifold. Many functions will
-	// work if the topology is non-manifold, but behavior of operators like Split/Flip/Collapse
-	// edge is untested. 
-	//
-	// The function CheckValidity() does extensive sanity checking on the mesh data structure.
-	// Use this to test your code, both for mesh construction and editing!!
-	// 
+
+    //
+    // NTMesh3 is a variant of DMesh3 that supports non-manifold mesh topology. 
+    // See DMesh3 comments for most details. 
+    // Main change is that edges buffer only stores 2-tuple vertex pairs.
+    // Each edge can be connected to arbitrary number of triangle, which are
+    // stored in edge_triangles
+    //
+    // per-vertex UVs have been removed (perhaps temporarily)
+    //
+    // Currently poke-face and split-edge are supported, but not collapse or flip.
+    // 
     public partial class NTMesh3 : IDeformableMesh
     {
         public const int InvalidID = -1;
