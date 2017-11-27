@@ -491,6 +491,10 @@ namespace g3
             return edge_triangles.ValueItr(eID);
         }
 
+        public int EdgeTrianglesCount(int eID)
+        {
+            return edge_triangles.Count(eID);
+        }
 
 
         // return same indices as GetEdgeV, but oriented based on attached triangle
@@ -560,16 +564,10 @@ namespace g3
                 return InvalidID;
             }
 
-            // look up edges. if any already have two triangles, this would 
-            // create non-manifold geometry and so we do not allow it
+            // look up edges. 
             int e0 = find_edge(tv[0], tv[1]);
             int e1 = find_edge(tv[1], tv[2]);
             int e2 = find_edge(tv[2], tv[0]);
-            if ((e0 != InvalidID && edge_is_boundary(e0) == false)
-                 || (e1 != InvalidID && edge_is_boundary(e1) == false)
-                 || (e2 != InvalidID && edge_is_boundary(e2) == false)) {
-                return NonManifoldID;
-            }
 
             // now safe to insert triangle
             int tid = triangles_refcount.allocate();
@@ -798,6 +796,7 @@ namespace g3
             if (!IsVertex(vID))
                 return MeshResult.Failed_NotAVertex;
 
+            vTriangles.Clear();
             foreach (int eid in vertex_edges.ValueItr(vID)) {
                 foreach (int tid in edge_triangles.ValueItr(eid)) {
                     if (vTriangles.Contains(tid) == false)
@@ -1287,6 +1286,131 @@ namespace g3
 
 
 
+        public struct EdgeSplitInfo
+        {
+            public bool bIsBoundary;
+            public int vNew;
+            public int eNewBN;      // new edge [vNew,vB] (original was AB)
+            public List<int> NewEdges;   // new edges [vNew,vK] where vK was an 'other' vtx opposite split edge
+        }
+        public MeshResult SplitEdge(int vA, int vB, out EdgeSplitInfo split)
+        {
+            int eid = find_edge(vA, vB);
+            if (eid == InvalidID) {
+                split = new EdgeSplitInfo();
+                return MeshResult.Failed_NotAnEdge;
+            }
+            return SplitEdge(eid, out split);
+        }
+        public MeshResult SplitEdge(int eab, out EdgeSplitInfo split)
+        {
+            split = new EdgeSplitInfo();
+            if (!IsEdge(eab))
+                return MeshResult.Failed_NotAnEdge;
+
+            // look up primary edge & triangle
+            int eab_i = 2 * eab;
+            int a = edges[eab_i], b = edges[eab_i + 1];
+
+            List<int> triangles = new List<int>(edge_triangles.ValueItr(eab));
+            if ( triangles.Count < 1 )
+                return MeshResult.Failed_BrokenTopology;
+                
+            // create new vertex
+            Vector3d vNew = 0.5 * (GetVertex(a) + GetVertex(b));
+            int f = AppendVertex(vNew);
+            if (HasVertexNormals)
+                SetVertexNormal(f, (GetVertexNormal(a) + GetVertexNormal(b)).Normalized);
+            if (HasVertexColors)
+                SetVertexColor(f, 0.5f * (GetVertexColor(a) + GetVertexColor(b)));
+
+
+            // edge eab becomes eaf
+            int eaf = eab; //Edge * eAF = eAB;
+            replace_edge_vertex(eaf, b, f);
+
+            // b is no longer connected to a 
+            vertex_edges.Remove(b, eab);
+            // f is connected to a
+            vertex_edges.Insert(f, eaf);
+
+            // add new edge efb
+            int efb = add_edge(f, b, -1, -1);
+            vertices_refcount.increment(f, (short)triangles.Count );
+
+            split.NewEdges = new List<int>();
+            split.eNewBN = efb;
+
+            // ok now we have split the edge but broken all the triangles
+            // around edge [a,b], so fix them...
+
+            foreach ( int tid in triangles ) {
+                Index3i Ttv = GetTriangle(tid);
+                Index3i Tte = GetTriEdges(tid);
+                int k = IndexUtil.find_tri_other_vtx(a, b, Ttv);
+
+                // old tri [a,b,k] becomes [a,f,k]
+                replace_tri_vertex(tid, b, f);
+                int ebk = Tte[IndexUtil.find_edge_index_in_tri(b, k, ref Ttv)];
+
+                // add new tri [f,b,k], with proper orientation
+                bool swap = IndexUtil.is_ordered(a, b, ref Ttv);
+                int tNew = (swap) ?
+                    add_triangle_only(f, b, k, InvalidID, InvalidID, InvalidID) :
+                    add_triangle_only(b, f, k, InvalidID, InvalidID, InvalidID);
+                //int tNew = add_triangle_only(f, b, k, InvalidID, InvalidID, InvalidID);
+                if (triangle_groups != null) 
+                    triangle_groups.insert(triangle_groups[tid], tNew);
+
+                // edge [b,k] is no longer adjacent to tid, now it's to tNew
+                replace_edge_triangle(ebk, tid, tNew);
+
+                // attach new tri to edge [f,b]
+                add_edge_triangle(efb, tNew);
+
+                // create new edge [k,f], which is adjacent to tid and tNew
+                int ekf = add_edge(k, f, tid, tNew);
+                split.NewEdges.Add(ekf);
+
+                // triangle tid is no longer adjacent to [b,k], replace with [k,f]
+                replace_triangle_edge(tid, ebk, ekf);
+
+                // set edges for new tri
+                //set_triangle_edges(tNew, efb, ebk, ekf);
+                if (swap)
+                    set_triangle_edges(tNew, efb, ebk, ekf);
+                else
+                    set_triangle_edges(tNew, efb, ekf, ebk);
+
+                // update vertex refcounts
+                vertices_refcount.increment(k);
+                vertices_refcount.increment(f);
+            }
+
+            split.bIsBoundary = (triangles.Count == 1);
+            split.vNew = f;
+
+            updateTimeStamp(true);
+            return MeshResult.Ok;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         public struct PokeTriangleInfo
@@ -1363,7 +1487,14 @@ namespace g3
 
 
 
-
+        public DMesh3 Deconstruct()
+        {
+            DMesh3 m = new DMesh3();
+            foreach ( Index3i tri in Triangles() ) {
+                m.AppendTriangle(m.AppendVertex(GetVertex(tri.a)), m.AppendVertex(GetVertex(tri.b)), m.AppendVertex(GetVertex(tri.c)));
+            }
+            return m;
+        }
 
 
 
