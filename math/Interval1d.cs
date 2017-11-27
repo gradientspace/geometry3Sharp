@@ -84,6 +84,13 @@ namespace g3
 				return 0;
         }
 
+        public Interval1d IntersectionWith(ref Interval1d o)
+        {
+            if (o.a > b || o.b < a)
+                return Interval1d.Empty;
+            return new Interval1d(Math.Max(a, o.a), Math.Min(b, o.b));
+        }
+
 
         public void Set(Interval1d o) {
             a = o.a; b = o.b;
