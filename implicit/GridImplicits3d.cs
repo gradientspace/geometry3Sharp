@@ -35,16 +35,16 @@ namespace g3
                 ((pt.y - GridOrigin.y) / CellSize),
                 ((pt.z - GridOrigin.z) / CellSize));
 
-            // clamp to grid
-            if (gridPt.x < 0 || gridPt.x >= Grid.ni - 1 ||
-                gridPt.y < 0 || gridPt.y >= Grid.nj - 1 ||
-                gridPt.z < 0 || gridPt.z >= Grid.nk - 1)
-                return Outside;
-
             // compute integer coordinates
             int x0 = (int)gridPt.x;
             int y0 = (int)gridPt.y, y1 = y0 + 1;
             int z0 = (int)gridPt.z, z1 = z0 + 1;
+
+            // clamp to grid
+            if (x0 < 0 || (x0+1) >= Grid.ni ||
+                y0 < 0 || y1 >= Grid.nj ||
+                z0 < 0 || z1 >= Grid.nk)
+                return Outside;
 
             // convert double coords to [0,1] range
             double fAx = gridPt.x - (double)x0;

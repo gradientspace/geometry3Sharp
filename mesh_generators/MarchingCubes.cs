@@ -358,16 +358,24 @@ namespace g3
         /// </summary>
         void find_iso(ref Vector3d p1, ref Vector3d p2, double valp1, double valp2, ref Vector3d pIso)
         {
+            // Ok, this is a bit hacky but seems to work? If both isovalues
+            // are the same, we just return the midpoint. If one is nearly zero, we can
+            // but assume that's where the surface is. *However* if we return that point exactly,
+            // we can get nonmanifold vertices, because multiple fans may connect there. 
+            // Since DMesh3 disallows that, it results in holes. So we pull 
+            // slightly towards the other point along this edge. This means we will get
+            // repeated nearly-coincident vertices, but the mesh will be manifold.
+            const double dt = 0.999999;
+            if (Math.Abs(valp1 - valp2) < 0.00001) {
+                pIso = (p1 + p2) * 0.5;
+                return;
+            }
             if (Math.Abs(IsoValue - valp1) < 0.00001) {
-                pIso = p1;
+                pIso = dt*p1 + (1.0-dt)*p2;
                 return;
             }
             if (Math.Abs(IsoValue - valp2) < 0.00001) {
-                pIso = p2;
-                return;
-            }
-            if (Math.Abs(valp1 - valp2) < 0.00001) {
-                pIso = p1;
+                pIso = (dt)*p2 + (1.0-dt)*p1;
                 return;
             }
 

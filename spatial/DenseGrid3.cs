@@ -36,6 +36,20 @@ namespace g3
             b = Buffer[offset + i0 + 1];
         }
 
+        public void apply(Func<float, float> f)
+        {
+            for ( int k = 0; k < nk; k++ ) {
+                for (int j = 0; j < nj; j++ ) {
+                    for ( int i = 0; i < ni; i++ ) {
+                        int idx = i + ni * (j + nj * k);
+                        Buffer[idx] = f(Buffer[idx]);
+                    }
+                }
+            }
+        }
+
+
+
     }
 
 
