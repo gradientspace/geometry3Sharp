@@ -30,8 +30,8 @@ namespace g3
         /// <summary> construct interval [0, N-1] </summary>
         static public Interval1i RangeInclusive(int N) { return new Interval1i(0, N); }
 
-        /// <summary> construct interval [start, N-1] </summary>
-        static public Interval1i Range(int start, int N) { return new Interval1i(start, N - 1); }
+        /// <summary> construct interval [start, start+N-1] </summary>
+        static public Interval1i Range(int start, int N) { return new Interval1i(start, start+N - 1); }
 
 
         public int this[int key]
