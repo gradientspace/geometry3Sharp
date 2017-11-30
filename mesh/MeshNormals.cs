@@ -83,9 +83,11 @@ namespace g3
                 Normals_lock.Exit();
             });
 
-            gParallel.ForEach(Interval1i.Range(NV), (vi) => {
-                if (Normals[vi].LengthSquared > MathUtil.ZeroTolerancef)
-                    Normals[vi] = Normals[vi].Normalized;
+            gParallel.BlockStartEnd(0, NV - 1, (vi_start, vi_end) => {
+                for (int vi = vi_start; vi <= vi_end; vi++) {
+                    if (Normals[vi].LengthSquared > MathUtil.ZeroTolerancef)
+                        Normals[vi] = Normals[vi].Normalized;
+                }
             });
         }
 

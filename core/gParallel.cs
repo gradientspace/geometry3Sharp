@@ -28,6 +28,51 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Evaluate input actions in parallel
+        /// </summary>
+        public static void Evaluate(params Action[] funcs)
+        {
+            int N = funcs.Length;
+            gParallel.ForEach(Interval1i.Range(N), (i) => {
+                funcs[i]();
+            });
+        }
+
+
+
+        /// <summary>
+        /// Process indices [iStart,iEnd], inclusive, by passing sub-intervals [start,end] to blockF.
+        /// Blocksize is automatically determind unless you specify one.
+        /// </summary>
+        public static void BlockStartEnd(int iStart, int iEnd, Action<int,int> blockF, int iBlockSize = -1, bool bDisableParallel = false )
+        {
+            if (iBlockSize == -1)
+                iBlockSize = 100;  // seems to work
+            int N = (iEnd - iStart + 1);
+            int num_blocks = N / iBlockSize;
+            // process main blocks in parallel
+            if (bDisableParallel) {
+                ForEach_Sequential(Interval1i.Range(num_blocks), (bi) => {
+                    int k = iStart + iBlockSize * bi;
+                    blockF(k, k + iBlockSize - 1);
+                });
+            } else {
+                ForEach(Interval1i.Range(num_blocks), (bi) => {
+                    int k = iStart + iBlockSize * bi;
+                    blockF(k, k + iBlockSize - 1);
+                });
+            }
+            // process leftover elements
+            int remaining = N - (num_blocks * iBlockSize);
+            if (remaining > 0) {
+                int k = iStart + num_blocks * iBlockSize;
+                blockF(k, k+remaining-1);
+            }
+        }
+
+
+
         // parallel for-each that will work on .net 3.5 (maybe?)
         // adapted from https://www.microsoft.com/en-us/download/details.aspx?id=19222
         static void for_each<T>( IEnumerable<T> source, Action<T> body )

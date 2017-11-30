@@ -245,21 +245,29 @@ namespace g3
 			int NT = mesh.MaxTriangleID;
 			QuadricError[] triQuadrics = new QuadricError[NT];
 			double[] triAreas = new double[NT];
-			gParallel.ForEach(mesh.TriangleIndices(), (tid) => {
-				Vector3d c, n;
-				mesh.GetTriInfo(tid, out n, out triAreas[tid], out c);
-				triQuadrics[tid] = new QuadricError(ref n, ref c);
+            gParallel.BlockStartEnd(0, mesh.MaxTriangleID-1, (start_tid, end_tid) => {
+                Vector3d c, n;
+                for (int tid = start_tid; tid <= end_tid; tid++) {
+                    if (mesh.IsTriangle(tid)) {
+                        mesh.GetTriInfo(tid, out n, out triAreas[tid], out c);
+                        triQuadrics[tid] = new QuadricError(ref n, ref c);
+                    }
+                }
 			});
 
 
 			int NV = mesh.MaxVertexID;
 			vertQuadrics = new QuadricError[NV];
-			gParallel.ForEach(mesh.VertexIndices(), (vid) => {
-				vertQuadrics[vid] = QuadricError.Zero;
-				foreach (int tid in mesh.VtxTrianglesItr(vid)) {
-					vertQuadrics[vid].Add(triAreas[tid], ref triQuadrics[tid]);
-				}
-				//Util.gDevAssert(MathUtil.EpsilonEqual(0, vertQuadrics[i].Evaluate(mesh.GetVertex(i)), MathUtil.Epsilon * 10));
+            gParallel.BlockStartEnd(0, mesh.MaxVertexID-1, (start_vid, end_vid) => {
+                for (int vid = start_vid; vid <= end_vid; vid++) {
+                    vertQuadrics[vid] = QuadricError.Zero;
+                    if (mesh.IsVertex(vid)) {
+                        foreach (int tid in mesh.VtxTrianglesItr(vid)) {
+                            vertQuadrics[vid].Add(triAreas[tid], ref triQuadrics[tid]);
+                        }
+                        //Util.gDevAssert(MathUtil.EpsilonEqual(0, vertQuadrics[i].Evaluate(mesh.GetVertex(i)), MathUtil.Epsilon * 10));
+                    }
+                }
 			});
 
 		}
@@ -291,12 +299,16 @@ namespace g3
             float[] edgeErrors = new float[MaxEID];
 
             // vertex quadrics can be computed in parallel
-            gParallel.ForEach(mesh.EdgeIndices(), (eid) => {
-				Index2i ev = mesh.GetEdgeV(eid);
-				QuadricError Q = new QuadricError(ref vertQuadrics[ev.a], ref vertQuadrics[ev.b]);
-				Vector3d opt = OptimalPoint(eid, ref Q, ev.a, ev.b);
-				edgeErrors[eid] = (float)Q.Evaluate(ref opt);
-                EdgeQuadrics[eid] = new QEdge(eid, ref Q, ref opt);
+            gParallel.BlockStartEnd(0, MaxEID-1, (start_eid, end_eid) => {
+                for (int eid = start_eid; eid <= end_eid; eid++) {
+                    if (mesh.IsEdge(eid)) {
+                        Index2i ev = mesh.GetEdgeV(eid);
+                        QuadricError Q = new QuadricError(ref vertQuadrics[ev.a], ref vertQuadrics[ev.b]);
+                        Vector3d opt = OptimalPoint(eid, ref Q, ev.a, ev.b);
+                        edgeErrors[eid] = (float)Q.Evaluate(ref opt);
+                        EdgeQuadrics[eid] = new QEdge(eid, ref Q, ref opt);
+                    }
+                }
             });
 
             // sorted pq insert is faster, so sort edge errors array and index map
