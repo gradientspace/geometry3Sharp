@@ -9,7 +9,6 @@ namespace g3
         public DMesh3 Mesh;
 
         // info that is fixed based on mesh
-        SymmetricSparseMatrix M;
         PackedSparseMatrix PackedM;
         int N;
         int[] ToMeshV, ToIndex;
@@ -85,7 +84,7 @@ namespace g3
             Py = new double[N];
             Pz = new double[N];
             nbr_counts = new int[N];
-            M = new SymmetricSparseMatrix();
+            SymmetricSparseMatrix M = new SymmetricSparseMatrix();
 
             for (int i = 0; i < N; ++i) {
                 int vid = ToMeshV[i];
@@ -119,21 +118,21 @@ namespace g3
             // transpose(L) * L, but matrix is symmetric...
             if (UseSoftConstraintNormalEquations) {
                 //M = M.Multiply(M);
-                M = M.Square();        // only works if M is symmetric
+                // only works if M is symmetric!!
+                PackedM = M.SquarePackedParallel();
+            } else {
+                PackedM = new PackedSparseMatrix(M);
             }
-
-            // construct packed version of M matrix
-            PackedM = new PackedSparseMatrix(M);
 
             // compute laplacian vectors of initial mesh positions
             MLx = new double[N];
             MLy = new double[N];
             MLz = new double[N];
-            M.Multiply(Px, MLx);
-            M.Multiply(Py, MLy);
-            M.Multiply(Pz, MLz);
+            PackedM.Multiply(Px, MLx);
+            PackedM.Multiply(Py, MLy);
+            PackedM.Multiply(Pz, MLz);
 
-            // zero out...
+            // zero out...this is the smoothing bit!
             for (int i = 0; i < Px.Length; ++i) {
                 MLx[i] = 0;
                 MLy[i] = 0;
@@ -147,6 +146,7 @@ namespace g3
             Bx = new double[N]; By = new double[N]; Bz = new double[N];
             Sx = new double[N]; Sy = new double[N]; Sz = new double[N];
 
+            need_solve_update = true;
             UpdateForSolve();
         }
 
@@ -186,13 +186,10 @@ namespace g3
             }
 
             // update basic preconditioner
-            // [RMS] currently not using this...it actually seems to make things
-            //   worse!! 
+            // [RMS] currently not using this...it actually seems to make things worse!! 
             for ( int i = 0; i < N; i++ ) {
-                //double diag_value = M[i, i] + WeightsM[i, i];
-                double diag_value = M[i, i];
-                //Preconditioner.Set(i, i, 1.0 / diag_value);
-                Preconditioner.Set(i, i, diag_value);
+                double diag_value = PackedM[i, i] + WeightsM[i, i];
+                Preconditioner.Set(i, i, 1.0 / diag_value);
             }
 
             need_solve_update = false;
@@ -214,9 +211,9 @@ namespace g3
             Array.Copy(Pz, Sz, N);
 
             Action<double[], double[]> CombinedMultiply = (X, B) => {
-                // packed multiply is 3-4x faster...
-                //M.Multiply(X, B);
-                PackedM.Multiply(X, B);
+                //PackedM.Multiply(X, B);
+                PackedM.Multiply_Parallel(X, B);
+
                 for (int i = 0; i < N; ++i)
                     B[i] += WeightsM.D[i] * X[i];
             };
@@ -266,7 +263,7 @@ namespace g3
         {
             int N = Mesh.MaxVertexID;
             Vector3d[] Result = new Vector3d[N];
-            if (!Solve(Result))
+            if ( Solve(Result) == false )
                 return false;
             for (int i = 0; i < N; ++i ) {
                 if ( Mesh.IsVertex(i) ) {
