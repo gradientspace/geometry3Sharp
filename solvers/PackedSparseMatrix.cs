@@ -4,6 +4,15 @@ using System.Diagnostics;
 
 namespace g3
 {
+    public struct matrix_entry
+    {
+        public int r;
+        public int c;
+        public double value;
+    }
+
+
+
     /// <summary>
     /// This is a sparse matrix where each row is an array of (column,value) pairs
     /// This is more efficient for Matrix*Vector multiply.
@@ -17,8 +26,18 @@ namespace g3
         }
         public nonzero[][] Rows;
 
-        public int Columns;
-        public bool Sorted;
+        public int Columns = 0;
+        public bool Sorted = false;
+        public int NumNonZeros = 0;
+
+        public enum StorageModes
+        {
+            Full
+        }
+        public StorageModes StorageMode = StorageModes.Full;
+
+        public bool IsSymmetric = false;
+
 
         public PackedSparseMatrix(SymmetricSparseMatrix m, bool bTranspose = false)
         {
@@ -34,8 +53,12 @@ namespace g3
                     counts[ij.b]++;
             }
 
-            for (int k = 0; k < numRows; ++k)
+            NumNonZeros = 0;
+            for (int k = 0; k < numRows; ++k) {
                 Rows[k] = new nonzero[counts[k]];
+                NumNonZeros += counts[k];
+            }
+
 
             int[] accum = new int[numRows];
             foreach ( KeyValuePair<Index2i,double> ijv in m.NonZeros() ) {
@@ -53,22 +76,109 @@ namespace g3
                 }
             }
 
-            for (int k = 0; k < numRows; ++k)
-                Debug.Assert(accum[k] == counts[k]);
+            //for (int k = 0; k < numRows; ++k)
+            //    Debug.Assert(accum[k] == counts[k]);
 
             Sorted = false;
+            IsSymmetric = true;
+            StorageMode = StorageModes.Full;
         }
 
 
 
-        public void Sort()
+
+        public PackedSparseMatrix(DVector<matrix_entry> entries, int numRows, int numCols, bool bSymmetric = true)
         {
-            gParallel.ForEach(Interval1i.Range(Rows.Length), (i) => {
-                Array.Sort(Rows[i], (x, y) => { return x.j.CompareTo(y.j); });
-            });
-            //for ( int i = 0; i < Rows.Length; ++i ) 
-            //    Array.Sort(Rows[i], (x, y) => { return x.j.CompareTo(y.j); }  );
+            Columns = numCols;
+            Rows = new nonzero[numRows][];
+
+            int N = entries.size;
+            int[] counts = new int[numRows];
+            for ( int i = 0; i < N; ++i ) { 
+                counts[entries[i].r]++;
+                if (bSymmetric && entries[i].r != entries[i].c)
+                    counts[entries[i].c]++;
+            }
+
+            NumNonZeros = 0;
+            for (int k = 0; k < numRows; ++k) {
+                Rows[k] = new nonzero[counts[k]];
+                NumNonZeros += counts[k];
+            }
+
+            int[] accum = new int[numRows];
+            for ( int i = 0; i < N; ++i ) {
+                matrix_entry e = entries[i];
+                int k = accum[e.r]++;
+                Rows[e.r][k].j = e.c;
+                Rows[e.r][k].d = e.value;
+
+                if (bSymmetric && e.c != e.r ) {
+                    k = accum[e.c]++;
+                    Rows[e.c][k].j = e.r;
+                    Rows[e.c][k].d = e.value;
+                }
+            }
+
+            //for (int k = 0; k < numRows; ++k)
+            //    Debug.Assert(accum[k] == counts[k]);
+
+            Sorted = false;
+            IsSymmetric = true;
+            StorageMode = StorageModes.Full;
+        }
+
+
+
+
+        public double this[int r, int c] {
+            get {
+                nonzero[] row = Rows[r];
+                int n = row.Length;
+                for (int k = 0; k < n; ++k) {
+                    if (row[k].j == c)
+                        return row[k].d;
+                }
+                return 0;
+            }
+        }
+
+
+        /// <summary>
+        /// sort each row
+        /// </summary>
+        public void Sort(bool bParallel = true) {
+            if (bParallel) {
+                gParallel.BlockStartEnd(0, Rows.Length - 1, (a, b) => {
+                    for (int i = a; i <= b; i++) {
+                        Array.Sort(Rows[i], (x, y) => { return x.j.CompareTo(y.j); });
+                    }
+                });
+            } else {
+                for (int i = 0; i < Rows.Length; ++i)
+                    Array.Sort(Rows[i], (x, y) => { return x.j.CompareTo(y.j); });
+            }
             Sorted = true;
+        }
+
+
+
+        /// <summary>
+        /// For row r, find interval that nonzeros lie in
+        /// </summary>
+        public Interval1i NonZerosRange(int r)
+        {
+            nonzero[] Row = Rows[r];
+            if (Row.Length == 0)
+                return Interval1i.Empty;
+            if (Sorted == false) {
+                Interval1i range = Interval1i.Empty;
+                for (int i = 0; i < Row.Length; ++i)
+                    range.Contain(Row[i].j);
+                return range;
+            } else {
+                return new Interval1i(Row[0].j, Row[Row.Length - 1].j);
+            }
         }
 
 
@@ -87,6 +197,21 @@ namespace g3
         }
 
 
+        public void Multiply_Parallel(double[] X, double[] Result)
+        {
+            gParallel.BlockStartEnd(0, Rows.Length - 1, (i_start, i_end) => {
+                for (int i = i_start; i <= i_end; ++i) {
+                    Result[i] = 0;
+                    nonzero[] row = Rows[i];
+                    int n = row.Length;
+                    for (int k = 0; k < n; ++k) {
+                        Result[i] += row[k].d * X[row[k].j];
+                    }
+                }
+            });
+        }
+
+
 
         /// <summary>
         /// Compute dot product of this.row[r] and M.col[c], where the
@@ -94,32 +219,54 @@ namespace g3
         /// </summary>
         public double DotRowColumn(int r, int c, PackedSparseMatrix MTranspose)
         {
+            if (Sorted == false || MTranspose.Sorted == false)
+                throw new Exception("PackedSparseMatrix.DotRowColumn: matrices must be sorted!");
+            if (Rows.Length != MTranspose.Rows.Length )
+                throw new Exception("PackedSparseMatrix.DotRowColumn: matrices are not the same size!");
+
             Debug.Assert(Sorted && MTranspose.Sorted);
             Debug.Assert(Rows.Length == MTranspose.Rows.Length);
 
-            int a = 0;
-            int b = 0;
+            int ri = 0;
+            int ci = 0;
             nonzero[] Row = Rows[r];
             nonzero[] Col = MTranspose.Rows[c];
-            int NA = Row.Length;
-            int NB = Col.Length;
+            int NR = Row.Length;
+            int NC = Col.Length;
+            int last_col_j = Col[NC-1].j;
+            int last_row_j = Row[NR-1].j;
 
             double sum = 0;
-            while (a < NA && b < NB) { 
-                if ( Row[a].j == Col[b].j ) {
-                    sum += Row[a].d * Col[b].d;
-                    a++;
-                    b++;
-                } else if ( Row[a].j < Col[b].j ) {
-                    a++;
+            while (ri < NR && ci < NC) {
+                // early out if we passed last nonzero in other array
+                if (Row[ri].j > last_col_j || Col[ci].j > last_row_j)
+                    break;
+                if (Row[ri].j == Col[ci].j) {
+                    sum += Row[ri].d * Col[ci].d;
+                    ri++;
+                    ci++;
+                } else if (Row[ri].j < Col[ci].j) {
+                    ri++;
                 } else {
-                    b++;
+                    ci++;
                 }
             }
 
             return sum;
         }
 
+
+        /// <summary>
+        /// Dot product of this.row[r] with itself
+        /// </summary>
+        public double DotRowSelf(int r)
+        {
+            nonzero[] Row = Rows[r];
+            double sum = 0;
+            for (int ri = 0; ri < Row.Length; ri++)
+                sum += Row[ri].d * Row[ri].d;
+            return sum;
+        }
 
 
 
@@ -164,6 +311,66 @@ namespace g3
                 a++;
             }
 
+        }
+
+
+
+        public double FrobeniusNorm {
+            get {
+                double sum = 0;
+                for (int i = 0; i < Rows.Length; ++i) {
+                    nonzero[] row = Rows[i];
+                    for (int j = 0; j < row.Length; ++j)
+                        sum += row[j].d * row[j].d;
+                }
+                return Math.Sqrt(sum);
+            }
+        }
+
+
+        public double MaxNorm {
+            get {
+                double max = 0;
+                for (int i = 0; i < Rows.Length; ++i) {
+                    nonzero[] row = Rows[i];
+                    for (int j = 0; j < row.Length; ++j) {
+                        if (row[j].d > max)
+                            max = row[j].d;
+                    }
+                }
+                return max;
+            }
+        }
+
+
+        public double Trace {
+            get {
+                double sum = 0;
+                for (int i = 0; i < Rows.Length; ++i) {
+                    nonzero[] row = Rows[i];
+                    for (int j = 0; j < row.Length; ++j) {
+                        if (row[j].j == i)
+                            sum += row[j].d;
+                    }
+                }
+                return sum;
+            }
+        }
+
+
+
+
+        public string MatrixInfo(bool bExtended = false) {
+            string s = string.Format("Rows {0}  Cols {1}   NonZeros {2}  Sorted {3}", Rows.Length, Columns, NumNonZeros, Sorted);
+            if ( bExtended ) {
+                double sum = 0; 
+                foreach ( var row in Rows ) {
+                    foreach (var val in row)
+                        sum += val.d;
+                }
+                s = s + string.Format("  Sum {0}  Frobenius {1}  Max {2}  Trace {3}", sum, FrobeniusNorm, MaxNorm, Trace);
+            }
+            return s;
         }
 
 

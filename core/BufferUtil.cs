@@ -56,6 +56,16 @@ namespace g3
                 dest[i] += multiply * add[i];
         }
 
+        static public double MultiplyAdd_GetSqrSum(double[] dest, double multiply, double[] add)
+        {
+            double sum = 0;
+            for (int i = 0; i < dest.Length; ++i) {
+                dest[i] += multiply * add[i];
+                sum += dest[i] * dest[i];
+            }
+            return sum;
+        }
+
         static public double DistanceSquared(double[] a, double[] b)
         {
             double sum = 0;

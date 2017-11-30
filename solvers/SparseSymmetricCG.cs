@@ -5,7 +5,9 @@ namespace g3
     // ported from WildMagic5 Wm5LinearSystem.cpp
     public class SparseSymmetricCG
     {
+        // Compute B = A*X, where inputs are ordered <X,B>
         public Action<double[], double[]> MultiplyF;
+
         public Action<double[], double[]> PreconditionMultiplyF;
 
         // B is not modified!
@@ -80,12 +82,17 @@ namespace g3
                 MultiplyF(P, W);
 
                 alpha = rho1 / BufferUtil.Dot(P, W);
-                BufferUtil.MultiplyAdd(X, alpha, P);
-                BufferUtil.MultiplyAdd(R, -alpha, W);
-                rho0 = rho1;
-                rho1 = BufferUtil.Dot(R, R);
-            }
 
+                // can compute these two steps simultaneously
+                double RdotR = 0;
+                gParallel.Evaluate(
+                    () => { BufferUtil.MultiplyAdd(X, alpha, P); },
+                    () => { RdotR = BufferUtil.MultiplyAdd_GetSqrSum(R, -alpha, W); } 
+                );
+
+                rho0 = rho1;
+                rho1 = RdotR; // BufferUtil.Dot(R, R);
+            }
 
             //System.Console.WriteLine("{0} iterations", iter);
             Iterations = iter;
