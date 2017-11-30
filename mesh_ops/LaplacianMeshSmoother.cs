@@ -36,7 +36,7 @@ namespace g3
 
 
         // Appendix C from http://sites.fas.harvard.edu/~cs277/papers/deformation_survey.pdf
-        bool UseSoftConstraintNormalEquations = true;
+        public bool UseSoftConstraintNormalEquations = true;
 
 
         // result
