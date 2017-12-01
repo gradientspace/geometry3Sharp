@@ -191,7 +191,7 @@ namespace g3
 
 
         // Result must be as large as Mesh.MaxVertexID
-        public bool Solve(Vector3d[] Result)
+        public bool SolveMultipleCG(Vector3d[] Result)
         {
             if (WeightsM == null)
                 Initialize();       // force initialize...
@@ -252,6 +252,69 @@ namespace g3
             return true;
         }
 
+
+
+
+        // Result must be as large as Mesh.MaxVertexID
+        public bool SolveMultipleRHS(Vector3d[] Result)
+        {
+            if (WeightsM == null)
+                Initialize();       // force initialize...
+
+            UpdateForSolve();
+
+            // use initial positions as initial solution. 
+            double[][] B = BufferUtil.InitNxM(3, N, new double[][] { Bx, By, Bz });
+            double[][] X = BufferUtil.InitNxM(3, N, new double[][] { Px, Py, Pz });
+
+            Action<double[][], double[][]> CombinedMultiply = (Xt, Bt) => {
+                PackedM.Multiply_Parallel_3(Xt, Bt);
+                gParallel.ForEach(Interval1i.Range(3), (j) => {
+                    BufferUtil.MultiplyAdd(Bt[j], WeightsM.D, Xt[j]);
+                });
+            };
+
+            SparseSymmetricCGMultipleRHS Solver = new SparseSymmetricCGMultipleRHS() {
+                B = B, X = X,
+                MultiplyF = CombinedMultiply, PreconditionMultiplyF = null,
+                UseXAsInitialGuess = true
+            };
+
+            bool ok = Solver.Solve();
+
+            if (ok == false)
+                return false;
+
+            for (int i = 0; i < N; ++i) {
+                int vid = ToMeshV[i];
+                Result[vid] = new Vector3d(X[0][i], X[1][i], X[2][i]);
+            }
+
+            // apply post-fixed constraints
+            if (HavePostFixedConstraints) {
+                foreach (var constraint in SoftConstraints) {
+                    if (constraint.Value.PostFix) {
+                        int vid = constraint.Key;
+                        Result[vid] = constraint.Value.Position;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+
+
+
+
+        public bool Solve(Vector3d[] Result)
+        {
+            // for small problems, faster to use separate CGs?
+            if ( Mesh.VertexCount < 10000 )
+                return SolveMultipleCG(Result);
+            else
+                return SolveMultipleRHS(Result);
+        }
 
 
 

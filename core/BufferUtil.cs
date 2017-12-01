@@ -56,6 +56,12 @@ namespace g3
                 dest[i] += multiply * add[i];
         }
 
+        static public void MultiplyAdd(double[] dest, double[] multiply, double[] add)
+        {
+            for (int i = 0; i < dest.Length; ++i)
+                dest[i] += multiply[i] * add[i];
+        }
+
         static public double MultiplyAdd_GetSqrSum(double[] dest, double multiply, double[] add)
         {
             double sum = 0;
@@ -74,10 +80,28 @@ namespace g3
             return sum;
         }
 
-		/// <summary>
-		/// Count number of elements in array (or up to max_i) that pass FilterF test
-		/// </summary>
-		static public int CountValid<T>(T[] data, Func<T, bool> FilterF, int max_i = -1) {
+
+        static public double[][] AllocNxM(int N, int M)
+        {
+            double[][] d = new double[N][];
+            for (int k = 0; k <  N; ++k)
+                d[k] = new double[M];
+            return d;
+        }
+
+        static public double[][] InitNxM(int N, int M, double[][] init)
+        {
+            double[][] d = AllocNxM(N, M);
+            for (int k = 0; k < N; ++k)
+                Array.Copy(init[k], d[k], M);
+            return d;
+        }
+
+
+        /// <summary>
+        /// Count number of elements in array (or up to max_i) that pass FilterF test
+        /// </summary>
+        static public int CountValid<T>(T[] data, Func<T, bool> FilterF, int max_i = -1) {
 			int n = (max_i == -1) ? data.Length : max_i;
 			int valid = 0;
 			for (int i = 0; i < n; ++i) {

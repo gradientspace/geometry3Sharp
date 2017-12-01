@@ -212,6 +212,28 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Hardcoded variant for 3 RHS vectors, much faster
+        /// </summary>
+        public void Multiply_Parallel_3(double[][] X, double[][] Result)
+        {
+            int j = X.Length;
+            gParallel.BlockStartEnd(0, Rows.Length - 1, (i_start, i_end) => {
+                for (int i = i_start; i <= i_end; ++i) {
+                    Result[0][i] = Result[1][i] = Result[2][i] = 0;
+                    nonzero[] row = Rows[i];
+                    int n = row.Length;
+                    for (int k = 0; k < n; ++k) {
+                        int rowkj = row[k].j;
+                        double d = row[k].d;
+                        Result[0][i] += d * X[0][rowkj];
+                        Result[1][i] += d * X[1][rowkj];
+                        Result[2][i] += d * X[2][rowkj];
+                    }
+                }
+            });
+        }
+
 
         /// <summary>
         /// Compute dot product of this.row[r] and M.col[c], where the
