@@ -98,7 +98,7 @@ namespace g3
 
 
         public double Cross(Vector2d v2) {
-            return y * v2.y - y * v2.x;
+            return x * v2.y - y * v2.x;
         }
 
 

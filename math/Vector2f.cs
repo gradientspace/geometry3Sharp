@@ -93,7 +93,7 @@ namespace g3
 
 
         public float Cross(Vector2f v2) {
-            return y * v2.y - y * v2.x;
+            return x * v2.y - y * v2.x;
         }
 
 
