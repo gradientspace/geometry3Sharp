@@ -504,12 +504,12 @@ namespace g3
                     if (done_v[sub_v] == false) {
 
                         // first check if this is a boundary vtx on submesh and maps to a bdry vtx on base mesh
-                        if (submesh.vertex_is_boundary(sub_v)) {
+                        if (submesh.IsBoundaryVertex(sub_v)) {
                             int base_v = (sub_v < sub.SubToBaseV.size) ? sub.SubToBaseV[sub_v] : -1;
                             if ( base_v >= 0 && Mesh.IsVertex(base_v) && sub.BaseBorderV[base_v] == true ) { 
                                 // [RMS] this should always be true, but assert in tests to find out
-                                Debug.Assert(Mesh.vertex_is_boundary(base_v));
-                                if (Mesh.vertex_is_boundary(base_v)) {
+                                Debug.Assert(Mesh.IsBoundaryVertex(base_v));
+                                if (Mesh.IsBoundaryVertex(base_v)) {
                                     new_v = base_v;
                                 }
                             }

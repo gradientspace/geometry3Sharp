@@ -283,15 +283,13 @@ namespace g3 {
 				return ProcessResult.Failed_NotAnEdge;
 			bool bIsBoundaryEdge = (t1 == DMesh3.InvalidID);
 
-			// look up 'other' verts c (from t0) and d (from t1, if it exists)
-			Index3i T0tv = mesh.GetTriangle(t0);
-			int c = IndexUtil.find_tri_other_vtx(a, b, T0tv);
-			Index3i T1tv = (bIsBoundaryEdge) ? DMesh3.InvalidTriangle : mesh.GetTriangle(t1);
-			int d = (bIsBoundaryEdge) ? DMesh3.InvalidID : IndexUtil.find_tri_other_vtx( a, b, T1tv );
+            // look up 'other' verts c (from t0) and d (from t1, if it exists)
+            Index2i ov = mesh.GetEdgeOpposingV(edgeID);
+            int c = ov.a, d = ov.b;
 
 			Vector3d vA = mesh.GetVertex(a);
 			Vector3d vB = mesh.GetVertex(b);
-			double edge_len_sqr = (vA-vB).LengthSquared;
+            double edge_len_sqr = vA.DistanceSquared(vB);
 
             begin_collapse();
 
@@ -358,10 +356,10 @@ namespace g3 {
 				// don't want to flip if it will invert triangle...tetrahedron sign??
 
 				// can we do this more efficiently somehow?
-				bool a_is_boundary_vtx = (MeshIsClosed) ? false : (bIsBoundaryEdge || mesh.vertex_is_boundary(a));
-				bool b_is_boundary_vtx = (MeshIsClosed) ? false : (bIsBoundaryEdge || mesh.vertex_is_boundary(b));
-				bool c_is_boundary_vtx = (MeshIsClosed) ? false : mesh.vertex_is_boundary(c);
-				bool d_is_boundary_vtx = (MeshIsClosed) ? false :  mesh.vertex_is_boundary(d);
+				bool a_is_boundary_vtx = (MeshIsClosed) ? false : (bIsBoundaryEdge || mesh.IsBoundaryVertex(a));
+				bool b_is_boundary_vtx = (MeshIsClosed) ? false : (bIsBoundaryEdge || mesh.IsBoundaryVertex(b));
+				bool c_is_boundary_vtx = (MeshIsClosed) ? false : mesh.IsBoundaryVertex(c);
+				bool d_is_boundary_vtx = (MeshIsClosed) ? false :  mesh.IsBoundaryVertex(d);
 				int valence_a = mesh.GetVtxEdgeCount(a), valence_b = mesh.GetVtxEdgeCount(b);
 				int valence_c = mesh.GetVtxEdgeCount(c), valence_d = mesh.GetVtxEdgeCount(d);
 				int valence_a_target = (a_is_boundary_vtx) ? valence_a : 6;
@@ -402,7 +400,7 @@ namespace g3 {
                 COUNT_SPLITS++;
 				MeshResult result = mesh.SplitEdge(edgeID, out splitInfo);
 				if ( result == MeshResult.Ok ) {
-                    update_after_split(edgeID, a, b, splitInfo);
+                    update_after_split(edgeID, a, b, ref splitInfo);
                     OnEdgeSplit(edgeID, a, b, splitInfo);
                     DoDebugChecks();
 					return ProcessResult.Ok_Split;
@@ -425,7 +423,7 @@ namespace g3 {
         // The edge needs to inherit the constraint on the other pre-existing edge that we kept.
         // In addition, if the edge vertices were both constrained, then we /might/
         // want to also constrain this new vertex, possibly project to constraint target. 
-        void update_after_split(int edgeID, int va, int vb, DMesh3.EdgeSplitInfo splitInfo)
+        void update_after_split(int edgeID, int va, int vb, ref DMesh3.EdgeSplitInfo splitInfo)
         {
             bool bPositionFixed = false;
             if (constraints != null && constraints.HasEdgeConstraint(edgeID)) {

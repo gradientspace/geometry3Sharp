@@ -84,7 +84,7 @@ namespace g3
                 if (Region.SubMesh.IsBoundaryEdge(eid))
                     continue;
                 Index2i edgev = Region.SubMesh.GetEdgeV(eid);
-                if (Region.SubMesh.vertex_is_boundary(edgev.a) && Region.SubMesh.vertex_is_boundary(edgev.b)) {
+                if (Region.SubMesh.IsBoundaryVertex(edgev.a) && Region.SubMesh.IsBoundaryVertex(edgev.b)) {
                     // ok, we have an internal edge where both verts are on the boundary
                     // now check if it is an edge in the base mesh
                     int base_a = Region.MapVertexToBaseMesh(edgev.a);

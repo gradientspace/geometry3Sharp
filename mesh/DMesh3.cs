@@ -1462,10 +1462,10 @@ namespace g3
         }
 
 
-        // ugh need to deprecate this...weird API!
-		public bool vertex_is_boundary(int vID) {
+        [System.Obsolete("vertex_is_boundary will be removed in future, use IsBoundaryVertex instead")]
+        public bool vertex_is_boundary(int vID) {
             return IsBoundaryVertex(vID);
-		}
+        }
         public bool IsBoundaryVertex(int vID) {
             foreach (int e in vertex_edges.ValueItr(vID)) {
                 if (edges[4 * e + 3] == InvalidID)

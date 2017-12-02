@@ -64,7 +64,7 @@ namespace g3
                         int eid = find_edge(oa,ob);
                         if (edge_is_boundary(eid))
                             continue;
-                        if (vertex_is_boundary(oa) || vertex_is_boundary(ob))
+                        if (IsBoundaryVertex(oa) || IsBoundaryVertex(ob))
                             return MeshResult.Failed_WouldCreateBowtie;
                     }
                 }
@@ -113,7 +113,7 @@ namespace g3
             // (that vtx already has 2 boundary edges, and we would add two more)
             if (bPreserveManifold) {
                 for (int j = 0; j < 3; ++j) {
-                    if (vertex_is_boundary(tv[j])) {
+                    if (IsBoundaryVertex(tv[j])) {
                         if (edge_is_boundary(te[j]) == false && edge_is_boundary(te[(j + 2) % 3]) == false)
                             return MeshResult.Failed_WouldCreateBowtie;
                     }
@@ -628,7 +628,7 @@ namespace g3
 			//
 			// NOTE: potentially scanning all edges here...couldn't we
 			//  pick up eac/bc/ad/bd as we go? somehow?
-			if ( bIsBoundaryEdge == false && vertex_is_boundary(a) && vertex_is_boundary(b) )
+			if ( bIsBoundaryEdge == false && IsBoundaryVertex(a) && IsBoundaryVertex(b) )
 				return MeshResult.Failed_InvalidNeighbourhood;
 
 
