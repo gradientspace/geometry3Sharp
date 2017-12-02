@@ -1004,9 +1004,9 @@ namespace g3
             int e0 = find_edge(tv[0], tv[1]);
             int e1 = find_edge(tv[1], tv[2]);
             int e2 = find_edge(tv[2], tv[0]);
-            if ((e0 != InvalidID && edge_is_boundary(e0) == false)
-                 || (e1 != InvalidID && edge_is_boundary(e1) == false)
-                 || (e2 != InvalidID && edge_is_boundary(e2) == false)) {
+            if ((e0 != InvalidID && IsBoundaryEdge(e0) == false)
+                 || (e1 != InvalidID && IsBoundaryEdge(e1) == false)
+                 || (e2 != InvalidID && IsBoundaryEdge(e2) == false)) {
                 return NonManifoldID;
             }
 
@@ -1388,9 +1388,9 @@ namespace g3
 
         public bool tri_is_boundary(int tID) {
 			int i = 3*tID;
-            return edge_is_boundary(triangle_edges[i])
-                || edge_is_boundary(triangle_edges[i + 1])
-                || edge_is_boundary(triangle_edges[i + 2]);
+            return IsBoundaryEdge(triangle_edges[i])
+                || IsBoundaryEdge(triangle_edges[i + 1])
+                || IsBoundaryEdge(triangle_edges[i + 2]);
         }
 
         public bool tri_has_neighbour_t(int tCheck, int tNbr) {
@@ -1438,9 +1438,11 @@ namespace g3
         public bool IsBoundaryEdge(int eid) {
             return edges[4 * eid + 3] == InvalidID;
         }
+        [System.Obsolete("edge_is_boundary will be removed in future, use IsBoundaryEdge instead")]
         public bool edge_is_boundary(int eid) {
             return edges[4 * eid + 3] == InvalidID;
         }
+
         public bool edge_has_v(int eid, int vid) {
 			int i = 4*eid;
             return (edges[i] == vid) || (edges[i + 1] == vid);
@@ -1721,12 +1723,12 @@ namespace g3
             // [RMS] under possibly-mistaken belief that foreach() has some overhead...
             if (MaxEdgeID / EdgeCount > 5) {
                 foreach (int eid in edges_refcount)
-                    if (edge_is_boundary(eid))
+                    if (IsBoundaryEdge(eid))
                         return false;
             } else {
                 int N = MaxEdgeID;
                 for (int i = 0; i < N; ++i)
-                    if (edges_refcount.isValid(i) && edge_is_boundary(i))
+                    if (edges_refcount.isValid(i) && IsBoundaryEdge(i))
                         return false;
             }
             return true;            

@@ -62,7 +62,7 @@ namespace g3
                         int j = IndexUtil.find_tri_index(vID, tri);
                         int oa = tri[(j + 1) % 3], ob = tri[(j + 2) % 3];
                         int eid = find_edge(oa,ob);
-                        if (edge_is_boundary(eid))
+                        if (IsBoundaryEdge(eid))
                             continue;
                         if (IsBoundaryVertex(oa) || IsBoundaryVertex(ob))
                             return MeshResult.Failed_WouldCreateBowtie;
@@ -114,7 +114,7 @@ namespace g3
             if (bPreserveManifold) {
                 for (int j = 0; j < 3; ++j) {
                     if (IsBoundaryVertex(tv[j])) {
-                        if (edge_is_boundary(te[j]) == false && edge_is_boundary(te[(j + 2) % 3]) == false)
+                        if (IsBoundaryEdge(te[j]) == false && IsBoundaryEdge(te[(j + 2) % 3]) == false)
                             return MeshResult.Failed_WouldCreateBowtie;
                     }
                 }
@@ -189,9 +189,9 @@ namespace g3
             int e0 = find_edge(newv[0], newv[1]);
             int e1 = find_edge(newv[1], newv[2]);
             int e2 = find_edge(newv[2], newv[0]);
-            if ((te.a != -1 && e0 != InvalidID && edge_is_boundary(e0) == false)
-                 || (te.b != -1 && e1 != InvalidID && edge_is_boundary(e1) == false)
-                 || (te.c != -1 && e2 != InvalidID && edge_is_boundary(e2) == false)) {
+            if ((te.a != -1 && e0 != InvalidID && IsBoundaryEdge(e0) == false)
+                 || (te.b != -1 && e1 != InvalidID && IsBoundaryEdge(e1) == false)
+                 || (te.c != -1 && e2 != InvalidID && IsBoundaryEdge(e2) == false)) {
                 return MeshResult.Failed_BrokenTopology;
             }
 
@@ -301,7 +301,7 @@ namespace g3
 
             // quite a bit of code is duplicated between boundary and non-boundary case, but it
             //  is too hard to follow later if we factor it out...
-            if ( edge_is_boundary(eab) ) {
+            if ( IsBoundaryEdge(eab) ) {
 
 				// look up edge bc, which needs to be modified
 				Index3i T0te = GetTriEdges(t0);
@@ -434,7 +434,7 @@ namespace g3
 			flip = new EdgeFlipInfo();
 			if (! IsEdge(eab) )
 				return MeshResult.Failed_NotAnEdge;
-			if ( edge_is_boundary(eab) )
+			if ( IsBoundaryEdge(eab) )
 				return MeshResult.Failed_IsBoundaryEdge;
 
 			// find oriented edge [a,b], tris t0,t1, and other verts c in t0, d in t1
@@ -612,10 +612,10 @@ namespace g3
 					return MeshResult.Failed_CollapseTetrahedron;
 				}
 
-			} else if (bIsBoundaryEdge == true && edge_is_boundary(eac) ) {
+			} else if (bIsBoundaryEdge == true && IsBoundaryEdge(eac) ) {
                 // Cannot collapse edge if we are down to a single triangle
                 ebc = find_edge_from_tri(b, c, t0);
-                if ( edge_is_boundary(ebc) )
+                if ( IsBoundaryEdge(ebc) )
 					return MeshResult.Failed_CollapseTriangle;
 			}
 
@@ -907,13 +907,13 @@ namespace g3
 				// problem case is when vert_1 == vert_2  (ie two edges w/ same other vtx).
 				for (int i = 0; i < Nedges && found == false; ++i) {
 					int edge_1 = edges_v[i];
-					if ( edge_is_boundary(edge_1) == false)
+					if ( IsBoundaryEdge(edge_1) == false)
 						continue;
 					int vert_1 = edge_other_v(edge_1, v1);
 					for (int j = i + 1; j < Nedges; ++j) {
 						int edge_2 = edges_v[j];
 						int vert_2 = edge_other_v(edge_2, v1);
-						if (vert_1 == vert_2 && edge_is_boundary(edge_2)) { // if ! boundary here, we are in deep trouble...
+						if (vert_1 == vert_2 && IsBoundaryEdge(edge_2)) { // if ! boundary here, we are in deep trouble...
 							// replace edge_2 w/ edge_1 in tri, update edge and vtx-edge-nbr lists
 							int tri_1 = edges[4 * edge_1 + 2];
 							int tri_2 = edges[4 * edge_2 + 2];
