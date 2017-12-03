@@ -80,26 +80,29 @@ namespace g3
 			L = new DenseMatrix(N, N);
 			double[] Lbuf = L.Buffer;
 
+            Action<int> compute_diag = (r) => {
+                double diag_dot = 0;
+                int ck = r * N; int ck_stop = ck + r;
+                do {
+                    diag_dot += Lbuf[ck] * Lbuf[ck];
+                } while (ck++ < ck_stop);
+                L[r, r] = Math.Sqrt(A[r, r] - diag_dot);
+            };
+
             // compute initial column
             L[0, 0] = Math.Sqrt(A[0, 0]);
             for (int r = 1; r < N; ++r) {
                 L[r, 0] = A[r, 0] / L[0, 0];
             }
 
-            // for each row, we compute the diagonal element, and
-            // then parallel-fill the column below that diagonal elem.
+            // fill diag (1,1)
+            compute_diag(1);
+
+            // once we have computed a diagonal element, we can parallel-fill
+            // the column below it
             for (int c = 1; c < N; ++c) {
 
-                // compute diagonal element
-                // note: could fold into loop below - can fill diagonal (c+1,c+1) as soon as we have computed (c+1,c)
-                double diag_dot = 0;
-                int ck = c * N; int ck_stop = ck + c;
-                do {
-                    diag_dot += Lbuf[ck] * Lbuf[ck];
-                } while (ck++ < ck_stop);
-                L[c, c] = Math.Sqrt(A[c, c] - diag_dot);
-
-                // compute rest of this column below diagonal element
+                int num_rows = (N-1) - (c+1);
                 gParallel.BlockStartEnd(c + 1, N - 1, (a, b) => {
                     for (int r = a; r <= b; ++r) {
                         double row_dot = 0;
@@ -111,8 +114,11 @@ namespace g3
                         }
 
                         L[r, c] = (1.0 / L[c, c]) * (A[r, c] - row_dot);
+
+                        if (r == c + 1)
+                            compute_diag(r);   // compute diagonal for next column
                     }
-                });
+                }, Math.Max(num_rows/20, 1) );     
             }
 
 

@@ -239,13 +239,13 @@ namespace g3
 
 
 
-        public DenseMatrix Multiply(DenseMatrix M2)
+        public DenseMatrix Multiply(DenseMatrix M2, bool bParallel = true)
         {
             DenseMatrix R = new DenseMatrix(Rows, M2.Columns);
-            Multiply(M2, ref R);
+            Multiply(M2, ref R, bParallel);
             return R;
         }
-        public void Multiply(DenseMatrix M2, ref DenseMatrix R)
+        public void Multiply(DenseMatrix M2, ref DenseMatrix R, bool bParallel = true)
         {
             int rows1 = N, cols1 = M;
             int rows2 = M2.N, cols2 = M2.M;
@@ -259,13 +259,26 @@ namespace g3
             if (R.Rows != rows1 || R.Columns != cols2)
                 throw new Exception("DenseMatrix.Multiply: Result matrix has incorrect dimensions");
 
-            for ( int r1i = 0; r1i < rows1; r1i++ ) {
-				int ii = r1i * M;
-                for ( int c2i = 0; c2i < cols2; c2i++ ) {
-                    double v = 0;
-                    for (int k = 0; k < cols1; ++k)
-                        v += d[ii+k] * M2.d[k*M+c2i];
-                    R[ii+c2i] = v;
+            if (bParallel) {
+                DenseMatrix Rt = R;
+                gParallel.ForEach(Interval1i.Range(0, rows1), (r1i) => {
+                    int ii = r1i * M;
+                    for (int c2i = 0; c2i < cols2; c2i++) {
+                        double v = 0;
+                        for (int k = 0; k < cols1; ++k)
+                            v += d[ii + k] * M2.d[k * M + c2i];
+                        Rt[ii + c2i] = v;
+                    }
+                });
+            } else {
+                for (int r1i = 0; r1i < rows1; r1i++) {
+                    int ii = r1i * M;
+                    for (int c2i = 0; c2i < cols2; c2i++) {
+                        double v = 0;
+                        for (int k = 0; k < cols1; ++k)
+                            v += d[ii + k] * M2.d[k * M + c2i];
+                        R[ii + c2i] = v;
+                    }
                 }
             }
 
