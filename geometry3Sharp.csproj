@@ -308,6 +308,7 @@
     <Compile Include="containment\TilingUtil.cs" />
     <Compile Include="curve\Hexagon2.cs" />
     <Compile Include="solvers\CholeskyDecomposition.cs" />
+    <Compile Include="spatial\Bitmap2.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

@@ -34,6 +34,11 @@ namespace g3
         static public Interval1i Range(int start, int N) { return new Interval1i(start, start+N - 1); }
 
 
+		/// <summary> construct interval [a, b] </summary>
+		static public Interval1i FromToInclusive(int a, int b) { return new Interval1i(a, b); }
+
+
+
         public int this[int key]
         {
             get { return (key == 0) ? a : b; }
