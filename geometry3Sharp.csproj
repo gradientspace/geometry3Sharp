@@ -307,6 +307,7 @@
     <Compile Include="queries\IntersectionUtil.cs" />
     <Compile Include="containment\TilingUtil.cs" />
     <Compile Include="curve\Hexagon2.cs" />
+    <Compile Include="solvers\CholeskyDecomposition.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />

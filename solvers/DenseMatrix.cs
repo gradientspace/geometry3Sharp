@@ -3,10 +3,14 @@
 
 namespace g3
 {
+	/// <summary>
+	/// Row-major dense matrix
+	/// </summary>
     public class DenseMatrix : IMatrix
     {
         double[] d;
-        int N, M;
+		int N;		// rows
+		int M;		// columns
 
 
         public DenseMatrix(int Nrows, int Mcols)
@@ -34,6 +38,14 @@ namespace g3
         {
             d[r*M+c] = value;
         }
+
+
+		public void Set(double[] values)
+		{
+			if (values.Length != N * M)
+				throw new Exception("DenseMatrix.Set: incorrect length");
+			Array.Copy(values, d, d.Length);
+		}
 
 
         public int Rows { get { return N; } }
@@ -132,6 +144,39 @@ namespace g3
             return true;
         }
 
+
+		public bool IsPositiveDefinite()
+		{
+			if (M != N)
+				throw new Exception("DenseMatrix.IsPositiveDefinite: matrix is not square!");
+			if (IsSymmetric() == false)
+				throw new Exception("DenseMatrix.IsPositiveDefinite: matrix is not symmetric!");
+
+			for (int i = 0; i < N; ++i) {
+				double diag = d[i * M + i];
+				double row_sum = 0;
+				for (int j = 0; j < N; ++j) {
+					if (j != i)
+						row_sum += Math.Abs(d[i * M + j]);
+				}
+				if (diag < 0 || diag < row_sum)
+					return false;
+			}
+			return true;
+		}
+
+
+
+		public bool EpsilonEquals(DenseMatrix m2, double epsilon = MathUtil.ZeroTolerance)
+		{
+			if (N != m2.N || M != m2.M)
+				throw new Exception("DenseMatrix.Equals: matrices are not the same size!");
+			for (int i = 0; i < d.Length; ++i) {
+				if (Math.Abs(d[i] - m2.d[i]) > epsilon)
+					return false;
+			}
+			return true;
+		}
 
 
 
