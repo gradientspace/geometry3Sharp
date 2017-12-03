@@ -46,8 +46,8 @@ namespace g3
 					double row_dot = 0;
 					int rk = r * N, jk = j * N;
 					int jk_stop = jk + j;
-					while ( jk < jk_stop ) {
-						row_dot += Lbuf[rk++] * Lbuf[jk++];
+					while ( jk < jk_stop ) {    				// k from 0 to j-1
+						row_dot += Lbuf[rk++] * Lbuf[jk++];   	// L[r,k] * L[j,k]
 					}
 
 					L[r,j] = (1.0/L[j,j]) * (A[r,j] - row_dot);
