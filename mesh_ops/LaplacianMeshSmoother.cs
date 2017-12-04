@@ -185,8 +185,7 @@ namespace g3
                 Bz[i] = MLz[i] + Cz[i];
             }
 
-            // update basic preconditioner
-            // [RMS] currently not using this...it actually seems to make things worse!! 
+            // update basic Jacobi preconditioner
             for ( int i = 0; i < N; i++ ) {
                 double diag_value = PackedM[i, i] + WeightsM[i, i];
                 Preconditioner.Set(i, i, 1.0 / diag_value);
@@ -233,9 +232,9 @@ namespace g3
             bool[] ok = new bool[3];
             int[] indices = new int[3] { 0, 1, 2 };
 
-            // preconditioned solve is slower =\
-            //Action<int> SolveF = (i) => {  ok[i] = solvers[i].SolvePreconditioned(); };
-            Action<int> SolveF = (i) => {  ok[i] = solvers[i].Solve(); };
+            // preconditioned solve is marginally faster
+            Action<int> SolveF = (i) => {  ok[i] = solvers[i].SolvePreconditioned(); };
+            //Action<int> SolveF = (i) => {  ok[i] = solvers[i].Solve(); };
             gParallel.ForEach(indices, SolveF);
 
             if (ok[0] == false || ok[1] == false || ok[2] == false)
@@ -280,13 +279,21 @@ namespace g3
                 });
             };
 
+            Action<double[][], double[][]> CombinedPreconditionerMultiply = (Xt, Bt) => {
+                gParallel.ForEach(Interval1i.Range(3), (j) => {
+                    Preconditioner.Multiply(Xt[j], Bt[j]);
+                });
+            };
+
             SparseSymmetricCGMultipleRHS Solver = new SparseSymmetricCGMultipleRHS() { 
                 B = B, X = X,
-                MultiplyF = CombinedMultiply, PreconditionMultiplyF = null,
+                MultiplyF = CombinedMultiply, PreconditionMultiplyF = CombinedPreconditionerMultiply,
                 UseXAsInitialGuess = true
             };
 
-            bool ok = Solver.Solve();
+            // preconditioned solve is marginally faster
+            //bool ok = Solver.Solve();
+            bool ok = Solver.SolvePreconditioned();
 
             if (ok == false)
                 return false;

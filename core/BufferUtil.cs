@@ -81,6 +81,19 @@ namespace g3
         }
 
 
+
+        static public void ParallelDot(double[] a, double[][] b, double[][] result)
+        {
+            int N = a.Length, count = b.Length;
+            gParallel.BlockStartEnd(0, N-1, (i0, i1) => {
+                for (int i = i0; i <= i1; i++) {
+                    for (int j = 0; j < count; ++j)
+                        result[j][i] = a[i] * b[j][i];
+                }
+            }, 1000);
+        }
+
+
         static public double[][] AllocNxM(int N, int M)
         {
             double[][] d = new double[N][];
