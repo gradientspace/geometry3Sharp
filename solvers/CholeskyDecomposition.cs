@@ -189,5 +189,41 @@ namespace g3
 			}
 		}
 
+
+
+
+
+        /// <summary>
+        /// Solve A*X=B via backsubstitution in cholesky factorization
+        /// Requires temporary vector Y
+        /// </summary>
+        public void Solve(double[] B, double[] X, double[] Y)
+        {
+            int N = A.Rows;
+            if (Y == null)
+                Y = new double[N];
+
+            // first solve L * Y = B  (store Y in X)   via forward substitution
+            Y[0] = B[0] / L[0, 0];
+            for ( int i = 1; i < N; ++i ) {
+                double sum = 0;
+                for ( int j = 0; j < i; ++j ) {
+                    sum += L[i, j] * Y[j];
+                }
+                Y[i] = (B[i] - sum) / L[i, i];
+            }
+
+            // now solve L^T * X = Y  via backsubstutition
+            X[N-1] = Y[N-1] / L[N-1,N-1];
+            for ( int i = N-2; i >= 0; --i ) {
+                double sum = 0;
+                for ( int j = i+1; j < N; ++j ) {
+                    sum += L[j,i] * X[j];
+                }
+                X[i] = (Y[i] - sum) / L[i, i];
+            }
+
+        }
+
     }
 }
