@@ -270,4 +270,40 @@ namespace g3
         }
     }
 
+
+
+
+#if G3_USING_UNITY && (NET_2_0 || NET_2_0_SUBSET)
+
+    /*
+     * .NET 3.5 (default in Unity) does not have SpinLock object, which we
+     * are using in a few places. So provide a wrapper around Monitor.
+     * Note that this is class and SpinLock is a struct, so this may cause
+     * disasters, but at least things build...
+     */
+    public class SpinLock
+    {
+        object o;
+        public SpinLock()
+        {
+            o = new object();
+        }
+
+        public void Enter(ref bool entered)
+        {
+            Monitor.Enter(o);
+            entered = true;
+        }
+
+        public void Exit()
+        {
+            Monitor.Exit(o);
+        }
+
+    }
+
+
+#endif
+
+
 }
