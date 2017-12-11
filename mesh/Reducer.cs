@@ -14,8 +14,8 @@ namespace g3
 	{
 
 		protected DMesh3 mesh;
-		MeshConstraints constraints = null;
-		IProjectionTarget target = null;
+        protected MeshConstraints constraints = null;
+        protected IProjectionTarget target = null;
 
 		// other options
 
@@ -238,7 +238,7 @@ namespace g3
 
 
 
-        QuadricError[] vertQuadrics;
+        protected QuadricError[] vertQuadrics;
 		protected virtual void InitializeVertexQuadrics()
 		{
 
@@ -273,8 +273,8 @@ namespace g3
 		}
 
 
-		// internal class for priority queue
-        struct QEdge { 
+        // internal class for priority queue
+        protected struct QEdge { 
 			public int eid;
 			public QuadricError q;
 			public Vector3d collapse_pt;
@@ -286,8 +286,8 @@ namespace g3
 			}
 		}
 
-        QEdge[] EdgeQuadrics;
-        IndexPriorityQueue EdgeQueue;
+        protected QEdge[] EdgeQuadrics;
+        protected IndexPriorityQueue EdgeQueue;
 
 		protected virtual void InitializeQueue()
 		{
@@ -344,8 +344,8 @@ namespace g3
         }
 
 
-		// return point that minimizes quadric error for edge [ea,eb]
-		Vector3d OptimalPoint(int eid, ref QuadricError q, int ea, int eb) {
+        // return point that minimizes quadric error for edge [ea,eb]
+        protected Vector3d OptimalPoint(int eid, ref QuadricError q, int ea, int eb) {
 
             // if we would like to preserve boundary, we need to know that here
             // so that we properly score these edges
@@ -423,8 +423,8 @@ namespace g3
 
 
 
-        bool HaveBoundary;
-        bool[] IsBoundaryVtxCache;
+        protected bool HaveBoundary;
+        protected bool[] IsBoundaryVtxCache;
         protected virtual void Precompute()
         {
             HaveBoundary = false;
@@ -600,7 +600,7 @@ skip_to_end:
 
 
 
-		bool creates_flip_or_invalid(int vid, int vother, ref Vector3d newv, int tc, int td) {
+        protected bool creates_flip_or_invalid(int vid, int vother, ref Vector3d newv, int tc, int td) {
             Vector3d va = Vector3d.Zero, vb = Vector3d.Zero, vc = Vector3d.Zero;
 			foreach ( int tid in mesh.VtxTrianglesItr(vid)) {
 				if (tid == tc || tid == td)
@@ -634,7 +634,7 @@ skip_to_end:
         // does not catch some topological cases at the edge-constraint level, which 
         // which we will only be able to detect once we know if we are losing a or b.
         // See comments on can_collapse_vtx() for what collapse_to is for.
-        bool can_collapse_constraints(int eid, int a, int b, int c, int d, int tc, int td, out int collapse_to)
+        protected bool can_collapse_constraints(int eid, int a, int b, int c, int d, int tc, int td, out int collapse_to)
         {
             collapse_to = -1;
             if (constraints == null)
@@ -667,7 +667,7 @@ skip_to_end:
         // are constrained, then we want to keep that vertex and collapse to its position.
         // This vertex (a or b) will be returned in collapse_to, which is -1 otherwise.
         // If a *and* b are constrained, then things are complicated (and documented below).
-        bool can_collapse_vtx(int eid, int a, int b, out int collapse_to)
+        protected bool can_collapse_vtx(int eid, int a, int b, out int collapse_to)
         {
             collapse_to = -1;
             if (constraints == null)
@@ -719,13 +719,13 @@ skip_to_end:
         }
 
 
-        bool vertex_is_fixed(int vid)
+        protected bool vertex_is_fixed(int vid)
         {
             if (constraints != null && constraints.GetVertexConstraint(vid).Fixed)
                 return true;
             return false;
         }
-        bool vertex_is_constrained(int vid)
+        protected bool vertex_is_constrained(int vid)
         {
             if ( constraints != null ) {
                 VertexConstraint vc = constraints.GetVertexConstraint(vid);
@@ -735,14 +735,14 @@ skip_to_end:
             return false;
         }
 
-        VertexConstraint get_vertex_constraint(int vid)
+        protected VertexConstraint get_vertex_constraint(int vid)
         {
             if (constraints != null)
                 return constraints.GetVertexConstraint(vid);
             return VertexConstraint.Unconstrained;
         }
 
-        void project_vertex(int vID, IProjectionTarget targetIn)
+        protected void project_vertex(int vID, IProjectionTarget targetIn)
         {
             Vector3d curpos = mesh.GetVertex(vID);
             Vector3d projected = targetIn.Project(curpos, vID);
@@ -750,7 +750,7 @@ skip_to_end:
         }
 
         // used by collapse-edge to get projected position for new vertex
-        Vector3d get_projected_collapse_position(int vid, Vector3d vNewPos)
+        protected Vector3d get_projected_collapse_position(int vid, Vector3d vNewPos)
         {
             if (constraints != null) {
                 VertexConstraint vc = constraints.GetVertexConstraint(vid);
@@ -770,7 +770,7 @@ skip_to_end:
 
 
         // we can do projection in parallel if we have .net 
-        void FullProjectionPass()
+        protected virtual void FullProjectionPass()
         {
             Action<int> project = (vID) => {
                 if (vertex_is_constrained(vID))
@@ -786,8 +786,8 @@ skip_to_end:
 
 
 
-        [Conditional("DEBUG")] 
-        void RuntimeDebugCheck(int eid)
+        [Conditional("DEBUG")]
+        protected virtual void RuntimeDebugCheck(int eid)
         {
             if (DebugEdges.Contains(eid))
                 System.Diagnostics.Debugger.Break();
@@ -795,7 +795,7 @@ skip_to_end:
 
 
         public bool ENABLE_DEBUG_CHECKS = false;
-        void DoDebugChecks()
+        protected virtual void DoDebugChecks()
         {
             if (ENABLE_DEBUG_CHECKS == false)
                 return;
@@ -817,7 +817,7 @@ skip_to_end:
             //}
         }
 
-        void DebugCheckVertexConstraints()
+        protected virtual void DebugCheckVertexConstraints()
         {
             if (constraints == null)
                 return;
