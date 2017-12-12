@@ -318,13 +318,6 @@ namespace g3
                    (float)Math.Abs(z - q2.z) < epsilon &&
                    (float)Math.Abs(w - q2.w) < epsilon;
         }
-        public bool PrecisionEqual(Quaternionf q2, int nDigits)
-        {
-            return Math.Round(x, nDigits) == Math.Round(q2.x, nDigits) &&
-                   Math.Round(y, nDigits) == Math.Round(q2.y, nDigits) &&
-                   Math.Round(z, nDigits) == Math.Round(q2.z, nDigits) &&
-                   Math.Round(w, nDigits) == Math.Round(q2.w, nDigits);
-        }
 
 
         public override string ToString() {

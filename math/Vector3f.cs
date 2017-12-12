@@ -293,12 +293,6 @@ namespace g3
                    (float)Math.Abs(y - v2.y) < epsilon &&
                    (float)Math.Abs(z - v2.z) < epsilon;
         }
-        public bool PrecisionEqual(Vector3f v2, int nDigits)
-        {
-            return Math.Round(x, nDigits) == Math.Round(v2.x, nDigits) &&
-                   Math.Round(y, nDigits) == Math.Round(v2.y, nDigits) &&
-                   Math.Round(z, nDigits) == Math.Round(v2.z, nDigits);
-        }
 
 
         public static Vector3f Lerp(Vector3f a, Vector3f b, float t)

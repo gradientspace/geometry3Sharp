@@ -240,11 +240,6 @@ namespace g3
             return Math.Abs(x - v2.x) < epsilon && 
                    Math.Abs(y - v2.y) < epsilon;
         }
-        public bool PrecisionEqual(Vector2d v2, int nDigits)
-        {
-            return Math.Round(x, nDigits) == Math.Round(v2.x, nDigits) &&
-                   Math.Round(y, nDigits) == Math.Round(v2.y, nDigits);
-        }
 
 
         public static Vector2d Lerp(Vector2d a, Vector2d b, double t)

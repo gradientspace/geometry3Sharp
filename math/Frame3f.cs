@@ -368,10 +368,6 @@ namespace g3
             return origin.EpsilonEqual(f2.origin, epsilon) &&
                 rotation.EpsilonEqual(f2.rotation, epsilon);
         }
-        public bool PrecisionEqual(Frame3f f2, int nDigits) {
-            return origin.PrecisionEqual(f2.origin, nDigits) && 
-                rotation.PrecisionEqual(f2.rotation, nDigits);
-        }
 
 
         public override string ToString() {

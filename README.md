@@ -68,7 +68,7 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
     - minimum-rotation frame-to-frame alignment
     - ray-plane intersection
     - **Frames are awesome** and you should use them instead of matrices!!
-- **MathUtil**: constants, IsFinite, EpsilonEqual, PrecisionEqual, Clamp, RangeClamp, SignedClamp, ClampAngle (properly handles negative angles & zero-crossings!), 3-item Min/Max/MinMax, PlaneAngle, MostParallelAxis, Lerp, SmoothInterp, SmoothRise0To1, LinearRampT (with deadzone), Area and Normal of 3D triangle, FastNormal, VectorCot/VectorTan (fast co/tangent between 3D vectors), IsObtuse, IsLeft, SolveQuadratic
+- **MathUtil**: constants, IsFinite, EpsilonEqual, Clamp, RangeClamp, SignedClamp, ClampAngle (properly handles negative angles & zero-crossings!), 3-item Min/Max/MinMax, PlaneAngle, MostParallelAxis, Lerp, SmoothInterp, SmoothRise0To1, LinearRampT (with deadzone), Area and Normal of 3D triangle, FastNormal, VectorCot/VectorTan (fast co/tangent between 3D vectors), IsObtuse, IsLeft, SolveQuadratic
 - **TransformSequence**: stack of affine transformations
 - **IndexUtil**: utility functions for working with tuples/lists of indices (cycling, filtering, etc)
 - **BoundsUtil**: construct bboxes from different data sources, containment tests

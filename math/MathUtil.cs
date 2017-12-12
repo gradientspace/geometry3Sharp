@@ -42,13 +42,6 @@ namespace g3
             return (float)Math.Abs(a - b) < epsilon;
         }
 
-        public static bool PrecisionEqual(double a, double b, int nDigits) {
-            return Math.Round(a, nDigits) == Math.Round(b, nDigits);
-        }
-        public static bool PrecisionEqual(float a, float b, int nDigits) {
-            return Math.Round(a, nDigits) == Math.Round(b, nDigits);
-        }
-
         // ugh C# generics so limiting...
         public static T Clamp<T>(T f, T low, T high) where T : IComparable
         {
