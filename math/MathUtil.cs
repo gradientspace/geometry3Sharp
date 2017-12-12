@@ -36,10 +36,10 @@ namespace g3
 
 
         public static bool EpsilonEqual(double a, double b, double epsilon = MathUtil.Epsilon) {
-            return Math.Abs(a - b) < epsilon;
+            return Math.Abs(a - b) <= epsilon;
         }
         public static bool EpsilonEqual(float a, float b, float epsilon = MathUtil.Epsilonf) {
-            return (float)Math.Abs(a - b) < epsilon;
+            return (float)Math.Abs(a - b) <= epsilon;
         }
 
         // ugh C# generics so limiting...

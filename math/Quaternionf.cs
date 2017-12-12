@@ -313,10 +313,10 @@ namespace g3
 
 
         public bool EpsilonEqual(Quaternionf q2, float epsilon) {
-            return (float)Math.Abs(x - q2.x) < epsilon && 
-                   (float)Math.Abs(y - q2.y) < epsilon &&
-                   (float)Math.Abs(z - q2.z) < epsilon &&
-                   (float)Math.Abs(w - q2.w) < epsilon;
+            return (float)Math.Abs(x - q2.x) <= epsilon && 
+                   (float)Math.Abs(y - q2.y) <= epsilon &&
+                   (float)Math.Abs(z - q2.z) <= epsilon &&
+                   (float)Math.Abs(w - q2.w) <= epsilon;
         }
 
 

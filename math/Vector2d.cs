@@ -237,8 +237,8 @@ namespace g3
 
 
         public bool EpsilonEqual(Vector2d v2, double epsilon) {
-            return Math.Abs(x - v2.x) < epsilon && 
-                   Math.Abs(y - v2.y) < epsilon;
+            return Math.Abs(x - v2.x) <= epsilon && 
+                   Math.Abs(y - v2.y) <= epsilon;
         }
 
 

@@ -230,8 +230,8 @@ namespace g3
 
 
         public bool EpsilonEqual(Vector2f v2, float epsilon) {
-            return (float)Math.Abs(x - v2.x) < epsilon && 
-                   (float)Math.Abs(y - v2.y) < epsilon;
+            return (float)Math.Abs(x - v2.x) <= epsilon && 
+                   (float)Math.Abs(y - v2.y) <= epsilon;
         }
 
 
