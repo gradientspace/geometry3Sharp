@@ -121,7 +121,11 @@ namespace g3
                 Row1.x, Row1.y, Row1.z,
                 Row2.x, Row2.y, Row2.z };
         }
-
+        public void ToBuffer(double[] buf) {
+            buf[0] = Row0.x; buf[1] = Row0.y; buf[2] = Row0.z;
+            buf[3] = Row1.x; buf[4] = Row1.y; buf[5] = Row1.z;
+            buf[6] = Row2.x; buf[7] = Row2.y; buf[8] = Row2.z;
+        }
 
 
 

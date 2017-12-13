@@ -22,6 +22,11 @@ namespace g3
     /// 
     /// Useful properties:
     ///   - quaternions are rotations, there are no mirrors like in normal SVD
+    ///   
+    /// 
+    /// TODO:
+    ///   - SymmetricMatrix3d currently a class, could make a struct (see comments)
+    /// 
     /// </summary>
     public class FastQuaternionSVD
     {
@@ -33,22 +38,42 @@ namespace g3
         public Vector3d S;
 
 
+
+        public FastQuaternionSVD()
+        {
+        }
+
         public FastQuaternionSVD(Matrix3d matrix, double epsilon = MathUtil.Epsilon, int jacobiIters = 4)
         {
-            NumJacobiIterations = jacobiIters;
+            Solve(matrix, epsilon, jacobiIters);
+        }
 
-            SymmetricMatrix3d ATA = SymmetricMatrix3d.MakeATA(matrix);
+
+        SymmetricMatrix3d ATA;
+        double[] AV;
+
+        public void Solve(Matrix3d matrix, double epsilon = MathUtil.Epsilon, int jacobiIters = -1)
+        {
+            if (jacobiIters != -1)
+                NumJacobiIterations = jacobiIters;
+
+            if (ATA == null)
+                ATA = new SymmetricMatrix3d();
+            ATA.SetATA(ref matrix);
+
             Vector4d v = jacobiDiagonalize(ATA);
-            double[] AV = computeAV(matrix, ref v);
+
+            if ( AV == null )
+                AV = new double[9];
+            computeAV(ref matrix, ref v, AV);
 
             Vector4d u = Vector4d.Zero;
-            QRFactorize(AV, ref v, epsilon, ref this.S, ref u);
+            QRFactorize(AV, ref v, epsilon, ref S, ref u);
 
             //u,v are quaternions in (s, x, y, z) order
             U = new Quaterniond(u[1], u[2], u[3], u[0]);
             V = new Quaterniond(v[1], v[2], v[3], v[0]);
         }
-
 
 
 
@@ -87,18 +112,25 @@ namespace g3
 
 
 
+        /// <summary>
+        /// compute givens angles of B for (p,q). Only 
+        /// ever called with p,q as [0,1], [0,2], or [1,2]
+        /// </summary>
         Vector2d givensAngles(SymmetricMatrix3d B, int p, int q)
         {
-            double ch = 0;
-            if (p == 0 && q == 1) {
-                ch = B.entries[0] - B.entries[q];
-            } else if (p == 0 && q == 2) {
-                ch = B.entries[q] - B.entries[p];
-            } else if (p == 1 && q == 2) {
+            double ch = 0, sh = 0;
+            if ( p == 0 ) {
+                if (q == 1) {
+                    ch = B.entries[p] - B.entries[q];
+                    sh = 0.5 * B.entries[3];
+                } else {
+                    ch = B.entries[q] - B.entries[p];
+                    sh = 0.5 * B.entries[4];
+                }
+            } else if ( p == 1 /* && q == 2 */ ) {
                 ch = B.entries[p] - B.entries[q];
+                sh = 0.5 * B.entries[5];
             }
-
-            double sh = 0.5 * B[p, q];
 
             // [TODO] can use fast reciprocal square root here...
             double omega = 1.0 / Math.Sqrt(ch * ch + sh * sh);
@@ -116,25 +148,13 @@ namespace g3
 
 
 
-
-
-
-
-        double[] computeAV(Matrix3d matrix, ref Vector4d V)
+        void computeAV(ref Matrix3d matrix, ref Vector4d V, double[] buf)
         {
             Quaterniond qV = new Quaterniond(V[1], V[2], V[3], V[0]);
             Matrix3d MV = qV.ToRotationMatrix();
             Matrix3d AV = matrix * MV;
-            return AV.ToBuffer();
+            AV.ToBuffer(buf);
         }
-
-
-
-
-
-
-
-
 
 
 
@@ -157,7 +177,6 @@ namespace g3
             quatTimesEqualCoordinateAxis(ref U, givens21.x, givens21.y, 0);
 
             S = new Vector3d(AV[0], AV[4], AV[8]);
-            //return new KeyValuePair<Vector3d, double[]>(S, U);
         }
 
 
@@ -177,6 +196,7 @@ namespace g3
                 double tmp = sh; sh = ch; ch = tmp;
             }
 
+            // [TODO] can use fast reciprocal square root here...
             double omega = 1.0 / Math.Sqrt(ch * ch + sh * sh);
             ch *= omega;
             sh *= omega;
@@ -261,16 +281,13 @@ namespace g3
         {
             //the quat we're multiplying by is (c, ? s ?)  where s is in slot i of the vector part,
             //and the other entries are 0
-            double newS = lhs.x * c - lhs[i + 1] * s;
+            double newS = lhs.x*c - lhs[i + 1]*s;
 
-            Vector3d newVals = Vector3d.Zero;
-            //the s2*v1 part
-            newVals.x = c * lhs.y;
-            newVals.y = c * lhs.z;
-            newVals.z = c * lhs.w;
-            //the s1*v2 part
+            // s2*v1
+            Vector3d newVals = new Vector3d(c * lhs.y, c * lhs.z, c * lhs.w);
+            // s1*v2
             newVals[i] += lhs.x * s;
-            //the cross product part
+            // cross product
             newVals[(i + 1) % 3] += s * lhs[1 + ((i + 2) % 3)];
             newVals[(i + 2) % 3] -= s * lhs[1 + ((i + 1) % 3)];
 
@@ -287,9 +304,9 @@ namespace g3
 
         void permuteColumns(double[] B, ref Vector4d V)
         {
-            double magx = B[0] * B[0] + B[3] * B[3] + B[6] * B[6];
-            double magy = B[1] * B[1] + B[4] * B[4] + B[7] * B[7];
-            double magz = B[2] * B[2] + B[5] * B[5] + B[8] * B[8];
+            double magx = B[0]*B[0] + B[3]*B[3] + B[6]*B[6];
+            double magy = B[1]*B[1] + B[4]*B[4] + B[7]*B[7];
+            double magz = B[2]*B[2] + B[5]*B[5] + B[8]*B[8];
 
             if (magx < magy) {
                 swapColsNeg(B, 0, 1);
@@ -339,96 +356,29 @@ namespace g3
     /// </summary>
     class SymmetricMatrix3d
     {
+        // [TODO] could replace entries w/ 2 Vector3d, 
+        // one for diag and one for off-diags. Then this can be a struct.
         public double[] entries = new double[6];
 
         public SymmetricMatrix3d()
         {
         }
 
-        public static SymmetricMatrix3d MakeATA(Matrix3d A)
+        public void SetATA(ref Matrix3d A)
         {
-            SymmetricMatrix3d M = new SymmetricMatrix3d();
             Vector3d c0 = A.Column(0), c1 = A.Column(1), c2 = A.Column(2);
-            M.entries[0] = c0.LengthSquared;
-            M.entries[1] = c1.LengthSquared;
-            M.entries[2] = c2.LengthSquared;
-            M.entries[3] = c0.Dot(c1);
-            M.entries[4] = c0.Dot(c2);
-            M.entries[5] = c1.Dot(c2);
-            return M;
+            entries[0] = c0.LengthSquared;
+            entries[1] = c1.LengthSquared;
+            entries[2] = c2.LengthSquared;
+            entries[3] = c0.Dot(c1);
+            entries[4] = c0.Dot(c2);
+            entries[5] = c1.Dot(c2);
         }
-
-
-        public double this[int r, int c] {
-            get {
-                Debug.Assert(r <= c);
-                if (r == c) { return entries[r]; } 
-                else if (r == 0) { return entries[2 + c]; } 
-                else return entries[5];
-            }
-            set {
-                Debug.Assert(r <= c);
-                if (r == c) { entries[r] = value; } 
-                else if (r == 0) { entries[2 + c] = value; } 
-                else entries[5] = value;
-            }
-        }
-
 
         /*
          * These functions compute Q^T * S * Q
          * where Q is represented as the quaterion with c as the scalar and s in the slot that's not p or q
          */
-
-/*      // unused
-        public void quatConjugateFull(double[] q){
-	        //assume q is unit
-	  
-	        double a = 1 - 2*(q[2]*q[2] + q[3]*q[3]);
-	        double b = 2*(q[1]*q[2] - q[3]*q[0]);
-	        double c = 2*(q[1]*q[3] + q[2]*q[0]);
-
-	        double d = 2*(q[1]*q[2] + q[3]*q[0]);
-	        double e = 1 - 2*(q[1]*q[1] + q[3]*q[3]);
-	        double f = 2*(q[2]*q[3] - q[1]*q[0]);
-
-	        double g = 2*(q[1]*q[3] - q[2]*q[0]);
-	        double h = 2*(q[2]*q[3] + q[1]*q[0]);
-	        double i = 1 - 2*(q[1]*q[1] + q[2]*q[2]);
-
-	        //B = Q^T S
-	        double B11 = a*entries[0] + d*entries[3] + g*entries[4];
-	        double B12 = a*entries[3] + d*entries[1] + g*entries[5];
-	        double B13 = a*entries[4] + d*entries[5] + g*entries[2];
-	  
-	        double B21 = b*entries[0] + e*entries[3] + h*entries[4];
-	        double B22 = b*entries[3] + e*entries[1] + h*entries[5];
-	        double B23 = b*entries[4] + e*entries[5] + h*entries[2];
-	  
-	        double B31 = c*entries[0] + f*entries[3] + i*entries[4];
-	        double B32 = c*entries[3] + f*entries[1] + i*entries[5];
-	        double B33 = c*entries[4] + f*entries[5] + i*entries[2];
-
-	        double new11 = a*B11 + d*B12 + g*B13;
-	        double new22 = b*B21 + e*B22 + h*B23;
-	        double new33 = c*B31 + f*B32 + i*B33;
-	  
-	        double new12 = a*B21 + d*B22 + g*B23;
-	        double new13 = a*B31 + d*B32 + g*B33;
-		
-	        double new23 = b*B31 + e*B32 + h*B33;
-
-	        entries[0] = new11;
-	        entries[1] = new22;
-	        entries[2] = new33;
-	        entries[3] = new12;
-	        entries[4] = new13;
-	        entries[5] = new23;
-  	    }
-*/
-
-
-
         public void quatConjugate01(double c, double s){
             //rotatoin around z axis
             double realC = c*c - s*s;
