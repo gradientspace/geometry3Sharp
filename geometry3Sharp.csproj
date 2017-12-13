@@ -194,6 +194,7 @@
     <Compile Include="mesh_ops\MeshLoopClosure.cs" />
     <Compile Include="mesh_ops\MeshLoopSmooth.cs" />
     <Compile Include="mesh_ops\MeshOps.cs" />
+    <Compile Include="mesh_ops\PlanarHoleFiller.cs" />
     <Compile Include="mesh_ops\RegionOperator.cs" />
     <Compile Include="mesh_ops\SimpleHoleFiller.cs" />
     <Compile Include="mesh_selection\MeshBoundaryLoops.cs" />

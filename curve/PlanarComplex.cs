@@ -131,23 +131,25 @@ namespace g3
 		}
 
 
-        public void Add(Polygon2d poly)
+        public Element Add(Polygon2d poly)
         {
             SmoothLoopElement e = new SmoothLoopElement();
             e.ID = id_generator++;
             e.source = new Polygon2DCurve() { Polygon = poly };
             e.polygon = new Polygon2d(poly);
             vElements.Add(e);
+            return e;
         }
 
 
-        public void Add(PolyLine2d pline)
+        public Element Add(PolyLine2d pline)
         {
             SmoothCurveElement e = new SmoothCurveElement();
             e.ID = id_generator++;
             e.source = new PolyLine2DCurve() { Polyline = pline };
             e.polyLine = new PolyLine2d(pline);
             vElements.Add(e);
+            return e;
         }
 
 
@@ -409,11 +411,19 @@ namespace g3
 
 
 
+        public class GeneralSolid
+        {
+            public Element Outer;
+            public List<Element> Holes = new List<Element>();
+        }
+
         public class SolidRegionInfo
         {
             public List<GeneralPolygon2d> Polygons;
             public List<PlanarSolid2d> Solids;
 
+            // map from polygon solids back to element(s) they came from
+            public List<GeneralSolid> PolygonsSources;
 
             public AxisAlignedBox2d Bounds {
                 get {
@@ -462,7 +472,14 @@ namespace g3
 				TrustOrientations = false,
 				AllowOverlappingHoles = false
 			};
-		}
+
+            public static readonly FindSolidsOptions SortPolygons = new FindSolidsOptions() {
+                SimplifyDeviationTolerance = 0.0,
+                WantCurveSolids = false,
+                TrustOrientations = true,
+                AllowOverlappingHoles = false
+            };
+        }
 
 
 		public SolidRegionInfo FindSolidRegions(double fSimplifyDeviationTol = 0.1, bool bWantCurveSolids = true)
@@ -550,6 +567,8 @@ namespace g3
 			}
 
 			List<GeneralPolygon2d> polysolids = new List<GeneralPolygon2d>();
+            List<GeneralSolid> polySolidsInfo = new List<GeneralSolid>();
+
             List<PlanarSolid2d> solids = new List<PlanarSolid2d>();
 			HashSet<SmoothLoopElement> used = new HashSet<SmoothLoopElement>();
 
@@ -597,6 +616,7 @@ namespace g3
                     ParentsToProcess.Add(i);
 
                 polysolids.Add(g);
+                polySolidsInfo.Add(new GeneralSolid() { Outer = loopi });
                 if ( bWantCurveSolids )
                     solids.Add(s);
             }
@@ -632,7 +652,8 @@ namespace g3
                         }
 
                         try {
-							polysolids[outer_idx].AddHole(hole_poly, bCheckHoles);
+                            polysolids[outer_idx].AddHole(hole_poly, bCheckHoles);
+                            polySolidsInfo[outer_idx].Holes.Add(childLoop);
                             if ( hole_loop != null )
                                 solids[outer_idx].AddHole(hole_loop);
                         } catch {
@@ -660,7 +681,6 @@ namespace g3
                 }
 
                 ParentsToProcess.Clear();
-
 
                 // ok now find next-level uncontained parents...
                 for (int i = 0; i < N; ++i) {
@@ -695,6 +715,7 @@ namespace g3
                         ParentsToProcess.Add(i);
 
                     polysolids.Add(g);
+                    polySolidsInfo.Add(new GeneralSolid() { Outer = loopi });
                     if (bWantCurveSolids)
                         solids.Add(s);
                 }
@@ -722,6 +743,7 @@ namespace g3
                     s.SetOuter(outer_loop, true);
 
                 polysolids.Add(g);
+                polySolidsInfo.Add(new GeneralSolid() { Outer = loopi });
                 if (bWantCurveSolids)
                     solids.Add(s);
             }
@@ -730,6 +752,7 @@ namespace g3
 
             return new SolidRegionInfo() {
                 Polygons = polysolids,
+                PolygonsSources = polySolidsInfo,
                 Solids = (bWantCurveSolids) ? solids : null
             };
 		}

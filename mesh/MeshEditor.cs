@@ -595,6 +595,43 @@ namespace g3
 
             return true;
         }
+        public static DMesh3 Combine(params IMesh[] appendMeshes )
+        {
+            DMesh3 m = new DMesh3();
+            MeshEditor editor = new MeshEditor(m);
+            foreach ( var mesh in appendMeshes ) {
+                editor.AppendMesh(mesh, m.AllocateTriangleGroup());
+            }
+            return m;
+        }
+
+
+        public bool AppendMesh(IMesh appendMesh, IndexMap mergeMapV, out int[] mapV, int appendGID = -1)
+        {
+            mapV = new int[appendMesh.MaxVertexID];
+            foreach (int vid in appendMesh.VertexIndices()) {
+                if (mergeMapV.Contains(vid)) {
+                    mapV[vid] = mergeMapV[vid];
+                } else {
+                    NewVertexInfo vinfo = appendMesh.GetVertexAll(vid);
+                    int newvid = Mesh.AppendVertex(vinfo);
+                    mapV[vid] = newvid;
+                }
+            }
+
+            foreach (int tid in appendMesh.TriangleIndices()) {
+                Index3i t = appendMesh.GetTriangle(tid);
+                t.a = mapV[t.a];
+                t.b = mapV[t.b];
+                t.c = mapV[t.c];
+                int gid = appendMesh.GetTriangleGroup(tid);
+                if (appendGID >= 0)
+                    gid = appendGID;
+                Mesh.AppendTriangle(t, gid);
+            }
+
+            return true;
+        }
 
 
 
