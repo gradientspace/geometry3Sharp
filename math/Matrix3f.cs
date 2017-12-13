@@ -56,6 +56,10 @@ namespace g3
             get { return m[r*3+c]; }
             set { m[r * 3 + c] = value; }
         }
+        public float this[int i] {
+            get { return m[i]; }
+            set { m[i] = value; }
+        }
 
 
         public static Vector3f operator *(Matrix3f mat, Vector3f v) {

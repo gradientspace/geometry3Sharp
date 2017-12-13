@@ -126,10 +126,12 @@
     <Compile Include="math\MathUtil.cs" />
     <Compile Include="math\Matrix2f.cs" />
     <Compile Include="math\Matrix2d.cs" />
+    <Compile Include="math\Matrix3d.cs" />
     <Compile Include="math\Matrix3f.cs" />
     <Compile Include="math\MatrixUtil.cs" />
     <Compile Include="math\Plane3.cs" />
     <Compile Include="math\PrimalQuery2d.cs" />
+    <Compile Include="math\Quaterniond.cs" />
     <Compile Include="math\Quaternionf.cs" />
     <Compile Include="math\Query2.cs" />
     <Compile Include="math\Query2Integer.cs" />
@@ -140,6 +142,7 @@
     <Compile Include="math\Vector2d.cs" />
     <Compile Include="math\Vector2f.cs" />
     <Compile Include="math\Vector2i.cs" />
+    <Compile Include="math\Vector4d.cs" />
     <Compile Include="math\VectorTuple.cs" />
     <Compile Include="mesh\MeshRefinerBase.cs" />
     <Compile Include="mesh\NTMesh3.cs" />
@@ -212,6 +215,7 @@
     <Compile Include="solvers\DenseVector.cs" />
     <Compile Include="solvers\IMatrix.cs" />
     <Compile Include="solvers\PackedSparseMatrix.cs" />
+    <Compile Include="solvers\FastQuaternionSVD.cs" />
     <Compile Include="solvers\SingularValueDecomposition.cs" />
     <Compile Include="solvers\SparseMatrix.cs" />
     <Compile Include="solvers\SparseSymmetricCG.cs" />

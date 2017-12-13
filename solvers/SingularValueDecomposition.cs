@@ -3,11 +3,30 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    // port of WildMagic5 SingularValueDecomposition class (which is a back-port
-    // of GTEngine SVD class) see geometrictools.com
+    /// <summary>
+    /// Singular Value Decomposition of arbitrary matrix A
+    /// Computes U/S/V of  A = U * S * V^T
+    /// 
+    /// Useful Properties:
+    ///  S = square-roots of eigenvalues of A
+    ///  U = eigenvectors of A * A^T
+    ///  V = eigenvectors of A^T * A
+    ///  U * V^T = rotation matrix closest to A 
+    ///  V * Inv(S) * U^T = psuedoinverse of A
+    ///  
+    /// U and/or V are rotation matrices but may also contain reflections
+    /// Detection: det(U) or det(v) == -1
+    /// Removal: if ( det(U) == -1 ) { U *= -1; S *= -1 }
+    ///          if ( det(V) == -1 ) { V *= -1; S *= -1 }     (right? seems to work)
+    ///  
+    /// </summary>
     public class SingularValueDecomposition
     {
-       // The solver processes MxN symmetric matrices, where M >= N > 1
+        // port of WildMagic5 SingularValueDecomposition class (which is a back-port
+        // of GTEngine SVD class) see geometrictools.com
+
+
+        // The solver processes MxN symmetric matrices, where M >= N > 1
         // ('numRows' is M and 'numCols' is N) and the matrix is stored in
         // row-major order.  The maximum number of iterations ('maxIterations')
         // must be specified for the reduction of a bidiagonal matrix to a
