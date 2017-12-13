@@ -223,31 +223,9 @@ namespace g3
             }
 
             return this;
-
         }
 
 
-
-        static Vector3d bilerp(ref Vector3d v00, ref Vector3d v10, ref Vector3d v11, ref Vector3d v01, double tx, double ty)
-        {
-            Vector3d a = Vector3d.Lerp(ref v00, ref v01, ty);
-            Vector3d b = Vector3d.Lerp(ref v10, ref v11, ty);
-            return Vector3d.Lerp(a, b, tx);
-        }
-
-        static Vector3i bilerp(ref Vector3i v00, ref Vector3i v10, ref Vector3i v11, ref Vector3i v01, double tx, double ty)
-        {
-            Vector3d a = Vector3d.Lerp((Vector3d)v00, (Vector3d)v01, ty);
-            Vector3d b = Vector3d.Lerp((Vector3d)v10, (Vector3d)v11, ty);
-            Vector3d c = Vector3d.Lerp(a, b, tx);
-            return new Vector3i((int)Math.Round(c.x), (int)Math.Round(c.y), (int)Math.Round(c.z));
-        }
-
-        static Vector3i lerp(ref Vector3i a, ref Vector3i b, double t)
-        {
-            Vector3d c = Vector3d.Lerp((Vector3d)a, (Vector3d)b, t);
-            return new Vector3i((int)Math.Round(c.x), (int)Math.Round(c.y), (int)Math.Round(c.z));
-        }
 
     }
 

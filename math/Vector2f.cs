@@ -235,8 +235,11 @@ namespace g3
         }
 
 
-        public static Vector2f Lerp(Vector2f a, Vector2f b, float t)
-        {
+        public static Vector2f Lerp(Vector2f a, Vector2f b, float t) {
+            float s = 1 - t;
+            return new Vector2f(s * a.x + t * b.x, s * a.y + t * b.y);
+        }
+        public static Vector2f Lerp(ref Vector2f a, ref Vector2f b, float t) {
             float s = 1 - t;
             return new Vector2f(s * a.x + t * b.x, s * a.y + t * b.y);
         }

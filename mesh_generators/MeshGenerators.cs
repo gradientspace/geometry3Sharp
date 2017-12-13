@@ -213,6 +213,43 @@ namespace g3
         }
 
 
+        protected Vector3d bilerp(ref Vector3d v00, ref Vector3d v10, ref Vector3d v11, ref Vector3d v01, double tx, double ty)
+        {
+            Vector3d a = Vector3d.Lerp(ref v00, ref v01, ty);
+            Vector3d b = Vector3d.Lerp(ref v10, ref v11, ty);
+            return Vector3d.Lerp(a, b, tx);
+        }
+
+        protected Vector2d bilerp(ref Vector2d v00, ref Vector2d v10, ref Vector2d v11, ref Vector2d v01, double tx, double ty)
+        {
+            Vector2d a = Vector2d.Lerp(ref v00, ref v01, ty);
+            Vector2d b = Vector2d.Lerp(ref v10, ref v11, ty);
+            return Vector2d.Lerp(a, b, tx);
+        }
+        protected Vector2f bilerp(ref Vector2f v00, ref Vector2f v10, ref Vector2f v11, ref Vector2f v01, float tx, float ty)
+        {
+            Vector2f a = Vector2f.Lerp(ref v00, ref v01, ty);
+            Vector2f b = Vector2f.Lerp(ref v10, ref v11, ty);
+            return Vector2f.Lerp(a, b, tx);
+        }
+
+        protected Vector3i bilerp(ref Vector3i v00, ref Vector3i v10, ref Vector3i v11, ref Vector3i v01, double tx, double ty)
+        {
+            Vector3d a = Vector3d.Lerp((Vector3d)v00, (Vector3d)v01, ty);
+            Vector3d b = Vector3d.Lerp((Vector3d)v10, (Vector3d)v11, ty);
+            Vector3d c = Vector3d.Lerp(a, b, tx);
+            return new Vector3i((int)Math.Round(c.x), (int)Math.Round(c.y), (int)Math.Round(c.z));
+        }
+
+        protected Vector3i lerp(ref Vector3i a, ref Vector3i b, double t)
+        {
+            Vector3d c = Vector3d.Lerp((Vector3d)a, (Vector3d)b, t);
+            return new Vector3i((int)Math.Round(c.x), (int)Math.Round(c.y), (int)Math.Round(c.z));
+        }
+
+
+
+
 #if G3_USING_UNITY
         // generate unity mesh. 
         // [TODO] The left/right flip here may not work...
