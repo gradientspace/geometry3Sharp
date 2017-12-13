@@ -218,46 +218,8 @@ namespace g3
         }
 
         public Quaterniond ToQuaternion() {
-            // from here: http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
-
-            double m00 = this[0, 0], m01 = this[0, 1], m02 = this[0, 2];
-            double m10 = this[1, 0], m11 = this[1, 1], m12 = this[1, 2];
-            double m20 = this[2, 0], m21 = this[2, 1], m22 = this[2, 2];
-
-            double tr = m00 + m11 + m22;
-            double qw, qx, qy, qz;
-
-            if (tr > 0) {
-                double S = (double)Math.Sqrt(tr + 1.0) * 2; // S=4*qw 
-                qw = 0.25f * S;
-                qx = (m21 - m12) / S;
-                qy = (m02 - m20) / S;
-                qz = (m10 - m01) / S;
-            } else if ((m00 > m11) & (m00 > m22)) {
-                double S = (double)Math.Sqrt(1.0 + m00 - m11 - m22) * 2; // S=4*qx 
-                qw = (m21 - m12) / S;
-                qx = 0.25f * S;
-                qy = (m01 + m10) / S;
-                qz = (m02 + m20) / S;
-            } else if (m11 > m22) {
-                double S = (double)Math.Sqrt(1.0 + m11 - m00 - m22) * 2; // S=4*qy
-                qw = (m02 - m20) / S;
-                qx = (m01 + m10) / S;
-                qy = 0.25f * S;
-                qz = (m12 + m21) / S;
-            } else {
-                double S = (double)Math.Sqrt(1.0 + m22 - m00 - m11) * 2; // S=4*qz
-                qw = (m10 - m01) / S;
-                qx = (m02 + m20) / S;
-                qy = (m12 + m21) / S;
-                qz = 0.25f * S;
-            }
-
-            return new Quaterniond(qx, qy, qz, qw).Normalized;
+            return new Quaterniond(this);
         }
-
-
-
 
 
         public bool EpsilonEqual(Matrix3d m2, double epsilon)

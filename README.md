@@ -51,7 +51,7 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 ## Math
 
 - reasonably complete set of vector-math objects, implemented as structs
-    - **Vector**2d/3d/2f/3f, **Matrix**2d/2f/3f, **Quaternionf**
+    - **Vector**2d/3d/4d/2f/3f, **Matrix**2d/2f/3f/3d, **Quaternionf/d**
     - **Segment**2d/3d/2f/3f, **Line**2d/3d/2f/3f, **Ray**3d/3f
     - **Triangle**2d/3d/2f/3f, **Plane**3d/3f
     - **AxisAlignedBox**2d/3d/2f/3f, (oriented) **Box**2d/3d/2f/3f
