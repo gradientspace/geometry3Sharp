@@ -76,7 +76,8 @@ namespace g3
 
         public override MeshGenerator Generate()
         {
-            int N = EdgeVertices;   int Nm2 = N - 2;
+            int N = (EdgeVertices > 1) ? EdgeVertices : 2;
+            int Nm2 = N - 2;
             int NT = N - 1;
             int N2 = N * N;
             vertices = new VectorArray3d((NoSharedVertices) ? (N2 * 6) : (8 + Nm2*12 + Nm2*Nm2*6));

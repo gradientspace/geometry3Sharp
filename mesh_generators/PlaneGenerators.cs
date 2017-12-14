@@ -111,7 +111,7 @@ namespace g3
             if (MathUtil.InRange(IndicesMap.a, 1, 3) == false || MathUtil.InRange(IndicesMap.b, 1, 3) == false)
                 throw new Exception("GriddedRectGenerator: Invalid IndicesMap!");
 
-            int N = EdgeVertices;
+            int N = (EdgeVertices > 1) ? EdgeVertices : 2;
             int NT = N - 1, N2 = N * N;
             vertices = new VectorArray3d(N2);
             uv = new VectorArray2f(vertices.Count);

@@ -114,7 +114,7 @@ namespace g3
                 int nDivisions = 0;
                 if ( FillTargetEdgeLen < double.MaxValue && FillTargetEdgeLen > 0) {
                     int n = (int)((planeW / (float)scale) / FillTargetEdgeLen) + 1;
-                    nDivisions = Math.Max(n, 0);
+                    nDivisions = (n <= 1) ? 0 : n;
                 }
 
                 if (nDivisions == 0) {
