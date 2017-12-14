@@ -14,7 +14,8 @@ namespace g3
         public const double ZeroTolerance = 1e-08;
         public const double Epsilon = 2.2204460492503131e-016;
         public const double SqrtTwo = 1.41421356237309504880168872420969807;
-		public const double SqrtThree = 1.73205080756887729352744634150587236;
+        public const double SqrtTwoInv = 1.0 / SqrtTwo;
+        public const double SqrtThree = 1.73205080756887729352744634150587236;
 
         public const float Deg2Radf = (float)(Math.PI / 180.0);
         public const float Rad2Degf = (float)(180.0 / Math.PI);
@@ -36,17 +37,10 @@ namespace g3
 
 
         public static bool EpsilonEqual(double a, double b, double epsilon = MathUtil.Epsilon) {
-            return Math.Abs(a - b) < epsilon;
+            return Math.Abs(a - b) <= epsilon;
         }
         public static bool EpsilonEqual(float a, float b, float epsilon = MathUtil.Epsilonf) {
-            return (float)Math.Abs(a - b) < epsilon;
-        }
-
-        public static bool PrecisionEqual(double a, double b, int nDigits) {
-            return Math.Round(a, nDigits) == Math.Round(b, nDigits);
-        }
-        public static bool PrecisionEqual(float a, float b, int nDigits) {
-            return Math.Round(a, nDigits) == Math.Round(b, nDigits);
+            return (float)Math.Abs(a - b) <= epsilon;
         }
 
         // ugh C# generics so limiting...

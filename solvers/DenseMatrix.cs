@@ -3,10 +3,14 @@
 
 namespace g3
 {
+	/// <summary>
+	/// Row-major dense matrix
+	/// </summary>
     public class DenseMatrix : IMatrix
     {
         double[] d;
-        int N, M;
+		int N;		// rows
+		int M;		// columns
 
 
         public DenseMatrix(int Nrows, int Mcols)
@@ -34,6 +38,14 @@ namespace g3
         {
             d[r*M+c] = value;
         }
+
+
+		public void Set(double[] values)
+		{
+			if (values.Length != N * M)
+				throw new Exception("DenseMatrix.Set: incorrect length");
+			Array.Copy(values, d, d.Length);
+		}
 
 
         public int Rows { get { return N; } }
@@ -133,6 +145,39 @@ namespace g3
         }
 
 
+		public bool IsPositiveDefinite()
+		{
+			if (M != N)
+				throw new Exception("DenseMatrix.IsPositiveDefinite: matrix is not square!");
+			if (IsSymmetric() == false)
+				throw new Exception("DenseMatrix.IsPositiveDefinite: matrix is not symmetric!");
+
+			for (int i = 0; i < N; ++i) {
+				double diag = d[i * M + i];
+				double row_sum = 0;
+				for (int j = 0; j < N; ++j) {
+					if (j != i)
+						row_sum += Math.Abs(d[i * M + j]);
+				}
+				if (diag < 0 || diag < row_sum)
+					return false;
+			}
+			return true;
+		}
+
+
+
+		public bool EpsilonEquals(DenseMatrix m2, double epsilon = MathUtil.ZeroTolerance)
+		{
+			if (N != m2.N || M != m2.M)
+				throw new Exception("DenseMatrix.Equals: matrices are not the same size!");
+			for (int i = 0; i < d.Length; ++i) {
+				if (Math.Abs(d[i] - m2.d[i]) > epsilon)
+					return false;
+			}
+			return true;
+		}
+
 
 
 
@@ -194,13 +239,13 @@ namespace g3
 
 
 
-        public DenseMatrix Multiply(DenseMatrix M2)
+        public DenseMatrix Multiply(DenseMatrix M2, bool bParallel = true)
         {
             DenseMatrix R = new DenseMatrix(Rows, M2.Columns);
-            Multiply(M2, ref R);
+            Multiply(M2, ref R, bParallel);
             return R;
         }
-        public void Multiply(DenseMatrix M2, ref DenseMatrix R)
+        public void Multiply(DenseMatrix M2, ref DenseMatrix R, bool bParallel = true)
         {
             int rows1 = N, cols1 = M;
             int rows2 = M2.N, cols2 = M2.M;
@@ -214,13 +259,26 @@ namespace g3
             if (R.Rows != rows1 || R.Columns != cols2)
                 throw new Exception("DenseMatrix.Multiply: Result matrix has incorrect dimensions");
 
-            for ( int r1i = 0; r1i < rows1; r1i++ ) {
-				int ii = r1i * M;
-                for ( int c2i = 0; c2i < cols2; c2i++ ) {
-                    double v = 0;
-                    for (int k = 0; k < cols1; ++k)
-                        v += d[ii+k] * M2.d[k*M+c2i];
-                    R[ii+c2i] = v;
+            if (bParallel) {
+                DenseMatrix Rt = R;
+                gParallel.ForEach(Interval1i.Range(0, rows1), (r1i) => {
+                    int ii = r1i * M;
+                    for (int c2i = 0; c2i < cols2; c2i++) {
+                        double v = 0;
+                        for (int k = 0; k < cols1; ++k)
+                            v += d[ii + k] * M2.d[k * M + c2i];
+                        Rt[ii + c2i] = v;
+                    }
+                });
+            } else {
+                for (int r1i = 0; r1i < rows1; r1i++) {
+                    int ii = r1i * M;
+                    for (int c2i = 0; c2i < cols2; c2i++) {
+                        double v = 0;
+                        for (int k = 0; k < cols1; ++k)
+                            v += d[ii + k] * M2.d[k * M + c2i];
+                        R[ii + c2i] = v;
+                    }
                 }
             }
 

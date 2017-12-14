@@ -8,6 +8,7 @@ namespace g3
         // Compute B = A*X, where inputs are ordered <X,B>
         public Action<double[], double[]> MultiplyF;
 
+        // Compute B = A*X, where inputs are ordered <X,B>
         public Action<double[], double[]> PreconditionMultiplyF;
 
         // B is not modified!
@@ -22,7 +23,7 @@ namespace g3
         public int Iterations;
 
         // internal
-        double[] R, P, W, Z;
+        double[] R, P, AP, Z;
 
 
 
@@ -35,7 +36,7 @@ namespace g3
             // Based on the algorithm in "Matrix Computations" by Golum and Van Loan.
             R = new double[size];
             P = new double[size];
-            W = new double[size];
+            AP = new double[size];
 
             if ( X == null || UseXAsInitialGuess == false ) {
                 if ( X == null )
@@ -61,11 +62,11 @@ namespace g3
 
             Array.Copy(R, P, R.Length);
 
-            MultiplyF(P, W);
+            MultiplyF(P, AP);
 
-            double alpha = rho0 / BufferUtil.Dot(P, W);
+            double alpha = rho0 / BufferUtil.Dot(P, AP);
             BufferUtil.MultiplyAdd(X, alpha, P);
-            BufferUtil.MultiplyAdd(R, -alpha, W);
+            BufferUtil.MultiplyAdd(R, -alpha, AP);
             double rho1 = BufferUtil.Dot(R, R);
 
             // The remaining iterations.
@@ -79,15 +80,15 @@ namespace g3
                 double beta = rho1 / rho0;
                 UpdateP(P, beta, R);
 
-                MultiplyF(P, W);
+                MultiplyF(P, AP);
 
-                alpha = rho1 / BufferUtil.Dot(P, W);
+                alpha = rho1 / BufferUtil.Dot(P, AP);
 
                 // can compute these two steps simultaneously
                 double RdotR = 0;
                 gParallel.Evaluate(
                     () => { BufferUtil.MultiplyAdd(X, alpha, P); },
-                    () => { RdotR = BufferUtil.MultiplyAdd_GetSqrSum(R, -alpha, W); } 
+                    () => { RdotR = BufferUtil.MultiplyAdd_GetSqrSum(R, -alpha, AP); } 
                 );
 
                 rho0 = rho1;
@@ -124,19 +125,16 @@ namespace g3
         public bool SolvePreconditioned()
         {
             Iterations = 0;
-            int size = B.Length;
+            int n = B.Length;
 
-            // Based on the algorithm in "Matrix Computations" by Golum and Van Loan.
-            // [RMS] added preconditioner...
+            R = new double[n];
+            P = new double[n];
+            AP = new double[n];
+            Z = new double[n];
 
-            R = new double[size];
-            P = new double[size];
-            W = new double[size];
-            Z = new double[size];
-
-            if ( X == null || UseXAsInitialGuess == false ) {
-                if ( X == null )
-                    X = new double[size];
+            if (X == null || UseXAsInitialGuess == false) {
+                if (X == null)
+                    X = new double[n];
                 Array.Clear(X, 0, X.Length);
                 Array.Copy(B, R, B.Length);
             } else {
@@ -144,47 +142,56 @@ namespace g3
                 InitializeR(R);
             }
 
-            // [RMS] these were inside loop but they are constant!
+            // [RMS] for convergence test?
             double norm = BufferUtil.Dot(B, B);
             double root1 = Math.Sqrt(norm);
 
-            // The first iteration.
-            Array.Copy(R, P, R.Length);
+            // r_0 = b - A*x_0
+            MultiplyF(X, R);
+            for (int i = 0; i < n; ++i)
+                R[i] = B[i] - R[i];
 
-            MultiplyF(P, W);
+            // z0 = M_inverse * r_0
             PreconditionMultiplyF(R, Z);
 
-            double rho0 = BufferUtil.Dot(Z, R);
+            // p0 = z0
+            Array.Copy(Z, P, n);
 
-            // [RMS] If we were initialized w/ constraints already satisfied, 
-            //   then we are done! (happens for example in mesh deformations)
-            if (rho0 < MathUtil.ZeroTolerance * root1)
-                return true;
+            double RdotZ_k = BufferUtil.Dot(R, Z);
 
-            double alpha = rho0 / BufferUtil.Dot(P, W);
-            BufferUtil.MultiplyAdd(X, alpha, P);
-            BufferUtil.MultiplyAdd(R, -alpha, W);
-            double rho1 = BufferUtil.Dot(Z, R);
-
-            // The remaining iterations.
             int iter = 0;
-            for (iter = 1; iter < MaxIterations; ++iter) {
-                double root0 = Math.Sqrt(rho1);
+            while (iter++ < MaxIterations) {
+
+                // convergence test
+                double root0 = Math.Sqrt(RdotZ_k);
                 if (root0 <= MathUtil.ZeroTolerance * root1) {
                     break;
                 }
 
-                double beta = rho1 / rho0;
-                UpdateP(P, beta, Z);
+                MultiplyF(P, AP);
+                double alpha_k = RdotZ_k / BufferUtil.Dot(P, AP);
 
-                MultiplyF(P, W);
+                gParallel.Evaluate(
+                    // x_k+1 = x_k + alpha_k * p_k
+                    () => { BufferUtil.MultiplyAdd(X, alpha_k, P); },
+                    // r_k+1 = r_k - alpha_k * A * p_k
+                    () => { BufferUtil.MultiplyAdd(R, -alpha_k, AP); }
+                );
 
-                alpha = rho1 / BufferUtil.Dot(P, W);
-                BufferUtil.MultiplyAdd(X, alpha, P);
-                BufferUtil.MultiplyAdd(R, -alpha, W);
+                // z_k+1 = M_inverse * r_k+1
                 PreconditionMultiplyF(R, Z);
-                rho0 = rho1;
-                rho1 = BufferUtil.Dot(Z, R);
+
+                // beta_k = (z_k+1 * r_k+1) / (z_k * r_k)
+                double beta_k = BufferUtil.Dot(Z, R) / RdotZ_k;
+
+                gParallel.Evaluate(
+                    // p_k+1 = z_k+1 + beta_k * p_k
+                    () => {
+                        for (int i = 0; i < n; ++i)
+                            P[i] = Z[i] + beta_k * P[i];
+                    },
+                    () => { RdotZ_k = BufferUtil.Dot(R, Z); }
+                );
             }
 
 
@@ -192,6 +199,7 @@ namespace g3
             Iterations = iter;
             return iter < MaxIterations;
         }
+
 
     }
 
@@ -209,6 +217,11 @@ namespace g3
     /// [RMS] this is a variant of SparseSymmetricCG that supports multiple right-hand-sides.
     /// Makes quite a big difference as matrix gets bigger, because MultiplyF can
     /// unroll inner loops (as long as you actually do that)
+    /// 
+    /// However, if this is done then it is not really possible to do different numbers
+    /// of iterations for different RHS's. We will not update that RHS once it has 
+    /// converged, however we still have to do the multiplies!
+    /// 
     /// </summary>
     public class SparseSymmetricCGMultipleRHS
     {
@@ -231,9 +244,12 @@ namespace g3
         public int Iterations;
 
         // internal
-        double[][] R, P, W; //, Z;
+        double[][] R, P, W, AP, Z;
 
 
+        /// <summary>
+        /// standard CG solve
+        /// </summary>
         public bool Solve()
         {
             Iterations = 0;
@@ -353,6 +369,154 @@ namespace g3
             Iterations = iter;
             return iter < MaxIterations;
         }
+
+
+
+
+
+        /// <summary>
+        /// Preconditioned variant
+        /// Similar to non-preconditioned version, this can suffer if one solution converges
+        /// much slower than others, as we can't skip matrix multiplies in that case.
+        /// </summary>
+        public bool SolvePreconditioned()
+        {
+            Iterations = 0;
+            if (B == null || MultiplyF == null || PreconditionMultiplyF == null)
+                throw new Exception("SparseSymmetricCGMultipleRHS.SolvePreconditioned(): Must set B and MultiplyF and PreconditionMultiplyF!");
+            int NRHS = B.Length;
+            if (NRHS == 0)
+                throw new Exception("SparseSymmetricCGMultipleRHS.SolvePreconditioned(): Need at least one RHS vector in B");
+            int n = B[0].Length;
+
+            R = BufferUtil.AllocNxM(NRHS, n);
+            P = BufferUtil.AllocNxM(NRHS, n);
+            AP = BufferUtil.AllocNxM(NRHS, n);
+            Z = BufferUtil.AllocNxM(NRHS, n);
+
+            if (X == null || UseXAsInitialGuess == false) {
+                if (X == null)
+                    X = BufferUtil.AllocNxM(NRHS, n);
+                for (int j = 0; j < NRHS; ++j) {
+                    Array.Clear(X[j], 0, n);
+                    Array.Copy(B[j], R[j], n);
+                }
+            } else {
+                // hopefully is X is a decent initialization...
+                InitializeR(R);
+            }
+
+            // [RMS] for convergence test?
+            double[] norm = new double[NRHS];
+            for (int j = 0; j < NRHS; ++j)
+                norm[j] = BufferUtil.Dot(B[j], B[j]);
+            double[] root1 = new double[NRHS];
+            for (int j = 0; j < NRHS; ++j)
+                root1[j] = Math.Sqrt(norm[j]);
+
+
+            // r_0 = b - A*x_0
+            MultiplyF(X, R);
+            for (int j = 0; j < NRHS; ++j) {
+                for (int i = 0; i < n; ++i)
+                    R[j][i] = B[j][i] - R[j][i];
+            }
+
+            // z0 = M_inverse * r_0
+            PreconditionMultiplyF(R, Z);
+
+            // p0 = z0
+            for (int j = 0; j < NRHS; ++j)
+                Array.Copy(Z[j], P[j], n);
+
+            // compute initial R*Z
+            double[] RdotZ_k = new double[NRHS];
+            for (int j = 0; j < NRHS; ++j)
+                RdotZ_k[j] = BufferUtil.Dot(R[j], Z[j]);
+
+            double[] alpha_k = new double[NRHS];
+            double[] beta_k = new double[NRHS];
+            bool[] converged = new bool[NRHS];
+            Interval1i rhs = Interval1i.Range(NRHS);
+
+            int iter = 0;
+            while (iter++ < MaxIterations) {
+
+                // convergence test
+                bool done = true;
+                for (int j = 0; j < NRHS; ++j) {
+                    if (converged[j] == false) {
+                        double root0 = Math.Sqrt(RdotZ_k[j]);
+                        if (root0 <= ConvergeTolerance * root1[j])
+                            converged[j] = true;
+                    }
+                    if (converged[j] == false)
+                        done = false;
+                }
+                if (done)
+                    break;
+
+                MultiplyF(P, AP);
+
+                gParallel.ForEach(rhs, (j) => {
+                    if ( converged[j] == false )
+                        alpha_k[j] = RdotZ_k[j] / BufferUtil.Dot(P[j], AP[j]);
+                });
+
+                // x_k+1 = x_k + alpha_k * p_k
+                gParallel.ForEach(rhs, (j) => {
+                    if (converged[j] == false) {
+                        BufferUtil.MultiplyAdd(X[j], alpha_k[j], P[j]);
+                    }
+                });
+
+                // r_k+1 = r_k - alpha_k * A * p_k
+                gParallel.ForEach(rhs, (j) => {
+                    if (converged[j] == false) {
+                        BufferUtil.MultiplyAdd(R[j], -alpha_k[j], AP[j]);
+                    }
+                });
+
+                // z_k+1 = M_inverse * r_k+1
+                PreconditionMultiplyF(R, Z);
+
+                // beta_k = (z_k+1 * r_k+1) / (z_k * r_k)
+                gParallel.ForEach(rhs, (j) => {
+                    if (converged[j] == false)
+                        beta_k[j] = BufferUtil.Dot(Z[j], R[j]) / RdotZ_k[j];
+                });
+
+                // can do these in parallel but improvement is minimal
+
+                // p_k+1 = z_k+1 + beta_k * p_k
+                gParallel.ForEach(rhs, (j) => {
+                    if (converged[j] == false) {
+                        for (int i = 0; i < n; ++i)
+                            P[j][i] = Z[j][i] + beta_k[j] * P[j][i];
+                    }
+                });
+
+                gParallel.ForEach(rhs, (j) => {
+                    if (converged[j] == false) {
+                        RdotZ_k[j] = BufferUtil.Dot(R[j], Z[j]);
+                    }
+                });
+            }
+
+
+            //System.Console.WriteLine("{0} iterations", iter);
+            Iterations = iter;
+            return iter < MaxIterations;
+        }
+
+
+
+
+
+
+
+
+
 
 
         void UpdateP(double[][] P, double[] beta, double[][] R, bool[] converged)

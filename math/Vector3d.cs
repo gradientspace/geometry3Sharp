@@ -303,15 +303,9 @@ namespace g3
 
 
         public bool EpsilonEqual(Vector3d v2, double epsilon) {
-            return Math.Abs(x - v2.x) < epsilon && 
-                   Math.Abs(y - v2.y) < epsilon &&
-                   Math.Abs(z - v2.z) < epsilon;
-        }
-        public bool PrecisionEqual(Vector3d v2, int nDigits)
-        {
-            return Math.Round(x, nDigits) == Math.Round(v2.x, nDigits) &&
-                   Math.Round(y, nDigits) == Math.Round(v2.y, nDigits) &&
-                   Math.Round(z, nDigits) == Math.Round(v2.z, nDigits);
+            return Math.Abs(x - v2.x) <= epsilon && 
+                   Math.Abs(y - v2.y) <= epsilon &&
+                   Math.Abs(z - v2.z) <= epsilon;
         }
 
 

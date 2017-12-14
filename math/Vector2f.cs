@@ -230,18 +230,16 @@ namespace g3
 
 
         public bool EpsilonEqual(Vector2f v2, float epsilon) {
-            return (float)Math.Abs(x - v2.x) < epsilon && 
-                   (float)Math.Abs(y - v2.y) < epsilon;
-        }
-        public bool PrecisionEqual(Vector2f v2, int nDigits)
-        {
-            return Math.Round(x, nDigits) == Math.Round(v2.x, nDigits) &&
-                   Math.Round(y, nDigits) == Math.Round(v2.y, nDigits);
+            return (float)Math.Abs(x - v2.x) <= epsilon && 
+                   (float)Math.Abs(y - v2.y) <= epsilon;
         }
 
 
-        public static Vector2f Lerp(Vector2f a, Vector2f b, float t)
-        {
+        public static Vector2f Lerp(Vector2f a, Vector2f b, float t) {
+            float s = 1 - t;
+            return new Vector2f(s * a.x + t * b.x, s * a.y + t * b.y);
+        }
+        public static Vector2f Lerp(ref Vector2f a, ref Vector2f b, float t) {
             float s = 1 - t;
             return new Vector2f(s * a.x + t * b.x, s * a.y + t * b.y);
         }

@@ -18,7 +18,20 @@ Many, many data structures and algorithms have been ported from the WildMagic5 a
 The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](https://github.com/christopherbatty/SDFGen) code written by [Christopher Batty](https://cs.uwaterloo.ca/~c2batty/) and [Robert Bridson](http://www.cs.ubc.ca/~rbridson/). 
 
 
-# Core
+
+# Tutorials
+
+Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
+
+- [Creating meshes, Mesh File I/O, Ray/Mesh Intersection and Nearest-Point](http://www.gradientspace.com/tutorials/2017/7/20/basic-mesh-creation-with-g3sharp)
+- [Mesh Simplification with Reducer class](http://www.gradientspace.com/tutorials/2017/8/30/mesh-simplification)
+- [Voxelization/Signed Distance Fields and Marching Cubes Remeshing](http://www.gradientspace.com/tutorials/2017/11/21/signed-distance-fields-tutorial)
+
+
+
+# Main Classes
+
+## Core
 
 - **DVector**: indexed list with vector-style interface, but internally stored as separate blocks of memory
     - appending is amortized O(1), never a full buffer copy like normal list
@@ -35,10 +48,10 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **DijkstraGraphDistance**: compute shortest-path distances between nodes in graph, from seed points. Graph is defined externally by iterators and Func's, so this class can easily be applied to many situations.
 - **SmallListSet**: efficient allocation of a large number of small lists, with initial fixed-size buffer and "spilling" into linked list.
 
-# Math
+## Math
 
 - reasonably complete set of vector-math objects, implemented as structs
-    - **Vector**2d/3d/2f/3f, **Matrix**2d/2f/3f, **Quaternionf**
+    - **Vector**2d/3d/4d/2f/3f, **Matrix**2d/2f/3f/3d, **Quaternionf/d**
     - **Segment**2d/3d/2f/3f, **Line**2d/3d/2f/3f, **Ray**3d/3f
     - **Triangle**2d/3d/2f/3f, **Plane**3d/3f
     - **AxisAlignedBox**2d/3d/2f/3f, (oriented) **Box**2d/3d/2f/3f
@@ -55,7 +68,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
     - minimum-rotation frame-to-frame alignment
     - ray-plane intersection
     - **Frames are awesome** and you should use them instead of matrices!!
-- **MathUtil**: constants, IsFinite, EpsilonEqual, PrecisionEqual, Clamp, RangeClamp, SignedClamp, ClampAngle (properly handles negative angles & zero-crossings!), 3-item Min/Max/MinMax, PlaneAngle, MostParallelAxis, Lerp, SmoothInterp, SmoothRise0To1, LinearRampT (with deadzone), Area and Normal of 3D triangle, FastNormal, VectorCot/VectorTan (fast co/tangent between 3D vectors), IsObtuse, IsLeft, SolveQuadratic
+- **MathUtil**: constants, IsFinite, EpsilonEqual, Clamp, RangeClamp, SignedClamp, ClampAngle (properly handles negative angles & zero-crossings!), 3-item Min/Max/MinMax, PlaneAngle, MostParallelAxis, Lerp, SmoothInterp, SmoothRise0To1, LinearRampT (with deadzone), Area and Normal of 3D triangle, FastNormal, VectorCot/VectorTan (fast co/tangent between 3D vectors), IsObtuse, IsLeft, SolveQuadratic
 - **TransformSequence**: stack of affine transformations
 - **IndexUtil**: utility functions for working with tuples/lists of indices (cycling, filtering, etc)
 - **BoundsUtil**: construct bboxes from different data sources, containment tests
@@ -65,7 +78,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 
 
 
-# Approximation
+## Approximation
 
 - **BiArcFit2**: fit 2D bi-arc to pair of points and tangents
 - **QuadraticFit2**: fit general quadratic or 2D circle to set of 2D points
@@ -73,23 +86,25 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **OrthogonalPlaneFit3**: fit of plane to 3D point set
 
 
-# Solvers
+## Solvers
 
 - basic arbitrary-size **DenseMatrix**, **DenseVector**, **DiagonalMatrix**, **SymmetricSparseMatrix** (based on Dictionary), **PackedSparseMatrix** (row arrays)
-- **SparseSymmetricCG** conjugate-gradient matrix solver
+- **CholeskyDecomposition** dense-matrix Cholesky decomposition, optionally multi-threaded
+- **SparseSymmetricCG** conjugate-gradient matrix solver w/ support for preconditioning, client-provided matrix/vector multiply
+- **SparseSymmetricCGMultipleRHS** variant that supports multiple right-hand sides
 - **SingularValueDecomposition** SVD for arbitrary matrices
-- **SymmetricEigenSolver** eigensolver for symmetric matrices using Symmetric QR, ported from GTEngine. 
+- **SymmetricEigenSolver** eigensolver for symmetric matrices using Symmetric QR, ported from GTEngine.
 
 
 
-# Color
+## Color
 
 - **Colorf**: float rgba color, with many standard colors pre-defined
 - **Colorb**: byte rgba color
 - **ColorHSV**: Hue-Saturation-Value color, convert to/from RGB
 
 
-# Distance Queries
+## Distance Queries
 
 - 2D:
 	- point/curve: **DistPoint2Circle2**
@@ -103,7 +118,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
     - linear/area: **DistLine3Triangle3**, **DistSegment3Triangle3**
     - area/area: **DistTriangle3Triangle3**
     
-# Intersection Queries    
+## Intersection Queries    
     
 - 2D: 
     - linear/linear: **IntrLine2Line2**, **IntrLine2Segment2**, **IntrSegment2Segment2**
@@ -116,7 +131,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
     - ray-sphere and ray-cylinder
 
 
-# Containment
+## Containment
 - 2D:
 	- **ContMinCircle2**: compute minimal-area circle containing input point set
 	- **ContMinBox2**: minimal-area box containing input point set, double & 64-bit integer
@@ -126,7 +141,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 	
 
 
-# Meshes
+## Meshes
 
 - **SimpleMesh**: standard indexed mesh class
     - dense index space, backed by DVector buffers
@@ -191,7 +206,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
     - **MarchingCubes**: multi-threaded triangulation of implicit functions / scalar fields
     
 
-# Mesh Selections
+## Mesh Selections
 
 - **MeshVertexSelection**: create/manipulate set of vertices. grow by one-rings, tris-to-verts, etc
 - **MeshFaceSelection**: similiar. *LocalOptimize()* 'cleans up' irregular selection boundaries.
@@ -206,7 +221,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 
 
 
-# Mesh Operations
+## Mesh Operations
 
 - **LaplacianMeshDeformer**: basic laplacian mesh deformation, currently only symmetrized uniform weights, conjugate-gradient solve
 - **LaplacianMeshSmoother**: laplacian mesh smoother w/ per-vertex soft constraints, CG-solve
@@ -225,7 +240,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **MeshIsoCurve**: compute piecewise-linear iso-curves of a function on a mesh, as a **DGraph3**
 
 
-# Spatial Data Structures
+## Spatial Data Structures
 
 - **DMeshAABBTree**: triangle mesh axis-aligned bounding box tree
 	- bottom-up construction using mesh topology to accelerate leaf node layer
@@ -246,7 +261,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 
 
 
-# 2D Curves
+## 2D Curves
 
 - **Circle2d**, **Arc2d**, **Ellipse2d**, **EllipseArc2d**, **PolyLine2d**
 - **Polygon2d**: closed polyline with signed area, point-in-polygon test, polygon/polygon intersection, polygon-in-polygon, simplification
@@ -264,7 +279,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **Hexagon2**: hexagon type w/ hex-math
 - **PolygonFont2d**: GPolygon2d representation of font outlines, generate fonts with **gsPolyFontGenerator** tool in [gsMeshUtilities](https://github.com/gradientspace/gsMeshUtilities).
 
-# 2D Computational Geometry
+## 2D Computational Geometry
 
 - **ConvexHull2**: 2D convex hull, compute w/ doubles or 64-bit integers
 - **Arrangement2d**: compute 2D line-segmenent *arrangement*, ie find split inserted line segments at intersection points
@@ -272,7 +287,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **GraphCells2D**: extract enclosed regions ("cells") from a DGraph2, as boundary loops
 
 
-# 3D Curves
+## 3D Curves
 
 - **DCurve3**: 3D polyline
 - **CurveUtil**: queries like Ray/curve intersection based on curve thickness, nearest index, etc
@@ -283,13 +298,13 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 - **DGraph3**: dynamic arbitrary-topology 3D graph (nodes and edges), 3D variant of DGraph2
 - **DGraph3Util**: ExtractCurves, DisconnectJunctions, etc
 
-# 3D Solids
+## 3D Solids
 
 - **Cylinder3d**
 - **DenseGridTrilinearImplicit**: trilinear interpolant of 3D grid
 
 
-# I/O    
+## I/O    
     
 - format-agnostic **StandardMeshReader** and **StandardMeshWriter**
     - can register additional format handlers beyond supported defaults
@@ -306,7 +321,7 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 
 
 
-# Misc
+## Misc
 
 - 2D implicit blobs
 - 2D Marching Quads

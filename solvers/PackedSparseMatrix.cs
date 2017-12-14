@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 namespace g3
 {
@@ -36,7 +37,24 @@ namespace g3
         }
         public StorageModes StorageMode = StorageModes.Full;
 
+        // [TODO] this should be enum w/ 3 states (yes, no, unknown)
         public bool IsSymmetric = false;
+
+
+        public PackedSparseMatrix(PackedSparseMatrix copy)
+        {
+            int N = copy.Rows.Length;
+            Rows = new nonzero[N][];
+            for ( int r = 0; r < N; ++r ) {
+                Rows[r] = new nonzero[copy.Rows[r].Length];
+                Array.Copy(copy.Rows[r], Rows[r], Rows[r].Length);
+            }
+            Columns = copy.Columns;
+            Sorted = copy.Sorted;
+            NumNonZeros = copy.NumNonZeros;
+            StorageMode = copy.StorageMode;
+            IsSymmetric = copy.IsSymmetric;
+        }
 
 
         public PackedSparseMatrix(SymmetricSparseMatrix m, bool bTranspose = false)
@@ -124,9 +142,25 @@ namespace g3
             //    Debug.Assert(accum[k] == counts[k]);
 
             Sorted = false;
-            IsSymmetric = true;
+            IsSymmetric = bSymmetric;
             StorageMode = StorageModes.Full;
         }
+
+
+
+        public static PackedSparseMatrix FromDense(DenseMatrix m, bool bSymmetric)
+        {
+            DVector<matrix_entry> nonzeros = new DVector<matrix_entry>();
+            for ( int r = 0; r < m.Rows; ++r) {
+                int nStop = (bSymmetric) ? r + 1 : m.Columns;
+                for ( int c = 0; c < nStop; ++c ) {
+                    if ( m[r,c] != 0 ) 
+                        nonzeros.Add(new matrix_entry() { r = r, c = c, value = m[r, c] });
+                }
+            }
+            return new PackedSparseMatrix(nonzeros, m.Rows, m.Columns, bSymmetric);
+        }
+
 
 
 
@@ -140,6 +174,17 @@ namespace g3
                         return row[k].d;
                 }
                 return 0;
+            }
+            set {
+                nonzero[] row = Rows[r];
+                int n = row.Length;
+                for (int k = 0; k < n; ++k) {
+                    if (row[k].j == c) {
+                        row[k].d = value;
+                        return;
+                    }
+                }
+                throw new Exception("PackedSparseMatrix[r,c]: value at index " + r.ToString() + "," + c.ToString() + " does not exist!");
             }
         }
 
@@ -179,6 +224,30 @@ namespace g3
             } else {
                 return new Interval1i(Row[0].j, Row[Row.Length - 1].j);
             }
+        }
+
+
+        public IEnumerable<Vector2i> NonZeroIndicesByRow(bool bWantSorted = true)
+        {
+            if (bWantSorted && Sorted == false)
+                throw new Exception("PackedSparseMatrix.NonZeroIndicesByRow: sorting requested but not available");
+            int N = Rows.Length;
+            for ( int r = 0; r < N; ++r ) {
+                nonzero[] Row = Rows[r];
+                for (int i = 0; i < Row.Length; ++i)
+                    yield return new Vector2i(r, Row[i].j);
+            }
+        }
+
+
+
+        public IEnumerable<Vector2i> NonZeroIndicesForRow(int r, bool bWantSorted = true)
+        {
+            if (bWantSorted && Sorted == false)
+                throw new Exception("PackedSparseMatrix.NonZeroIndicesByRow: sorting requested but not available");
+            nonzero[] Row = Rows[r];
+            for (int i = 0; i < Row.Length; ++i)
+                yield return new Vector2i(r, Row[i].j);
         }
 
 
@@ -334,6 +403,165 @@ namespace g3
             }
 
         }
+
+
+
+
+        /// <summary>
+        /// Compute dot product of this.row[r1] and this.row[r2], up to N elements
+        /// </summary>
+        public double DotRows(int r1, int r2, int MaxCol = int.MaxValue)
+        {
+            if (Sorted == false)
+                throw new Exception("PackedSparseMatrix.DotRows: matrices must be sorted!");
+            Debug.Assert(Sorted);
+
+            MaxCol = Math.Min(MaxCol, Columns);
+
+            int r1i = 0;
+            int r2i = 0;
+            nonzero[] Row1 = Rows[r1];
+            nonzero[] Row2 = Rows[r2];
+            int N1 = Row1.Length;
+            int N2 = Row2.Length;
+            //int last_col_1 = Col[MaxCol - 1].j;
+            //int last_col_2 = Row[NR - 1].j;
+
+            double sum = 0;
+            while (r1i < N1 && r2i < N2) {
+                if (Row1[r1i].j > MaxCol || Row2[r2i].j > MaxCol)
+                    break;
+                // early out if we passed last nonzero in other array
+                //if (Row[ri].j > last_col_j || Col[ci].j > last_row_j)
+                //    break;
+                if (Row1[r1i].j == Row2[r2i].j) {
+                    sum += Row1[r1i].d * Row2[r2i].d;
+                    r1i++;
+                    r2i++;
+                } else if (Row1[r1i].j < Row2[r2i].j) {
+                    r1i++;
+                } else {
+                    r2i++;
+                }
+            }
+
+            return sum;
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// Compute dot product of this.row[r] and vec, up to N elements
+        /// </summary>
+        public double DotRowVector(int r, double[] vec, int MaxCol = int.MaxValue)
+        {
+            if (Sorted == false && MaxCol < int.MaxValue)
+                throw new Exception("PackedSparseMatrix.DotRows: matrices must be sorted if MaxCol is specified!");
+
+            MaxCol = Math.Min(MaxCol, Columns);
+
+            nonzero[] Row = Rows[r];
+
+            double sum = 0;
+            for ( int ri = 0; ri < Row.Length; ++ri ) { 
+                if (Row[ri].j > MaxCol)
+                    break;
+                sum += Row[ri].d * vec[Row[ri].j];
+            }
+
+            return sum;
+        }
+
+
+
+
+        /// <summary>
+        /// Compute dot product of this.row[r1] and this.row[r2], up to N elements
+        /// </summary>
+        public double DotColumnVector(int c, double[] vec, int start_row = 0, int end_row = int.MaxValue)
+        {
+            int Nr = Rows.Length;
+
+            double sum = 0;
+            if (Sorted) {
+                for (int ri = start_row; ri <= end_row; ri++) {
+                    nonzero[] row = Rows[ri];
+                    for (int k = 0; k < row.Length; ++k) {
+                        if (row[k].j == c) {
+                            sum += row[k].d * vec[ri];
+                            break;
+                        } else if (row[k].j > c) {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                for (int ri = start_row; ri <= end_row; ri++) {
+                    nonzero[] row = Rows[ri];
+                    for (int k = 0; k < row.Length; ++k) {
+                        if (row[k].j == c) {
+                            sum += row[k].d * vec[ri];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return sum;
+        }
+
+
+
+
+
+
+        public PackedSparseMatrix Square()
+        {
+            if (Rows.Length != Columns)
+                throw new Exception("PackedSparseMatrix.Square: matrix is not square!");
+            int N = Columns;
+
+            DVector<matrix_entry> entries = new DVector<matrix_entry>();
+            SpinLock entries_lock = new SpinLock();
+
+            gParallel.BlockStartEnd(0, N - 1, (r_start, r_end) => {
+                for (int r1i = r_start; r1i <= r_end; r1i++) {
+
+                    // determine which entries of squared matrix might be nonzeros
+                    HashSet<int> nbrs = new HashSet<int>();
+                    nbrs.Add(r1i);
+                    PackedSparseMatrix.nonzero[] row = Rows[r1i];
+                    for (int k = 0; k < row.Length; ++k) {
+                        if (row[k].j > r1i)
+                            nbrs.Add(row[k].j);
+                        PackedSparseMatrix.nonzero[] row2 = Rows[row[k].j];
+                        for (int j = 0; j < row2.Length; ++j) {
+                            if (row2[j].j > r1i)     // only compute lower-triangular entries
+                                nbrs.Add(row2[j].j);
+                        }
+                    }
+
+                    // compute them!
+                    foreach (int c2i in nbrs) {
+                        double v = DotRowColumn(r1i, c2i, this);
+                        if (Math.Abs(v) > MathUtil.ZeroTolerance) {
+                            bool taken = false;
+                            entries_lock.Enter(ref taken);
+                            entries.Add(new matrix_entry() { r = r1i, c = c2i, value = v });
+                            entries_lock.Exit();
+                        }
+                    }
+                }
+            });
+
+            PackedSparseMatrix R = new PackedSparseMatrix(entries, N, N, true);
+            return R;
+        }
+
+
 
 
 

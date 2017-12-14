@@ -12,6 +12,8 @@ namespace g3
         public float Width = 1.0f;
         public float Height = 1.0f;
 
+        public Vector3f Normal = Vector3f.AxisY;
+
         /// <summary>
         /// How to map 2D indices to 3D. Default is (x,0,z). Set this value to (1,2) if you want (x,y,0).
         /// Set values to negative to mirror on that axis.
@@ -50,7 +52,7 @@ namespace g3
             vertices[2] = make_vertex(Width / 2.0f, Height / 2.0f);
             vertices[3] = make_vertex(-Width / 2.0f, Height / 2.0f);
 
-            normals[0] = normals[1] = normals[2] = normals[3] = Vector3f.AxisY;
+            normals[0] = normals[1] = normals[2] = normals[3] = Normal;
 
             float uvleft = 0.0f, uvright = 1.0f, uvbottom = 0.0f, uvtop = 1.0f;
 
@@ -89,6 +91,103 @@ namespace g3
             return this;
         }
     }
+
+
+
+
+
+
+    /// <summary>
+    /// Generate a mesh of a rect that has "gridded" faces, ie grid of triangulated quads, 
+    /// with EdgeVertices verts along each edge.
+    /// [TODO] allow varying EdgeVertices in each dimension (tricky...)
+    /// </summary>
+    public class GriddedRectGenerator : TrivialRectGenerator
+    {
+        public int EdgeVertices = 8;
+
+        override public MeshGenerator Generate()
+        {
+            if (MathUtil.InRange(IndicesMap.a, 1, 3) == false || MathUtil.InRange(IndicesMap.b, 1, 3) == false)
+                throw new Exception("GriddedRectGenerator: Invalid IndicesMap!");
+
+            int N = (EdgeVertices > 1) ? EdgeVertices : 2;
+            int NT = N - 1, N2 = N * N;
+            vertices = new VectorArray3d(N2);
+            uv = new VectorArray2f(vertices.Count);
+            normals = new VectorArray3f(vertices.Count);
+            triangles = new IndexArray3i(2 * NT * NT);
+            groups = new int[triangles.Count];
+
+            // corner vertices
+            Vector3d v00 = make_vertex(-Width / 2.0f, -Height / 2.0f);
+            Vector3d v01 = make_vertex(Width / 2.0f, -Height / 2.0f);
+            Vector3d v11 = make_vertex(Width / 2.0f, Height / 2.0f);
+            Vector3d v10 = make_vertex(-Width / 2.0f, Height / 2.0f);
+
+            // corner UVs
+            float uvleft = 0.0f, uvright = 1.0f, uvbottom = 0.0f, uvtop = 1.0f;
+
+            if (UVMode != UVModes.FullUVSquare) {
+                if (Width > Height) {
+                    float a = Height / Width;
+                    if (UVMode == UVModes.CenteredUVRectangle) {
+                        uvbottom = 0.5f - a / 2.0f; uvtop = 0.5f + a / 2.0f;
+                    } else {
+                        uvtop = a;
+                    }
+                } else if (Height > Width) {
+                    float a = Width / Height;
+                    if (UVMode == UVModes.CenteredUVRectangle) {
+                        uvleft = 0.5f - a / 2.0f; uvright = 0.5f + a / 2.0f;
+                    } else {
+                        uvright = a;
+                    }
+                }
+            }
+
+            Vector2f uv00 = new Vector2f(uvleft, uvbottom);
+            Vector2f uv01 = new Vector2f(uvright, uvbottom);
+            Vector2f uv11 = new Vector2f(uvright, uvtop);
+            Vector2f uv10 = new Vector2f(uvleft, uvtop);
+
+            int vi = 0;
+            int ti = 0;
+
+            // add vertex rows
+            int start_vi = vi;
+            for (int yi = 0; yi < N; ++yi) {
+                double ty = (double)yi / (double)(N - 1);
+                for (int xi = 0; xi < N; ++xi) {
+                    double tx = (double)xi / (double)(N - 1);
+                    normals[vi] = Normal;
+                    uv[vi] = bilerp(ref uv00, ref uv01, ref uv11, ref uv10, (float)tx, (float)ty);
+                    vertices[vi++] = bilerp(ref v00, ref v01, ref v11, ref v10, tx, ty);
+                }
+            }
+
+            // add faces
+            for (int y0 = 0; y0 < NT; ++y0) {
+                for (int x0 = 0; x0 < NT; ++x0) {
+                    int i00 = start_vi + y0 * N + x0;
+                    int i10 = start_vi + (y0 + 1) * N + x0;
+                    int i01 = i00 + 1, i11 = i10 + 1;
+
+                    groups[ti] = 0;
+                    triangles.Set(ti++, i00, i11, i01, Clockwise);
+                    groups[ti] = 0;
+                    triangles.Set(ti++, i00, i10, i11, Clockwise);
+                }
+            }
+
+            return this;
+        }
+    }
+
+
+
+
+
 
 
 

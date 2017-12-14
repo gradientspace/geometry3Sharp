@@ -141,42 +141,7 @@ namespace g3
         {
             PackedSparseMatrix M = new PackedSparseMatrix(this);
             M.Sort();
-
-            DVector<matrix_entry> entries = new DVector<matrix_entry>();
-            SpinLock entries_lock = new SpinLock();
-
-            gParallel.BlockStartEnd(0, N-1, (r_start, r_end) => { 
-                for (int r1i = r_start; r1i <= r_end; r1i++) {
-
-                    // determine which entries of squared matrix might be nonzeros
-                    HashSet<int> nbrs = new HashSet<int>();
-                    nbrs.Add(r1i);
-                    PackedSparseMatrix.nonzero[] row = M.Rows[r1i];
-                    for ( int k = 0; k < row.Length; ++k ) {
-                        if (row[k].j > r1i)
-                            nbrs.Add(row[k].j);
-                        PackedSparseMatrix.nonzero[] row2 = M.Rows[row[k].j];
-                        for (int j = 0; j < row2.Length; ++j) {
-                            if ( row2[j].j > r1i )     // only compute lower-triangular entries
-                                nbrs.Add(row2[j].j);
-                        }
-                    }
-
-                    // compute them!
-                    foreach ( int c2i in nbrs ) {
-                        double v = M.DotRowColumn(r1i, c2i, M);
-                        if (Math.Abs(v) > MathUtil.ZeroTolerance) {
-                            bool taken = false;
-                            entries_lock.Enter(ref taken);
-                            entries.Add(new matrix_entry() { r = r1i, c = c2i, value = v });
-                            entries_lock.Exit();
-                        }
-                    }
-                }
-            });
-
-            PackedSparseMatrix R = new PackedSparseMatrix(entries, Rows, Columns, true);
-            return R;
+            return M.Square();
         }
 
 

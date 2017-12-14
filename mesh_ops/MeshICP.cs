@@ -10,7 +10,7 @@ namespace g3
         public DMeshAABBTree3 TargetSurface;
 
         public Vector3d Translation;
-        public Quaternionf Rotation;
+        public Quaterniond Rotation;
 
         public Action<string> VerboseF = null;
 
@@ -36,7 +36,7 @@ namespace g3
             TargetSurface = target;
 
             Translation = Vector3d.Zero;
-            Rotation = Quaternionf.Identity;
+            Rotation = Quaterniond.Identity;
         }
 
 
@@ -109,7 +109,7 @@ namespace g3
 
                 if ( bNormals ) {
                     target.SetVertexNormal(vid,
-                        Rotation * target.GetVertexNormal(vid));
+                        (Vector3f)(Rotation * target.GetVertexNormal(vid)) );
                 }
             }
         }
@@ -172,9 +172,9 @@ namespace g3
                 Weights[vi] = 1.0f;
 
                 if ( bNormals ) {
-                    Vector3f fromN = Rotation * Source.GetVertexNormal(vi);
-                    Vector3f toN = (Vector3f)TargetSurface.Mesh.GetTriNormal(tid);
-                    float fDot = fromN.Dot(toN);
+                    Vector3d fromN = Rotation * Source.GetVertexNormal(vi);
+                    Vector3d toN = TargetSurface.Mesh.GetTriNormal(tid);
+                    double fDot = fromN.Dot(toN);
                     Debug.Assert(MathUtil.IsFinite(fDot));
                     if (fDot < 0)
                         Weights[vi] = 0;
@@ -269,8 +269,8 @@ namespace g3
             }
 
             // convert matrix to quaternion
-            Matrix3f RotUpdateM = new Matrix3f(RotUpdate);
-            Quaternionf RotUpdateQ = new Quaternionf(RotUpdateM);
+            Matrix3d RotUpdateM = new Matrix3d(RotUpdate);
+            Quaterniond RotUpdateQ = new Quaterniond(RotUpdateM);
 
             // [TODO] is this right? We are solving for a translation and
             //  rotation of the current From points, but when we fold these

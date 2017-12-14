@@ -150,7 +150,7 @@ namespace g3
         public IList<Vector3d> VertexList;
         public bool Closed { get; set; }
 
-        public int VertexCount { get { return VertexList.Count; } }
+        public int VertexCount { get { return (VertexList == null) ? 0 : VertexList.Count; } }
         public Vector3d GetVertex(int i) { return VertexList[i]; }
         public IEnumerable<Vector3d> Vertices { get { return VertexList; } }
     }

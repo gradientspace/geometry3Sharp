@@ -127,7 +127,8 @@ namespace g3
                 }
 
                 if (inserted == false) {
-                    throw new Exception("MeshInsertUVPolyCurve.insert_corners: curve vertex " + i.ToString() + " is not inside or on any mesh triangle!");
+                    throw new Exception("MeshInsertUVPolyCurve.insert_corners: curve vertex " 
+                        + i.ToString() + " is not inside or on any mesh triangle!");
                 }
             }
         }
