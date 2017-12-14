@@ -6,6 +6,16 @@ using System.Diagnostics;
 
 namespace g3
 {
+    /// <summary>
+    /// Compute Dijkstra shortest-path algorithm on a graph. 
+    /// Computation is index-based, but can use sparse data
+    /// structures if the index space will be sparse.
+    /// 
+    /// Construction is somewhat complicated, but see shortcut static
+    /// methods at end of file for common construction cases:
+    ///   - MeshVertices(mesh) - compute on vertices of mesh
+    /// 
+    /// </summary>
     public class DijkstraGraphDistance
     {
 
@@ -66,8 +76,15 @@ namespace g3
         List<int> order;
 
         /// <summary>
-        /// nodeFilterF is used to restrict to valid nodes (eg if id space is sparse, or you only want a subset of possible nbrs)
-        /// seeds list are pairs (id, seedvalue)
+        /// Constructor configures the graph as well. Graph is not specified
+        /// explicitly, is provided via functions, for maximum flexibility.
+        /// 
+        /// nMaxID: maximum ID that will be added. 
+        /// bSparse: is ID space large but sparse? this will save memory
+        /// nodeFilterF: restrict to a subset of nodes (eg if you want to filter neighbours but not change neighboursF
+        /// nodeDistanceF: must return (symmetric) distance between two nodes a and b
+        /// neighboursF: return enumeration of neighbours of a
+        /// seeds: although Vector2d, are actually pairs (id, seedvalue)   (or use AddSeed later)
         /// </summary>
         public DijkstraGraphDistance(int nMaxID, bool bSparse,
             Func<int,bool> nodeFilterF,
@@ -117,6 +134,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Add seed point as id/distance pair
+        /// </summary>
         public void AddSeed(int id, float seed_dist)
         {
             if (SparseNodes != null) {
@@ -242,7 +262,7 @@ namespace g3
                 return g.priority;
             } else {
                 GraphNodeStruct g = DenseNodes[id];
-                return g.distance;
+                return (g.frozen) ? g.distance : float.MaxValue;
             }
         }
 
@@ -331,8 +351,17 @@ namespace g3
 
 
 
-
-
+        /// <summary>
+        /// shortcut to setup functions for mesh vertices
+        /// </summary>
+        public static DijkstraGraphDistance MeshVertices(DMesh3 mesh)
+        {
+            return new DijkstraGraphDistance(
+                mesh.MaxVertexID, false,
+                (id) => { return true; },
+                (a, b) => { return (float)mesh.GetVertex(a).Distance(mesh.GetVertex(b)); },
+                mesh.VtxVerticesItr);
+        }
 
     }
 }
