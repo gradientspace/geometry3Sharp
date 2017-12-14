@@ -21,7 +21,7 @@ namespace g3
         // these will be computed if you don't set them
         Vector3d PlaneX, PlaneY;
 
-        struct FillLoop
+        class FillLoop
         {
             public EdgeLoop edgeLoop;
             public Polygon2d poly;
@@ -33,6 +33,13 @@ namespace g3
         {
             Mesh = mesh;
             Bounds = AxisAlignedBox2d.Empty;
+        }
+
+        public PlanarHoleFiller(MeshPlaneCut cut)
+        {
+            Mesh = cut.Mesh;
+            AddFillLoops(cut.CutLoops);
+            SetPlane(cut.PlaneOrigin, cut.PlaneNormal);
         }
 
 
@@ -53,16 +60,7 @@ namespace g3
 
         public void AddFillLoop(EdgeLoop loop)
         {
-            FillLoop floop = new FillLoop();
-            floop.edgeLoop = loop;
-
-            floop.poly = new Polygon2d();
-            foreach ( int vid in loop.Vertices ) {
-                Vector2d v = to2D(Mesh.GetVertex(vid));
-                floop.poly.AppendVertex(v);
-            }
-            Loops.Add(floop);
-            Bounds.Contain(floop.poly.Bounds);
+            Loops.Add(new FillLoop() { edgeLoop = loop });
         }
 
         public void AddFillLoops(IEnumerable<EdgeLoop> loops)
@@ -74,6 +72,8 @@ namespace g3
 
         public bool Fill()
         {
+            compute_polygons();
+
             // translate/scale fill loops to unit box. This will improve
             // accuracy in the calcs below...
             Vector2d shiftOrigin = Bounds.Center;
@@ -180,6 +180,8 @@ namespace g3
                 //    if not, can try to delete nbr tris to repair
                 IndexMap mergeMapV = new IndexMap(true);
                 for ( int pi = 0; pi < polys.Count; ++pi ) {
+                    if (polyVertices[pi] == null)
+                        continue;
                     int[] fillLoopVerts = polyVertices[pi];
                     int NV = fillLoopVerts.Length;
 
@@ -207,6 +209,25 @@ namespace g3
             }
 
             return true;
+        }
+
+
+
+        void compute_polygons()
+        {
+            Bounds = AxisAlignedBox2d.Empty;
+            for ( int i = 0; i < Loops.Count; ++i ) {
+                EdgeLoop loop = Loops[i].edgeLoop;
+                Polygon2d poly = new Polygon2d();
+
+                foreach (int vid in loop.Vertices) {
+                    Vector2d v = to2D(Mesh.GetVertex(vid));
+                    poly.AppendVertex(v);
+                }
+
+                Loops[i].poly = poly;
+                Bounds.Contain(poly.Bounds);
+            }
         }
 
 
