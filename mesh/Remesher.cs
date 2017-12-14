@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Diagnostics;
 
 
@@ -72,6 +73,9 @@ namespace g3 {
         // across runs because we smooth in-place and hence there will be order side-effects.
         public bool EnableParallelSmooth = true;
 
+        // if smoothing is done in-place, we don't need an extra buffer, but also 
+        // there will some randomness introduced in results. Probably worse.
+        public bool EnableSmoothInPlace = false;
 
 		public Remesher(DMesh3 m) {
 			mesh = m;
@@ -86,6 +90,9 @@ namespace g3 {
         }
         public MeshConstraints Constraints {
             get { return constraints; }
+        }
+        public IProjectionTarget ProjectionTarget {
+            get { return this.target; }
         }
 
 
@@ -188,7 +195,10 @@ namespace g3 {
 
             begin_smooth();
             if (EnableSmoothing && SmoothSpeedT > 0) {
-                FullSmoothPass_InPlace(EnableParallelSmooth);
+                if (EnableSmoothInPlace)
+                    FullSmoothPass_InPlace(EnableParallelSmooth);
+                else
+                    FullSmoothPass_Buffer(EnableParallelSmooth);
                 DoDebugChecks();
             }
             end_smooth();
@@ -423,7 +433,7 @@ namespace g3 {
         // The edge needs to inherit the constraint on the other pre-existing edge that we kept.
         // In addition, if the edge vertices were both constrained, then we /might/
         // want to also constrain this new vertex, possibly project to constraint target. 
-        void update_after_split(int edgeID, int va, int vb, ref DMesh3.EdgeSplitInfo splitInfo)
+        protected virtual void update_after_split(int edgeID, int va, int vb, ref DMesh3.EdgeSplitInfo splitInfo)
         {
             bool bPositionFixed = false;
             if (constraints != null && constraints.HasEdgeConstraint(edgeID)) {
@@ -475,7 +485,7 @@ namespace g3 {
         // does not catch some topological cases at the edge-constraint level, which 
         // which we will only be able to detect once we know if we are losing a or b.
         // See comments on can_collapse_vtx() for what collapse_to is for.
-        bool can_collapse_constraints(int eid, int a, int b, int c, int d, int tc, int td, out int collapse_to)
+        protected virtual bool can_collapse_constraints(int eid, int a, int b, int c, int d, int tc, int td, out int collapse_to)
         {
             collapse_to = -1;
             if (constraints == null)
@@ -508,7 +518,7 @@ namespace g3 {
         // are constrained, then we want to keep that vertex and collapse to its position.
         // This vertex (a or b) will be returned in collapse_to, which is -1 otherwise.
         // If a *and* b are constrained, then things are complicated (and documented below).
-        bool can_collapse_vtx(int eid, int a, int b, out int collapse_to)
+        protected virtual bool can_collapse_vtx(int eid, int a, int b, out int collapse_to)
         {
             collapse_to = -1;
             if (constraints == null)
@@ -560,13 +570,13 @@ namespace g3 {
         }
 
 
-        bool vertex_is_fixed(int vid)
+        protected virtual bool vertex_is_fixed(int vid)
         {
             if (constraints != null && constraints.GetVertexConstraint(vid).Fixed)
                 return true;
             return false;
         }
-        bool vertex_is_constrained(int vid)
+        protected virtual bool vertex_is_constrained(int vid)
         {
             if ( constraints != null ) {
                 VertexConstraint vc = constraints.GetVertexConstraint(vid);
@@ -576,14 +586,14 @@ namespace g3 {
             return false;
         }
 
-        VertexConstraint get_vertex_constraint(int vid)
+        protected virtual VertexConstraint get_vertex_constraint(int vid)
         {
             if (constraints != null)
                 return constraints.GetVertexConstraint(vid);
             return VertexConstraint.Unconstrained;
         }
 
-        void project_vertex(int vID, IProjectionTarget targetIn)
+        protected virtual void project_vertex(int vID, IProjectionTarget targetIn)
         {
             Vector3d curpos = mesh.GetVertex(vID);
             Vector3d projected = targetIn.Project(curpos, vID);
@@ -591,7 +601,7 @@ namespace g3 {
         }
 
         // used by collapse-edge to get projected position for new vertex
-        Vector3d get_projected_collapse_position(int vid, Vector3d vNewPos)
+        protected virtual Vector3d get_projected_collapse_position(int vid, Vector3d vNewPos)
         {
             if (constraints != null) {
                 VertexConstraint vc = constraints.GetVertexConstraint(vid);
@@ -614,7 +624,7 @@ namespace g3 {
 
 
 
-		void FullSmoothPass_InPlace(bool bParallel) {
+		protected virtual void FullSmoothPass_InPlace(bool bParallel) {
             Func<DMesh3, int, double, Vector3d> smoothFunc = MeshUtil.UniformSmooth;
             if (CustomSmoothF != null) {
                 smoothFunc = CustomSmoothF;
@@ -639,6 +649,79 @@ namespace g3 {
                     smooth(vID);
             }
 		}
+
+
+
+
+        protected virtual void FullSmoothPass_Buffer(bool bParallel)
+        {
+            InitializeVertexBufferForPass();
+
+            Func<DMesh3, int, double, Vector3d> smoothFunc = MeshUtil.UniformSmooth;
+            if (CustomSmoothF != null) {
+                smoothFunc = CustomSmoothF;
+            } else {
+                if (SmoothType == SmoothTypes.MeanValue)
+                    smoothFunc = MeshUtil.MeanValueSmooth;
+                else if (SmoothType == SmoothTypes.Cotan)
+                    smoothFunc = MeshUtil.CotanSmooth;
+            }
+
+            Action<int> smooth = (vID) => {
+                bool bModified = false;
+                Vector3d vSmoothed = ComputeSmoothedVertexPos(vID, smoothFunc, out bModified);
+                if (bModified) {
+                    vModifiedV[vID] = true;
+                    vBufferV[vID] = vSmoothed;
+                }
+            };
+
+            if (bParallel) {
+                gParallel.ForEach<int>(smooth_vertices(), smooth);
+            } else {
+                foreach (int vID in smooth_vertices())
+                    smooth(vID);
+            }
+
+            ApplyVertexBuffer(bParallel);
+        }
+
+
+
+        protected DVector<Vector3d> vBufferV = new DVector<Vector3d>();
+        protected BitArray vModifiedV = new BitArray(4096);
+
+        protected virtual void InitializeVertexBufferForPass()
+        {
+            if (vBufferV.size < mesh.MaxVertexID)
+                vBufferV.resize(mesh.MaxVertexID + mesh.MaxVertexID / 5);
+            if (vModifiedV.Length < mesh.MaxVertexID) {
+                vModifiedV = new BitArray(2 * mesh.MaxVertexID);
+            } else {
+                vModifiedV.SetAll(false);
+            }
+        }
+
+        protected virtual void ApplyVertexBuffer(bool bParallel)
+        {
+            // [TODO] can probably use block-parallel here...
+            if (bParallel) {
+                gParallel.BlockStartEnd(0, mesh.MaxVertexID-1, (a,b) => {
+                    for (int vid = a; vid <= b; vid++) {
+                        if (vModifiedV[vid])
+                            Mesh.SetVertex(vid, vBufferV[vid]);
+                    }
+                });
+            } else {
+                foreach (int vid in mesh.VertexIndices()) {
+                    if (vModifiedV[vid])
+                        Mesh.SetVertex(vid, vBufferV[vid]);
+                }
+            }
+        }
+
+
+
 
         /// <summary>
         /// This computes smoothed positions w/ proper constraints/etc.
@@ -675,7 +758,7 @@ namespace g3 {
 
         // Project vertices onto projection target. 
         // We can do projection in parallel if we have .net 
-        void FullProjectionPass()
+        protected virtual void FullProjectionPass()
         {
             Action<int> project = (vID) => {
                 if (vertex_is_constrained(vID))
@@ -699,7 +782,7 @@ namespace g3 {
         // Project vertices towards projection target by input alpha, and optionally, don't project vertices too far away
         // We can do projection in parallel if we have .net 
         // [TODO] this code is currently not called
-        void FullProjectionPass(double projectionAlpha, double maxProjectDistance)
+        protected virtual void FullProjectionPass(double projectionAlpha, double maxProjectDistance)
         {
             projectionAlpha = MathUtil.Clamp(projectionAlpha, 0, 1);
 
@@ -755,7 +838,7 @@ namespace g3 {
 
 
         public bool ENABLE_DEBUG_CHECKS = false;
-        void DoDebugChecks()
+        protected virtual void DoDebugChecks()
         {
             if (ENABLE_DEBUG_CHECKS == false)
                 return;
