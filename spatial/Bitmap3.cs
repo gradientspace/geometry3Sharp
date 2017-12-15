@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+using System.Threading;
 namespace g3
 {
 
@@ -26,6 +24,8 @@ namespace g3
         }
 
         int row_size, slab_size;
+
+        SpinLock bit_lock = new SpinLock();
 
         public Bitmap3(Vector3i dims)
         {
@@ -65,6 +65,15 @@ namespace g3
         {
             int i = idx.z * slab_size + idx.y * row_size + idx.x;
             Bits[i] = val;
+        }
+
+        public void SafeSet(Vector3i idx, bool val)
+        {
+            bool taken = false;
+            bit_lock.Enter(ref taken);
+            int i = idx.z * slab_size + idx.y * row_size + idx.x;
+            Bits[i] = val;
+            bit_lock.Exit();
         }
 
         public bool Get(Vector3i idx)

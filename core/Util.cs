@@ -186,6 +186,9 @@ namespace g3
         {
             WriteOptions options = WriteOptions.Defaults;
             options.bWriteGroups = true;
+            options.bPerVertexColors = true;
+            options.bPerVertexNormals = true;
+            options.bPerVertexUVs = true;
             StandardMeshWriter.WriteFile(sPath, new List<WriteMesh>() { new WriteMesh(mesh) }, options);
         }
 
