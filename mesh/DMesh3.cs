@@ -540,8 +540,10 @@ namespace g3
         /// the mesh topology doesn't change, meaning that one axis of the frame
         /// will be computed from projection of outgoing edge.
         /// Requires that vertex normals are available.
+        /// by default, frame.Z is normal, and .X points along mesh edge
+        /// if bFrameNormalY, then frame.Y is normal (X still points along mesh edge)
         /// </summary>
-        public Frame3f GetVertexFrame(int vID, int nFrameNormal = 2)
+        public Frame3f GetVertexFrame(int vID, bool bFrameNormalY = false)
         {
             Debug.Assert(HasVertexNormals);
 
@@ -554,12 +556,12 @@ namespace g3
             Vector3d edge = (ov - v);
             edge.Normalize();
 
-            Vector3d t2 = edge.Cross(normal);
-            t2.Normalize();
-            Vector3d t1 = normal.Cross(t2);
-            t1.Normalize();
-
-            return new Frame3f((Vector3f)v, (Vector3f)t1, (Vector3f)t2, (Vector3f)normal);
+            Vector3d other = normal.Cross(edge);
+            edge = other.Cross(normal);
+            if (bFrameNormalY)
+                return new Frame3f((Vector3f)v, (Vector3f)edge, (Vector3f)normal, (Vector3f)(-other));
+            else 
+                return new Frame3f((Vector3f)v, (Vector3f)edge, (Vector3f)other, (Vector3f)normal);
         }
 
 
@@ -680,6 +682,9 @@ namespace g3
 		}
 
 
+        /// <summary>
+        /// interpolate vertex normals of triangle using barycentric coordinates
+        /// </summary>
         public Vector3d GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) { 
             int ai = 3 * triangles[3 * tID], 
                 bi = 3 * triangles[3 * tID + 1], 
@@ -692,6 +697,9 @@ namespace g3
             return n;
         }
 
+        /// <summary>
+        /// efficiently compute centroid of triangle
+        /// </summary>
         public Vector3d GetTriCentroid(int tID)
         {
             int ai = 3 * triangles[3 * tID], 
@@ -745,7 +753,9 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// construct bounding box of triangle as efficiently as possible
+        /// </summary>
         public AxisAlignedBox3d GetTriBounds(int tID)
         {
             int vi = 3 * triangles[3 * tID];
@@ -762,20 +772,28 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Construct stable frame at triangle centroid, where frame.Z is face normal,
+        /// and frame.X is aligned with edge nEdge of triangle.
+        /// </summary>
         public Frame3f GetTriFrame(int tID, int nEdge = 0)
         {
             int ti = 3 * tID;
-            int a = triangles[ti + (nEdge % 3)];
-            int b = triangles[ti + ((nEdge+1) % 3)];
-            int c = triangles[ti + ((nEdge+2) % 3)];
-            Vector3d v0 = new Vector3d(vertices[3 * a], vertices[3 * a + 1], vertices[3 * a + 2]);
-            Vector3d v1 = new Vector3d(vertices[3 * b], vertices[3 * b + 1], vertices[3 * b + 2]);
-            Vector3d v2 = new Vector3d(vertices[3 * c], vertices[3 * c + 1], vertices[3 * c + 2]);
-            Vector3f edge = (Vector3f)(v1 - v0).Normalized;
-            Vector3f normal = (Vector3f)MathUtil.Normal(ref v0, ref v1, ref v2);
-            Vector3f other = edge.Cross(normal);
-            Vector3f center = (Vector3f)(v0 + v1 + v2) / 3;
-            return new Frame3f(center, edge, other, normal);
+            int a = 3 * triangles[ti + (nEdge % 3)];
+            int b = 3 * triangles[ti + ((nEdge+1) % 3)];
+            int c = 3 * triangles[ti + ((nEdge+2) % 3)];
+            Vector3d v1 = new Vector3d(vertices[a], vertices[a + 1], vertices[a + 2]);
+            Vector3d v2 = new Vector3d(vertices[b], vertices[b + 1], vertices[b + 2]);
+            Vector3d v3 = new Vector3d(vertices[c], vertices[c + 1], vertices[c + 2]);
+
+            Vector3d edge1 = v2 - v1;  edge1.Normalize();
+            Vector3d edge2 = v3 - v2;  edge2.Normalize();
+            Vector3d normal = edge1.Cross(edge2); normal.Normalize();
+
+            Vector3d other = normal.Cross(edge1);
+
+            Vector3f center = (Vector3f)(v1 + v2 + v3) / 3;
+            return new Frame3f(center, (Vector3f)edge1, (Vector3f)other, (Vector3f)normal);
         }
 
 
