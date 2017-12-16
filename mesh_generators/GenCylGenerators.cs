@@ -67,7 +67,7 @@ namespace g3
 
                     int k = nStartR + j;
                     Vector2d pv = Polygon.Vertices[j % Slices];
-                    Vector3d v = fCur.FromFrameP((Vector2f)pv, 2);
+                    Vector3d v = fCur.FromPlaneUV((Vector2f)pv, 2);
                     vertices[k] = v;
                     uv[k] = new Vector2f(uv_along, uv_around);
                     Vector3f n = (Vector3f)(v - fCur.Origin).Normalized;

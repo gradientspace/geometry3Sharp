@@ -519,7 +519,7 @@ namespace g3
         /// If point is in triangle plane and inside triangle, coords will be positive and sum to 1.
         /// ie if result is a, then vPoint = a.x*V0 + a.y*V1 + a.z*V2.
         /// </summary>
-        public static Vector3d BarycentricCoords(Vector3d vPoint, Vector3d V0, Vector3d V1, Vector3d V2)
+        public static Vector3d BarycentricCoords(ref Vector3d vPoint, ref Vector3d V0, ref Vector3d V1, ref Vector3d V2)
         {
             Vector3d kV02 = V0 - V2;
             Vector3d kV12 = V1 - V2;
@@ -536,7 +536,9 @@ namespace g3
             double fBary3 = 1.0 - fBary1 - fBary2;
             return new Vector3d(fBary1, fBary2, fBary3);
         }
-
+        public static Vector3d BarycentricCoords(Vector3d vPoint, Vector3d V0, Vector3d V1, Vector3d V2) {
+            return BarycentricCoords(ref vPoint, ref V0, ref V1, ref V2);
+        }
 
         /// <summary>
         /// Compute barycentric coordinates/weights of vPoint inside triangle (V0,V1,V2). 

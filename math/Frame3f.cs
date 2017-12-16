@@ -191,8 +191,14 @@ namespace g3
             Rotate(rot);
         }
 
+        public Vector3f ProjectToPlane(Vector3f p, int nNormal)
+        {
+            Vector3f d = p - origin;
+            Vector3f n = GetAxis(nNormal);
+            return origin + (d - d.Dot(n) * n);
+        }
 
-        public Vector3f FromFrameP(Vector2f v, int nPlaneNormalAxis)
+        public Vector3f FromPlaneUV(Vector2f v, int nPlaneNormalAxis)
         {
             Vector3f dv = new Vector3f(v[0], v[1], 0);
             if (nPlaneNormalAxis == 0) {
@@ -202,12 +208,17 @@ namespace g3
             }
             return this.rotation * dv + this.origin;
         }
+        [System.Obsolete("replaced with FromPlaneUV")]
+        public Vector3f FromFrameP(Vector2f v, int nPlaneNormalAxis) {
+            return FromPlaneUV(v, nPlaneNormalAxis);
+        }
 
-        public Vector3f ProjectToPlane(Vector3f p, int nNormal)
+        public Vector2f ToPlaneUV(Vector3f p, int nNormal = 2, int nAxis0 = 0, int nAxis1 = 1)
         {
             Vector3f d = p - origin;
-            Vector3f n = GetAxis(nNormal);
-            return origin + (d - d.Dot(n) * n);
+            float fu = d.Dot(GetAxis(nAxis0));
+            float fv = d.Dot(GetAxis(nAxis1));
+            return new Vector2f(fu, fv);
         }
 
 

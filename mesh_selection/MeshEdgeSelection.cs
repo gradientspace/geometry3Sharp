@@ -160,6 +160,14 @@ namespace g3
             }
         }
 
+        public void SelectTriangleEdges(IEnumerable<int> triangles)
+        {
+            foreach ( int tid in triangles ) {
+                Index3i et = Mesh.GetTriEdges(tid);
+                add(et.a); add(et.b); add(et.c);
+            }
+        }
+
 
         public void Deselect(int tid) {
             remove(tid);

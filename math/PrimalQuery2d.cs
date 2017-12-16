@@ -144,6 +144,39 @@ namespace g3
             return ((sign0 != 0 && sign1 != 0 && sign2 != 0) ? -1 : 0);
         }
 
+
+
+        // [RMS] added to handle queries where mesh is not consistently oriented
+        // For a triangle with vertices V0, V1, and V2, oriented cw or ccw,
+        // ToTriangleUnsigned returns
+        //   +1, P outside triangle
+        //   -1, P inside triangle
+        //    0, P on triangle
+        // The query involves three calls to ToLine, so the numbers match those
+        // of ToLine.
+        public int ToTriangleUnsigned(int i, int v0, int v1, int v2)
+        {
+            return ToTriangleUnsigned(PointF(i), v0, v1, v2);
+
+        }
+        public int ToTriangleUnsigned(Vector2d test, int v0, int v1, int v2)
+        {
+            int sign0 = ToLine(test, v1, v2);
+            int sign1 = ToLine(test, v0, v2);
+            int sign2 = ToLine(test, v0, v1);
+
+            // valid sign patterns are -+- and +-+, but also we might
+            // have zeros...can't figure out a more clever test right now
+            if ( (sign0 <= 0 && sign1 >= 0 && sign2 <= 0) ||
+                 (sign0 >= 0 && sign1 <= 0 && sign2 >= 0 )) 
+            {
+                return ((sign0 != 0 && sign1 != 0 && sign2 != 0) ? -1 : 0);
+            }
+            return +1;
+        }
+
+
+
         // For a triangle with counterclockwise vertices V0, V1, and V2,
         // ToCircumcircle returns
         //   +1, P outside circumcircle of triangle

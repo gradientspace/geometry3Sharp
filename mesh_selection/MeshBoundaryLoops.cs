@@ -105,7 +105,21 @@ namespace g3
 
 
         /// <summary>
-        /// find the loop that contains an edge, or return -1
+        /// find the loop index that contains a vertex, or return -1
+        /// </summary>
+        public int FindLoopContainingVertex(int vid)
+        {
+            int N = Loops.Count;
+            for (int li = 0; li < N; ++li) {
+                if (Loops[li].Vertices.Contains(vid))
+                    return li;
+            }
+            return -1;
+        }
+
+
+        /// <summary>
+        /// find the loop index that contains an edge, or return -1
         /// </summary>
         public int FindLoopContainingEdge(int eid)
         {

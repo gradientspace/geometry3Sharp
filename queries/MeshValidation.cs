@@ -12,6 +12,8 @@ namespace g3
         NotBoundaryVertex,
         NotBoundaryEdge,
 
+        NotATriangle,
+
         VerticesNotConnectedByEdge,
         IncorrectLoopOrientation,
 
