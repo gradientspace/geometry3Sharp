@@ -127,6 +127,27 @@ namespace g3
         }
 
 
+
+        /// <summary>
+        /// if this is a border edge-loop, we can check that it is oriented correctly, and
+        /// if not, reverse it.
+        /// Returns true if we reversed orientation.
+        /// </summary>
+        public bool CorrectOrientation()
+        {
+            int a = Vertices[0], b = Vertices[1];
+            int eid = Mesh.FindEdge(a, b);
+            if (Mesh.IsBoundaryEdge(eid)) {
+                Index2i ev = Mesh.GetOrientedBoundaryEdgeV(eid);
+                if (ev.a == b && ev.b == a) {
+                    Reverse();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
         public void Reverse()
         {
             Array.Reverse(Vertices);
