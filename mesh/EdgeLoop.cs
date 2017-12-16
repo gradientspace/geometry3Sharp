@@ -2,8 +2,14 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+
 namespace g3
 {
+    /// <summary>
+    /// Sequential set of vertices/edges in a mesh, that form a closed loop.
+    /// 
+    /// If all you have are the vertices, use EdgeLoop.VertexLoopToEdgeLoop() to construct an EdgeLoop
+    /// </summary>
     public class EdgeLoop
     {
         public DMesh3 Mesh;
@@ -39,8 +45,10 @@ namespace g3
             Array.Copy(copy.Vertices, Vertices, Vertices.Length);
             Edges = new int[copy.Edges.Length];
             Array.Copy(copy.Edges, Edges, Edges.Length);
-            BowtieVertices = new int[copy.BowtieVertices.Length];
-            Array.Copy(copy.BowtieVertices, BowtieVertices, BowtieVertices.Length);
+            if (copy.BowtieVertices != null) {
+                BowtieVertices = new int[copy.BowtieVertices.Length];
+                Array.Copy(copy.BowtieVertices, BowtieVertices, BowtieVertices.Length);
+            }
         }
 
 
@@ -68,16 +76,31 @@ namespace g3
 
         /// <summary>
         /// construct EdgeLoop from a list of vertices of mesh
+        /// if loop is a boundary edge, we can correct orientation if requested
         /// </summary>
-        public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices)
+        public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices, bool bAutoOrient = true)
         {
             int[] Vertices = new int[vertices.Count];
             for (int i = 0; i < Vertices.Length; i++) 
                 Vertices[i] = vertices[i];
 
+            if ( bAutoOrient ) {
+                int a = Vertices[0], b = Vertices[1];
+                int eid = mesh.FindEdge(a, b);
+                if (mesh.IsBoundaryEdge(eid)) {
+                    Index2i ev = mesh.GetOrientedBoundaryEdgeV(eid);
+                    if (ev.a == b && ev.b == a)
+                        Array.Reverse(Vertices);
+                }
+            }
+
             int[] Edges = new int[Vertices.Length];
-            for (int i = 0; i < Edges.Length; ++i)
-                Edges[i] = mesh.FindEdge(Vertices[i], Vertices[(i + 1) % Vertices.Length]);
+            for (int i = 0; i < Edges.Length; ++i) {
+                int a = Vertices[i], b = Vertices[(i + 1) % Vertices.Length];
+                Edges[i] = mesh.FindEdge(a, b);
+                if (Edges[i] == DMesh3.InvalidID)
+                    throw new Exception("EdgeLoop.FromVertices: invalid edge [" + a + "," + b + "]");
+            }
 
             return new EdgeLoop(mesh, Vertices, Edges, false);
         }
@@ -104,6 +127,17 @@ namespace g3
         }
 
 
+        public void Reverse()
+        {
+            Array.Reverse(Vertices);
+            Array.Reverse(Edges);
+        }
+
+
+        /// <summary>
+        /// check if all edges of this loop are internal edges (ie none on boundary)
+        /// </summary>
+        /// <returns></returns>
         public bool IsInternalLoop()
         {
             int NV = Vertices.Length;
@@ -117,6 +151,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Check if all edges of this loop are boundary edges
+        /// </summary>
         public bool IsBoundaryLoop()
         {
             int NV = Vertices.Length;
@@ -143,7 +180,9 @@ namespace g3
             return -1;
         }
 
-
+        /// <summary>
+        /// find index of vertices of loop that is closest to point v
+        /// </summary>
         public int FindNearestVertex(Vector3d v)
         {
             int iNear = -1;
