@@ -112,7 +112,10 @@ namespace g3
 
                 foreach (int tid in Mesh.TriangleIndices()) {
                     Index3i tv = Mesh.GetTriangle(tid);
-                    int query_result = query.ToTriangle(vInsert, tv.a, tv.b, tv.c);
+                    // [RMS] using unsigned query here because we do not need to care about tri CW/CCW orientation
+                    //   (right? otherwise we have to explicitly invert mesh. Nothing else we do depends on tri orientation)
+                    //int query_result = query.ToTriangle(vInsert, tv.a, tv.b, tv.c);
+                    int query_result = query.ToTriangleUnsigned(vInsert, tv.a, tv.b, tv.c);
                     if (query_result == -1 || query_result == 0) {
                         Vector3d bary = MathUtil.BarycentricCoords(vInsert, PointF(tv.a), PointF(tv.b), PointF(tv.c));
                         int vid = insert_corner_from_bary(i, tid, bary);
