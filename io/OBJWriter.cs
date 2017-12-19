@@ -31,7 +31,7 @@ namespace g3
             if (options.GroupNameF != null)
                 GroupNameF = options.GroupNameF;
 
-                int nAccumCountV = 1;       // OBJ indices always start at 1
+            int nAccumCountV = 1;       // OBJ indices always start at 1
             int nAccumCountUV = 1;
 
 			// collect materials
