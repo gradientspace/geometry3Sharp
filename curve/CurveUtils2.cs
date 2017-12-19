@@ -60,11 +60,13 @@ namespace g3
             }
             return l;
         }
+        public static List<IParametricCurve2d> Flatten(IParametricCurve2d curve) {
+            return new List<IParametricCurve2d>(LeafCurvesIteration(curve));
+        }
 
 
-
-		// returns largest scalar coordinate value, useful for converting to integer coords
-		public static Vector2d GetMaxOriginDistances(IEnumerable<Vector2d> vertices)
+        // returns largest scalar coordinate value, useful for converting to integer coords
+        public static Vector2d GetMaxOriginDistances(IEnumerable<Vector2d> vertices)
 		{
 			Vector2d max = Vector2d.Zero;
 			foreach (Vector2d v in vertices) {
