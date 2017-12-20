@@ -7,6 +7,9 @@ namespace g3
 {
 	public class SVGWriter
 	{
+        public bool FlipY = true;
+
+
 		public struct Style {
 			public string fill;
 			public string stroke;
@@ -37,7 +40,8 @@ namespace g3
 		public Style DefaultPolylineStyle;
         public Style DefaultDGraphStyle;
         public Style DefaultCircleStyle;
-		public Style DefaultLineStyle;
+        public Style DefaultArcStyle;
+        public Style DefaultLineStyle;
 
 
         List<object> Objects;
@@ -48,6 +52,7 @@ namespace g3
 		public int Precision = 3;
 		public double BoundsPad = 10;
 
+
 		public SVGWriter()
 		{
 			Objects = new List<object>();
@@ -56,6 +61,7 @@ namespace g3
 			DefaultPolygonStyle = Style.Outline("black", 1);
 			DefaultPolylineStyle = Style.Outline("cyan", 1);
 			DefaultCircleStyle = Style.Filled("green", "black", 1);
+            DefaultArcStyle = Style.Outline("purple", 1);
             DefaultLineStyle = Style.Outline("black", 1);
             DefaultDGraphStyle = Style.Outline("blue", 1);
         }
@@ -70,6 +76,19 @@ namespace g3
 			Styles[poly] = style;
 			Bounds.Contain(poly.Bounds);
 		}
+
+
+        public void AddBox(AxisAlignedBox2d box) {
+            AddBox(box, DefaultPolygonStyle);
+        }
+        public void AddBox(AxisAlignedBox2d box, Style style)
+        {
+            Polygon2d poly = new Polygon2d();
+            for (int k = 0; k < 4; ++k)
+                poly.AppendVertex(box.GetCorner(k));
+            AddPolygon(poly, style);
+        }
+
 
 
 		public void AddPolyline(PolyLine2d poly) {
@@ -107,7 +126,20 @@ namespace g3
 		}
 
 
-		public void AddLine(Segment2d segment) {
+        public void AddArc(Arc2d arc)
+        {
+            Objects.Add(arc);
+            Bounds.Contain(arc.Bounds);
+        }
+        public void AddArc(Arc2d arc, Style style)
+        {
+            Objects.Add(arc);
+            Styles[arc] = style;
+            Bounds.Contain(arc.Bounds);
+        }
+
+
+        public void AddLine(Segment2d segment) {
 			Objects.Add(new Segment2dBox(segment));
 			Bounds.Contain(segment.P0); Bounds.Contain(segment.P1);
 		}
@@ -117,6 +149,14 @@ namespace g3
 			Styles[segbox] = style;
 			Bounds.Contain(segment.P0); Bounds.Contain(segment.P1);
 		}
+
+
+        public void AddComplex(PlanarComplex complex, Style style)
+        {
+            Objects.Add(complex);
+            Styles[complex] = style;
+            Bounds.Contain(complex.Bounds());
+        }
 
 
 
@@ -135,10 +175,14 @@ namespace g3
                         write_polyline(o as PolyLine2d, w);
                     else if (o is Circle2d)
                         write_circle(o as Circle2d, w);
+                    else if (o is Arc2d)
+                        write_arc(o as Arc2d, w);
                     else if (o is Segment2dBox)
                         write_line(o as Segment2dBox, w);
                     else if (o is DGraph2)
                         write_graph(o as DGraph2, w);
+                    else if (o is PlanarComplex)
+                        write_complex(o as PlanarComplex, w);
                     else
                         throw new Exception("SVGWriter.Write: unknown object type " + o.GetType().ToString());
 				}
@@ -149,6 +193,16 @@ namespace g3
 
 			return IOWriteResult.Ok;
 		}
+
+
+
+        protected virtual Vector2d MapPt(Vector2d v)
+        {
+            if (FlipY) {
+                return new Vector2d(v.x, Bounds.Min.y + (Bounds.Max.y - v.y));
+            } else
+                return v;
+        }
 
 
 
@@ -177,9 +231,10 @@ namespace g3
 			StringBuilder b = new StringBuilder();
 			b.Append("<polygon points=\"");
 			for (int i = 0; i < poly.VertexCount; ++i ) {
-				b.Append(Math.Round(poly[i].x,Precision)); 
+                Vector2d v = MapPt(poly[i]);
+				b.Append(Math.Round(v.x,Precision)); 
 				b.Append(','); 
-				b.Append(Math.Round(poly[i].y, Precision));
+				b.Append(Math.Round(v.y, Precision));
 				if (i < poly.VertexCount - 1)
 					b.Append(' ');
 			}
@@ -197,9 +252,10 @@ namespace g3
 			StringBuilder b = new StringBuilder();
 			b.Append("<polyline points=\"");
 			for (int i = 0; i < poly.VertexCount; ++i) {
-				b.Append(Math.Round(poly[i].x, Precision));
+                Vector2d v = MapPt(poly[i]);
+                b.Append(Math.Round(v.x, Precision));
 				b.Append(',');
-				b.Append(Math.Round(poly[i].y, Precision));
+				b.Append(Math.Round(v.y, Precision));
 				if (i < poly.VertexCount - 1)
 					b.Append(' ');
 			}
@@ -220,10 +276,11 @@ namespace g3
             foreach ( int eid in graph.EdgeIndices()) {
                 Segment2d seg = graph.GetEdgeSegment(eid);
                 b.Append("<line ");
-                append_property("x1", seg.P0.x, b, true);
-                append_property("y1", seg.P0.y, b, true);
-                append_property("x2", seg.P1.x, b, true);
-                append_property("y2", seg.P1.y, b, true);
+                Vector2d p0 = MapPt(seg.P0), p1 = MapPt(seg.P1);
+                append_property("x1", p0.x, b, true);
+                append_property("y1", p0.y, b, true);
+                append_property("x2", p1.x, b, true);
+                append_property("y2", p1.y, b, true);
                 b.Append(style);
                 b.Append(" />");
                 b.AppendLine();
@@ -236,8 +293,9 @@ namespace g3
 		{
 			StringBuilder b = new StringBuilder();
 			b.Append("<circle ");
-			append_property("cx", circle.Center.x, b, true);
-			append_property("cy", circle.Center.y, b, true);
+            Vector2d c = MapPt(circle.Center);
+            append_property("cx", c.x, b, true);
+			append_property("cy", c.y, b, true);
 			append_property("r", circle.Radius, b, true);
 			append_style(b, circle, ref DefaultCircleStyle);
 			b.Append(" />");
@@ -245,12 +303,59 @@ namespace g3
 		}
 
 
-		void write_line(Segment2dBox segbox, StreamWriter w)
+        void write_arc(Arc2d arc, StreamWriter w)
+        {
+            StringBuilder b = new StringBuilder();
+            Vector2d vStart = MapPt(arc.P0);
+            Vector2d vEnd = MapPt(arc.P1);
+            b.Append("<path ");
+            b.Append("d=\"");
+
+            // move to start coordinates
+            b.Append("M");
+            b.Append(Math.Round(vStart.x, Precision));
+            b.Append(",");
+            b.Append(Math.Round(vStart.y, Precision));
+            b.Append(" ");
+
+            // start arc
+            b.Append("A");
+
+            // radii (write twice because this is actually elliptical arc)
+            b.Append(Math.Round(arc.Radius, Precision));
+            b.Append(",");
+            b.Append(Math.Round(arc.Radius, Precision));
+            b.Append(" ");
+
+            b.Append("0 ");     // x-axis-rotation
+
+            int large = (arc.AngleEndDeg - arc.AngleStartDeg) > 180 ? 1 : 0;
+            int sweep = (arc.IsReversed) ? 1 : 0;
+            b.Append(large);
+            b.Append(",");
+            b.Append(sweep);
+
+            // end coordinates
+            b.Append(Math.Round(vEnd.x, Precision));
+            b.Append(",");
+            b.Append(Math.Round(vEnd.y, Precision));
+
+            b.Append("\" ");     // close path
+
+            append_style(b, arc, ref DefaultArcStyle);
+
+
+            b.Append(" />");
+            w.WriteLine(b);
+        }
+
+
+        void write_line(Segment2dBox segbox, StreamWriter w)
 		{
 			Segment2d seg = (Segment2d)segbox;
 			StringBuilder b = new StringBuilder();
 			b.Append("<line ");
-			Vector2d p0 = seg.P0, p1 = seg.P1;
+			Vector2d p0 = MapPt(seg.P0), p1 = MapPt(seg.P1);
 			append_property("x1", p0.x, b, true);
 			append_property("y1", p0.y, b, true);
 			append_property("x2", p1.x, b, true);
@@ -259,6 +364,26 @@ namespace g3
 			b.Append(" />");
 			w.WriteLine(b);
 		}
+
+
+
+
+        void write_complex(PlanarComplex complex, StreamWriter w)
+        {
+            foreach ( var elem in complex.ElementsItr() ) {
+                List<IParametricCurve2d> curves = CurveUtils2.Flatten(elem.source);
+                foreach ( IParametricCurve2d c in curves ) {
+                    if (c is Segment2d)
+                        write_line(new Segment2dBox((Segment2d)c), w);
+                    else if (c is Circle2d)
+                        write_circle(c as Circle2d, w);
+                    else if (c is Polygon2d)
+                        write_polygon(c as Polygon2d, w);
+                    else if (c is Arc2d)
+                        write_arc(c as Arc2d, w);
+                }
+            }
+        }
 
 
 		void append_property(string name, double val, StringBuilder b, bool trailSpace = true) {

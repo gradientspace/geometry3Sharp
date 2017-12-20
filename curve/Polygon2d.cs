@@ -399,6 +399,7 @@ namespace g3
 			int N = vertices.Count;
 			for (int i = 0; i < N; ++i)
 				vertices[i] += translate;
+            Timestamp++;
             return this;
 		}
 
@@ -406,6 +407,7 @@ namespace g3
             int N = vertices.Count;
             for (int i = 0; i < N; ++i)
                 vertices[i] = rotation * (vertices[i] - origin) + origin;
+            Timestamp++;
             return this;
         }
 
@@ -413,6 +415,7 @@ namespace g3
 			int N = vertices.Count;
 			for (int i = 0; i < N; ++i)
 				vertices[i] = scale * (vertices[i] - origin) + origin;
+            Timestamp++;
             return this;
         }
 
@@ -421,6 +424,7 @@ namespace g3
             int N = vertices.Count;
             for (int i = 0; i < N; ++i)
                 vertices[i] = transformF(vertices[i]);
+            Timestamp++;
             return this;
         }
 
@@ -429,6 +433,7 @@ namespace g3
             int N = vertices.Count;
             for (int k = 0; k < N; ++k)
                 vertices[k] = xform.TransformP(vertices[k]);
+            Timestamp++;
             return this;
         }
 
@@ -449,6 +454,8 @@ namespace g3
             }
             for (int k = 0; k < vertices.Count; ++k)
                 vertices[k] = newv[k];
+
+            Timestamp++;
         }
 
 
@@ -477,6 +484,8 @@ namespace g3
             }
             for (int k = 0; k < vertices.Count; ++k)
                 vertices[k] = newv[k];
+
+            Timestamp++;
         }
 
 
@@ -566,11 +575,70 @@ namespace g3
 				if (mk[i])
 					vertices.Add( vt[i] );
 			}
-			Timestamp++;
 
+			Timestamp++;
 			return;
 		}
 
+
+
+
+        public void Chamfer(double chamfer_dist, double minConvexAngleDeg = 30, double minConcaveAngleDeg = 30)
+        {
+            if (IsClockwise)
+                throw new Exception("must be ccw?");
+
+            List<Vector2d> NewV = new List<Vector2d>();
+            int N = Vertices.Count;
+
+            int iCur = 0;
+            do {
+                Vector2d center = Vertices[iCur];
+
+                int iPrev = (iCur == 0) ? N - 1 : iCur - 1;
+                Vector2d prev = Vertices[iPrev];
+                int iNext = (iCur + 1) % N;
+                Vector2d next = Vertices[iNext];
+
+                Vector2d cp = prev - center;
+                double cpdist = cp.Normalize();
+                Vector2d cn = next - center;
+                double cndist = cn.Normalize();
+
+                // if degenerate, skip this vert
+                if (cpdist < MathUtil.ZeroTolerancef || cndist < MathUtil.ZeroTolerancef) {
+                    iCur = iNext;
+                    continue;
+                }
+
+                double angle = Vector2d.AngleD(cp, cn);
+                // TODO document what this means sign-wise
+                double sign = cp.Perp.Dot(cn);
+                bool bConcave = (sign > 0);
+
+                double thresh = (bConcave) ? minConcaveAngleDeg : minConvexAngleDeg;
+
+                // ok not too sharp
+                if (angle > thresh) {
+                    NewV.Add(center);
+                    iCur = iNext;
+                    continue;
+                }
+
+
+                double prev_cut_dist = Math.Min(chamfer_dist, cpdist*0.5);
+                Vector2d prev_cut = center + prev_cut_dist * cp;
+                double next_cut_dist = Math.Min(chamfer_dist, cndist * 0.5);
+                Vector2d next_cut = center + next_cut_dist * cn;
+
+                NewV.Add(prev_cut);
+                NewV.Add(next_cut);
+                iCur = iNext;
+            } while (iCur != 0);
+
+            vertices = NewV;
+            Timestamp++;
+        }
 
 
 

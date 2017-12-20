@@ -279,6 +279,15 @@ namespace g3
             Max.Add(vTranslate);
         }
 
+        public void Scale(double scale) {
+            Min = Min * scale;
+            Max = Max * scale;
+        }
+        public void Scale(double scale, Vector2d origin) {
+            Min = (Min - origin) * scale + origin;
+            Max = (Max - origin) * scale + origin;
+        }
+
         public void MoveMin(Vector2d vNewMin) {
             Max.x = vNewMin.x + (Max.x - Min.x);
             Max.y = vNewMin.y + (Max.y - Min.y);

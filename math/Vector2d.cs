@@ -97,17 +97,31 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// returns cross-product of this vector with v2 (same as DotPerp)
+        /// </summary>
         public double Cross(Vector2d v2) {
             return x * v2.y - y * v2.x;
         }
 
 
+        /// <summary>
+        /// returns right-perp vector, ie rotated 90 degrees to the right
+        /// </summary>
 		public Vector2d Perp {
 			get { return new Vector2d(y, -x); }
 		}
+
+        /// <summary>
+        /// returns right-perp vector, ie rotated 90 degrees to the right
+        /// </summary>
 		public Vector2d UnitPerp {
 			get { return new Vector2d(y, -x).Normalized; }
 		}
+
+        /// <summary>
+        /// returns dot-product of this vector with v2.Perp
+        /// </summary>
 		public double DotPerp(Vector2d v2) {
 			return x*v2.y - y*v2.x;
 		}
