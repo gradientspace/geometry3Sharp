@@ -910,20 +910,28 @@ namespace g3
 
 
 
-        public void Transform(ITransform2 xform, bool bApplyToSources)
+        public void Transform(ITransform2 xform, bool bApplyToSources, bool bRecomputePolygons = false)
         {
             foreach ( var element in vElements ) {
                 if ( element is SmoothLoopElement ) {
                     var loop = element as SmoothLoopElement;
-                    loop.polygon.Transform(xform);
                     if (bApplyToSources && loop.source != loop.polygon)
                         loop.source.Transform(xform);
 
+                    if ( bRecomputePolygons )
+                        UpdateSampling(loop);
+                    else
+                        loop.polygon.Transform(xform);
+
                 } else if (element is SmoothCurveElement) {
                     var curve = element as SmoothCurveElement;
-                    curve.polyLine.Transform(xform);
                     if (bApplyToSources && curve.source != curve.polyLine)
                         curve.source.Transform(xform);
+
+                    if (bRecomputePolygons)
+                        UpdateSampling(curve);
+                    else
+                        curve.polyLine.Transform(xform);
                 }
             }
         }

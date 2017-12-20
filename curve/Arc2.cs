@@ -29,6 +29,36 @@ namespace g3 {
 		}
 
 
+        /// <summary>
+        /// Create Arc around center, **clockwise** from start to end points.
+        /// Points must both be the same distance from center (ie on circle)
+        /// </summary>
+        public Arc2d(Vector2d vCenter, Vector2d vStart, Vector2d vEnd)
+        {
+            IsReversed = false;
+            SetFromCenterAndPoints(vCenter, vStart, vEnd);
+        }
+
+
+        /// <summary>
+        /// Initialize Arc around center, **clockwise** from start to end points.
+        /// Points must both be the same distance from center (ie on circle)
+        /// </summary>
+        public void SetFromCenterAndPoints(Vector2d vCenter, Vector2d vStart, Vector2d vEnd)
+        {
+            Vector2d ds = vStart - vCenter;
+            Vector2d de = vEnd - vCenter;
+            Debug.Assert(Math.Abs(ds.LengthSquared - de.LengthSquared) < MathUtil.ZeroTolerancef);
+            AngleStartDeg = Math.Atan2(ds.y, ds.x) * MathUtil.Rad2Deg;
+            AngleEndDeg = Math.Atan2(de.y, de.x) * MathUtil.Rad2Deg;
+            if (AngleEndDeg < AngleStartDeg)
+                AngleEndDeg += 360;
+            Center = vCenter;
+            Radius = ds.Length;
+        }
+
+
+
 		public Vector2d P0 {
 			get { return SampleT(0.0); }
 		}
@@ -113,15 +143,11 @@ namespace g3 {
         public bool IsTransformable { get { return true; } }
         public void Transform(ITransform2 xform)
         {
-            Center = xform.TransformP(Center);
-            Vector2d new_P0 = xform.TransformP(P0) - Center;
-            AngleStartDeg = Math.Atan2(new_P0.y, new_P0.x);
-            Vector2d new_P1 = xform.TransformP(P1) - Center;
-            AngleEndDeg = Math.Atan2(new_P1.y, new_P1.x);
-            if (AngleEndDeg < AngleStartDeg)
-                AngleEndDeg += 360;
+            Vector2d vCenter = xform.TransformP(Center);
+            Vector2d vStart = xform.TransformP((IsReversed) ? P1 : P0);
+            Vector2d vEnd = xform.TransformP((IsReversed) ? P0 : P1);
 
-            Radius = xform.TransformScalar(Radius);
+            SetFromCenterAndPoints(vCenter, vStart, vEnd);
         }
 
 

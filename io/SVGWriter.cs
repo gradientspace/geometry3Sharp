@@ -58,13 +58,25 @@ namespace g3
 			Objects = new List<object>();
 			Bounds = AxisAlignedBox2d.Empty;
 
-			DefaultPolygonStyle = Style.Outline("black", 1);
+			DefaultPolygonStyle = Style.Outline("grey", 1);
 			DefaultPolylineStyle = Style.Outline("cyan", 1);
 			DefaultCircleStyle = Style.Filled("green", "black", 1);
-            DefaultArcStyle = Style.Outline("purple", 1);
+            DefaultArcStyle = Style.Outline("magenta", 1);
             DefaultLineStyle = Style.Outline("black", 1);
             DefaultDGraphStyle = Style.Outline("blue", 1);
         }
+
+
+        public void SetDefaultLineWidth(float width)
+        {
+            DefaultPolygonStyle.stroke_width = width;
+            DefaultPolylineStyle.stroke_width = width;
+            DefaultCircleStyle.stroke_width = width;
+            DefaultArcStyle.stroke_width = width;
+            DefaultLineStyle.stroke_width = width;
+            DefaultDGraphStyle.stroke_width = width;
+        }
+
 
 
 		public void AddPolygon(Polygon2d poly) {
@@ -151,10 +163,9 @@ namespace g3
 		}
 
 
-        public void AddComplex(PlanarComplex complex, Style style)
+        public void AddComplex(PlanarComplex complex)
         {
             Objects.Add(complex);
-            Styles[complex] = style;
             Bounds.Contain(complex.Bounds());
         }
 
@@ -377,8 +388,10 @@ namespace g3
                         write_line(new Segment2dBox((Segment2d)c), w);
                     else if (c is Circle2d)
                         write_circle(c as Circle2d, w);
-                    else if (c is Polygon2d)
-                        write_polygon(c as Polygon2d, w);
+                    else if (c is Polygon2DCurve)
+                        write_polygon((c as Polygon2DCurve).Polygon, w);
+                    else if (c is PolyLine2DCurve)
+                        write_polyline((c as PolyLine2DCurve).Polyline, w);
                     else if (c is Arc2d)
                         write_arc(c as Arc2d, w);
                 }
