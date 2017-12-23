@@ -38,6 +38,19 @@ namespace g3
 
 
         /// <summary>
+        /// Find distance from point to mesh
+        /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
+        /// </summary>
+        public static double NearestPointDistance(DMesh3 mesh, ISpatial spatial, Vector3d queryPoint, double maxDist = double.MaxValue)
+        {
+            int tid = spatial.FindNearestTriangle(queryPoint, maxDist);
+            if (tid == DMesh3.InvalidID)
+                return double.MaxValue;
+            return Math.Sqrt(TriangleDistance(mesh, tid, queryPoint).DistanceSquared);
+        }
+
+
+        /// <summary>
         /// convenience function to construct a IntrRay3Triangle3 object for a mesh triangle
         /// </summary>
         public static IntrRay3Triangle3 TriangleIntersection(DMesh3 mesh, int ti, Ray3d ray)

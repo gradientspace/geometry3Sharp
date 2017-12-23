@@ -24,6 +24,15 @@ namespace g3
     ///    that "narrow" if you have large triangles on a diagonal to grid axes
     /// 
     /// 
+    /// Potential optimizations:
+    ///  - Often we have a spatial data structure that would allow faster computation of the
+    ///    narrow-band distances (which become quite expensive if we want a wider band!)
+    ///    Not clear how to take advantage of this though. Perhaps we could have a binary
+    ///    grid that, in first pass, we set bits inside triangle bboxes to 1? Or perhaps
+    ///    same as current code, but we use spatial-dist, and so for each ijk we only compute once?
+    ///    (then have to test for computed value at each cell of each triangle...)
+    ///    
+    /// 
     /// This code is based on the C++ implementation found at https://github.com/christopherbatty/SDFGen
     /// Original license was public domain. 
     /// Permission granted by Christopher Batty to include C# port under Boost license.

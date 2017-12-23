@@ -10,6 +10,7 @@ namespace g3
         public List<Vector3d> Vertices;
         public Polygon2d Polygon;
         public bool Capped = true;
+        public bool ClosedLoop = false;
 
         // [TODO] Frame3d ??
         public Frame3f Frame = Frame3f.Identity;
@@ -29,15 +30,16 @@ namespace g3
             int nRings = Vertices.Count;
             int nRingSize = (NoSharedVertices) ? Slices + 1 : Slices;
             int nCapVertices = (NoSharedVertices) ? Slices + 1 : 1;
-            if (Capped == false)
+            if (Capped == false || ClosedLoop == true)
                 nCapVertices = 0;
 
             vertices = new VectorArray3d(nRings * nRingSize + 2 * nCapVertices);
             uv = new VectorArray2f(vertices.Count);
             normals = new VectorArray3f(vertices.Count);
 
-            int nSpanTris = (Vertices.Count - 1) * (2 * Slices);
-            int nCapTris = (Capped) ? 2 * Slices : 0;
+            int quad_strips = ClosedLoop ? (nRings) : (nRings-1);
+            int nSpanTris = quad_strips * (2 * Slices);
+            int nCapTris = (Capped && ClosedLoop == false) ? 2 * Slices : 0;
             triangles = new IndexArray3i(nSpanTris + nCapTris);
 
             Frame3f fCur = new Frame3f(Frame);
@@ -78,9 +80,12 @@ namespace g3
 
             // generate triangles
             int ti = 0;
-            for (int ri = 0; ri < nRings-1; ++ri) {
+            int nStop = (ClosedLoop) ? nRings : (nRings - 1);
+            for (int ri = 0; ri < nStop; ++ri) {
                 int r0 = ri * nRingSize;
                 int r1 = r0 + nRingSize;
+                if (ClosedLoop && ri == nStop - 1)
+                    r1 = 0;
                 for (int k = 0; k < nRingSize - 1; ++k) {
                     triangles.Set(ti++, r0 + k, r0 + k + 1, r1 + k + 1, Clockwise);
                     triangles.Set(ti++, r0 + k, r1 + k + 1, r1 + k, Clockwise);
@@ -91,7 +96,7 @@ namespace g3
                 }
             }
 
-            if (Capped) {
+            if (Capped && ClosedLoop == false) {
                 // add endcap verts
                 int nBottomC = nRings * nRingSize;
                 vertices[nBottomC] = fStart.Origin;

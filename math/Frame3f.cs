@@ -138,12 +138,10 @@ namespace g3
 
         public void Rotate(Quaternionf q)
         {
-            Debug.Assert(rotation.w != 0);      // catch un-initialized quaternions
             rotation = q * rotation;
         }
         public Frame3f Rotated(Quaternionf q)
         {
-            Debug.Assert(rotation.w != 0);
             return new Frame3f(this.origin, q * this.rotation);
         }
         public Frame3f Rotated(float fAngle, int nAxis)
@@ -164,27 +162,23 @@ namespace g3
 
         public void RotateAround(Vector3f point, Quaternionf q)
         {
-            Debug.Assert(rotation.w != 0);
             Vector3f dv = q * (origin - point);
             rotation = q * rotation;
             origin = point + dv;
         }
         public Frame3f RotatedAround(Vector3f point, Quaternionf q)
         {
-            Debug.Assert(rotation.w != 0);
             Vector3f dv = q * (this.origin - point);
             return new Frame3f(point + dv, q * this.rotation);
         }
 
         public void AlignAxis(int nAxis, Vector3f vTo)
         {
-            Debug.Assert(rotation.w != 0);
             Quaternionf rot = Quaternionf.FromTo(GetAxis(nAxis), vTo);
             Rotate(rot);
         }
         public void ConstrainedAlignAxis(int nAxis, Vector3f vTo, Vector3f vAround)
         {
-            Debug.Assert(rotation.w != 0);
             Vector3f axis = GetAxis(nAxis);
             float fAngle = MathUtil.PlaneAngleSignedD(axis, vTo, vAround);
             Quaternionf rot = Quaternionf.AxisAngleD(vAround, fAngle);

@@ -10,6 +10,11 @@ namespace g3
         public DMesh3 Mesh;
         public Func<Vector3d, double> ValueF = null;
 
+        /// <summary>
+        /// Optional - provide value at vertex (which may be precomputed)
+        /// </summary>
+        public Func<int, double> VertexValueF = null;
+
         public DGraph3 Graph = null;
 
         public enum TriangleCase
@@ -64,7 +69,11 @@ namespace g3
 
                 Vector3dTuple3 tv = new Vector3dTuple3();
                 Mesh.GetTriVertices(tid, ref tv.V0, ref tv.V1, ref tv.V2);
-                Vector3d f = new Vector3d(ValueF(tv.V0), ValueF(tv.V1), ValueF(tv.V2));
+                Index3i triVerts = Mesh.GetTriangle(tid);
+
+                Vector3d f = (VertexValueF != null) ?
+                    new Vector3d(VertexValueF(triVerts.a), VertexValueF(triVerts.b), VertexValueF(triVerts.c))
+                    : new Vector3d(ValueF(tv.V0), ValueF(tv.V1), ValueF(tv.V2));
 
                 // round f to 0 within epsilon?
 
@@ -73,7 +82,6 @@ namespace g3
                 if (f.x > 0 && f.y > 0 && f.z > 0)
                     continue;
 
-                Index3i triVerts = Mesh.GetTriangle(tid);
                 Index3i triEdges = Mesh.GetTriEdges(tid);
 
                 if (f.x * f.y * f.z == 0) {
@@ -125,10 +133,15 @@ namespace g3
                     int e1 = (cross_verts.c == int.MinValue) ? 1 : 2;
                     int ev0 = cross_verts[e0];
                     int ev1 = cross_verts[e1];
-                    Util.gDevAssert(ev0 != int.MinValue && ev1 != int.MinValue);
-                    int graph_eid = Graph.AppendEdge(ev0, ev1, (int)TriangleCase.EdgeEdge);
-                    if (WantGraphEdgeInfo)
-                        add_edge_edge(graph_eid, tid, new Index2i(triEdges[e0], triEdges[e1]));
+                    // [RMS] if function is garbage, we can end up w/ case where both crossings
+                    //   happen at same vertex, even though values are not the same (eg if
+                    //   some values are double.MaxValue). We will just fail in these cases.
+                    if (ev0 != ev1) {
+                        Util.gDevAssert(ev0 != int.MinValue && ev1 != int.MinValue);
+                        int graph_eid = Graph.AppendEdge(ev0, ev1, (int)TriangleCase.EdgeEdge);
+                        if (WantGraphEdgeInfo)
+                            add_edge_edge(graph_eid, tid, new Index2i(triEdges[e0], triEdges[e1]));
+                    }
                 }
             }
 
@@ -184,9 +197,11 @@ namespace g3
             double t = 0.5;
             if (fA < fB) {
                 t = (0 - fA) / (fB - fA);
+                t = MathUtil.Clamp(t, 0, 1);
                 return (1 - t) * a + (t) * b;
             } else if ( fB < fA ) {
                 t = (0 - fB) / (fA - fB);
+                t = MathUtil.Clamp(t, 0, 1);
                 return (1 - t) * b + (t) * a;
             } else
                 return a;

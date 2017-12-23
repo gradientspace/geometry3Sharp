@@ -90,8 +90,9 @@ namespace g3
                         path.Closed = true;
                         c.Loops.Add(path);
                         // need to mark incoming edge as used...but is it valid now?
-                        Util.gDevAssert(eid != int.MaxValue);
-                        used.Add(eid);
+                        //Util.gDevAssert(eid != int.MaxValue);
+                        if ( eid != int.MaxValue )
+                            used.Add(eid);
 
                     } else {
                         c.Paths.Add(path);

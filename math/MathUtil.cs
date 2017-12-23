@@ -246,7 +246,11 @@ namespace g3
             vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0f;
             vFrom.Normalize();
             vTo.Normalize();
-            float fSign = Math.Sign(vFrom.Cross(vTo)[nPlaneNormalIdx]);
+            Vector3f c = vFrom.Cross(vTo);
+            if (c.LengthSquared < MathUtil.ZeroTolerancef) {        // vectors are parallel
+                return vFrom.Dot(vTo) < 0 ? 180.0f : 0;
+            }
+            float fSign = Math.Sign(c[nPlaneNormalIdx]);
             float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
             return fAngle;
         }
@@ -255,7 +259,11 @@ namespace g3
             vFrom[nPlaneNormalIdx] = vTo[nPlaneNormalIdx] = 0.0;
             vFrom.Normalize();
             vTo.Normalize();
-            double fSign = Math.Sign(vFrom.Cross(vTo)[nPlaneNormalIdx]);
+            Vector3d c = vFrom.Cross(vTo);
+            if (c.LengthSquared < MathUtil.ZeroTolerance) {        // vectors are parallel
+                return vFrom.Dot(vTo) < 0 ? 180.0 : 0;
+            }
+            double fSign = Math.Sign(c[nPlaneNormalIdx]);
             double fAngle = fSign * Vector3d.AngleD(vFrom, vTo);
             return fAngle;
         }
@@ -267,6 +275,9 @@ namespace g3
             vFrom.Normalize();
             vTo.Normalize();
             Vector3f c = Vector3f.Cross(vFrom, vTo);
+            if (c.LengthSquared < MathUtil.ZeroTolerancef) {        // vectors are parallel
+                return vFrom.Dot(vTo) < 0 ? 180.0f : 0;
+            }
             float fSign = Math.Sign(Vector3f.Dot(c, planeN));
             float fAngle = fSign * Vector3f.AngleD(vFrom, vTo);
             return fAngle;
@@ -278,6 +289,9 @@ namespace g3
             vFrom.Normalize();
             vTo.Normalize();
             Vector3d c = Vector3d.Cross(vFrom, vTo);
+            if (c.LengthSquared < MathUtil.ZeroTolerance) {        // vectors are parallel
+                return vFrom.Dot(vTo) < 0 ? 180.0 : 0;
+            }
             double fSign = Math.Sign(Vector3d.Dot(c, planeN));
             double fAngle = fSign * Vector3d.AngleD(vFrom, vTo);
             return fAngle;
