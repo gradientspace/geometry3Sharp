@@ -175,6 +175,22 @@ namespace g3
 
 
 
+        /// <summary>
+        /// move list at from_index to to_index
+        /// </summary>
+        public void Move(int from_index, int to_index)
+        {
+            if (list_heads[to_index] != Null)
+                throw new Exception("SmallListSet.MoveTo: list at " + to_index + " is not empty!");
+            if (list_heads[from_index] == Null)
+                throw new Exception("SmallListSet.MoveTo: list at " + from_index + " is empty!");
+            list_heads[to_index] = list_heads[from_index];
+            list_heads[from_index] = Null;
+        }
+
+
+
+
 
 
         /// <summary>
@@ -319,6 +335,52 @@ namespace g3
                 }
             }
             return invalidValue;
+        }
+
+
+
+
+
+        /// <summary>
+        /// search for findF(list_value) == true, of list at list_index, and replace with new_value.
+        /// returns false if not found
+        /// </summary>
+        public bool Replace(int list_index, Func<int, bool> findF, int new_value)
+        {
+            int block_ptr = list_heads[list_index];
+            if (block_ptr != Null) {
+                int N = block_store[block_ptr];
+                if (N < BLOCKSIZE) {
+                    int iEnd = block_ptr + N;
+                    for (int i = block_ptr + 1; i <= iEnd; ++i) {
+                        int val = block_store[i];
+                        if (findF(val)) {
+                            block_store[i] = new_value;
+                            return true;
+                        }
+                    }
+                } else {
+                    // we spilled to linked list, have to iterate through it as well
+                    int iEnd = block_ptr + BLOCKSIZE;
+                    for (int i = block_ptr + 1; i <= iEnd; ++i) {
+                        int val = block_store[i];
+                        if (findF(val)) {
+                            block_store[i] = new_value;
+                            return true;
+                        }
+                    }
+                    int cur_ptr = block_store[block_ptr + BLOCK_LIST_OFFSET];
+                    while (cur_ptr != Null) {
+                        int val = linked_store[cur_ptr];
+                        if (findF(val)) {
+                            linked_store[cur_ptr] = new_value;
+                            return true;
+                        }
+                        cur_ptr = linked_store[cur_ptr + 1];
+                    }
+                }
+            }
+            return false;
         }
 
 

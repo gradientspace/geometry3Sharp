@@ -133,6 +133,14 @@ namespace g3
         }
 
 
+        public void trim(int maxIndex)
+        {
+            free_indices = new DVector<int>();
+            ref_counts.resize(maxIndex);
+            used_count = maxIndex;
+        }
+
+
 
 
         public System.Collections.IEnumerator GetEnumerator()

@@ -110,8 +110,6 @@ namespace g3
 		DVector<float> colors;
 		DVector<float> uv;
 
-        // [TODO] this seems like it will not be efficient! 
-        //   do our own short_list backed my a memory pool?
         // [TODO] this is optional if we only want to use this class as an iterable mesh-with-nbrs
         //   make it optional with a flag? (however find_edge depends on it...)
         SmallListSet vertex_edges;
@@ -1771,7 +1769,9 @@ namespace g3
         public bool IsCompactV {
             get { return vertices_refcount.is_dense; }
         }
-
+        public bool IsCompactT {
+            get { return triangles_refcount.is_dense; }
+        }
 
 
 
@@ -1956,6 +1956,182 @@ namespace g3
             updateTimeStamp(true);
         }
 
-	}
+
+
+        /// <summary>
+        /// Compact mesh in-place, by moving vertices around and rewriting indices.
+        /// Should be faster if the amount of compacting is not too significant, and
+        /// is useful in some places.
+        /// [TODO] vertex_edges is not compacted. does not affect indices, but does keep memory.
+        /// 
+        /// If bComputeCompactInfo=false, the returned CompactInfo is not initialized
+        /// </summary>
+        public CompactInfo CompactInPlace(bool bComputeCompactInfo = false)
+        {
+            IndexMap mapV = (bComputeCompactInfo) ? new IndexMap(MaxVertexID, VertexCount) : null;
+            CompactInfo ci = new CompactInfo();
+            ci.MapV = mapV;
+
+            // find first free vertex, and last used vertex
+            int iLastV = MaxVertexID - 1, iCurV = 0;
+            while (vertices_refcount.isValidUnsafe(iLastV) == false)
+                iLastV--;
+            while (vertices_refcount.isValidUnsafe(iCurV))
+                iCurV++;
+
+            DVector<short> vref = vertices_refcount.RawRefCounts;
+
+            while (iCurV < iLastV) {
+                int kc = iCurV * 3, kl = iLastV * 3;
+                vertices[kc] = vertices[kl];  vertices[kc+1] = vertices[kl+1];  vertices[kc+2] = vertices[kl+2];
+                if ( normals != null ) {
+                    normals[kc] = normals[kl];  normals[kc+1] = normals[kl+1];  normals[kc+2] = normals[kl+2];
+                }
+                if (colors != null) {
+                    colors[kc] = colors[kl];  colors[kc+1] = colors[kl+1];  colors[kc+2] = colors[kl+2];
+                }
+                if (uv != null) {
+                    int ukc = iCurV * 2, ukl = iLastV * 2;
+                    uv[ukc] = uv[ukl]; uv[ukc+1] = uv[ukl+1];
+                }
+
+                foreach ( int eid in vertex_edges.ValueItr(iLastV) ) {
+                    // replace vertex in edges
+                    replace_edge_vertex(eid, iLastV, iCurV);
+
+                    // replace vertex in triangles
+                    int t0 = edges[4*eid + 2];
+                    replace_tri_vertex(t0, iLastV, iCurV);
+                    int t1 = edges[4*eid + 3];
+                    if ( t1 != DMesh3.InvalidID )
+                        replace_tri_vertex(t1, iLastV, iCurV);
+                }
+
+                // shift vertex refcount to new position
+                vref[iCurV] = vref[iLastV];
+                vref[iLastV] = RefCountVector.invalid;
+
+                // move edge list
+                vertex_edges.Move(iLastV, iCurV);
+
+                if (mapV != null)
+                    mapV[iLastV] = iCurV;
+
+                // move cur forward one, last back one, and  then search for next valid
+                iLastV--; iCurV++;
+                while (vertices_refcount.isValidUnsafe(iLastV) == false)
+                    iLastV--;
+                while (vertices_refcount.isValidUnsafe(iCurV) && iCurV < iLastV)
+                    iCurV++;
+            }
+
+            // trim vertices data structures
+            vertices_refcount.trim(VertexCount);
+            vertices.resize(VertexCount*3);
+            if (normals != null)
+                normals.resize(VertexCount * 3);
+            if (colors != null)
+                colors.resize(VertexCount * 3);
+            if (uv != null)
+                uv.resize(VertexCount * 2);
+
+            // [TODO] vertex_edges!!!
+
+            /** shift triangles **/
+
+            // find first free triangle, and last valid triangle
+            int iLastT = MaxTriangleID - 1, iCurT = 0;
+            while (triangles_refcount.isValidUnsafe(iLastT) == false)
+                iLastT--;
+            while (triangles_refcount.isValidUnsafe(iCurT))
+                iCurT++;
+
+            DVector<short> tref = triangles_refcount.RawRefCounts;
+
+            while (iCurT < iLastT) {
+                int kc = iCurT * 3, kl = iLastT * 3;
+
+                // shift triangle
+                for (int j = 0; j < 3; ++j) {
+                    triangles[kc + j] = triangles[kl + j];
+                    triangle_edges[kc + j] = triangle_edges[kl + j];
+                }
+                if (triangle_groups != null)
+                    triangle_groups[iCurT] = triangle_groups[iLastT];
+
+                // update edges
+                for ( int j = 0; j < 3; ++j ) {
+                    int eid = triangle_edges[kc + j];
+                    replace_edge_triangle(eid, iLastT, iCurT);
+                }
+
+                // shift triangle refcount to new position
+                tref[iCurT] = tref[iLastT];
+                tref[iLastT] = RefCountVector.invalid;
+
+                // move cur forward one, last back one, and  then search for next valid
+                iLastT--; iCurT++;
+                while (triangles_refcount.isValidUnsafe(iLastT) == false)
+                    iLastT--;
+                while (triangles_refcount.isValidUnsafe(iCurT) && iCurT < iLastT)
+                    iCurT++;
+            }
+
+            // trim triangles data structures
+            triangles_refcount.trim(TriangleCount);
+            triangles.resize(TriangleCount*3);
+            triangle_edges.resize(TriangleCount*3);
+            if (triangle_groups != null)
+                triangle_groups.resize(TriangleCount);
+
+            /** shift edges **/
+
+            // find first free edge, and last used edge
+            int iLastE = MaxEdgeID - 1, iCurE = 0;
+            while (edges_refcount.isValidUnsafe(iLastE) == false)
+                iLastE--;
+            while (edges_refcount.isValidUnsafe(iCurE))
+                iCurE++;
+
+            DVector<short> eref = edges_refcount.RawRefCounts;
+
+            while (iCurE < iLastE) {
+                int kc = iCurE * 4, kl = iLastE * 4;
+
+                // shift edge
+                for (int j = 0; j < 4; ++j) {
+                    edges[kc + j] = edges[kl + j];
+                }
+
+                // replace edge in vertex edges lists
+                int v0 = edges[kc], v1 = edges[kc + 1];
+                vertex_edges.Replace(v0, (eid) => { return eid == iLastE; }, iCurE);
+                vertex_edges.Replace(v1, (eid) => { return eid == iLastE; }, iCurE);
+
+                // replace edge in triangles
+                replace_triangle_edge(edges[kc + 2], iLastE, iCurE);
+                if (edges[kc + 3] != DMesh3.InvalidID)
+                    replace_triangle_edge(edges[kc + 3], iLastE, iCurE);
+
+                // shift triangle refcount to new position
+                eref[iCurE] = eref[iLastE];
+                eref[iLastE] = RefCountVector.invalid;
+
+                // move cur forward one, last back one, and  then search for next valid
+                iLastE--; iCurE++;
+                while (edges_refcount.isValidUnsafe(iLastE) == false)
+                    iLastE--;
+                while (edges_refcount.isValidUnsafe(iCurE) && iCurE < iLastE)
+                    iCurE++;
+            }
+
+            // trim edge data structures
+            edges_refcount.trim(EdgeCount);
+            edges.resize(EdgeCount*4);
+
+            return ci;
+        }
+
+    }
 }
 
