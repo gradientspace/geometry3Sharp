@@ -146,7 +146,6 @@ namespace g3
         }
         public Frame3f Rotated(float fAngle, int nAxis)
         {
-            Debug.Assert(rotation.w != 0);
             return this.Rotated(new Quaternionf(GetAxis(nAxis), fAngle));
         }
 
