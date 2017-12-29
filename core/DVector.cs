@@ -160,7 +160,10 @@ namespace g3
                 Blocks[i] = null;
 
             // resize to right number of segments
-            Blocks.Capacity = nNumSegs;
+            if ( nNumSegs >= Blocks.Count )
+                Blocks.Capacity = nNumSegs;
+            else
+                Blocks.RemoveRange(nNumSegs, Blocks.Count - nNumSegs);
 
             // allocate new segments
             for (int i = (int)nCurCount; i < nNumSegs; ++i) {
