@@ -60,6 +60,9 @@ namespace g3
         }
         public ComputeModes ComputeMode = ComputeModes.NarrowBandOnly;
 
+        // should we try to compute signs? if not, grid remains unsigned
+        public bool ComputeSigns = true;
+
         // What counts as "inside" the mesh. Crossing count does not use triangle
         // orientation, so inverted faces are fine, but overlapping shells or self intersections
         // will be filled using even/odd rules (as seen along X axis...)
@@ -220,32 +223,36 @@ namespace g3
                 }
             }
 
-            if (DebugPrint) System.Console.WriteLine("done narrow-band");
+            if (ComputeSigns == true) {
 
-            compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+                if (DebugPrint) System.Console.WriteLine("done narrow-band");
 
-            if (DebugPrint) System.Console.WriteLine("done intersections");
+                compute_intersections(origin, dx, ni, nj, nk, intersection_count);
 
-            if (ComputeMode == ComputeModes.FullGrid) {
-                // and now we fill in the rest of the distances with fast sweeping
-                for (int pass = 0; pass < 2; ++pass) 
-                    sweep_pass(origin, dx, distances, closest_tri);
-                if (DebugPrint) System.Console.WriteLine("done sweeping");
-            } else {
-                // nothing!
-                if (DebugPrint) System.Console.WriteLine("skipped sweeping");
+                if (DebugPrint) System.Console.WriteLine("done intersections");
+
+                if (ComputeMode == ComputeModes.FullGrid) {
+                    // and now we fill in the rest of the distances with fast sweeping
+                    for (int pass = 0; pass < 2; ++pass)
+                        sweep_pass(origin, dx, distances, closest_tri);
+                    if (DebugPrint) System.Console.WriteLine("done sweeping");
+                } else {
+                    // nothing!
+                    if (DebugPrint) System.Console.WriteLine("skipped sweeping");
+                }
+
+
+                // then figure out signs (inside/outside) from intersection counts
+                compute_signs(ni, nj, nk, distances, intersection_count);
+
+                if (DebugPrint) System.Console.WriteLine("done signs");
+
+                if (WantIntersectionsGrid)
+                    intersections_grid = intersection_count;
             }
-
-
-            // then figure out signs (inside/outside) from intersection counts
-            compute_signs(ni, nj, nk, distances, intersection_count);
-
-            if (DebugPrint) System.Console.WriteLine("done signs");
 
             if (WantClosestTriGrid)
                 closest_tri_grid = closest_tri;
-            if (WantIntersectionsGrid)
-                intersections_grid = intersection_count;
 
         }   // end make_level_set_3
 
@@ -329,33 +336,37 @@ namespace g3
             });
 
 
-            if (DebugPrint) System.Console.WriteLine("done narrow-band");
+            if (ComputeSigns == true) {
 
-            compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+                if (DebugPrint) System.Console.WriteLine("done narrow-band");
 
-            if (DebugPrint) System.Console.WriteLine("done intersections");
+                compute_intersections(origin, dx, ni, nj, nk, intersection_count);
 
-            if (ComputeMode == ComputeModes.FullGrid) {
-                // and now we fill in the rest of the distances with fast sweeping
-                for (int pass = 0; pass < 2; ++pass)
-                    sweep_pass(origin, dx, distances, closest_tri);
+                if (DebugPrint) System.Console.WriteLine("done intersections");
+
+                if (ComputeMode == ComputeModes.FullGrid) {
+                    // and now we fill in the rest of the distances with fast sweeping
+                    for (int pass = 0; pass < 2; ++pass)
+                        sweep_pass(origin, dx, distances, closest_tri);
+                    if (DebugPrint) System.Console.WriteLine("done sweeping");
+                } else {
+                    // nothing!
+                    if (DebugPrint) System.Console.WriteLine("skipped sweeping");
+                }
+
                 if (DebugPrint) System.Console.WriteLine("done sweeping");
-            } else {
-                // nothing!
-                if (DebugPrint) System.Console.WriteLine("skipped sweeping");
+
+                // then figure out signs (inside/outside) from intersection counts
+                compute_signs(ni, nj, nk, distances, intersection_count);
+
+                if (WantIntersectionsGrid)
+                    intersections_grid = intersection_count;
+
+                if (DebugPrint) System.Console.WriteLine("done signs");
             }
-
-            if (DebugPrint) System.Console.WriteLine("done sweeping");
-
-            // then figure out signs (inside/outside) from intersection counts
-            compute_signs(ni, nj, nk, distances, intersection_count);
-
-            if (DebugPrint) System.Console.WriteLine("done signs");
 
             if (WantClosestTriGrid)
                 closest_tri_grid = closest_tri;
-            if (WantIntersectionsGrid)
-                intersections_grid = intersection_count;
 
         }   // end make_level_set_3
 

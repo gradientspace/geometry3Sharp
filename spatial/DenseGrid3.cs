@@ -29,6 +29,11 @@ namespace g3
             set { Buffer[i + ni * (j + nj * k)] = value; }
         }
 
+        public float this[Vector3i ijk] {
+            get { return Buffer[ijk.x + ni * (ijk.y + nj * ijk.z)]; }
+            set { Buffer[ijk.x + ni * (ijk.y + nj * ijk.z)] = value; }
+        }
+
         public void get_x_pair(int i0, int j, int k, out double a, out double b)
         {
             int offset = ni * (j + nj * k);
@@ -44,6 +49,33 @@ namespace g3
                         int idx = i + ni * (j + nj * k);
                         Buffer[idx] = f(Buffer[idx]);
                     }
+                }
+            }
+        }
+
+        public AxisAlignedBox3i Bounds {
+            get { return new AxisAlignedBox3i(0, 0, 0, ni, nj, nk); }
+        }
+
+
+        public IEnumerable<Vector3i> Indices()
+        {
+            for (int z = 0; z < nk; ++z) {
+                for (int y = 0; y < nj; ++y) {
+                    for (int x = 0; x < ni; ++x)
+                        yield return new Vector3i(x, y, z);
+                }
+            }
+        }
+
+
+        public IEnumerable<Vector3i> InsetIndices(int border_width)
+        {
+            int stopy = nj - border_width, stopx = ni - border_width;
+            for (int z = border_width; z < nk-border_width; ++z) {
+                for (int y = border_width; y < stopy; ++y) {
+                    for (int x = border_width; x < stopx; ++x)
+                        yield return new Vector3i(x, y, z);
                 }
             }
         }

@@ -346,7 +346,39 @@ namespace g3
 		};
 
 
-	}
+
+        public static IEnumerable<Vector3i> Grid3Indices(int nx, int ny, int nz)
+        {
+            for (int z = 0; z < nz; ++z)
+                for (int y = 0; y < ny; ++y)
+                    for (int x = 0; x < nx; ++x)
+                        yield return new Vector3i(x, y, z);
+        }
+
+
+        public static IEnumerable<Vector3i> Grid3IndicesYZ(int ny, int nz)
+        {
+            for (int z = 0; z < nz; ++z)
+                for (int y = 0; y < ny; ++y)
+                    yield return new Vector3i(0, y, z);
+        }
+
+        public static IEnumerable<Vector3i> Grid3IndicesXZ(int nx, int nz)
+        {
+            for (int z = 0; z < nz; ++z)
+                for (int x = 0; x < nx; ++x)
+                    yield return new Vector3i(x, 0, z);
+        }
+
+        public static IEnumerable<Vector3i> Grid3IndicesXY(int nx, int ny)
+        {
+            for (int y = 0; y < ny; ++y)
+                for (int x = 0; x < nx; ++x)
+                    yield return new Vector3i(x, y, 0);
+        }
+
+
+    }
 
 
 
