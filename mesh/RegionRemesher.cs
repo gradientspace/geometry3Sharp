@@ -156,11 +156,19 @@ namespace g3
 
 
 
+        [Flags]
+        public enum QuickRemeshFlags
+        {
+            NoFlags = 0,
+            PreventNormalFlips = 1
+        }
+
 
         public static RegionRemesher QuickRemesh(DMesh3 mesh, int[] tris, 
             double minEdgeLen, double maxEdgeLen, double smoothSpeed, 
             int rounds, 
-            IProjectionTarget target)
+            IProjectionTarget target,
+            QuickRemeshFlags flags = QuickRemeshFlags.PreventNormalFlips )
         {
             RegionRemesher remesh = new RegionRemesher(mesh, tris);
             if ( target != null )
@@ -168,6 +176,8 @@ namespace g3
             remesh.MinEdgeLength = minEdgeLen;
             remesh.MaxEdgeLength = maxEdgeLen;
             remesh.SmoothSpeedT = smoothSpeed;
+            if ((flags & QuickRemeshFlags.PreventNormalFlips) != 0)
+                remesh.PreventNormalFlips = true;
             for (int k = 0; k < rounds; ++k) {
                 remesh.BasicRemeshPass();
             }
@@ -177,13 +187,16 @@ namespace g3
         public static RegionRemesher QuickRemesh(DMesh3 mesh, int[] tris, 
             double targetEdgeLen, double smoothSpeed, 
             int rounds, 
-            IProjectionTarget target)
+            IProjectionTarget target,
+            QuickRemeshFlags flags = QuickRemeshFlags.PreventNormalFlips )
         {
             RegionRemesher remesh = new RegionRemesher(mesh, tris);
             if ( target != null )
                 remesh.SetProjectionTarget(target);
             remesh.SetTargetEdgeLength(targetEdgeLen);
             remesh.SmoothSpeedT = smoothSpeed;
+            if ( (flags & QuickRemeshFlags.PreventNormalFlips) != 0 )
+                remesh.PreventNormalFlips = true;
             for (int k = 0; k < rounds; ++k) {
                 remesh.BasicRemeshPass();
             }
