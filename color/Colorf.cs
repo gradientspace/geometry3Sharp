@@ -188,12 +188,13 @@ namespace g3
         static public readonly Colorf FireBrick = new Colorf(178, 34, 34, 255);
         static public readonly Colorf HotPink = new Colorf(255, 105, 180, 255);
         static public readonly Colorf LightPink = new Colorf(255, 182, 193, 255);
-        
 
+        static public readonly Colorf DarkBlue = new Colorf(16, 16, 139, 255);
         static public readonly Colorf BlueMetal = new Colorf(176, 197, 235, 255);       // I made this one up...
         static public readonly Colorf Navy = new Colorf(16, 16, 128, 255);
         static public readonly Colorf CornflowerBlue = new Colorf(100, 149, 237, 255);
         static public readonly Colorf LightSteelBlue = new Colorf(176, 196, 222, 255);
+        static public readonly Colorf DarkSlateBlue = new Colorf(72, 61, 139, 255);
 
         static public readonly Colorf Teal = new Colorf(16, 128, 128, 255);
         static public readonly Colorf ForestGreen = new Colorf(16, 139, 16, 255);
@@ -207,10 +208,15 @@ namespace g3
         static public readonly Colorf SaddleBrown = new Colorf(139,  69,  19, 255);
         static public readonly Colorf Goldenrod = new Colorf(218, 165,  32, 255);
         static public readonly Colorf Wheat = new Colorf(245, 222, 179, 255);
-       
-        
 
+
+
+        static public readonly Colorf LightGrey = new Colorf(211, 211, 211, 255);
         static public readonly Colorf Silver = new Colorf(192, 192, 192, 255);
+        static public readonly Colorf LightSlateGrey = new Colorf(119, 136, 153, 255);
+        static public readonly Colorf Grey = new Colorf(128, 128, 128, 255);
+        static public readonly Colorf DarkGrey = new Colorf(169, 169, 169, 255);
+        static public readonly Colorf SlateGrey = new Colorf(112, 128, 144, 255);
         static public readonly Colorf DimGrey = new Colorf(105, 105, 105, 255);
         static public readonly Colorf DarkSlateGrey = new Colorf(47,  79,  79, 255);
 

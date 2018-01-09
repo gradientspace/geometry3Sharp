@@ -60,6 +60,12 @@ namespace g3
             return (f < low) ? low : (f > high) ? high : f;
         }
 
+        public static int ModuloClamp(int f, int N) {
+            while (f < 0)
+                f += N;
+            return f % N;
+        }
+
         // fMinMaxValue may be signed
         public static float RangeClamp(float fValue, float fMinMaxValue)
         {
