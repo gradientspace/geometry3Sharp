@@ -174,12 +174,14 @@ namespace g3
 
 
         /// <summary>
-        /// Separate input mesh into disconnected shells
+        /// Separate input mesh into disconnected shells.
+        /// Resulting array is sorted by decreasing triangle count.
         /// </summary>
         public static DMesh3[] Separate(DMesh3 meshIn)
         {
             MeshConnectedComponents c = new MeshConnectedComponents(meshIn);
             c.FindConnectedT();
+            c.SortByCount(false);
 
             DMesh3[] result = new DMesh3[c.Components.Count];
 
@@ -192,6 +194,18 @@ namespace g3
             return result;
         }
 
+
+        /// <summary>
+        /// extract largest shell of meshIn
+        /// </summary>
+        public static DMesh3 LargestT(DMesh3 meshIn)
+        {
+            MeshConnectedComponents c = new MeshConnectedComponents(meshIn);
+            c.FindConnectedT();
+            c.SortByCount(false);
+            DSubmesh3 submesh = new DSubmesh3(meshIn, c.Components[0].Indices);
+            return submesh.SubMesh;
+        }
 
     }
 }
