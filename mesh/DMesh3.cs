@@ -624,7 +624,7 @@ namespace g3
 		}
 
         public int AllocateTriangleGroup() {
-            return max_group_id++;
+            return ++max_group_id;
         }
 
 
