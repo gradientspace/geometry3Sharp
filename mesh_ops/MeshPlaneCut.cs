@@ -15,7 +15,8 @@ namespace g3
 	///    1) find all edge crossings
 	///    2) Do edge splits at crossings
 	///    3) delete all vertices on positive side
-	///    4) find loops through valid boundary edges (ie connected to splits, or on-plane edges)
+    ///    4) (optionally) collapse any degenerate boundary edges 
+	///    5) find loops through valid boundary edges (ie connected to splits, or on-plane edges)
 	/// 
 	/// [TODO] could run into trouble w/ on-plane degenerate triangles. Should optionally
 	///   discard any triangles with all vertex distances < epsilon. But this complicates
@@ -28,6 +29,14 @@ namespace g3
 		public DMesh3 Mesh;
 		public Vector3d PlaneOrigin;
 		public Vector3d PlaneNormal;
+
+        // a plane cut very near a vertex can result in degenerate edges on the open loops/spans, which 
+        // can cause problems downstream (eg if hole-filling). It is easy for us to collapse these before
+        // we construct the loops.
+        public bool CollapseDegenerateEdgesOnCut = true;
+
+        // the min-edge-length if we are collapsing degenerate edges
+        public double DegenerateEdgeTol = MathUtil.ZeroTolerancef;
 
         // if non-null, we will only iterate through these edges
         public MeshFaceSelection CutFaceSet = null;
@@ -149,6 +158,12 @@ namespace g3
 					Mesh.RemoveVertex(vid, true, false);
 			}
 
+            // collapse degenerate edges if we got em
+            if (CollapseDegenerateEdgesOnCut) {
+                collapse_degenerate_edges(OnCutEdges, ZeroEdges);
+            }
+
+
 			// ok now we extract boundary loops, but restricted
 			// to either the zero-edges we found, or the edges we created! bang!!
 			Func<int, bool> CutEdgeFilterF = (eid) => {
@@ -171,9 +186,38 @@ namespace g3
 				CutLoopsFailed = true;
 			}
 
-			return true;
+            return true;
 
 		} // Cut()
+
+
+
+        protected void collapse_degenerate_edges(HashSet<int> OnCutEdges, HashSet<int> ZeroEdges)
+        {
+            HashSet<int>[] sets = new HashSet<int>[2] { OnCutEdges, ZeroEdges };
+
+            double tol2 = DegenerateEdgeTol * DegenerateEdgeTol;
+            Vector3d a = Vector3d.Zero, b = Vector3d.Zero;
+            int collapsed = 0;
+            do {
+                collapsed = 0;
+                foreach (var edge_set in sets) {
+                    foreach (int eid in edge_set) {
+                        if (Mesh.IsEdge(eid) == false)
+                            continue;
+                        Mesh.GetEdgeV(eid, ref a, ref b);
+                        if (a.DistanceSquared(b) > tol2)
+                            continue;
+
+                        Index2i ev = Mesh.GetEdgeV(eid);
+                        DMesh3.EdgeCollapseInfo collapseInfo;
+                        MeshResult result = Mesh.CollapseEdge(ev.a, ev.b, out collapseInfo);
+                        if (result == MeshResult.Ok)
+                            collapsed++;
+                    }
+                }
+            } while (collapsed != 0);
+        }
 
 
 

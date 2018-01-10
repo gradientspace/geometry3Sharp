@@ -74,9 +74,9 @@ namespace g3
         }
 
 
-        public virtual ValidationStatus Validate()
+        public virtual ValidationStatus Validate(double fDegenerateTol = MathUtil.ZeroTolerancef)
 		{
-            double dist_sqr_thresh = MathUtil.ZeroTolerancef * MathUtil.ZeroTolerancef;
+            double dist_sqr_thresh = fDegenerateTol * fDegenerateTol;
 
             int nStop = IsLoop ? Curve.VertexCount - 1 : Curve.VertexCount;
             for ( int k = 0; k < nStop; ++k ) {

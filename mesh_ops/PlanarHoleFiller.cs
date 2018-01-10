@@ -102,6 +102,8 @@ namespace g3
                 complex.FindSolidRegions(PlanarComplex.FindSolidsOptions.SortPolygons);
 
             // fill each 2d solid
+            List<Index2i> failed_inserts = new List<Index2i>();
+            List<Index2i> failed_merges = new List<Index2i>();
             for ( int fi = 0; fi < solids.Polygons.Count; ++fi ) {
                 var gpoly = solids.Polygons[fi];
                 PlanarComplex.GeneralSolid gsolid = solids.PolygonsSources[fi];
@@ -140,13 +142,17 @@ namespace g3
                 // insert each poly
                 for ( int pi = 0; pi < polys.Count; ++pi ) { 
                     MeshInsertUVPolyCurve insert = new MeshInsertUVPolyCurve(FillMesh, polys[pi]);
-                    ValidationStatus status = insert.Validate();
+                    ValidationStatus status = insert.Validate(MathUtil.ZeroTolerancef * scale);
+                    bool failed = true;
                     if (status == ValidationStatus.Ok) {
                         if (insert.Apply()) {
                             insert.Simplify();
                             polyVertices[pi] = insert.CurveVertices;
+                            failed = false;
                         }
                     }
+                    if (failed)
+                        failed_inserts.Add(new Index2i(fi, pi));
                 }
 
                 // remove any triangles not contained in gpoly
@@ -190,6 +196,7 @@ namespace g3
                     EdgeLoop sourceLoop = Loops[loopi].edgeLoop;
 
                     if (sourceLoop.VertexCount != NV) {
+                        failed_merges.Add(new Index2i(fi, pi));
                         continue;
                     }
 
@@ -206,7 +213,12 @@ namespace g3
                 MeshEditor editor = new MeshEditor(Mesh);
                 int[] mapV;
                 editor.AppendMesh(FillMesh, mergeMapV, out mapV, Mesh.AllocateTriangleGroup());
+
+                // [TODO] should verify that we actually merged the loops...
             }
+
+            if (failed_inserts.Count > 0 || failed_merges.Count > 0)
+                return false;
 
             return true;
         }
