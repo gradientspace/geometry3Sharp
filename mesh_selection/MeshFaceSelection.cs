@@ -69,6 +69,13 @@ namespace g3
         }
 
 
+        // select a group
+        public MeshFaceSelection(DMesh3 mesh, int group_id) : this(mesh)
+        {
+            SelectGroup(group_id);
+        }
+
+
         public IEnumerator<int> GetEnumerator() {
             return Selected.GetEnumerator();
         }

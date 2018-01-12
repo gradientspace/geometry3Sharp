@@ -48,4 +48,50 @@ namespace g3
     }
 
 
+
+    /// <summary>
+    /// IList wrapper that remaps values via a Func (eg for index maps)
+    /// </summary>
+    public class MappedList : IList<int>
+    {
+        public IList<int> BaseList;
+        public Func<int, int> MapF = (i) => { return i; };
+
+        public MappedList(IList<int> list, int[] map)
+        {
+            BaseList = list;
+            MapF = (v) => { return map[v]; };
+        }
+
+        public int this[int index] {
+            get { return MapF(BaseList[index]); }
+            set { throw new NotImplementedException(); }
+        }
+        public int Count { get { return BaseList.Count; } }
+        public bool IsReadOnly { get { return true; } }
+
+        public void Add(int item) { throw new NotImplementedException(); }
+        public void Clear() { throw new NotImplementedException(); }
+        public void Insert(int index, int item) { throw new NotImplementedException(); }
+        public bool Remove(int item) { throw new NotImplementedException(); }
+        public void RemoveAt(int index) { throw new NotImplementedException(); }
+
+        // could be implemented...
+        public bool Contains(int item) { throw new NotImplementedException(); }
+        public int IndexOf(int item) { throw new NotImplementedException(); }
+        public void CopyTo(int[] array, int arrayIndex) { throw new NotImplementedException(); }
+
+        public IEnumerator<int> GetEnumerator() {
+            int N = BaseList.Count;
+            for (int i = 0; i < N; ++i)
+                yield return MapF(BaseList[i]);
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
+
+
 }
