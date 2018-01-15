@@ -51,6 +51,22 @@ namespace g3
             }
         }
 
+
+        public static Vector3d Rotate(Vector3d pos, Vector3d origin, Quaterniond rotation) {
+            return rotation * (pos - origin) + origin;
+        }
+        public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaterniond rotation)
+        {
+            int NV = mesh.MaxVertexID;
+            for (int vid = 0; vid < NV; ++vid) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3d v = rotation * (mesh.GetVertex(vid) - origin) + origin;
+                    mesh.SetVertex(vid, v);
+                }
+            }
+        }
+
+
         public static void Scale(IDeformableMesh mesh, double sx, double sy, double sz)
         {
             int NV = mesh.MaxVertexID;
