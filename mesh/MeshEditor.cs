@@ -604,6 +604,11 @@ namespace g3
             }
             return m;
         }
+        public static void Append(DMesh3 appendTo, DMesh3 append)
+        {
+            MeshEditor editor = new MeshEditor(appendTo);
+            editor.AppendMesh(append, appendTo.AllocateTriangleGroup());
+        }
 
 
         public bool AppendMesh(IMesh appendMesh, IndexMap mergeMapV, out int[] mapV, int appendGID = -1)
