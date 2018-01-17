@@ -309,15 +309,22 @@ namespace g3
             byte[] header = binReader.ReadBytes(80);
             bool bIsBinary = false;
 
-            // if first 80 bytes contain non-text chars, probably a binary file
-            if (Util.IsTextString(header) == false)
+            // [RMS] Thingi10k includes some files w/ unicode string in ascii header...
+            //   How can we detect this? can we check that each character is a character?
+            string sUTF8 = System.Text.Encoding.UTF8.GetString(header);
+            string sAscii = System.Text.Encoding.ASCII.GetString(header);
+            if (sUTF8.Contains("solid") == false && sAscii.Contains("solid") == false)
                 bIsBinary = true;
-            // if we don't see "solid" string in first 80 chars, probably binary
-            if (bIsBinary == false) {
-                string sText = System.Text.Encoding.ASCII.GetString(header);
-                if (sText.Contains("solid") == false)
-                    bIsBinary = true;
-            }
+
+            // if first 80 bytes contain non-text chars, probably a binary file
+            //if (Util.IsTextString(header) == false)
+            //    bIsBinary = true;
+            //// if we don't see "solid" string in first 80 chars, probably binary
+            //if (bIsBinary == false) {
+            //    string sText = System.Text.Encoding.ASCII.GetString(header);
+            //    if (sText.Contains("solid") == false)
+            //        bIsBinary = true;
+            //}
 
             stream.Seek(0, SeekOrigin.Begin); // reset stream
 

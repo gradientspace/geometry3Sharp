@@ -86,6 +86,8 @@ namespace g3
             try {
                 for (int i = 0; i < totalTris; ++i) {
                     byte[] tri_bytes = reader.ReadBytes(50);
+                    if (tri_bytes.Length < 50)
+                        break;
 
                     Marshal.Copy(tri_bytes, 0, bufptr, tri_size);
                     stl_triangle tri = (stl_triangle)Marshal.PtrToStructure(bufptr, tri_type);
@@ -143,9 +145,9 @@ namespace g3
                     continue;
 
                 if (tokens[0].Equals("vertex", StringComparison.OrdinalIgnoreCase)) {
-                    float x = Single.Parse(tokens[1]);
-                    float y = Single.Parse(tokens[2]);
-                    float z = Single.Parse(tokens[3]);
+                    float x = (tokens.Length > 1) ? Single.Parse(tokens[1]) : 0;
+                    float y = (tokens.Length > 2) ? Single.Parse(tokens[2]) : 0;
+                    float z = (tokens.Length > 3) ? Single.Parse(tokens[3]) : 0;
                     append_vertex(x, y, z);
 
                 // [RMS] we don't really care about these lines...
