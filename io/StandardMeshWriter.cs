@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using System.Threading;
+using System.Globalization;
 
 namespace g3
 {
     public class StandardMeshWriter : IDisposable
     {
+        /// <summary>
+        /// If the mesh format we are writing is text, then the OS will write in the number style
+        /// of the current language. So in Germany, numbers are written 1,00 instead of 1.00, for example.
+        /// If this flag is true, we override this to always write in a consistent way.
+        /// </summary>
+        public bool WriteInvariantCulture = true;
+
+
         public void Dispose()
         {
         }
@@ -51,9 +59,27 @@ namespace g3
             if (writeFunc == null)
                 return new IOWriteResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
 
+            // save current culture
+            var current_culture = Thread.CurrentThread.CurrentCulture;
+
             try {
-                return writeFunc(sFilename, vMeshes, options);
+                // push invariant culture for write
+                if (WriteInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
+                var result = writeFunc(sFilename, vMeshes, options);
+
+                // restore culture
+                if (WriteInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
+                return result;
+
             } catch (Exception e) {
+                // restore culture
+                if (WriteInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
                 return new IOWriteResult(IOCode.WriterError, "Unknown error : exception : " + e.Message);
             }
         }

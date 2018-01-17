@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using System.Threading;
+using System.Globalization;
 
 namespace g3
 {
@@ -20,6 +20,13 @@ namespace g3
 
     public class StandardMeshReader
     {
+        /// <summary>
+        /// If the mesh format we are writing is text, then the OS will write in the number style
+        /// of the current language. So in Germany, numbers are written 1,00 instead of 1.00, for example.
+        /// If this flag is true, we override this to always write in a consistent way.
+        /// </summary>
+        public bool ReadInvariantCulture = true;
+
 
         // connect to this to get warning status messages
         public event ParsingMessagesHandler warningEvent;
@@ -108,9 +115,27 @@ namespace g3
             if ( useReader == null ) 
                 return new IOReadResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
 
+            // save current culture
+            var current_culture = Thread.CurrentThread.CurrentCulture;
+
             try {
-                return useReader.ReadFile(sFilename, MeshBuilder, options, on_warning);
+                // push invariant culture for write
+                if (ReadInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
+                var result = useReader.ReadFile(sFilename, MeshBuilder, options, on_warning);
+
+                // restore culture
+                if (ReadInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
+                return result;
+
             } catch (Exception e) {
+                // restore culture
+                if (ReadInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
                 return new IOReadResult(IOCode.GenericReaderError, "Unknown error : exception : " + e.Message);
             }
         }
@@ -135,9 +160,27 @@ namespace g3
             if (useReader == null)
                 return new IOReadResult(IOCode.UnknownFormatError, "format " + sExtension + " is not supported");
 
+            // save current culture
+            var current_culture = Thread.CurrentThread.CurrentCulture;
+
             try {
-                return useReader.ReadFile(stream, MeshBuilder, options, on_warning);
+                // push invariant culture for write
+                if (ReadInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
+                var result = useReader.ReadFile(stream, MeshBuilder, options, on_warning);
+
+                // restore culture
+                if (ReadInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
+                return result;
+
             } catch (Exception e) {
+                // restore culture
+                if (ReadInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
                 return new IOReadResult(IOCode.GenericReaderError, "Unknown error : exception : " + e.Message);
             }
         }
