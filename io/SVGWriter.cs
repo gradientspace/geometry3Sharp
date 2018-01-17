@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Globalization;
 
 namespace g3
 {
@@ -172,37 +174,50 @@ namespace g3
 
 
 		public IOWriteResult Write(string sFilename) {
-			using (StreamWriter w = new StreamWriter(sFilename)) {
-				if (w.BaseStream == null)
-					return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
+            var current_culture = Thread.CurrentThread.CurrentCulture;
+
+            try {
+                // push invariant culture for write
+                Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
+                using (StreamWriter w = new StreamWriter(sFilename)) {
+                    if (w.BaseStream == null)
+                        return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
 
 
-				write_header_1_1(w);
+                    write_header_1_1(w);
 
-				foreach (var o in Objects) {
-                    if (o is Polygon2d)
-                        write_polygon(o as Polygon2d, w);
-                    else if (o is PolyLine2d)
-                        write_polyline(o as PolyLine2d, w);
-                    else if (o is Circle2d)
-                        write_circle(o as Circle2d, w);
-                    else if (o is Arc2d)
-                        write_arc(o as Arc2d, w);
-                    else if (o is Segment2dBox)
-                        write_line(o as Segment2dBox, w);
-                    else if (o is DGraph2)
-                        write_graph(o as DGraph2, w);
-                    else if (o is PlanarComplex)
-                        write_complex(o as PlanarComplex, w);
-                    else
-                        throw new Exception("SVGWriter.Write: unknown object type " + o.GetType().ToString());
-				}
+                    foreach (var o in Objects) {
+                        if (o is Polygon2d)
+                            write_polygon(o as Polygon2d, w);
+                        else if (o is PolyLine2d)
+                            write_polyline(o as PolyLine2d, w);
+                        else if (o is Circle2d)
+                            write_circle(o as Circle2d, w);
+                        else if (o is Arc2d)
+                            write_arc(o as Arc2d, w);
+                        else if (o is Segment2dBox)
+                            write_line(o as Segment2dBox, w);
+                        else if (o is DGraph2)
+                            write_graph(o as DGraph2, w);
+                        else if (o is PlanarComplex)
+                            write_complex(o as PlanarComplex, w);
+                        else
+                            throw new Exception("SVGWriter.Write: unknown object type " + o.GetType().ToString());
+                    }
 
 
-				w.WriteLine("</svg>");
-			}
+                    w.WriteLine("</svg>");
+                }
 
-			return IOWriteResult.Ok;
+                // restore culture
+                Thread.CurrentThread.CurrentCulture = current_culture;
+                return IOWriteResult.Ok;
+
+            } catch (Exception e) {
+                Thread.CurrentThread.CurrentCulture = current_culture;
+                return new IOWriteResult(IOCode.WriterError, "Unknown error : exception : " + e.Message);
+            }
 		}
 
 
