@@ -54,8 +54,11 @@ namespace g3
 				writer.WriteLine("mtllib {0}", sMaterialLib);
 
             for (int mi = 0; mi < vMeshes.Count; ++mi) {
-
                 IMesh mesh = vMeshes[mi].Mesh;
+
+                if (options.ProgressFunc != null)
+                    options.ProgressFunc(mi, vMeshes.Count - 1);
+
                 bool bVtxColors = options.bPerVertexColors && mesh.HasVertexColors;
                 bool bNormals = options.bPerVertexNormals && mesh.HasVertexNormals;
 
