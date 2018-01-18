@@ -257,7 +257,7 @@ namespace g3
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             try {
-                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read)) {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     OBJReader reader = new OBJReader();
                     if (options.ReadMaterials)
                         reader.MTLFileSearchPaths.Add(Path.GetDirectoryName(sFilename));
@@ -294,7 +294,7 @@ namespace g3
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             try {
-                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read)) {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     return ReadFile(stream, builder, options, messages);
                 }
             } catch (Exception e) {
@@ -354,7 +354,7 @@ namespace g3
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             try {
-                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read)) {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     return ReadFile(stream, builder, options, messages);
                 }
             } catch (Exception e) {
