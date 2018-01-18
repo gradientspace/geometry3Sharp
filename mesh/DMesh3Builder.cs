@@ -7,6 +7,25 @@ namespace g3
 {
     public class DMesh3Builder : IMeshBuilder
     {
+        public enum AddTriangleFailBehaviors
+        {
+            DiscardTriangle = 0,
+            DuplicateAllVertices = 1
+        }
+
+        /// <summary>
+        /// What should we do when AddTriangle() fails because triangle is non-manifold?
+        /// </summary>
+        public AddTriangleFailBehaviors NonManifoldTriBehavior = AddTriangleFailBehaviors.DuplicateAllVertices;
+
+        /// <summary>
+        /// What should we do when AddTriangle() fails because the triangle already exists?
+        /// </summary>
+        public AddTriangleFailBehaviors DuplicateTriBehavior = AddTriangleFailBehaviors.DiscardTriangle;
+
+
+
+
         public List<DMesh3> Meshes;
         public List<GenericMaterial> Materials;
 
@@ -59,14 +78,7 @@ namespace g3
 
         public int AppendTriangle(int i, int j, int k)
         {
-            // [RMS] What to do here? We definitely do not want to add a duplicate triangle!!
-            //   But is silently ignoring the right thing to do?
-            int existing_tid = Meshes[nActiveMesh].FindTriangle(i, j, k);
-            if (existing_tid != DMesh3.InvalidID)
-                return existing_tid;
-
-            int tid = Meshes[nActiveMesh].AppendTriangle(i, j, k);
-            return tid;
+            return AppendTriangle(i, j, k, -1);
         }
 
         public int AppendTriangle(int i, int j, int k, int g)
@@ -74,12 +86,35 @@ namespace g3
             // [RMS] What to do here? We definitely do not want to add a duplicate triangle!!
             //   But is silently ignoring the right thing to do?
             int existing_tid = Meshes[nActiveMesh].FindTriangle(i, j, k);
-            if (existing_tid != DMesh3.InvalidID)
-                return existing_tid;
+            if (existing_tid != DMesh3.InvalidID) {
+                if (DuplicateTriBehavior == AddTriangleFailBehaviors.DuplicateAllVertices)
+                    return append_duplicate_triangle(i, j, k, g);
+                else
+                    return existing_tid;
+            }
 
             int tid = Meshes[nActiveMesh].AppendTriangle(i, j, k, g);
+            if ( tid == DMesh3.NonManifoldID ) {
+                if (NonManifoldTriBehavior == AddTriangleFailBehaviors.DuplicateAllVertices)
+                    return append_duplicate_triangle(i, j, k, g);
+                else
+                    return DMesh3.NonManifoldID;
+            }
             return tid;
         }
+        int append_duplicate_triangle(int i, int j, int k, int g)
+        {
+            NewVertexInfo vinfo = new NewVertexInfo();
+            Meshes[nActiveMesh].GetVertex(i, ref vinfo, true, true, true);
+            int new_i = Meshes[nActiveMesh].AppendVertex(vinfo);
+            Meshes[nActiveMesh].GetVertex(j, ref vinfo, true, true, true);
+            int new_j = Meshes[nActiveMesh].AppendVertex(vinfo);
+            Meshes[nActiveMesh].GetVertex(k, ref vinfo, true, true, true);
+            int new_k = Meshes[nActiveMesh].AppendVertex(vinfo);
+            return Meshes[nActiveMesh].AppendTriangle(new_i, new_j, new_k, g);
+        }
+
+
 
         public int AppendVertex(double x, double y, double z)
         {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.IO;
 
 namespace g3
 {
@@ -59,6 +60,62 @@ namespace g3
                     return false;
             }
             return true;
+        }
+
+
+        /// <summary>
+        /// check if file contains bytes that correspond to ascii control characters,
+        /// which would not occur in a plain text file, but are likely in a binary file.
+        /// (note: this is not conclusive! for example if binary file was all FF's, this would return true)
+        /// </summary>
+        static public bool IsBinaryFile(string path, int max_search_len = -1)
+        {
+            using (FileStream stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                return IsBinaryStream(stream, max_search_len);
+            }
+        }
+
+        /// <summary>
+        /// See IsBinaryFile()
+        /// </summary>
+        static public bool IsBinaryStream(Stream streamIn, int max_search_len = -1)
+        {
+            int i = 0, ch = 0;
+            int sequential_null = 0;
+            StreamReader stream = new StreamReader(streamIn);
+            bool is_binary = false;
+            while ((ch = stream.Read()) != -1) {
+                if (i++ >= max_search_len) 
+                    goto decided_no;
+
+                if (IsASCIIControlChar(ch))
+                    goto decided_yes;
+
+                if (ch == 0) {
+                    sequential_null++;
+                    if (sequential_null >= 2) 
+                        goto decided_yes;
+                } else
+                    sequential_null = 0;
+            }
+        decided_yes:
+            is_binary = true;
+        decided_no:
+            streamIn.Seek(0, SeekOrigin.Begin); // reset stream
+            return is_binary;
+        }
+
+
+        /// <summary>
+        /// test if character is ascii control character, which (presumably?) won't
+        /// occur in unicode files?
+        /// </summary>
+        static public bool IsASCIIControlChar(int ch) {
+            const char NUL = (char)0; // Null char
+            const char BS = (char)8; // Back Space
+            const char CR = (char)13; // Carriage Return
+            const char SUB = (char)26; // Substitute
+            return (ch > NUL && ch <= BS) || (ch > CR && ch <= SUB);
         }
 
 

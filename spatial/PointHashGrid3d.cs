@@ -111,7 +111,8 @@ namespace g3
         /// <summary>
         /// Find nearest point in grid, within radius, without locking / thread-safety
         /// You must provided distF which returns distance between query_pt and the point argument
-        /// You can ignore specific points via ignoreF lambda
+        /// You can ignore specific points via ignoreF lambda.
+        /// returned key is InvalidValue if not found
         /// </summary>
         public KeyValuePair<T, double> FindNearestInRadius(Vector3d query_pt, double radius, Func<T, double> distF, Func<T, bool> ignoreF = null)
         {
