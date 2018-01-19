@@ -141,7 +141,7 @@ namespace g3
         {
             // return false to terminate this branch
             // arguments are box and depth in tree
-            public Func<AxisAlignedBox3f, int, bool> NextBoxF = (box,depth) => { return true; };
+            public Func<AxisAlignedBox3d, int, bool> NextBoxF = (box,depth) => { return true; };
 
             public Action<int> NextPointF = (vID) => { };
         }
@@ -238,8 +238,8 @@ namespace g3
         //   - box_to_index is a pointer into index_list
         //   - box_centers and box_extents are the centers/extents of the bounding boxes
         DVector<int> box_to_index;
-        DVector<Vector3f> box_centers;
-        DVector<Vector3f> box_extents;
+        DVector<Vector3d> box_centers;
+        DVector<Vector3d> box_extents;
 
         // list of indices for a given box. There is *no* marker/sentinel between
         // boxes, you have to get the starting index from box_to_index[]
@@ -285,7 +285,7 @@ namespace g3
 
             boxes_set leafs = new boxes_set();
             boxes_set nodes = new boxes_set();
-            AxisAlignedBox3f rootBox;
+            AxisAlignedBox3d rootBox;
             int rootnode = (bSorted) ?
                 split_point_set_sorted(valid_indices, valid_points, 0, N, 0, LeafMaxPointCount, leafs, nodes, out rootBox)
                 : split_point_set_midpoint(valid_indices, valid_points, 0, N, 0, LeafMaxPointCount, leafs, nodes, out rootBox);
@@ -337,8 +337,8 @@ namespace g3
         class boxes_set
         {
             public DVector<int> box_to_index = new DVector<int>();
-            public DVector<Vector3f> box_centers = new DVector<Vector3f>();
-            public DVector<Vector3f> box_extents = new DVector<Vector3f>();
+            public DVector<Vector3d> box_centers = new DVector<Vector3d>();
+            public DVector<Vector3d> box_extents = new DVector<Vector3d>();
             public DVector<int> index_list = new DVector<int>();
             public int iBoxCur = 0;
             public int iIndicesCur = 0;
@@ -346,9 +346,9 @@ namespace g3
 
         int split_point_set_sorted(int[] pt_indices, Vector3d[] positions, 
             int iStart, int iCount, int depth, int minIndexCount,
-            boxes_set leafs, boxes_set nodes, out AxisAlignedBox3f box)
+            boxes_set leafs, boxes_set nodes, out AxisAlignedBox3d box)
         {
-            box = AxisAlignedBox3f.Empty;
+            box = AxisAlignedBox3d.Empty;
             int iBox = -1;
 
             if ( iCount < minIndexCount ) {
@@ -375,7 +375,7 @@ namespace g3
             int n1 = iCount - mid;
 
             // create child boxes
-            AxisAlignedBox3f box1;
+            AxisAlignedBox3d box1;
             int child0 = split_point_set_sorted(pt_indices, positions, iStart, n0, depth + 1, minIndexCount, leafs, nodes, out box);
             int child1 = split_point_set_sorted(pt_indices, positions, iStart+mid, n1, depth + 1, minIndexCount, leafs, nodes, out box1);
             box.Contain(box1);
@@ -402,9 +402,9 @@ namespace g3
 
         int split_point_set_midpoint(int[] pt_indices, Vector3d[] positions, 
             int iStart, int iCount, int depth, int minIndexCount,
-            boxes_set leafs, boxes_set nodes, out AxisAlignedBox3f box)
+            boxes_set leafs, boxes_set nodes, out AxisAlignedBox3d box)
         {
-            box = AxisAlignedBox3f.Empty;
+            box = AxisAlignedBox3d.Empty;
             int iBox = -1;
 
             if ( iCount < minIndexCount ) {
@@ -463,7 +463,7 @@ namespace g3
             }
 
             // create child boxes
-            AxisAlignedBox3f box1;
+            AxisAlignedBox3d box1;
             int child0 = split_point_set_midpoint(pt_indices, positions, iStart, n0, depth + 1, minIndexCount, leafs, nodes, out box);
             int child1 = split_point_set_midpoint(pt_indices, positions, iStart+n0, n1, depth + 1, minIndexCount, leafs, nodes, out box1);
             box.Contain(box1);
@@ -483,25 +483,18 @@ namespace g3
 
 
 
-
-
-        
-
-        const float box_eps = 50.0f * MathUtil.Epsilonf;
-
-        AxisAlignedBox3f get_box(int iBox)
+        AxisAlignedBox3d get_box(int iBox)
         {
-            Vector3f c = box_centers[iBox];
-            Vector3f e = box_extents[iBox];
-            return new AxisAlignedBox3f(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
+            Vector3d c = box_centers[iBox];
+            Vector3d e = box_extents[iBox];
+            return new AxisAlignedBox3d(ref c, e.x, e.y, e.z);
         }
 
 
         double box_distance_sqr(int iBox, ref Vector3d p)
         {
-            Vector3d c = (Vector3d)box_centers[iBox];
-            Vector3d e = (Vector3d)box_extents[iBox];
-            e += box_eps;
+            Vector3d c = box_centers[iBox];
+            Vector3d e = box_extents[iBox];
             double dx = Math.Abs(p.x - c.x);
             dx = (dx < e.x) ? 0 : (dx - e.x);
             double dy = Math.Abs(p.y - c.y);
@@ -509,12 +502,6 @@ namespace g3
             double dz = Math.Abs(p.z - c.z);
             dz = (dz < e.z) ? 0 : (dz - e.z);
             double d2 = dx * dx + dy * dy + dz * dz;
-
-            AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x, e.y, e.z);
-            double b2 = box.DistanceSquared(p);
-            if (Math.Abs(b2 - d2) > MathUtil.Epsilon)
-                throw new Exception("wha?");
-
             return d2;
         }
 
@@ -536,6 +523,7 @@ namespace g3
                     Util.gBreakToDebugger();
         }
 
+
         // accumulate point counts and track each box-parent index. 
         // also checks that points are contained in boxes
         private void test_coverage(int[] point_counts, int[] parent_indices, int iBox)
@@ -547,11 +535,11 @@ namespace g3
             if ( idx < points_end ) {
                 // point-list case, array is [N t1 t2 ... tN]
                 int n = index_list[idx];
-                AxisAlignedBox3f box = get_box(iBox);
+                AxisAlignedBox3d box = get_box(iBox);
                 for ( int i = 1; i <= n; ++i ) {
                     int vi = index_list[idx + i];
                     point_counts[vi]++;
-                    Vector3f v = (Vector3f)points.GetVertex(vi);
+                    Vector3d v = points.GetVertex(vi);
                     if (!box.Contains(v))
                         Util.gBreakToDebugger();
                 }
@@ -596,11 +584,11 @@ namespace g3
         // do full tree traversal below iBox to make sure that all child points are contained
         void debug_check_child_points_in_box(int iBox)
         {
-            AxisAlignedBox3f box = get_box(iBox);
+            AxisAlignedBox3d box = get_box(iBox);
             TreeTraversal t = new TreeTraversal() {
                 NextPointF = (vID) => {
                     Vector3d v = points.GetVertex(vID);
-                    if (box.Contains((Vector3f)v) == false)
+                    if (box.Contains(v) == false)
                         Util.gBreakToDebugger();
                 }
             };
