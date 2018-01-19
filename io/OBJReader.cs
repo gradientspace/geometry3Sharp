@@ -27,15 +27,14 @@ namespace g3
 	/// </summary>
 
 
-    internal unsafe struct Triangle
+    internal struct Triangle
     {
         public const int InvalidMaterialID = -1;
         public const int InvalidGroupID = -1;
 
-        // [TODO] replace with Index3i, get rid of unsafe
-        public fixed int vIndices[3];
-        public fixed int vNormals[3];
-        public fixed int vUVs[3];
+        public Index3i vIndices;
+        public Index3i vNormals;
+        public Index3i vUVs;
         public int nMaterialID;
         public int nGroupID;
 
@@ -43,40 +42,30 @@ namespace g3
         {
             nMaterialID = InvalidMaterialID;
             nGroupID = InvalidGroupID;
-            fixed (int* v = this.vIndices) { v[0] = -1; v[1] = -1; v[2] = -1; }
-            fixed (int* n = this.vNormals) { n[0] = -1; n[1] = -1; n[2] = -1; }
-            fixed (int* u = this.vUVs) { u[0] = -1; u[1] = -1; u[2] = -1; }
+            vIndices = vNormals = vUVs = new Index3i(-1, -1, -1);
         }
 
         public void set_vertex(int j, int vi, int ni = -1, int ui = -1)
         {
-            fixed (int* v = this.vIndices, n = this.vNormals, u = this.vUVs)
-            {
-                v[j] = vi;
-                if (ni != -1) n[j] = ni;
-                if (ui != -1) u[j] = ui;
-            }
+            vIndices[j] = vi;
+            if (ni != -1) vNormals[j] = ni;
+            if (ui != -1) vUVs[j] = ui;
         }
 
         public void move_vertex(int jFrom, int jTo)
         {
-            fixed (int* v = this.vIndices, n = this.vNormals, u = this.vUVs)
-            {
-                v[jTo] = v[jFrom];
-                n[jTo] = n[jFrom];
-                u[jTo] = u[jFrom];
-            }
+            vIndices[jTo] = vIndices[jFrom];
+            vNormals[jTo] = vNormals[jFrom];
+            vUVs[jTo] = vUVs[jFrom];
         }
 
         public bool is_complex()
         {
-            fixed (int * v = this.vIndices, n = this.vNormals, u = this.vUVs) {
-                for ( int j = 0; j < 3; ++j ) {
-                    if (n[j] != -1 && n[j] != v[j])
-                        return true;
-                    if (u[j] != -1 && u[j] != v[j])
-                        return true;
-                }
+            for ( int j = 0; j < 3; ++j ) {
+                if (vNormals[j] != -1 && vNormals[j] != vNormals[j])
+                    return true;
+                if (vUVs[j] != -1 && vUVs[j] != vUVs[j])
+                    return true;
             }
             return false;
         }
@@ -208,7 +197,7 @@ namespace g3
 
 
 
-        unsafe int append_triangle(IMeshBuilder builder, int nTri, int[] mapV)
+        int append_triangle(IMeshBuilder builder, int nTri, int[] mapV)
         {
             Triangle t = vTriangles[nTri];
             int v0 = mapV[t.vIndices[0] - 1];
@@ -223,7 +212,7 @@ namespace g3
                 m_nSetInvalidGroupsTo : vTriangles[nTri].nGroupID;
             return builder.AppendTriangle(v0, v1, v2, gid);
         }
-        unsafe int append_triangle(IMeshBuilder builder, Triangle t)
+        int append_triangle(IMeshBuilder builder, Triangle t)
         {
             if ( t.vIndices[0] < 0 || t.vIndices[1] < 0 || t.vIndices[2] < 0 ) {
                 emit_warning(string.Format("[OBJReader] invalid triangle:  {0} {1} {2}",
@@ -236,7 +225,7 @@ namespace g3
         }
 
 
-        unsafe IOReadResult BuildMeshes_Simple(ReadOptions options, IMeshBuilder builder)
+        IOReadResult BuildMeshes_Simple(ReadOptions options, IMeshBuilder builder)
         {
             if (vPositions.Length == 0)
                 return new IOReadResult(IOCode.GarbageDataError, "No vertices in file");
@@ -277,7 +266,7 @@ namespace g3
 
 
 
-        unsafe IOReadResult BuildMeshes_ByMaterial(ReadOptions options, IMeshBuilder builder)
+        IOReadResult BuildMeshes_ByMaterial(ReadOptions options, IMeshBuilder builder)
         {
             if (vPositions.Length == 0)
                 return new IOReadResult(IOCode.GarbageDataError, "No vertices in file");
@@ -500,7 +489,7 @@ namespace g3
             return vi;
         }
 
-        private unsafe void append_face(string[] tokens, OBJMaterial activeMaterial, int nActiveGroup)
+        private void append_face(string[] tokens, OBJMaterial activeMaterial, int nActiveGroup)
         {
             int nMode = 0;
             if (tokens[1].IndexOf("//") != -1)
@@ -553,7 +542,7 @@ namespace g3
             }
         }
 
-        private unsafe void parse_triangle(string[] tokens, ref Triangle t ){
+        private void parse_triangle(string[] tokens, ref Triangle t ){
             int nMode = 0;
             if (tokens[1].IndexOf("//") != -1)
                 nMode = 1;
