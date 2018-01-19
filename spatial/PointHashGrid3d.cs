@@ -14,6 +14,11 @@ namespace g3
     /// Does not actually store 3D points. So, to remove a point
     /// you must also know it's 3D coordinate, so we can look up the cell coordinates.
     /// Hence, to 'update' a point, you need to know both it's old and new 3D coordinates.
+    /// 
+    /// TODO: if a lot of points are in the same spot, this is still a disaster.
+    /// What if we had a second level of hashing, where once a list at a level gets too
+    /// big, we build a sub-hash there?
+    /// 
     /// </summary>
     public class PointHashGrid3d<T>
     {
@@ -184,5 +189,18 @@ namespace g3
                 spinlock.Exit();
             return result;
         }
+
+
+
+
+        public void print_large_buckets()
+        {
+            foreach ( var entry in Hash ) {
+                if (entry.Value.Count > 512)
+                    System.Console.WriteLine("{0} : {1}", entry.Key, entry.Value.Count);
+            }
+        }
+
+
     }
 }

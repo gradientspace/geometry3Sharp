@@ -348,11 +348,15 @@ namespace g3
             for (int i = 0; i < N; ++i)
                 bounds.Contain(vertices[i]);
 
-            int num_bins = 128;
-            if (N > 100000)
-                num_bins = 512;
-            else if (N > 1000000)
-                num_bins = 1024;
+            // [RMS] because we are only searching within tiny radius, there is really no downside to
+            // using lots of bins here, except memory usage. If we don't, and the mesh has a ton of triangles
+            // very close together (happens all the time on big meshes!), then this step can start
+            // to take an *extremely* long time!
+            int num_bins = 256;
+            if (N > 100000)   num_bins = 512;
+            if (N > 1000000)  num_bins = 1024;
+            if (N > 2000000) num_bins = 2048;
+            if (N > 5000000) num_bins = 4096;
 
             PointHashGrid3d<int> uniqueV = new PointHashGrid3d<int>(bounds.MaxDim / (float)num_bins, -1);
             Vector3f[] pos = new Vector3f[N];
