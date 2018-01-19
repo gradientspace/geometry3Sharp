@@ -246,7 +246,7 @@ namespace g3
         {
             DMesh3 fastWeldMesh = BuildMesh_IdenticalWeld(solid);
             int fastWeldMesh_bdryCount;
-            if ( check_for_cracks(fastWeldMesh, out fastWeldMesh_bdryCount, WeldTolerance) ) {
+            if (check_for_cracks(fastWeldMesh, out fastWeldMesh_bdryCount, WeldTolerance)) {
                 DMesh3 tolWeldMesh = BuildMesh_TolerantWeld(solid, WeldTolerance);
                 int tolWeldMesh_bdryCount = count_boundary_edges(tolWeldMesh);
 
@@ -380,8 +380,7 @@ namespace g3
 
         void append_mapped_triangles(STLSolid solid, DMesh3Builder builder, int[] mapV)
         {
-            int N = solid.Vertices.Count / 3;
-            int nTris = N / 3;
+            int nTris = solid.Vertices.Count / 3;
             for (int ti = 0; ti < nTris; ++ti) {
                 int a = mapV[3 * ti];
                 int b = mapV[3 * ti + 1];
