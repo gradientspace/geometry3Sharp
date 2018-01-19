@@ -14,9 +14,14 @@ namespace g3
         public enum Strategy
         {
             NoProcessing = 0,
-            IdenticalVertexWeld = 1
+            IdenticalVertexWeld = 1,
+            TolerantVertexWeld = 2,
+
+            AutoBestResult = 3
         }
-        public Strategy RebuildStrategy = Strategy.IdenticalVertexWeld;
+        public Strategy RebuildStrategy = Strategy.AutoBestResult;
+
+        public double WeldTolerance = MathUtil.ZeroTolerancef;
 
 
         // connect to this to get warning messages
@@ -201,10 +206,19 @@ namespace g3
 
         protected virtual void BuildMesh(STLSolid solid, IMeshBuilder builder)
         {
-            if (RebuildStrategy == Strategy.IdenticalVertexWeld)
-                BuildMesh_IdenticalWeld(solid, builder);
-            else
+            if (RebuildStrategy == Strategy.AutoBestResult) {
+                DMesh3 result = BuildMesh_Auto(solid);
+                builder.AppendNewMesh(result);
+
+            } else if (RebuildStrategy == Strategy.IdenticalVertexWeld) {
+                DMesh3 result = BuildMesh_IdenticalWeld(solid);
+                builder.AppendNewMesh(result);
+            } else if (RebuildStrategy == Strategy.TolerantVertexWeld) {
+                DMesh3 result = BuildMesh_TolerantWeld(solid, WeldTolerance);
+                builder.AppendNewMesh(result);
+            } else {
                 BuildMesh_NoMerge(solid, builder);
+            }
         }
 
 
@@ -228,20 +242,83 @@ namespace g3
 
 
 
-        protected virtual void BuildMesh_IdenticalWeld(STLSolid solid, IMeshBuilder builder)
+        protected virtual DMesh3 BuildMesh_Auto(STLSolid solid)
         {
-            /*int meshID = */builder.AppendNewMesh(false, false, false, false);
+            DMesh3 fastWeldMesh = BuildMesh_IdenticalWeld(solid);
+            int fastWeldMesh_bdryCount;
+            if ( check_for_cracks(fastWeldMesh, out fastWeldMesh_bdryCount, WeldTolerance) ) {
+                DMesh3 tolWeldMesh = BuildMesh_TolerantWeld(solid, WeldTolerance);
+                int tolWeldMesh_bdryCount = count_boundary_edges(tolWeldMesh);
+
+                if (tolWeldMesh_bdryCount < fastWeldMesh_bdryCount)
+                    return tolWeldMesh;
+                else
+                    return fastWeldMesh;
+
+            }
+
+            return fastWeldMesh;
+        }
+
+
+
+
+        protected int count_boundary_edges(DMesh3 mesh) {
+            int boundary_edge_count = 0;
+            foreach (int eid in mesh.BoundaryEdgeIndices()) {
+                boundary_edge_count++;
+            }
+            return boundary_edge_count;
+        }
+
+
+
+        protected bool check_for_cracks(DMesh3 mesh, out int boundary_edge_count, double crack_tol = MathUtil.ZeroTolerancef)
+        {
+            boundary_edge_count = 0;
+            MeshVertexSelection boundary_verts = new MeshVertexSelection(mesh);
+            foreach ( int eid in mesh.BoundaryEdgeIndices() ) {
+                Index2i ev = mesh.GetEdgeV(eid);
+                boundary_verts.Select(ev.a); boundary_verts.Select(ev.b);
+                boundary_edge_count++;
+            }
+            if (boundary_verts.Count == 0)
+                return false;
+            
+
+            AxisAlignedBox3d bounds = mesh.CachedBounds;
+            PointHashGrid3d<int> borderV = new PointHashGrid3d<int>(bounds.MaxDim / 128, -1);
+            foreach ( int vid in boundary_verts ) {
+                Vector3d v = mesh.GetVertex(vid);
+                var result = borderV.FindNearestInRadius(v, crack_tol, (existing_vid) => {
+                    return v.Distance(mesh.GetVertex(existing_vid));
+                });
+                if (result.Key != -1)
+                    return true;            // we found a crack vertex!
+                borderV.InsertPoint(vid, v);
+            }
+
+            // found no cracks
+            return false;
+        }
+
+
+
+
+        protected virtual DMesh3 BuildMesh_IdenticalWeld(STLSolid solid)
+        {
+            DMesh3Builder builder = new DMesh3Builder();
+            builder.AppendNewMesh(false, false, false, false);
 
             DVectorArray3f vertices = solid.Vertices;
             int N = vertices.Count;
             int[] mapV = new int[N];
 
             Dictionary<Vector3f, int> uniqueV = new Dictionary<Vector3f, int>();
-
-            for ( int vi = 0; vi < N; ++vi ) {
+            for (int vi = 0; vi < N; ++vi) {
                 Vector3f v = vertices[vi];
                 int existing_idx;
-                if ( uniqueV.TryGetValue(v, out existing_idx) ) {
+                if (uniqueV.TryGetValue(v, out existing_idx)) {
                     mapV[vi] = existing_idx;
                 } else {
                     int vid = builder.AppendVertex(v.x, v.y, v.z);
@@ -250,9 +327,62 @@ namespace g3
                 }
             }
 
+            append_mapped_triangles(solid, builder, mapV);
+            return builder.Meshes[0];
+        }
 
+
+
+
+        protected virtual DMesh3 BuildMesh_TolerantWeld(STLSolid solid, double weld_tolerance)
+        {
+            DMesh3Builder builder = new DMesh3Builder();
+            builder.AppendNewMesh(false, false, false, false);
+
+            DVectorArray3f vertices = solid.Vertices;
+            int N = vertices.Count;
+            int[] mapV = new int[N];
+
+
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            for (int i = 0; i < N; ++i)
+                bounds.Contain(vertices[i]);
+
+            int num_bins = 128;
+            if (N > 100000)
+                num_bins = 512;
+            else if (N > 1000000)
+                num_bins = 1024;
+
+            PointHashGrid3d<int> uniqueV = new PointHashGrid3d<int>(bounds.MaxDim / (float)num_bins, -1);
+            Vector3f[] pos = new Vector3f[N];
+            for (int vi = 0; vi < N; ++vi) {
+                Vector3f v = vertices[vi];
+
+                var pair = uniqueV.FindNearestInRadius(v, weld_tolerance, (vid) => {
+                    return v.Distance(pos[vid]);
+                });
+                if (pair.Key == -1) {
+                    int vid = builder.AppendVertex(v.x, v.y, v.z);
+                    uniqueV.InsertPoint(vid, v);
+                    mapV[vi] = vid;
+                    pos[vid] = v;
+                } else {
+                    mapV[vi] = pair.Key;
+                }
+            }
+
+            append_mapped_triangles(solid, builder, mapV);
+            return builder.Meshes[0];
+        }
+
+
+
+        void append_mapped_triangles(STLSolid solid, DMesh3Builder builder, int[] mapV)
+        {
+            int N = solid.Vertices.Count / 3;
             int nTris = N / 3;
-            for ( int ti = 0; ti < nTris; ++ti ) {
+            for (int ti = 0; ti < nTris; ++ti) {
                 int a = mapV[3 * ti];
                 int b = mapV[3 * ti + 1];
                 int c = mapV[3 * ti + 2];
