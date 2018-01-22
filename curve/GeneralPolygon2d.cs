@@ -257,5 +257,22 @@ namespace g3
 			}
 		}
 
-	}
+
+
+
+
+
+        public void Simplify(double clusterTol = 0.0001,
+                              double lineDeviationTol = 0.01,
+                              bool bSimplifyStraightLines = true)
+        {
+            // [TODO] should make sure that holes stay inside Outer!!
+            Outer.Simplify(clusterTol, lineDeviationTol, bSimplifyStraightLines);
+            foreach (var hole in holes)
+                hole.Simplify(clusterTol, lineDeviationTol, bSimplifyStraightLines);
+        }
+
+
+
+    }
 }
