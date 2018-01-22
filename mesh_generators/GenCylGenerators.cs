@@ -21,6 +21,23 @@ namespace g3
         public int startCapCenterIndex = -1;
         public int endCapCenterIndex = -1;
 
+
+        public TubeGenerator()
+        {
+        }
+
+        public TubeGenerator(Polygon2d tubePath, Frame3f pathPlane, Polygon2d tubeShape, int nPlaneNormal = 2)
+        {
+            Vertices = new List<Vector3d>();
+            foreach (Vector2d v in tubePath.Vertices)
+                Vertices.Add(pathPlane.FromPlaneUV((Vector2f)v, nPlaneNormal));
+            Polygon = new Polygon2d(tubeShape);
+            ClosedLoop = true;
+            Capped = false;
+        }
+
+
+
         override public MeshGenerator Generate()
         {
             if (Polygon == null)

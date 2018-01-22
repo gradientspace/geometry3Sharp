@@ -40,6 +40,16 @@ namespace g3
 			Timestamp = 0;
         }
 
+
+        public Polygon2d(double[] values)
+        {
+            int N = values.Length / 2;
+            vertices = new List<Vector2d>(N);
+            for (int k = 0; k < N; ++k)
+                vertices.Add(new Vector2d(values[2 * k], values[2 * k + 1]));
+            Timestamp = 0;
+        }
+
         public Polygon2d(Func<int,Vector2d> SourceF, int N) 
         {
             vertices = new List<Vector2d>();
@@ -539,6 +549,8 @@ namespace g3
 							  bool bSimplifyStraightLines = true )
 		{
 			int n = vertices.Count;
+            if (n < 3)
+                return;
 
 			int i, k, pv;            // misc counters
 			Vector2d[] vt = new Vector2d[n+1];  // vertex buffer
@@ -549,25 +561,54 @@ namespace g3
 			// STAGE 1.  Vertex Reduction within tolerance of prior vertex cluster
 			double clusterTol2 = clusterTol*clusterTol;
 			vt[0] = vertices[0];              // start at the beginning
-			for (i = k = 1, pv = 0; i < n; i++) {
+			for (i = 1, k = 1, pv = 0; i < n; i++) {
 				if ( (vertices[i] - vertices[pv]).LengthSquared < clusterTol2 )
 					continue;
 				vt[k++] = vertices[i];
 				pv = i;
 			}
+            bool skip_dp = false;
+            if ( k == 1 ) {
+                vt[k++] = vertices[1];
+                vt[k++] = vertices[2];
+                skip_dp = true;
+            } else if ( k == 2 ) {
+                vt[k++] = vertices[0];
+                skip_dp = true;
+            }
+
             // push on start vertex again, because simplifyDP is for polylines, not polygons
             vt[k++] = vertices[0];
-			//if (pv < n-1)
-			//	vt[k++] = vertices[n-1];      // finish at the end
 
-			// STAGE 2.  Douglas-Peucker polyline simplification
-			if (lineDeviationTol > 0) {
+            // STAGE 2.  Douglas-Peucker polyline simplification
+            int nv = 0;
+			if (skip_dp == false && lineDeviationTol > 0) {
 				mk[0] = mk[k-1] = true;       // mark the first and last vertices
 				simplifyDP( lineDeviationTol, vt, 0, k-1, mk );
-			} else {
+                for (i = 0; i < k-1; ++i) {
+                    if (mk[i])
+                        nv++;
+                }
+            } else {
 				for (i = 0; i < k; ++i )
 					mk[i] = true;
+                nv = k - 1;
 			}
+
+            // polygon requires at least 3 vertices
+            if ( nv == 2 ) {
+                for (i = 1; i < k-1; ++i ) {
+                    if (mk[1] == false)
+                        mk[1] = true;
+                    else if (mk[k - 2] == false)
+                        mk[k - 2] = true;
+                }
+                nv++;
+            } else if ( nv == 1 ) {
+                mk[1] = true;
+                mk[2] = true;
+                nv += 2;
+            }
 
 			// copy marked vertices back to this polygon
 			vertices = new List<Vector2d>();
