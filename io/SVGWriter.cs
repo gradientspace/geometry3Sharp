@@ -222,6 +222,35 @@ namespace g3
 
 
 
+
+
+
+
+        public static void QuickWrite(List<GeneralPolygon2d> polygons, string sPath, double line_width = 1)
+        {
+            SVGWriter writer = new SVGWriter();
+            Style outer_cw = SVGWriter.Style.Outline("black", 2*(float)line_width);
+            Style outer_ccw = SVGWriter.Style.Outline("green", 2 * (float)line_width);
+            Style inner = SVGWriter.Style.Outline("red", (float)line_width);
+            foreach (GeneralPolygon2d poly in polygons) {
+                if ( poly.Outer.IsClockwise )
+                    writer.AddPolygon(poly.Outer, outer_cw);
+                else
+                    writer.AddPolygon(poly.Outer, outer_ccw);
+                foreach (var hole in poly.Holes)
+                    writer.AddPolygon(hole, inner);
+            }
+            writer.Write(sPath);
+        }
+
+
+
+
+
+
+
+
+
         protected virtual Vector2d MapPt(Vector2d v)
         {
             if (FlipY) {

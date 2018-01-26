@@ -148,6 +148,18 @@ namespace g3
         }
 
 
+        public void AppendPolyline(PolyLine2d poly, int gid = -1)
+        {
+            int prev = -1;
+            int N = poly.VertexCount;
+            for (int i = 0; i < N; ++i) {
+                int cur = AppendVertex(poly[i]);
+                AppendEdge(prev, cur, gid);
+                prev = cur;
+            }
+        }
+
+
         public void AppendGraph(DGraph2 graph, int gid = -1)
         {
             int[] mapV = new int[graph.MaxVertexID];

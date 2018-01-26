@@ -246,7 +246,7 @@ namespace g3
         //            v[] = polyline array of vertex points
         //            j,k = indices for the subchain v[j] to v[k]
         //    Output: mk[] = array of markers matching vertex array v[]
-        static void simplifyDP(double tol, Vector2d[] v, int j, int k, bool[] mk)
+        static protected void simplifyDP(double tol, Vector2d[] v, int j, int k, bool[] mk)
 		{
 			if (k <= j + 1) // there is nothing to simplify
 				return;
