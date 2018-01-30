@@ -10,10 +10,21 @@ namespace g3
         public Vector2d Origin;
         public Vector2d Direction;
 
-        public Line2d(Vector2d origin, Vector2d direction)
-        {
+        public Line2d(Vector2d origin, Vector2d direction) {
             this.Origin = origin;
             this.Direction = direction;
+        }
+
+        public Line2d(ref Vector2d origin, ref Vector2d direction) {
+            this.Origin = origin;
+            this.Direction = direction;
+        }
+
+        public static Line2d FromPoints(Vector2d p0, Vector2d p1) {
+            return new Line2d(p0, (p1 - p0).Normalized);
+        }
+        public static Line2d FromPoints(ref Vector2d p0, ref Vector2d p1) {
+            return new Line2d(p0, (p1 - p0).Normalized);
         }
 
         // parameter is distance along Line
