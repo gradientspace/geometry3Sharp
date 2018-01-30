@@ -6,6 +6,9 @@ namespace g3
     public static class FaceGroupUtil
     {
 
+        /// <summary>
+        /// Set group ID of all triangles in mesh
+        /// </summary>
         public static void SetGroupID(DMesh3 mesh, int to)
         {
             if (mesh.HasTriangleGroups == false)
@@ -15,6 +18,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Set group id of subset of triangles in mesh
+        /// </summary>
         public static void SetGroupID(DMesh3 mesh, IEnumerable<int> triangles, int to)
         {
             if (mesh.HasTriangleGroups == false)
@@ -24,6 +30,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// replace group id in mesh
+        /// </summary>
         public static void SetGroupToGroup(DMesh3 mesh, int from, int to)
         {
             if (mesh.HasTriangleGroups == false)
@@ -40,6 +49,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// find the set of group ids used in mesh
+        /// </summary>
         public static HashSet<int> FindAllGroups(DMesh3 mesh)
         {
             HashSet<int> Groups = new HashSet<int>();
@@ -57,8 +69,10 @@ namespace g3
         }
 
 
-
-        // returned pairs are [group_id, tri_count] 
+        /// <summary>
+        /// count number of tris in each group in mesh
+        /// returned pairs are [group_id, tri_count] 
+        /// </summary>
         public static SparseList<int> CountAllGroups(DMesh3 mesh)
         {
             SparseList<int> GroupCounts = new SparseList<int>(mesh.MaxGroupID, 0, 0);
@@ -76,8 +90,10 @@ namespace g3
         }
 
 
-        // Returns array of triangle lists (stored as arrays)
-        // This requires 2 passes over mesh, but each pass is linear
+        /// <summary>
+        /// collect triangles by group id. Returns array of triangle lists (stored as arrays).
+        /// This requires 2 passes over mesh, but each pass is linear
+        /// </summary>
         public static int[][] FindTriangleSetsByGroup(DMesh3 mesh, int ignoreGID = int.MinValue)
         {
             if (!mesh.HasTriangleGroups)
@@ -121,7 +137,9 @@ namespace g3
 
 
 
-
+        /// <summary>
+        /// find list of triangles in mesh with specific group id
+        /// </summary>
         public static List<int> FindTrianglesByGroup(IMesh mesh, int findGroupID)
         {
             List<int> tris = new List<int>();
@@ -133,6 +151,34 @@ namespace g3
             }
             return tris;
         }
+
+
+        /// <summary>
+        /// split input mesh into submeshes based on group ID
+        /// **does not** separate disconnected components w/ same group ID
+        /// </summary>
+        public static DMesh3[] SeparateMeshByGroups(DMesh3 mesh)
+        {
+            Dictionary<int, List<int>> meshes = new Dictionary<int, List<int>>();
+            foreach ( int tid in mesh.TriangleIndices() ) {
+                int gid = mesh.GetTriangleGroup(tid);
+                List<int> tris;
+                if ( meshes.TryGetValue(gid, out tris) == false ) {
+                    tris = new List<int>();
+                    meshes[gid] = tris;
+                }
+                tris.Add(gid);
+            }
+
+            DMesh3[] result = new DMesh3[meshes.Count];
+            int k = 0;
+            foreach ( var tri_list in meshes.Values) {
+                result[k++] = DSubmesh3.QuickSubmesh(mesh, tri_list);
+            }
+
+            return result;
+        }
+
 
 
     }
