@@ -77,6 +77,23 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Evaluate valueF for each component and sort by that
+        /// </summary>
+        public void SortByValue(Func<Component,double> valueF, bool bIncreasing = true)
+        {
+            Dictionary<Component, double> vals = new Dictionary<Component, double>();
+            foreach (Component c in Components)
+                vals[c] = valueF(c);
+
+            if (bIncreasing)
+                Components.Sort((x, y) => { return vals[x].CompareTo(vals[y]); });
+            else
+                Components.Sort((x, y) => { return -vals[x].CompareTo(vals[y]); });
+        }
+
+
+
         public void FindConnectedT()
         {
             Components = new List<Component>();

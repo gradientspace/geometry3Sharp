@@ -259,6 +259,18 @@ namespace g3
 
 
 
+        public static double AreaT(DMesh3 mesh, IEnumerable<int> triangleIndices)
+        {
+            double area = 0;
+            foreach (int tid in triangleIndices) 
+                area += mesh.GetTriArea(tid);
+            return area;
+        }
+
+
+
+
+
         public static Interval1d ExtentsOnAxis(DMesh3 mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
         {
             Interval1d extent = Interval1d.Empty;
