@@ -221,8 +221,22 @@ namespace g3
         }
 
 
+        public static AxisAlignedBox3d BoundsV(IMesh mesh, IEnumerable<int> vertexIndices, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            if (TransformF == null) {
+                foreach (int vid in vertexIndices) 
+                    bounds.Contain(mesh.GetVertex(vid));
+            } else {
+                foreach (int vid in vertexIndices)
+                    bounds.Contain(TransformF(mesh.GetVertex(vid)));
+            }
+            return bounds;
+        }
 
-        public static AxisAlignedBox3d BoundsT(IMesh mesh, int [] triangleIndices, Func<Vector3d, Vector3d> TransformF = null )
+
+
+        public static AxisAlignedBox3d BoundsT(IMesh mesh, IEnumerable<int> triangleIndices, Func<Vector3d, Vector3d> TransformF = null )
         {
             AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
             if (TransformF == null) {
