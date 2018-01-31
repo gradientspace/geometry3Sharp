@@ -117,8 +117,10 @@ namespace g3
                 int i0 = cur_i, i1 = (cur_i + 1) % N;
 
                 if ( keep_segments[i0] ) {
-                    Util.gDevAssert(input[i0].Distance(result[result.Count - 1]) > MathUtil.Epsilonf);
-                    result.Add(input[i0]);
+                    if (last_i != i0) {
+                        Util.gDevAssert(input[i0].Distance(result[result.Count - 1]) > MathUtil.Epsilonf);
+                        result.Add(input[i0]);
+                    }
                     result.Add(input[i1]);
                     last_i = i1;
                     cur_i = i1;
