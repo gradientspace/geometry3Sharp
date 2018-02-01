@@ -141,5 +141,79 @@ namespace g3
             }
         }
 
-	}
+
+
+
+
+        /// <summary>
+        /// Constrained laplacian smoothing of input polygon, alpha X iterations.
+        /// vertices are only allowed to move at most max_dist from constraint
+        /// if bAllowShrink == false, vertices are kept outside input polygon
+        /// if bAllowGrow == false, vertices are kept inside input polygon
+        /// 
+        /// max_dist is measured from vertex[i] to original_vertex[i], unless
+        /// you set bPerVertexDistances = false, then distance to original polygon
+        /// is used (which is much more expensive)
+        /// 
+        /// [TODO] this is pretty hacky...could be better in lots of ways...
+        /// 
+        /// </summary>
+        public static void LaplacianSmoothConstrained(Polygon2d poly, double alpha, int iterations, 
+            double max_dist, bool bAllowShrink, bool bAllowGrow, bool bPerVertexDistances = true)
+        {
+            Polygon2d origPoly = new Polygon2d(poly);
+
+            int N = poly.VertexCount;
+            Vector2d[] newV = new Vector2d[poly.VertexCount];
+
+            double max_dist_sqr = max_dist * max_dist;
+
+            double beta = 1.0 - alpha;
+            for (int ii = 0; ii < iterations; ++ii) {
+                for (int i = 0; i < N; ++i ) {
+                    Vector2d curpos = poly[i];
+                    Vector2d smoothpos = (poly[(i + N - 1) % N] + poly[(i + 1) % N]) * 0.5;
+                    bool contained = true;
+                    if (bAllowShrink == false || bAllowGrow == false)
+                        contained = origPoly.Contains(smoothpos);
+                    bool do_smooth = true;
+                    if (bAllowShrink && contained == false)
+                        do_smooth = false;
+                    if (bAllowGrow && contained == true)
+                        do_smooth = false;
+
+                    if ( do_smooth ) { 
+                        Vector2d newpos = beta * curpos + alpha * smoothpos;
+                        if (bPerVertexDistances) {
+                            while (origPoly[i].DistanceSquared(newpos) > max_dist_sqr) 
+                                newpos = (newpos + curpos) * 0.5;
+                        } else {
+                            while ( origPoly.DistanceSquared(newpos) > max_dist_sqr ) 
+                                newpos = (newpos + curpos) * 0.5;
+                        }
+                        newV[i] = newpos;
+                    } else {
+                        newV[i] = curpos;
+                    }
+                }
+
+                for (int i = 0; i < N; ++i)
+                    poly[i] = newV[i];
+            }
+        }
+
+
+
+
+        public static void LaplacianSmoothConstrained(GeneralPolygon2d solid, double alpha, int iterations, double max_dist, bool bAllowShrink, bool bAllowGrow)
+        {
+            LaplacianSmoothConstrained(solid.Outer, alpha, iterations, max_dist, bAllowShrink, bAllowGrow);
+            foreach (Polygon2d hole in solid.Holes) {
+                CurveUtils2.LaplacianSmoothConstrained(hole, alpha, iterations, max_dist, bAllowShrink, bAllowGrow);
+            }
+        }
+
+
+
+    }
 }
