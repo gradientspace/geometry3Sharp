@@ -5,11 +5,23 @@ using System.Text;
 
 namespace g3
 {
+    /// <summary>
+    /// Sweep a 2D Profile Polygon along a 3D Path.
+    /// Supports closed and open paths, and capping open paths.
+    /// However caps are triangulated using a fan around a center vertex (which you
+    /// can set using CapCenter). If Polygon is non-convex, this will have foldovers.
+    /// In that case, you have to triangulate and append it yourself.
+    /// </summary>
     public class TubeGenerator : MeshGenerator
     {
         public List<Vector3d> Vertices;
         public Polygon2d Polygon;
+
         public bool Capped = true;
+
+        // center of endcap triangle fan, relative to Polygon
+        public Vector2d CapCenter = Vector2d.Zero;
+
         public bool ClosedLoop = false;
 
         // [TODO] Frame3d ??
@@ -114,15 +126,16 @@ namespace g3
             }
 
             if (Capped && ClosedLoop == false) {
+
                 // add endcap verts
                 int nBottomC = nRings * nRingSize;
-                vertices[nBottomC] = fStart.Origin;
+                vertices[nBottomC] = fStart.FromPlaneUV((Vector2f)CapCenter,2);
                 uv[nBottomC] = new Vector2f(0.5f, 0.5f);
                 normals[nBottomC] = -fStart.Z;
                 startCapCenterIndex = nBottomC;
 
                 int nTopC = nBottomC + 1;
-                vertices[nTopC] = fCur.Origin;
+                vertices[nTopC] = fCur.FromPlaneUV((Vector2f)CapCenter, 2);
                 uv[nTopC] = new Vector2f(0.5f, 0.5f);
                 normals[nTopC] = fCur.Z;
                 endCapCenterIndex = nTopC;
