@@ -26,6 +26,7 @@ namespace g3
 
         static public readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
         static public readonly Vector3f One = new Vector3f(1.0f, 1.0f, 1.0f);
+        static public readonly Vector3f OneNormalized = new Vector3f(1.0f, 1.0f, 1.0f).Normalized;
         static public readonly Vector3f Invalid = new Vector3f(float.MaxValue, float.MaxValue, float.MaxValue);
         static public readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
         static public readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);

@@ -84,6 +84,21 @@ namespace g3 {
 		}
 
 
+        public IEnumerable<Vector3d> VerticesItr()
+        {
+            Vector3d extAxis0 = Extent.x * AxisX;
+            Vector3d extAxis1 = Extent.y * AxisY;
+            Vector3d extAxis2 = Extent.z * AxisZ;
+            yield return Center - extAxis0 - extAxis1 - extAxis2;
+            yield return Center + extAxis0 - extAxis1 - extAxis2;
+            yield return Center + extAxis0 + extAxis1 - extAxis2;
+            yield return Center - extAxis0 + extAxis1 - extAxis2;
+            yield return Center - extAxis0 - extAxis1 + extAxis2;
+            yield return Center + extAxis0 - extAxis1 + extAxis2;
+            yield return Center + extAxis0 + extAxis1 + extAxis2;
+            yield return Center - extAxis0 + extAxis1 + extAxis2;
+        }
+
 
         public AxisAlignedBox3d ToAABB()
         {
@@ -327,6 +342,22 @@ namespace g3 {
 			vertex[6] = Center + extAxis0 + extAxis1 + extAxis2;
 			vertex[7] = Center - extAxis0 + extAxis1 + extAxis2;			
 		}
+
+
+        public IEnumerable<Vector3f> VerticesItr()
+        {
+            Vector3f extAxis0 = Extent.x * AxisX;
+            Vector3f extAxis1 = Extent.y * AxisY;
+            Vector3f extAxis2 = Extent.z * AxisZ;
+            yield return Center - extAxis0 - extAxis1 - extAxis2;
+            yield return Center + extAxis0 - extAxis1 - extAxis2;
+            yield return Center + extAxis0 + extAxis1 - extAxis2;
+            yield return Center - extAxis0 + extAxis1 - extAxis2;
+            yield return Center - extAxis0 - extAxis1 + extAxis2;
+            yield return Center + extAxis0 - extAxis1 + extAxis2;
+            yield return Center + extAxis0 + extAxis1 + extAxis2;
+            yield return Center - extAxis0 + extAxis1 + extAxis2;
+        }
 
 
         public AxisAlignedBox3f ToAABB()
