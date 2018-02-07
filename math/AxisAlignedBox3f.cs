@@ -72,17 +72,14 @@ namespace g3
             Min = Max = vCenter;
         }
 
-        public float Width
-        {
-            get { return Max.x - Min.x; }
+        public float Width {
+            get { return Math.Max(Max.x - Min.x,0); }
         }
-        public float Height
-        {
-            get { return Max.y - Min.y; }
+        public float Height {
+            get { return Math.Max(Max.y - Min.y,0); }
         }
-        public float Depth
-        {
-            get { return Max.z - Min.z; }
+        public float Depth {
+            get { return Math.Max(Max.z - Min.z,0); }
         }
 
         public float Volume
@@ -143,11 +140,15 @@ namespace g3
         }
 
 
-        // TODO
-        ////! 0 == bottom-left, 1 = bottom-right, 2 == top-right, 3 == top-left
-        //public Vector3f GetCorner(int i) {
-        //    return new Vector3f((i % 3 == 0) ? Min.x : Max.x, (i < 2) ? Min.y : Max.y);
-        //}
+        // See Box3.Corner for details on which corner is which
+        public Vector3f Corner(int i)
+        {
+            float x = (((i & 1) != 0) ^ ((i & 2) != 0)) ? (Max.x) : (Min.x);
+            float y = ((i / 2) % 2 == 0) ? (Min.y) : (Max.y);
+            float z = (i < 4) ? (Min.z) : (Max.z);
+            return new Vector3f(x, y, z);
+        }
+
 
         //! value is subtracted from min and added to max
         public void Expand(float fRadius)
