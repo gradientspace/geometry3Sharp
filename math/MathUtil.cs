@@ -371,20 +371,20 @@ namespace g3
 
         public static float WyvillRise01(float fX) {
             float d = 1 - fX * fX;
-            return (d > 0) ? 1 - (d * d * d) : 0;
+            return (d >= 0) ? 1 - (d * d * d) : 0;
         }
         public static double WyvillRise01(double fX) {
             double d = 1 - fX * fX;
-            return (d > 0) ? 1 - (d * d * d) : 0;
+            return (d >= 0) ? 1 - (d * d * d) : 0;
         }
 
         public static float WyvillFalloff01(float fX) {
             float d = 1 - fX * fX;
-            return (d > 0) ? (d * d * d) : 0;
+            return (d >= 0) ? (d * d * d) : 0;
         }
         public static double WyvillFalloff01(double fX) {
             double d = 1 - fX * fX;
-            return (d > 0) ? (d * d * d) : 0;
+            return (d >= 0) ? (d * d * d) : 0;
         }
 
 
