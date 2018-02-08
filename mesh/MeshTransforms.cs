@@ -295,5 +295,22 @@ namespace g3
             }
         }
 
+
+        /// <summary>
+        /// Apply TransformF to subset of mesh vertices defined by MapV[vertices] 
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh targetMesh, IDeformableMesh sourceMesh, int[] mapV, Func<Vector3d, int, int, Vector3d> TransformF)
+        {
+            foreach (int vid in sourceMesh.VertexIndices()) {
+                int map_vid = mapV[vid];
+                if (targetMesh.IsVertex(map_vid)) {
+                    Vector3d newPos = TransformF(targetMesh.GetVertex(map_vid), vid, map_vid);
+                    targetMesh.SetVertex(map_vid, newPos);
+                }
+            }
+        }
+
+
+
     }
 }
