@@ -83,7 +83,7 @@ namespace g3
             Scale(mesh, s, s, s);
         }
 
-
+        ///<summary>Map mesh *into* local coordinates of Frame </summary>
         public static void ToFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
@@ -101,6 +101,8 @@ namespace g3
                 }
             }
         }
+
+        /// <summary> Map mesh *from* local frame coordinates into "world" coordinates </summary>
         public static void FromFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
