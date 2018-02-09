@@ -127,6 +127,13 @@ namespace g3
         }
 
 
+        public DCurve3 ToCurve()
+        {
+            DCurve3 curve = MeshUtil.ExtractLoopV(Mesh, Vertices);
+            curve.Closed = true;
+            return curve;
+        }
+
 
         /// <summary>
         /// if this is a border edge-loop, we can check that it is oriented correctly, and
