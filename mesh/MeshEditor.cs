@@ -260,10 +260,10 @@ namespace g3
         // [TODO] cannot back-out this operation right now
         //
         // Remove list of triangles. Values of triangles[] set to InvalidID are ignored.
-        public bool RemoveTriangles(int[] triangles, bool bRemoveIsolatedVerts)
+        public bool RemoveTriangles(IList<int> triangles, bool bRemoveIsolatedVerts)
         {
             bool bAllOK = true;
-            for (int i = 0; i < triangles.Length; ++i ) {
+            for (int i = 0; i < triangles.Count; ++i ) {
                 if (triangles[i] == DMesh3.InvalidID)
                     continue;
 
@@ -309,8 +309,14 @@ namespace g3
             return bAllOK;
         }
 
-
-
+        public static bool RemoveTriangles(DMesh3 Mesh, IList<int> triangles, bool bRemoveIsolatedVerts = true) {
+            MeshEditor editor = new MeshEditor(Mesh);
+            return editor.RemoveTriangles(triangles, bRemoveIsolatedVerts);
+        }
+        public static bool RemoveTriangles(DMesh3 Mesh, IEnumerable<int> triangles, bool bRemoveIsolatedVerts = true) {
+            MeshEditor editor = new MeshEditor(Mesh);
+            return editor.RemoveTriangles(triangles, bRemoveIsolatedVerts);
+        }
 
 
 
