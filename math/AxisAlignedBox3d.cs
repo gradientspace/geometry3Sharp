@@ -192,6 +192,19 @@ namespace g3
             return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
                 && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
         }
+        public bool Contains(ref Vector3d v) {
+            return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
+                && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
+        }
+
+        public bool Contains(AxisAlignedBox3d box2) {
+            return Contains(ref box2.Min) && Contains(ref box2.Max);
+        }
+        public bool Contains(ref AxisAlignedBox3d box2) {
+            return Contains(ref box2.Min) && Contains(ref box2.Max);
+        }
+
+
         public bool Intersects(AxisAlignedBox3d box) {
             return !((box.Max.x <= Min.x) || (box.Min.x >= Max.x) 
                 || (box.Max.y <= Min.y) || (box.Min.y >= Max.y)
