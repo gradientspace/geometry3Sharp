@@ -145,6 +145,7 @@
     <Compile Include="math\Vector2i.cs" />
     <Compile Include="math\Vector4d.cs" />
     <Compile Include="math\VectorTuple.cs" />
+    <Compile Include="mesh\DSubmesh3Set.cs" />
     <Compile Include="mesh\MeshPointSets.cs" />
     <Compile Include="mesh\MeshRefinerBase.cs" />
     <Compile Include="mesh\NTMesh3.cs" />
