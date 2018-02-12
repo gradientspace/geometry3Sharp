@@ -5,7 +5,9 @@ using System.Collections;
 namespace g3
 {
 	/// <summary>
-	/// Summary description for MarchingQuads.
+	/// 2D MarchingQuads polyline extraction from scalar field
+    /// [TODO] this is very, very old code. Should at minimum rewrite using current
+    /// vector classes/etc.
 	/// </summary>
 	public class MarchingQuads
 	{
@@ -111,7 +113,6 @@ namespace g3
 
 
 		public void AddSeedPoint( float x, float y ) {
-			// [RMS TODO] does this memleak... ??
 			m_seedPoints.Add( new SeedPoint(x - m_fXShift, y - m_fYShift) );
 		}
 
@@ -162,39 +163,6 @@ namespace g3
 				}
 			}
 			
-		}
-
-
-		void LerpStep(ref float fValue1, ref float fValue2, ref float fX1, ref float fY1, ref float fX2, ref float fY2, 
-						bool bVerticalEdge) {
-
-	        float fAlpha = 0.0f;
-	        if ( Math.Abs(fValue1-fValue2) < 0.001 ) {
-		        fAlpha = 0.5f;
-	        } else {
-		        fAlpha = (m_fIsoValue - fValue2) / (fValue1 - fValue2);
-	        }
-
-	        float fX = 0.0f, fY = 0.0f;
-	        if (bVerticalEdge) {
-		        fX = fX1;
-		        fY = fAlpha*fY1 + (1.0f-fAlpha)*fY2;
-	        } else {
-		        fX = fAlpha*fX1	+ (1.0f-fAlpha)*fX2;
-		        fY = fY1;
-	        }
-
-	        float fValue = (float)m_field.Value(fX, fY);
-	        if (fValue < m_fIsoValue) {
-		        fValue1 = fValue;
-		        fX1 = fX;
-		        fY1 = fY;
-	        } else {
-		        fValue2 = fValue;
-		        fX2 = fX;
-		        fY2 = fY;
-	        }
-
 		}
 
 
@@ -249,7 +217,7 @@ namespace g3
 			float fX2 = (float)x2 * m_fCellSize + m_fXShift;
 			float fY2 = (float)y2 * m_fCellSize + m_fYShift;
 
-            for (int i = 0; i < 5; ++i)
+            for (int i = 0; i < 10; ++i)
                 SubdivideStep(ref fRefValue1, ref fRefValue2, ref fX1, ref fY1, ref fX2, ref fY2, bVerticalEdge);
 
 			if ( Math.Abs(fRefValue1) < Math.Abs(fRefValue2) ) {
@@ -448,31 +416,6 @@ namespace g3
 			m_fCellSize = m_fScale / m_nCells;
 		}
 
-
-/*
-		public void DrawTouchedCells( Graphics g, Pen pen ) {
-
-			for (int yi = 0; yi < m_nCells; ++yi) {
-				for (int xi = 0; xi < m_nCells; ++xi) {
-					Cell cell = m_cells[yi][xi];
-					int x = (int)((float)xi*m_fCellSize + m_fXShift);
-					int y = (int)((float)yi*m_fCellSize + m_fYShift);
-					if (cell.bTouched) {
-						g.DrawRectangle( pen, x, y, (int)m_fCellSize, (int)m_fCellSize );
-					}
-					//if (cell.fValue == s_fValueSentinel)
-						//g.FillRectangle( Brushes.DarkOrange, x-2, y-2, 4, 4 );
-					if (cell.fValue != s_fValueSentinel) {
-						if (cell.fValue < 0.0)
-							g.FillRectangle( Brushes.Magenta, x-2, y-2, 4, 4 );
-						else
-							g.FillRectangle( Brushes.Cyan, x-2, y-2, 4, 4 );
-					}
-				}
-			}
-
-		}
-*/
 
 	}
 }

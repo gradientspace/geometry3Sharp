@@ -11,6 +11,13 @@ namespace g3
     /// However caps are triangulated using a fan around a center vertex (which you
     /// can set using CapCenter). If Polygon is non-convex, this will have foldovers.
     /// In that case, you have to triangulate and append it yourself.
+    /// 
+    /// If your profile curve does not contain the origin, use CapCenter.
+    /// 
+    /// The output normals are currently set to those for a circular profile.
+    /// Call MeshNormals.QuickCompute() on the output DMesh to estimate proper
+    /// vertex normals
+    /// 
     /// </summary>
     public class TubeGenerator : MeshGenerator
     {

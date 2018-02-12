@@ -15,6 +15,26 @@ namespace g3
         /// </summary>
         public Func<int, double> VertexValueF = null;
 
+        /// <summary>
+        /// If true, then we internally precompute vertex values.
+        /// ***THIS COMPUTATION IS MULTI-THREADED***
+        /// </summary>
+        public bool PrecomputeVertexValues = false;
+
+
+        public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
+
+        /// <summary>
+        /// Which rootfinding method will be used to converge on surface along edges
+        /// </summary>
+        public RootfindingModes RootMode = RootfindingModes.SingleLerp;
+
+        /// <summary>
+        /// number of iterations of rootfinding method (ignored for SingleLerp)
+        /// </summary>
+        public int RootModeSteps = 5;
+
+
         public DGraph3 Graph = null;
 
         public enum TriangleCase
@@ -34,6 +54,9 @@ namespace g3
         }
         public DVector<GraphEdgeInfo> GraphEdges = null;
 
+        // locations of edge crossings that we found during rootfinding
+        Dictionary<int, Vector3d> EdgeLocations = new Dictionary<int, Vector3d>();
+
 
         public MeshIsoCurves(DMesh3 mesh, Func<Vector3d, double> valueF)
         {
@@ -43,7 +66,7 @@ namespace g3
 
         public void Compute()
         {
-            compute_full(Mesh.TriangleIndices());
+            compute_full(Mesh.TriangleIndices(), true);
         }
         public void Compute(IEnumerable<int> Triangles)
         {
@@ -57,13 +80,31 @@ namespace g3
 
         Dictionary<Vector3d, int> Vertices;
 
-        protected void compute_full(IEnumerable<int> Triangles)
+        protected void compute_full(IEnumerable<int> Triangles, bool bIsFullMeshHint = false)
         {
             Graph = new DGraph3();
             if (WantGraphEdgeInfo)
                 GraphEdges = new DVector<GraphEdgeInfo>();
 
             Vertices = new Dictionary<Vector3d, int>();
+
+
+            // multithreaded precomputation of per-vertex values
+            double[] vertex_values = null;
+            if (PrecomputeVertexValues) {
+                vertex_values = new double[Mesh.MaxVertexID];
+                IEnumerable<int> verts = Mesh.VertexIndices();
+                if (bIsFullMeshHint == false) {
+                    MeshVertexSelection vertices = new MeshVertexSelection(Mesh);
+                    vertices.SelectTriangleVertices(Triangles);
+                    verts = vertices;
+                }
+                gParallel.ForEach(verts, (vid) => {
+                    vertex_values[vid] = ValueF(Mesh.GetVertex(vid));
+                });
+                VertexValueF = (vid) => { return vertex_values[vid]; };
+            }
+
 
             foreach (int tid in Triangles) {
 
@@ -111,6 +152,7 @@ namespace g3
                         }
                         Vector3d cross = find_crossing(tv[i], tv[j], f[i], f[j]);
                         int cross_vid = add_or_append_vertex(cross);
+                        add_edge_pos(triVerts[i], triVerts[j], cross);
 
                         int graph_eid = Graph.AppendEdge(vert_vid, cross_vid, (int)TriangleCase.EdgeVertex);
                         if (WantGraphEdgeInfo)
@@ -128,6 +170,7 @@ namespace g3
                         }
                         Vector3d cross = find_crossing(tv[i], tv[j], f[i], f[j]);
                         cross_verts[ti] = add_or_append_vertex(cross);
+                        add_edge_pos(triVerts[i], triVerts[j], cross);
                     }
                     int e0 = (cross_verts.a == int.MinValue) ? 1 : 0;
                     int e1 = (cross_verts.c == int.MinValue) ? 1 : 2;
@@ -192,19 +235,89 @@ namespace g3
         }
 
 
+        // [TODO] should convert this to a utility function
         Vector3d find_crossing(Vector3d a, Vector3d b, double fA, double fB)
         {
-            double t = 0.5;
-            if (fA < fB) {
-                t = (0 - fA) / (fB - fA);
-                t = MathUtil.Clamp(t, 0, 1);
+            if (fB < fA) {
+                Vector3d tmp = a; a = b; b = tmp;
+                double f = fA; fA = fB; fB = f;
+            }
+
+            if (RootMode == RootfindingModes.Bisection) {
+                for ( int k = 0; k < RootModeSteps; ++k ) {
+                    Vector3d c = Vector3d.Lerp(a, b, 0.5);
+                    double f = ValueF(c);
+                    if ( f < 0 ) {
+                        fA = f;  a = c;
+                    } else {
+                        fB = f;  b = c;
+                    }
+                }
+                return Vector3d.Lerp(a, b, 0.5);
+
+            } else {
+                // really should check this every iteration...
+                if ( Math.Abs(fB-fA) < MathUtil.ZeroTolerance )
+                    return a;
+
+                double t = 0;
+                if (RootMode == RootfindingModes.LerpSteps) {
+                    for (int k = 0; k < RootModeSteps; ++k) {
+                        t = MathUtil.Clamp((0 - fA) / (fB - fA), 0, 1);
+                        Vector3d c = (1 - t)*a + (t)*b;
+                        double f = ValueF(c);
+                        if (f < 0) {
+                            fA = f; a = c;
+                        } else {
+                            fB = f; b = c;
+                        }
+                    }
+                }
+
+                t = MathUtil.Clamp((0 - fA) / (fB - fA), 0, 1);
                 return (1 - t) * a + (t) * b;
-            } else if ( fB < fA ) {
-                t = (0 - fB) / (fA - fB);
-                t = MathUtil.Clamp(t, 0, 1);
-                return (1 - t) * b + (t) * a;
-            } else
-                return a;
+            }
+        }
+
+
+
+        void add_edge_pos(int a, int b, Vector3d crossing_pos)
+        {
+            int eid = Mesh.FindEdge(a, b);
+            if (eid == DMesh3.InvalidID)
+                throw new Exception("MeshIsoCurves.add_edge_split: invalid edge?");
+            if (EdgeLocations.ContainsKey(eid))
+                return;
+            EdgeLocations[eid] = crossing_pos;
+        }
+
+
+        /// <summary>
+        /// Split the mesh edges at the iso-crossings, unless edge is
+        /// shorter than min_len, or inserted point would be within min_len or vertex
+        /// [TODO] do we want to return any info here??
+        /// </summary>
+        public void SplitAtIsoCrossings(double min_len = 0)
+        {
+            foreach ( var pair in EdgeLocations ) {
+                int eid = pair.Key;
+                Vector3d pos = pair.Value;
+                if (!Mesh.IsEdge(eid))
+                    continue;
+
+                Index2i ev = Mesh.GetEdgeV(eid);
+                Vector3d a = Mesh.GetVertex(ev.a);
+                Vector3d b = Mesh.GetVertex(ev.b);
+                if (a.Distance(b) < min_len)
+                    continue;
+                Vector3d mid = (a + b) * 0.5;
+                if (a.Distance(mid) < min_len || b.Distance(mid) < min_len)
+                    continue;
+
+                DMesh3.EdgeSplitInfo splitInfo;
+                if (Mesh.SplitEdge(eid, out splitInfo) == MeshResult.Ok)
+                    Mesh.SetVertex(splitInfo.vNew, pos);
+            }
         }
 
 
