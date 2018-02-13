@@ -46,15 +46,21 @@ namespace g3
 
         public bool WantGraphEdgeInfo = false;
 
+        /// <summary>
+        /// Information about edge of the computed Graph. 
+        /// mesh_tri is triangle ID of crossed triangle
+        /// mesh_edges depends on case. EdgeEdge is [edgeid,edgeid], EdgeVertex is [edgeid,vertexid], and OnEdge is [edgeid,-1]
+        /// </summary>
         public struct GraphEdgeInfo
         {
             public TriangleCase caseType;
             public int mesh_tri;
             public Index2i mesh_edges;
+            public Index2i order;
         }
         public DVector<GraphEdgeInfo> GraphEdges = null;
 
-        // locations of edge crossings that we found during rootfinding
+        // locations of edge crossings that we found during rootfinding. key is edge id.
         Dictionary<int, Vector3d> EdgeLocations = new Dictionary<int, Vector3d>();
 
 
@@ -134,11 +140,14 @@ namespace g3
                     if (f[i1] == 0 || f[i2] == 0) {
                         // on-edge case
                         int z1 = f[i1] == 0 ? i1 : i2;
+                        if ( (z0+1)%3 != z1 ) {     
+                            int tmp = z0; z0 = z1; z1 = tmp;        // catch reverse-orientation cases
+                        }
                         int e0 = add_or_append_vertex(Mesh.GetVertex(triVerts[z0]));
                         int e1 = add_or_append_vertex(Mesh.GetVertex(triVerts[z1]));
                         int graph_eid = Graph.AppendEdge(e0, e1, (int)TriangleCase.OnEdge);
                         if (WantGraphEdgeInfo)
-                            add_on_edge(graph_eid, tid, triEdges[z0]);
+                            add_on_edge(graph_eid, tid, triEdges[z0], new Index2i(e0, e1));
 
                     } else {
                         // edge/vertex case
@@ -156,24 +165,42 @@ namespace g3
 
                         int graph_eid = Graph.AppendEdge(vert_vid, cross_vid, (int)TriangleCase.EdgeVertex);
                         if (WantGraphEdgeInfo)
-                            add_edge_edge(graph_eid, tid, new Index2i(triEdges[(z0+1)%3], triVerts[z0]));
+                            add_edge_vert(graph_eid, tid, triEdges[(z0+1)%3], triVerts[z0], new Index2i(vert_vid, cross_vid));
                     }
 
                 } else {
                     Index3i cross_verts = Index3i.Min;
-                    for (int ti = 0; ti < 3; ++ti) {
-                        int i = ti, j = (ti + 1) % 3;
+                    int less_than = 0, greater_than = 0;
+                    for (int tei = 0; tei < 3; ++tei) {
+                        int i = tei, j = (tei + 1) % 3;
+                        if (f[i] < 0)
+                            less_than++;
+                        else
+                            greater_than++;
                         if (f[i] * f[j] > 0)
                             continue;
                         if ( triVerts[j] < triVerts[i] ) {
                             int tmp = i; i = j; j = tmp;
                         }
                         Vector3d cross = find_crossing(tv[i], tv[j], f[i], f[j]);
-                        cross_verts[ti] = add_or_append_vertex(cross);
+                        cross_verts[tei] = add_or_append_vertex(cross);
                         add_edge_pos(triVerts[i], triVerts[j], cross);
                     }
                     int e0 = (cross_verts.a == int.MinValue) ? 1 : 0;
                     int e1 = (cross_verts.c == int.MinValue) ? 1 : 2;
+                    if (e0 == 0 && e1 == 2) {       // preserve orientation order
+                        e0 = 2; e1 = 0;
+                    }
+
+                    // preserving orientation does not mean we get a *consistent* orientation across faces.
+                    // To do that, we need to assign "sides". Either we have 1 less-than-0 or 1 greater-than-0 vtx.
+                    // Arbitrary decide that we want loops oriented like bdry loops would be if we discarded less-than side.
+                    // In that case, when we cut off one vertex, edge orientation would flip
+                    // (right? working for test case but is that everything ??)
+                    if (less_than == 1) {
+                        int tmp = e0; e0 = e1; e1 = tmp;
+                    }
+
                     int ev0 = cross_verts[e0];
                     int ev1 = cross_verts[e1];
                     // [RMS] if function is garbage, we can end up w/ case where both crossings
@@ -183,7 +210,7 @@ namespace g3
                         Util.gDevAssert(ev0 != int.MinValue && ev1 != int.MinValue);
                         int graph_eid = Graph.AppendEdge(ev0, ev1, (int)TriangleCase.EdgeEdge);
                         if (WantGraphEdgeInfo)
-                            add_edge_edge(graph_eid, tid, new Index2i(triEdges[e0], triEdges[e1]));
+                            add_edge_edge(graph_eid, tid, new Index2i(triEdges[e0], triEdges[e1]), new Index2i(ev0,ev1));
                     }
                 }
             }
@@ -204,32 +231,35 @@ namespace g3
         }
 
 
-        void add_edge_edge(int graph_eid, int mesh_tri, Index2i mesh_edges)
+        void add_edge_edge(int graph_eid, int mesh_tri, Index2i mesh_edges, Index2i order)
         {
             GraphEdgeInfo einfo = new GraphEdgeInfo() {
                 caseType = TriangleCase.EdgeEdge,
                 mesh_edges = mesh_edges,
-                mesh_tri = mesh_tri
+                mesh_tri = mesh_tri,
+                order = order
             };
             GraphEdges.insertAt(einfo, graph_eid);
         }
 
-        void add_edge_vert(int graph_eid, int mesh_tri, int mesh_edge, int mesh_vert)
+        void add_edge_vert(int graph_eid, int mesh_tri, int mesh_edge, int mesh_vert, Index2i order)
         {
             GraphEdgeInfo einfo = new GraphEdgeInfo() {
                 caseType = TriangleCase.EdgeVertex,
                 mesh_edges = new Index2i(mesh_edge, mesh_vert),
-                mesh_tri = mesh_tri
+                mesh_tri = mesh_tri,
+                order = order
             };
             GraphEdges.insertAt(einfo, graph_eid);
         }
 
-        void add_on_edge(int graph_eid, int mesh_tri, int mesh_edge)
+        void add_on_edge(int graph_eid, int mesh_tri, int mesh_edge, Index2i order)
         {
             GraphEdgeInfo einfo = new GraphEdgeInfo() {
                 caseType = TriangleCase.OnEdge,
                 mesh_edges = new Index2i(mesh_edge, -1),
-                mesh_tri = mesh_tri
+                mesh_tri = mesh_tri,
+                order = order
             };
             GraphEdges.insertAt(einfo, graph_eid);
         }
@@ -320,6 +350,29 @@ namespace g3
             }
         }
 
+
+
+
+        /// <summary>
+        /// DGraph3 edges are not oriented, which means they cannot inherit orientation from mesh.
+        /// This function returns true if, for a given graph_eid, the vertex pair returned by
+        /// Graph.GetEdgeV(graph_eid) should be reversed to be consistent with mesh orientation.
+        /// Mainly inteded to be passed to DGraph3Util.ExtractCurves
+        /// </summary>
+        public bool ShouldReverseGraphEdge(int graph_eid)
+        {
+            if (GraphEdges == null)
+                throw new Exception("MeshIsoCurves.OrientEdge: must track edge graph info to orient edge");
+
+            Index2i graph_ev = Graph.GetEdgeV(graph_eid);
+            GraphEdgeInfo einfo = GraphEdges[graph_eid];
+
+            if (graph_ev.b == einfo.order.a && graph_ev.a == einfo.order.b) {
+                return true;
+            }
+            Util.gDevAssert(graph_ev.a == einfo.order.a && graph_ev.b == einfo.order.b);
+            return false;
+        }
 
 
     }
