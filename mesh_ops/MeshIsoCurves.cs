@@ -170,13 +170,11 @@ namespace g3
 
                 } else {
                     Index3i cross_verts = Index3i.Min;
-                    int less_than = 0, greater_than = 0;
+                    int less_than = 0;
                     for (int tei = 0; tei < 3; ++tei) {
                         int i = tei, j = (tei + 1) % 3;
                         if (f[i] < 0)
                             less_than++;
-                        else
-                            greater_than++;
                         if (f[i] * f[j] > 0)
                             continue;
                         if ( triVerts[j] < triVerts[i] ) {
@@ -195,8 +193,7 @@ namespace g3
                     // preserving orientation does not mean we get a *consistent* orientation across faces.
                     // To do that, we need to assign "sides". Either we have 1 less-than-0 or 1 greater-than-0 vtx.
                     // Arbitrary decide that we want loops oriented like bdry loops would be if we discarded less-than side.
-                    // In that case, when we cut off one vertex, edge orientation would flip
-                    // (right? working for test case but is that everything ??)
+                    // In that case, when we are "cutting off" one vertex, orientation would end up flipped
                     if (less_than == 1) {
                         int tmp = e0; e0 = e1; e1 = tmp;
                     }
