@@ -10,7 +10,7 @@ namespace g3
     /// via GridOrigin, but does not support scaling or rotation. If you need those,
     /// you can wrap this in something that does the xform.
     /// </summary>
-    public class DenseGridTrilinearImplicit : ImplicitFunction3d
+	public class DenseGridTrilinearImplicit : BoundedImplicitFunction3d
     {
         public DenseGrid3f Grid;
         public double CellSize;
@@ -26,6 +26,16 @@ namespace g3
             GridOrigin = gridOrigin;
             CellSize = cellSize;
         }
+
+
+		public AxisAlignedBox3d Bounds()
+		{
+			return new AxisAlignedBox3d(
+				GridOrigin.x, GridOrigin.y, GridOrigin.z,
+				GridOrigin.x + CellSize * Grid.ni, 
+				GridOrigin.y + CellSize * Grid.nj, 
+				GridOrigin.z + CellSize * Grid.nk);
+		}
 
 
         public double Value(ref Vector3d pt)

@@ -24,11 +24,17 @@ namespace g3
             Max = new Vector3d(xmax, ymax, zmax);
         }
 
+		/// <summary>
+		/// init box [0,size] x [0,size] x [0,size]
+		/// </summary>
         public AxisAlignedBox3d(double fCubeSize) {
             Min = new Vector3d(0, 0, 0);
             Max = new Vector3d(fCubeSize, fCubeSize, fCubeSize);
         }
 
+		/// <summary>
+		/// Init box [0,width] x [0,height] x [0,depth]
+		/// </summary>
         public AxisAlignedBox3d(double fWidth, double fHeight, double fDepth) {
             Min = new Vector3d(0, 0, 0);
             Max = new Vector3d(fWidth, fHeight, fDepth);
