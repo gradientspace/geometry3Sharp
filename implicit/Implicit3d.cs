@@ -403,22 +403,43 @@ namespace g3
 		public BoundedImplicitFunction3d A;
 		public BoundedImplicitFunction3d B;
 
-		/// <summary>Blending power. 0 is Union, 2 is nice blend.</summary>
-		public double Blend {
+
+        /// <summary>Weight on implicit A</summary>
+        public double WeightA {
+            get { return weightA; }
+            set { weightA = MathUtil.Clamp(value, 0.00001, 100000); }
+        }
+        double weightA = 0.01;
+
+        /// <summary>Weight on implicit B</summary>
+        public double WeightB {
+            get { return weightB; }
+            set { weightB = MathUtil.Clamp(value, 0.00001, 100000); }
+        }
+        double weightB = 0.01;
+
+        /// <summary>Blending power</summary>
+        public double Blend {
 			get { return blend; }
 			set { blend = MathUtil.Clamp(value, 0.0, 100000); }
 		}
 		double blend = 2.0;
+
+
+        public double ExpandBounds = 0.25;
+
 
 		public double Value(ref Vector3d pt)
 		{
 			double fA = A.Value(ref pt);
 			double fB = B.Value(ref pt);
 			double sqr_sum = fA*fA + fB*fB;
-            Util.gDevAssert(sqr_sum != double.PositiveInfinity);
-			double b = blend / (1.0 + sqr_sum);
-			//double a = 0.5;
-			//return (1.0/(1.0+a)) * (fA + fB - Math.Sqrt(fA*fA + fB*fB - 2*a*fA*fB)) - b;
+            if (sqr_sum > 1e12)
+                return Math.Min(fA, fB);
+            double wa = fA/weightA, wb = fB/weightB;
+            double b = blend / (1.0 + wa*wa + wb*wb);
+            //double a = 0.5;
+            //return (1.0/(1.0+a)) * (fA + fB - Math.Sqrt(fA*fA + fB*fB - 2*a*fA*fB)) - b;
             return 0.666666 * (fA + fB - Math.Sqrt(sqr_sum - fA*fB)) - b;
 		}
 
@@ -426,7 +447,7 @@ namespace g3
 		{
 			var box = A.Bounds();
 			box.Contain(B.Bounds());
-            box.Expand( 0.5 * blend * box.MaxDim );
+            box.Expand(ExpandBounds * box.MaxDim );
 			return box;
 		}
 	}
