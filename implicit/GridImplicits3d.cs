@@ -17,8 +17,9 @@ namespace g3
         public Vector3d GridOrigin;
 
         // value to return if query point is outside grid (in an SDF
-        // outside is usually positive...)
-        public double Outside = double.MaxValue;
+        // outside is usually positive). Need to do math with this value,
+        // so don't use double.MaxValue or square will overflow
+        public double Outside = Math.Sqrt(Math.Sqrt(double.MaxValue));
 
         public DenseGridTrilinearImplicit(DenseGrid3f grid, Vector3d gridOrigin, double cellSize)
         {

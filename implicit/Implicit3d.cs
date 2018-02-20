@@ -213,6 +213,7 @@ namespace g3
 
 		public AxisAlignedBox3d Bounds()
 		{
+            // [TODO] intersect boxes
 			var box = A.Bounds();
 			box.Contain(B.Bounds());
 			return box;
@@ -222,7 +223,7 @@ namespace g3
 
 
 	/// <summary>
-	/// Boolean Difference/Subtraction of two implicit functions A-B, A AND (NOT B)
+	/// Boolean Difference/Subtraction of two implicit functions A-B = A AND (NOT B)
 	/// Assumption is that both have surface at zero isocontour and 
 	/// negative is inside.
 	/// </summary>
@@ -310,12 +311,94 @@ namespace g3
 
 
 
+    /// <summary>
+    /// Continuous R-Function Boolean Union of two implicit functions, A OR B.
+    /// Assumption is that both have surface at zero isocontour and 
+    /// negative is inside.
+    /// </summary>
+    public class ImplicitSmoothUnion3d : BoundedImplicitFunction3d
+    {
+        public BoundedImplicitFunction3d A;
+        public BoundedImplicitFunction3d B;
 
-	/// <summary>
-	/// Blend of two implicit surfaces. Assumes surface is at zero iscontour.
-	/// Uses Pasko blend from http://www.hyperfun.org/F-rep.pdf
-	/// </summary>
-	public class ImplicitBlend3d : BoundedImplicitFunction3d
+        const double mul = 1.0 / 1.5;
+
+        public double Value(ref Vector3d pt) {
+			double fA = A.Value(ref pt);
+			double fB = B.Value(ref pt);
+			return mul * (fA + fB - Math.Sqrt(fA*fA + fB*fB - fA*fB));
+        }
+
+        public AxisAlignedBox3d Bounds() {
+            var box = A.Bounds();
+            box.Contain(B.Bounds());
+            return box;
+        }
+    }
+
+
+
+    /// <summary>
+    /// Continuous R-Function Boolean Intersection of two implicit functions, A-B = A AND (NOT B)
+    /// Assumption is that both have surface at zero isocontour and 
+    /// negative is inside.
+    /// </summary>
+    public class ImplicitSmoothIntersection3d : BoundedImplicitFunction3d
+    {
+        public BoundedImplicitFunction3d A;
+        public BoundedImplicitFunction3d B;
+
+        const double mul = 1.0 / 1.5;
+
+        public double Value(ref Vector3d pt) {
+            double fA = A.Value(ref pt);
+            double fB = B.Value(ref pt);
+            return mul * (fA + fB + Math.Sqrt(fA*fA + fB*fB - fA*fB));
+        }
+
+        public AxisAlignedBox3d Bounds() {
+            var box = A.Bounds();
+            box.Contain(B.Bounds());
+            return box;
+        }
+    }
+
+
+
+
+    /// <summary>
+    /// Continuous R-Function Boolean Difference of two implicit functions, A AND B
+    /// Assumption is that both have surface at zero isocontour and 
+    /// negative is inside.
+    /// </summary>
+    public class ImplicitSmoothDifference3d : BoundedImplicitFunction3d
+    {
+        public BoundedImplicitFunction3d A;
+        public BoundedImplicitFunction3d B;
+
+        const double mul = 1.0 / 1.5;
+
+        public double Value(ref Vector3d pt) {
+            double fA = A.Value(ref pt);
+            double fB = -B.Value(ref pt);
+            return mul * (fA + fB + Math.Sqrt(fA*fA + fB*fB - fA*fB));
+        }
+
+        public AxisAlignedBox3d Bounds() {
+            var box = A.Bounds();
+            box.Contain(B.Bounds());
+            return box;
+        }
+    }
+
+
+
+
+    /// <summary>
+    /// Blend of two implicit surfaces. Assumes surface is at zero iscontour.
+    /// Uses Pasko blend from http://www.hyperfun.org/F-rep.pdf
+    /// </summary>
+    public class ImplicitBlend3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public BoundedImplicitFunction3d B;
@@ -332,16 +415,18 @@ namespace g3
 			double fA = A.Value(ref pt);
 			double fB = B.Value(ref pt);
 			double sqr_sum = fA*fA + fB*fB;
+            Util.gDevAssert(sqr_sum != double.PositiveInfinity);
 			double b = blend / (1.0 + sqr_sum);
 			//double a = 0.5;
 			//return (1.0/(1.0+a)) * (fA + fB - Math.Sqrt(fA*fA + fB*fB - 2*a*fA*fB)) - b;
-			return 0.666666 * (fA + fB - Math.Sqrt(sqr_sum - fA*fB)) - b;
+            return 0.666666 * (fA + fB - Math.Sqrt(sqr_sum - fA*fB)) - b;
 		}
 
 		public AxisAlignedBox3d Bounds()
 		{
 			var box = A.Bounds();
 			box.Contain(B.Bounds());
+            box.Expand( 0.5 * blend * box.MaxDim );
 			return box;
 		}
 	}

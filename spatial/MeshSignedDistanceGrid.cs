@@ -46,6 +46,10 @@ namespace g3
         // (In fact this is conservative, the band is often larger locally)
         public int ExactBandWidth = 1;
 
+        // Bounds of grid will be expanded this much in positive and negative directions.
+        // Useful for if you want field to extend outwards.
+        public Vector3d ExpandBounds = Vector3d.Zero;
+
         // Most of this parallelizes very well, makes a huge speed difference
         public bool UseParallel = true;
 
@@ -106,8 +110,8 @@ namespace g3
             AxisAlignedBox3d bounds = Mesh.CachedBounds;
 
             float fBufferWidth = 2 * ExactBandWidth * CellSize;
-            grid_origin = (Vector3f)bounds.Min - fBufferWidth * Vector3f.One;
-            Vector3f max = (Vector3f)bounds.Max + fBufferWidth * Vector3f.One;
+            grid_origin = (Vector3f)bounds.Min - fBufferWidth * Vector3f.One - (Vector3f)ExpandBounds;
+            Vector3f max = (Vector3f)bounds.Max + fBufferWidth * Vector3f.One + (Vector3f)ExpandBounds;
             int ni = (int)((max.x - grid_origin.x) / CellSize) + 1;
             int nj = (int)((max.y - grid_origin.y) / CellSize) + 1;
             int nk = (int)((max.z - grid_origin.z) / CellSize) + 1;
