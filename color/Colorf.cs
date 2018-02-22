@@ -222,6 +222,12 @@ namespace g3
 
 
 
+        // default colors
+        static readonly public Colorf StandardBeige = new Colorf(0.75f, 0.75f, 0.5f);
+        static readonly public Colorf SelectionGold = new Colorf(1.0f, 0.6f, 0.05f);
+        static readonly public Colorf PivotYellow = new Colorf(1.0f, 1.0f, 0.05f);
+
+
 
         // allow conversion to/from Vector3f
         public static implicit operator Vector3f(Colorf c)
