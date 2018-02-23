@@ -184,6 +184,9 @@ namespace g3
             Rotate(rot);
         }
 
+        /// <summary>
+        /// 3D projection of point p onto frame-axis plane orthogonal to normal axis
+        /// </summary>
         public Vector3f ProjectToPlane(Vector3f p, int nNormal)
         {
             Vector3f d = p - origin;
@@ -191,6 +194,10 @@ namespace g3
             return origin + (d - d.Dot(n) * n);
         }
 
+        /// <summary>
+        /// map from 2D coordinates in frame-axes plane perpendicular to normal axis, to 3D
+        /// [TODO] check that mapping preserves orientation?
+        /// </summary>
         public Vector3f FromPlaneUV(Vector2f v, int nPlaneNormalAxis)
         {
             Vector3f dv = new Vector3f(v[0], v[1], 0);
@@ -206,19 +213,38 @@ namespace g3
             return FromPlaneUV(v, nPlaneNormalAxis);
         }
 
-        public Vector2f ToPlaneUV(Vector3f p, int nNormal = 2, int nAxis0 = 0, int nAxis1 = 1)
+
+        /// <summary>
+        /// Project p onto plane axes
+        /// [TODO] check that mapping preserves orientation?
+        /// </summary>
+        public Vector2f ToPlaneUV(Vector3f p, int nNormal)
         {
+            int nAxis0 = 0, nAxis1 = 1;
+            if (nNormal == 0)
+                nAxis0 = 2;
+            else if (nNormal == 1)
+                nAxis1 = 2;
             Vector3f d = p - origin;
             float fu = d.Dot(GetAxis(nAxis0));
             float fv = d.Dot(GetAxis(nAxis1));
             return new Vector2f(fu, fv);
         }
+        [System.Obsolete("Use explicit ToPlaneUV instead")]
+        public Vector2f ToPlaneUV(Vector3f p, int nNormal, int nAxis0 = -1, int nAxis1 = -1)
+        {
+            if (nAxis0 != -1 || nAxis1 != -1)
+                throw new Exception("[RMS] was this being used?");
+            return ToPlaneUV(p, nNormal);
+        }
 
 
+        ///<summary> distance from p to frame-axes-plane perpendicular to normal axis </summary>
         public float DistanceToPlane(Vector3f p, int nNormal)
         {
             return Math.Abs((p - origin).Dot(GetAxis(nNormal)));
         }
+        ///<summary> signed distance from p to frame-axes-plane perpendicular to normal axis </summary>
 		public float DistanceToPlaneSigned(Vector3f p, int nNormal)
 		{
 			return (p - origin).Dot(GetAxis(nNormal));
@@ -309,7 +335,7 @@ namespace g3
         }
 
 
-
+        ///<summary> Map box *into* local coordinates of Frame </summary>
         public Box3f ToFrame(Box3f box) {
             box.Center = ToFrameP(box.Center);
             box.AxisX = ToFrameV(box.AxisX);
@@ -317,6 +343,7 @@ namespace g3
             box.AxisZ = ToFrameV(box.AxisZ);
             return box;
         }
+        /// <summary> Map box *from* local frame coordinates into "world" coordinates </summary>
         public Box3f FromFrame(Box3f box) {
             box.Center = FromFrameP(box.Center);
             box.AxisX = FromFrameV(box.AxisX);
@@ -324,6 +351,7 @@ namespace g3
             box.AxisZ = FromFrameV(box.AxisZ);
             return box;
         }
+        ///<summary> Map box *into* local coordinates of Frame </summary>
         public Box3d ToFrame(Box3d box) {
             box.Center = ToFrameP(box.Center);
             box.AxisX = ToFrameV(box.AxisX);
@@ -331,6 +359,7 @@ namespace g3
             box.AxisZ = ToFrameV(box.AxisZ);
             return box;
         }
+        /// <summary> Map box *from* local frame coordinates into "world" coordinates </summary>
         public Box3d FromFrame(Box3d box) {
             box.Center = FromFrameP(box.Center);
             box.AxisX = FromFrameV(box.AxisX);
@@ -358,12 +387,14 @@ namespace g3
         }
 
 
-
-        public static Frame3f Interpolate(Frame3f f1, Frame3f f2, float alpha)
+        /// <summary>
+        /// Interpolate between two frames - Lerp for origin, Slerp for rotation
+        /// </summary>
+        public static Frame3f Interpolate(Frame3f f1, Frame3f f2, float t)
         {
             return new Frame3f(
-                Vector3f.Lerp(f1.origin, f2.origin, alpha),
-                Quaternionf.Slerp(f1.rotation, f2.rotation, alpha) );
+                Vector3f.Lerp(f1.origin, f2.origin, t),
+                Quaternionf.Slerp(f1.rotation, f2.rotation, t) );
         }
 
 
