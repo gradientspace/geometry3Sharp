@@ -22,14 +22,16 @@ namespace g3
             QuaterionRotation = 1,
             QuaternionRotateAroundPoint = 2,
             Scale = 3,
-            ScaleAroundPoint = 4
+            ScaleAroundPoint = 4,
+            ToFrame = 5,
+            FromFrame = 6
         }
 
         struct XForm
         {
             public XFormType type;
             public Vector3dTuple3 data;
-
+            
             // may need to update these to handle other types...
             public Vector3d Translation {
                 get { return data.V0; }
@@ -42,6 +44,9 @@ namespace g3
             }
             public Vector3d RotateOrigin {
                 get { return data.V2; }
+            }
+            public Frame3f Frame {
+                get { return new Frame3f((Vector3f)RotateOrigin, Quaternion); }
             }
         }
 
@@ -103,6 +108,23 @@ namespace g3
             });
         }
 
+        public void AppendToFrame(Frame3f frame)
+        {
+            Quaternionf q = frame.Rotation; 
+            Operations.Add(new XForm() {
+                type = XFormType.ToFrame,
+                data = new Vector3dTuple3(new Vector3d(q.x, q.y, q.z), new Vector3d(q.w, 0, 0), frame.Origin)
+            });
+        }
+
+        public void AppendFromFrame(Frame3f frame)
+        {
+            Quaternionf q = frame.Rotation;
+            Operations.Add(new XForm() {
+                type = XFormType.FromFrame,
+                data = new Vector3dTuple3(new Vector3d(q.x, q.y, q.z), new Vector3d(q.w, 0, 0), frame.Origin)
+            });
+        }
 
 
         /// <summary>
@@ -137,6 +159,14 @@ namespace g3
                         p += Operations[i].RotateOrigin;
                         break;
 
+                    case XFormType.ToFrame:
+                        p = Operations[i].Frame.ToFrameP(p);
+                        break;
+
+                    case XFormType.FromFrame:
+                        p = Operations[i].Frame.FromFrameP(p);
+                        break;
+
                     default:
                         throw new NotImplementedException("TransformSequence.TransformP: unhandled type!");
                 }
@@ -145,6 +175,12 @@ namespace g3
             return p;
         }
 
+        /// <summary>
+        /// Apply transforms to point
+        /// </summary>
+        public Vector3f TransformP(Vector3f p) {
+            return (Vector3f)TransformP((Vector3d)p);
+        }
 
 
 
