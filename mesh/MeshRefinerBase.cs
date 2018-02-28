@@ -235,7 +235,11 @@ namespace g3
                 return constraints.GetVertexConstraint(vid);
             return VertexConstraint.Unconstrained;
         }
-
+        protected bool get_vertex_constraint(int vid, ref VertexConstraint  vc)
+        {
+            return (constraints == null) ? false :
+                constraints.GetVertexConstraint(vid, ref vc);
+        }
 
     }
 }
