@@ -60,17 +60,14 @@ namespace g3
             Min = Max = vCenter;
         }
 
-        public int Width
-        {
-            get { return Max.x - Min.x; }
+        public int Width {
+            get { return Math.Max(Max.x - Min.x, 0); }
         }
-        public int Height
-        {
-            get { return Max.y - Min.y; }
+        public int Height {
+            get { return Math.Max(Max.y - Min.y, 0); }
         }
-        public int Depth
-        {
-            get { return Max.z - Min.z; }
+        public int Depth {
+            get { return Math.Max(Max.z - Min.z, 0); }
         }
 
         public int Volume

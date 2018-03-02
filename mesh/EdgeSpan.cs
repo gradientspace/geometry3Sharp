@@ -84,6 +84,14 @@ namespace g3
         }
 
 
+        public DCurve3 ToCurve()
+        {
+            DCurve3 curve = MeshUtil.ExtractLoopV(Mesh, Vertices);
+            curve.Closed = true;
+            return curve;
+        }
+
+
         public bool IsInternalSpan()
         {
             int NV = Vertices.Length;

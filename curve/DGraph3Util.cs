@@ -22,7 +22,8 @@ namespace g3
         /// <summary>
         /// Decompose graph into simple polylines and polygons. 
         /// </summary>
-        public static Curves ExtractCurves(DGraph3 graph)
+        public static Curves ExtractCurves(DGraph3 graph,
+            Func<int, bool> CurveOrientationF = null )
         {
             Curves c = new Curves();
             c.Loops = new List<DCurve3>();
@@ -46,6 +47,7 @@ namespace g3
                 int eid = graph.GetVtxEdges(vid)[0];
                 if (used.Contains(eid))
                     continue;
+                bool reverse = (CurveOrientationF != null) ? CurveOrientationF(eid) : false;
 
                 DCurve3 path = new DCurve3() { Closed = false };
                 path.AppendVertex(graph.GetVertex(vid));
@@ -58,6 +60,8 @@ namespace g3
                     if (boundaries.Contains(vid) || junctions.Contains(vid))
                         break;  // done!
                 }
+                if (reverse)
+                    path.Reverse();
                 c.Paths.Add(path);
             }
 
@@ -71,6 +75,8 @@ namespace g3
                         continue;
                     int vid = start_vid;
                     int eid = outgoing_eid;
+
+                    bool reverse = (CurveOrientationF != null) ? CurveOrientationF(eid) : false;
 
                     DCurve3 path = new DCurve3() { Closed = false };
                     path.AppendVertex(graph.GetVertex(vid));
@@ -88,6 +94,8 @@ namespace g3
                     if (vid == start_vid) {
                         path.RemoveVertex(path.VertexCount - 1);
                         path.Closed = true;
+                        if (reverse)
+                            path.Reverse();
                         c.Loops.Add(path);
                         // need to mark incoming edge as used...but is it valid now?
                         //Util.gDevAssert(eid != int.MaxValue);
@@ -95,6 +103,8 @@ namespace g3
                             used.Add(eid);
 
                     } else {
+                        if (reverse)
+                            path.Reverse();
                         c.Paths.Add(path);
                     }
                 }
@@ -111,6 +121,8 @@ namespace g3
                 Index2i ev = graph.GetEdgeV(eid);
                 int vid = ev.a;
 
+                bool reverse = (CurveOrientationF != null) ? CurveOrientationF(eid) : false;
+
                 DCurve3 poly = new DCurve3() { Closed = true };
                 poly.AppendVertex(graph.GetVertex(vid));
                 while (true) {
@@ -125,6 +137,8 @@ namespace g3
                         break;
                 }
                 poly.RemoveVertex(poly.VertexCount - 1);
+                if (reverse)
+                    poly.Reverse();
                 c.Loops.Add(poly);
             }
 

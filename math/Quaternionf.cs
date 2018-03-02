@@ -8,7 +8,7 @@ using UnityEngine;
 namespace g3
 {
     // mostly ported from WildMagic5 Wm5Quaternion, from geometrictools.com
-    public struct Quaternionf
+    public struct Quaternionf : IComparable<Quaternionf>, IEquatable<Quaternionf>
     {
         // note: in Wm5 version, this is a 4-element array stored in order (w,x,y,z).
         public float x, y, z, w;
@@ -306,6 +306,51 @@ namespace g3
             }
 
             Normalize();   // we prefer normalized quaternions...
+        }
+
+
+
+
+        public static bool operator ==(Quaternionf a, Quaternionf b)
+        {
+            return (a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w);
+        }
+        public static bool operator !=(Quaternionf a, Quaternionf b)
+        {
+            return (a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Quaternionf)obj;
+        }
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int)2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ x.GetHashCode();
+                hash = (hash * 16777619) ^ y.GetHashCode();
+                hash = (hash * 16777619) ^ z.GetHashCode();
+                hash = (hash * 16777619) ^ w.GetHashCode();
+                return hash;
+            }
+        }
+        public int CompareTo(Quaternionf other)
+        {
+            if (x != other.x)
+                return x < other.x ? -1 : 1;
+            else if (y != other.y)
+                return y < other.y ? -1 : 1;
+            else if (z != other.z)
+                return z < other.z ? -1 : 1;
+            else if (w != other.w)
+                return w < other.w ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Quaternionf other)
+        {
+            return (x == other.x && y == other.y && z == other.z && w == other.w);
         }
 
 

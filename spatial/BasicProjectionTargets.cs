@@ -15,6 +15,8 @@ namespace g3
         {
             Mesh = mesh;
             Spatial = spatial;
+            if ( Spatial == null )
+                Spatial = new DMeshAABBTree3(mesh, true);
         }
 
         public MeshProjectionTarget(DMesh3 mesh)

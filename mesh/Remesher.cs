@@ -604,7 +604,8 @@ namespace g3 {
         protected virtual Vector3d ComputeSmoothedVertexPos(int vID, Func<DMesh3, int, double, Vector3d> smoothFunc, out bool bModified)
         {
             bModified = false;
-            VertexConstraint vConstraint = get_vertex_constraint(vID);
+            VertexConstraint vConstraint = VertexConstraint.Unconstrained;
+            get_vertex_constraint(vID, ref vConstraint);
             if (vConstraint.Fixed)
                 return Mesh.GetVertex(vID);
             VertexControl vControl = (VertexControlF == null) ? VertexControl.AllowAll : VertexControlF(vID);

@@ -24,11 +24,17 @@ namespace g3
             Max = new Vector3d(xmax, ymax, zmax);
         }
 
+		/// <summary>
+		/// init box [0,size] x [0,size] x [0,size]
+		/// </summary>
         public AxisAlignedBox3d(double fCubeSize) {
             Min = new Vector3d(0, 0, 0);
             Max = new Vector3d(fCubeSize, fCubeSize, fCubeSize);
         }
 
+		/// <summary>
+		/// Init box [0,width] x [0,height] x [0,depth]
+		/// </summary>
         public AxisAlignedBox3d(double fWidth, double fHeight, double fDepth) {
             Min = new Vector3d(0, 0, 0);
             Max = new Vector3d(fWidth, fHeight, fDepth);
@@ -62,14 +68,13 @@ namespace g3
         }
 
         public double Width {
-            get { return Max.x - Min.x; }
+            get { return Math.Max(Max.x - Min.x, 0); }
         }
         public double Height {
-            get { return Max.y - Min.y; }
+            get { return Math.Max(Max.y - Min.y, 0); }
         }
-        public double Depth
-        {
-            get { return Max.z - Min.z; }
+        public double Depth {
+            get { return Math.Max(Max.z - Min.z, 0); }
         }
 
         public double Volume {
@@ -193,6 +198,19 @@ namespace g3
             return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
                 && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
         }
+        public bool Contains(ref Vector3d v) {
+            return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
+                && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
+        }
+
+        public bool Contains(AxisAlignedBox3d box2) {
+            return Contains(ref box2.Min) && Contains(ref box2.Max);
+        }
+        public bool Contains(ref AxisAlignedBox3d box2) {
+            return Contains(ref box2.Min) && Contains(ref box2.Max);
+        }
+
+
         public bool Intersects(AxisAlignedBox3d box) {
             return !((box.Max.x <= Min.x) || (box.Min.x >= Max.x) 
                 || (box.Max.y <= Min.y) || (box.Min.y >= Max.y)

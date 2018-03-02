@@ -42,8 +42,9 @@ namespace g3
 
 
         /// <summary>
-        /// Process indices [iStart,iEnd], inclusive, by passing sub-intervals [start,end] to blockF.
+        /// Process indices [iStart,iEnd] *inclusive* by passing sub-intervals [start,end] to blockF.
         /// Blocksize is automatically determind unless you specify one.
+        /// Iterate over [start,end] *inclusive* in each block
         /// </summary>
         public static void BlockStartEnd(int iStart, int iEnd, Action<int,int> blockF, int iBlockSize = -1, bool bDisableParallel = false )
         {

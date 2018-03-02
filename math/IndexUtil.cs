@@ -80,6 +80,21 @@ namespace g3
             return DMesh3.InvalidID;
         }
 
+        /// <summary>
+        ///  find sequence [a,b] in tri_verts (mod3) and return index of a, or InvalidID if not found
+        /// </summary>
+        public static int find_tri_ordered_edge(int a, int b, ref Index3i tri_verts)
+        {
+            if (tri_verts.a == a && tri_verts.b == b) return 0;
+            if (tri_verts.b == a && tri_verts.c == b) return 1;
+            if (tri_verts.c == a && tri_verts.a == b) return 2;
+            return DMesh3.InvalidID;
+        }
+        public static int find_tri_ordered_edge(int a, int b, Index3i tri_verts)
+        {
+            return find_tri_ordered_edge(a, b, ref tri_verts);
+        }
+
         // find sequence [a,b] in tri_verts (mod3) then return the third **value**, or InvalidID if not found
         public static int find_tri_other_vtx(int a, int b, int[] tri_verts)
         {

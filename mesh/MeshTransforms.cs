@@ -83,7 +83,7 @@ namespace g3
             Scale(mesh, s, s, s);
         }
 
-
+        ///<summary>Map mesh *into* local coordinates of Frame </summary>
         public static void ToFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
@@ -101,6 +101,8 @@ namespace g3
                 }
             }
         }
+
+        /// <summary> Map mesh *from* local frame coordinates into "world" coordinates </summary>
         public static void FromFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
@@ -294,6 +296,23 @@ namespace g3
                 }
             }
         }
+
+
+        /// <summary>
+        /// Apply TransformF to subset of mesh vertices defined by MapV[vertices] 
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh targetMesh, IDeformableMesh sourceMesh, int[] mapV, Func<Vector3d, int, int, Vector3d> TransformF)
+        {
+            foreach (int vid in sourceMesh.VertexIndices()) {
+                int map_vid = mapV[vid];
+                if (targetMesh.IsVertex(map_vid)) {
+                    Vector3d newPos = TransformF(targetMesh.GetVertex(map_vid), vid, map_vid);
+                    targetMesh.SetVertex(map_vid, newPos);
+                }
+            }
+        }
+
+
 
     }
 }

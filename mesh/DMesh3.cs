@@ -321,9 +321,17 @@ namespace g3
             if (bShapeChange)
                 shape_timestamp++;
 		}
+
+        /// <summary>
+        /// Timestamp is incremented any time any change is made to the mesh
+        /// </summary>
         public int Timestamp {
             get { return timestamp; }
         }
+
+        /// <summary>
+        /// ShapeTimestamp is incremented any time any vertex position is changed or the mesh topology is modified
+        /// </summary>
         public int ShapeTimestamp {
             get { return shape_timestamp; }
         }
@@ -1156,6 +1164,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Enumerate ids of boundary edges
+        /// </summary>
         public IEnumerable<int> BoundaryEdgeIndices() {
             foreach ( int eid in edges_refcount ) {
                 if (edges[4 * eid + 3] == InvalidID)
@@ -1164,12 +1175,19 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Enumerate vertices
+        /// </summary>
         public IEnumerable<Vector3d> Vertices() {
             foreach (int vid in vertices_refcount) {
                 int i = 3 * vid;
                 yield return new Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
             }
         }
+
+        /// <summary>
+        /// Enumerate triangles
+        /// </summary>
         public IEnumerable<Index3i> Triangles() {
             foreach (int tid in triangles_refcount) {
                 int i = 3 * tid;
@@ -1177,7 +1195,9 @@ namespace g3
             }
         }
 
-        // return value is [v0,v1,t0,t1], where t1 will be InvalidID if this is a boundary edge
+        /// <summary>
+        /// Enumerage edges. return value is [v0,v1,t0,t1], where t1 will be InvalidID if this is a boundary edge
+        /// </summary>
         public IEnumerable<Index4i> Edges() {
             foreach (int eid in edges_refcount) {
                 int i = 4 * eid;
@@ -1188,21 +1208,30 @@ namespace g3
 
         // queries
 
-        // linear search through edges of vA
+        /// <summary>
+        /// Find edgeid for edge [a,b]
+        /// </summary>
         public int FindEdge(int vA, int vB) {
             debug_check_is_vertex(vA);
             debug_check_is_vertex(vB);
             return find_edge(vA, vB);
         }
 
-        // faster than FindEdge
-        public int FindEdgeFromTri(int vA, int vB, int t) {
-            return find_edge_from_tri(vA, vB, t);
+        /// <summary>
+        /// Find edgeid for edge [a,b] from triangle that contains the edge.
+        /// This is faster than FindEdge() because it is constant-time
+        /// </summary>
+        public int FindEdgeFromTri(int vA, int vB, int tID) {
+            return find_edge_from_tri(vA, vB, tID);
         }
 
-		// [RMS] this does more work than necessary, see (??? comment never finished...)
+		/// <summary>
+        /// If edge has vertices [a,b], and is connected two triangles [a,b,c] and [a,b,d],
+        /// this returns [c,d], or [c,InvalidID] for a boundary edge
+        /// </summary>
         public Index2i GetEdgeOpposingV(int eID)
         {
+            // [TODO] there was a comment here saying this does more work than necessary??
 			// ** it is important that verts returned maintain [c,d] order!!
 			int i = 4*eID;
             int a = edges[i], b = edges[i + 1];
@@ -1216,6 +1245,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Find triangle made up of any permutation of vertices [a,b,c]
+        /// </summary>
         public int FindTriangle(int a, int b, int c)
         {
             int eid = find_edge(a, b);
@@ -1238,6 +1270,9 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Enumerate "other" vertices of edges connected to vertex (ie vertex one-ring)
+        /// </summary>
 		public IEnumerable<int> VtxVerticesItr(int vID) {
 			if ( vertices_refcount.isValid(vID) ) {
                 foreach ( int eid in vertex_edges.ValueItr(vID) )
@@ -1246,6 +1281,9 @@ namespace g3
 		}
 
 
+        /// <summary>
+        /// Enumerate edge ids connected to vertex (ie edge one-ring)
+        /// </summary>
 		public IEnumerable<int> VtxEdgesItr(int vID) {
 			if ( vertices_refcount.isValid(vID) ) {
                 return vertex_edges.ValueItr(vID);
@@ -1280,6 +1318,7 @@ namespace g3
         }
 
         /// <summary>
+        /// Find edge ids of boundary edges connected to vertex.
         /// e needs to be large enough (ie call VtxBoundaryEdges, or as large as max one-ring)
         /// returns count, ie number of elements of e that were filled
         /// </summary>
@@ -1299,7 +1338,10 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Get triangle one-ring at vertex. 
+        /// bUseOrientation is more efficient but returns incorrect result if vertex is a bowtie
+        /// </summary>
         public MeshResult GetVtxTriangles(int vID, List<int> vTriangles, bool bUseOrientation)
         {
             if (!IsVertex(vID))
@@ -1363,6 +1405,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// iterate over triangle IDs of vertex one-ring
+        /// </summary>
 		public IEnumerable<int> VtxTrianglesItr(int vID) {
 			if ( IsVertex(vID) ) {
 				foreach (int eid in vertex_edges.ValueItr(vID)) {
@@ -1379,9 +1424,10 @@ namespace g3
 		}
 
 
-
-		// from edge and vert, returns other vert, two opposing verts, and two triangles
-		public void GetVtxNbrhood(int eID, int vID, ref int vOther, ref int oppV1, ref int oppV2, ref int t1, ref int t2)
+        /// <summary>
+        ///  from edge and vert, returns other vert, two opposing verts, and two triangles
+        /// </summary>
+        public void GetVtxNbrhood(int eID, int vID, ref int vOther, ref int oppV1, ref int oppV2, ref int t1, ref int t2)
 		{
 			int i = 4*eID;
 			vOther = (edges[i] == vID) ? edges[i+1] : edges[i];
@@ -1393,6 +1439,29 @@ namespace g3
 			else
 				t2 = InvalidID;
 		}
+
+
+        /// <summary>
+        /// Fastest possible one-ring centroid. This is used inside many other algorithms
+        /// so it helps to have it be maximally efficient
+        /// </summary>
+        public void VtxOneRingCentroid(int vID, ref Vector3d centroid)
+        {
+            centroid = Vector3d.Zero;
+            if (vertices_refcount.isValid(vID)) {
+                int n = 0;
+                foreach (int eid in vertex_edges.ValueItr(vID)) {
+                    int other_idx = 3 * edge_other_v(eid, vID);
+                    centroid.x += vertices[other_idx];
+                    centroid.y += vertices[other_idx + 1];
+                    centroid.z += vertices[other_idx + 2];
+                    n++;
+                }
+                double d = 1.0 / n;
+                centroid.x *= d; centroid.y *= d; centroid.z *= d;
+            }
+        }
+
 
 
         public bool tri_has_v(int tID, int vID) {
@@ -1493,6 +1562,9 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Returns true if any edge of triangle is a boundary edge
+        /// </summary>
         public bool IsBoundaryTriangle(int tID)
         {
             debug_check_is_triangle(tID);
@@ -1541,6 +1613,9 @@ namespace g3
         // queries
 
 
+        /// <summary>
+        /// Returns true if the two triangles connected to edge have different group IDs
+        /// </summary>
         public bool IsGroupBoundaryEdge(int eID)
         {
             if ( IsEdge(eID) == false )
@@ -1557,7 +1632,9 @@ namespace g3
         }
 
 
-        // returns true if vertex has more than one tri groups in its tri nbrhood
+        /// <summary>
+        /// returns true if vertex has more than one tri group in its tri nbrhood
+        /// </summary>
         public bool IsGroupBoundaryVertex(int vID)
         {
             if (IsVertex(vID) == false)
@@ -1586,7 +1663,9 @@ namespace g3
 
 
 
-        // returns true if more than two group border edges meet at vertex
+        /// <summary>
+        /// returns true if more than two group boundary edges meet at vertex (ie 3+ groups meet at this vertex)
+        /// </summary>
         public bool IsGroupJunctionVertex(int vID)
         {
             if (IsVertex(vID) == false)
@@ -1615,7 +1694,7 @@ namespace g3
 
 
         /// <summary>
-        /// returns up to 4 group IDs at input vid. Returns false if > 4 encountered
+        /// returns up to 4 group IDs at vertex. Returns false if > 4 encountered
         /// </summary>
         public bool GetVertexGroups(int vID, out Index4i groups)
         {
@@ -1648,7 +1727,7 @@ namespace g3
 
 
         /// <summary>
-        /// returns up to 4 group IDs at input vid. Returns false if > 4 encountered
+        /// returns all group IDs at vertex
         /// </summary>
         public bool GetAllVertexGroups(int vID, ref List<int> groups)
         {
@@ -1694,7 +1773,9 @@ namespace g3
         }
 
 
-        // compute vertex bounding box
+        /// <summary>
+        /// Computes bounding box of all vertices.
+        /// </summary>
         public AxisAlignedBox3d GetBounds()
         {
             double x = 0, y = 0, z = 0;
@@ -1715,7 +1796,9 @@ namespace g3
         AxisAlignedBox3d cached_bounds;
         int cached_bounds_timestamp = -1;
 
-        //! cached bounding box, lazily re-computed on access if mesh has changed
+        /// <summary>
+        /// cached bounding box, lazily re-computed on access if mesh has changed
+        /// </summary>
         public AxisAlignedBox3d CachedBounds
         {
             get {
@@ -1731,7 +1814,7 @@ namespace g3
 
 
         bool cached_is_closed = false;
-        int cached_is_closed_timstamp = -1;
+        int cached_is_closed_timestamp = -1;
 
         public bool IsClosed() {
             if (TriangleCount == 0)
@@ -1752,9 +1835,9 @@ namespace g3
 
         public bool CachedIsClosed {
             get {
-                if (cached_is_closed_timstamp != Timestamp) {
+                if (cached_is_closed_timestamp != Timestamp) {
                     cached_is_closed = IsClosed();
-                    cached_is_closed_timstamp = Timestamp;
+                    cached_is_closed_timestamp = Timestamp;
                 }
                 return cached_is_closed;
             }
@@ -1882,9 +1965,11 @@ namespace g3
 
 
 
-        // assumes that we have initialized vertices, triangles, and edges buffers,
-        // and edges refcounts. Rebuilds vertex and tri refcounts, triangle edges,
-        // vertex edges
+        /// <summary>
+        /// Rebuild mesh topology.
+        /// assumes that we have initialized vertices, triangles, and edges buffers,
+        /// and edges refcounts. Rebuilds vertex and tri refcounts, triangle edges, vertex edges.
+        /// </summary>
         public void RebuildFromEdgeRefcounts()
         {
             int MaxVID = vertices.Length / 3;

@@ -59,10 +59,10 @@ namespace g3
         }
 
         public double Width {
-            get { return Max.x - Min.x; }
+            get { return Math.Max(Max.x - Min.x, 0); }
         }
         public double Height {
-            get { return Max.y - Min.y; }
+            get { return Math.Max(Max.y - Min.y, 0); }
         }
 
         public double Area {

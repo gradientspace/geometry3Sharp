@@ -13,9 +13,16 @@ namespace g3 {
 		public static Vector3d UniformSmooth(DMesh3 mesh, int vID, double t) 
 		{
 			Vector3d v = mesh.GetVertex(vID);
-			Vector3d c = MeshWeights.OneRingCentroid(mesh, vID);
-			return (1-t)*v + (t)*c;
-		}
+            //Vector3d c = MeshWeights.OneRingCentroid(mesh, vID);
+            //return (1 - t) * v + (t) * c;
+            Vector3d c = Vector3d.Zero;
+            mesh.VtxOneRingCentroid(vID, ref c);
+            double s = 1.0 - t;
+            v.x = s * v.x + t * c.x;
+            v.y = s * v.y + t * c.y;
+            v.z = s * v.z + t * c.z;
+            return v;
+        }
 
 		// t in range [0,1]
 		public static Vector3d MeanValueSmooth(DMesh3 mesh, int vID, double t) 

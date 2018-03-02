@@ -103,6 +103,11 @@ namespace g3
             Timestamp++;
         }
 
+        public void Reverse() {
+			vertices.Reverse();
+			Timestamp++;
+		}
+
 
         public Vector3d this[int key]
         {
