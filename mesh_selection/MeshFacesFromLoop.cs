@@ -16,7 +16,7 @@ namespace g3
 
         int[] InitialLoopT;
 
-        List<int> PathT;
+        public List<int> PathT;
         List<int> InteriorT;
 
         public MeshFacesFromLoop(DMesh3 Mesh, DCurve3 SpaceCurve, ISpatial Spatial)

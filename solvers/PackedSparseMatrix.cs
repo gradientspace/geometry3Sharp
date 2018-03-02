@@ -546,12 +546,30 @@ namespace g3
 
                     // compute them!
                     foreach (int c2i in nbrs) {
-                        double v = DotRowColumn(r1i, c2i, this);
+                        double v;
+                        try
+                        {
+                            v = DotRowColumn(r1i, c2i, this);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                            return;
+                        }
+                        
                         if (Math.Abs(v) > MathUtil.ZeroTolerance) {
-                            bool taken = false;
-                            entries_lock.Enter(ref taken);
-                            entries.Add(new matrix_entry() { r = r1i, c = c2i, value = v });
-                            entries_lock.Exit();
+                            try
+                            {
+                                bool taken = false;
+                                entries_lock.Enter(ref taken);
+                                entries.Add(new matrix_entry() {r = r1i, c = c2i, value = v});
+                                entries_lock.Exit();
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                                return;
+                            }
                         }
                     }
                 }

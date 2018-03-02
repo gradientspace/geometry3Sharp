@@ -28,7 +28,7 @@ namespace g3
     ///   - DoTraversal(generic_traversal_object)
     /// 
     /// </summary>
-    public class DMeshAABBTree3 : ISpatial
+    public partial class DMeshAABBTree3 : ISpatial
     {
         DMesh3 mesh;
         int mesh_timestamp;

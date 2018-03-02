@@ -240,7 +240,7 @@ namespace g3
         public double[][] X;
         public bool UseXAsInitialGuess = true;
 
-        public int MaxIterations = 1024;
+        public int MaxIterations = 2048;
         public int Iterations;
 
         // internal

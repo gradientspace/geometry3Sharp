@@ -79,6 +79,7 @@ namespace g3
                 ToIndex[vid] = N;
                 N++;
             }
+            
 
             Px = new double[N];
             Py = new double[N];
@@ -112,7 +113,7 @@ namespace g3
                     sum_w += w;
                 }
                 sum_w = -sum_w;
-                M.Set(vid, vid, sum_w);
+                M.Set(i, i, sum_w);
             }
 
             // transpose(L) * L, but matrix is symmetric...
@@ -277,7 +278,7 @@ namespace g3
             SparseSymmetricCGMultipleRHS Solver = new SparseSymmetricCGMultipleRHS() {
                 B = B, X = X,
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = null,
-                UseXAsInitialGuess = true
+                UseXAsInitialGuess = true, ConvergeTolerance = MathUtil.ZeroTolerance * 10000
             };
 
             bool ok = Solver.Solve();

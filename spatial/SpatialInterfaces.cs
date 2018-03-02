@@ -26,6 +26,14 @@ namespace g3
         /// return true if query point is inside mesh
         /// </summary>
         bool IsInside(Vector3d p);
+        
+
+        /// <summary>
+        /// Find the triangles within a sphere with ${center} and ${radius}
+        /// </summary>
+        IEnumerable<int> FindInSphereTriangles(Vector3d center, double radius);
+        
+        bool SupportsInSphereTriangle { get; }
     }
 
 
