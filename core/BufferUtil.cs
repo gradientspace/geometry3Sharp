@@ -367,6 +367,104 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// convert byte array to VectorArray3d
+        /// </summary>
+        static public VectorArray3d ToVectorArray3d(byte[] buffer)
+        {
+            int sz = sizeof(double);
+            int Nvals = buffer.Length / sz;
+            int Nvecs = Nvals / 3;
+            VectorArray3d v = new VectorArray3d(Nvecs);
+            for (int i = 0; i < Nvecs; i++) {
+                double x = BitConverter.ToDouble(buffer, (3 * i) * sz);
+                double y = BitConverter.ToDouble(buffer, (3 * i + 1) * sz);
+                double z = BitConverter.ToDouble(buffer, (3 * i + 2) * sz);
+                v.Set(i, x, y, z);
+            }
+            return v;
+        }
+
+
+
+        /// <summary>
+        /// convert byte array to VectorArray2f
+        /// </summary>
+        static public VectorArray2f ToVectorArray2f(byte[] buffer)
+        {
+            int sz = sizeof(float);
+            int Nvals = buffer.Length / sz;
+            int Nvecs = Nvals / 2;
+            VectorArray2f v = new VectorArray2f(Nvecs);
+            for (int i = 0; i < Nvecs; i++) {
+                float x = BitConverter.ToSingle(buffer, (2 * i) * sz);
+                float y = BitConverter.ToSingle(buffer, (2 * i + 1) * sz);
+                v.Set(i, x, y);
+            }
+            return v;
+        }
+
+        /// <summary>
+        /// convert byte array to VectorArray3f
+        /// </summary>
+        static public VectorArray3f ToVectorArray3f(byte[] buffer)
+        {
+            int sz = sizeof(float);
+            int Nvals = buffer.Length / sz;
+            int Nvecs = Nvals / 3;
+            VectorArray3f v = new VectorArray3f(Nvecs);
+            for (int i = 0; i < Nvecs; i++) {
+                float x = BitConverter.ToSingle(buffer, (3 * i) * sz);
+                float y = BitConverter.ToSingle(buffer, (3 * i + 1) * sz);
+                float z = BitConverter.ToSingle(buffer, (3 * i + 2) * sz);
+                v.Set(i, x, y, z);
+            }
+            return v;
+        }
+
+
+
+
+        /// <summary>
+        /// convert byte array to VectorArray3i
+        /// </summary>
+        static public VectorArray3i ToVectorArray3i(byte[] buffer)
+        {
+            int sz = sizeof(int);
+            int Nvals = buffer.Length / sz;
+            int Nvecs = Nvals / 3;
+            VectorArray3i v = new VectorArray3i(Nvecs);
+            for (int i = 0; i < Nvecs; i++) {
+                int x = BitConverter.ToInt32(buffer, (3 * i) * sz);
+                int y = BitConverter.ToInt32(buffer, (3 * i + 1) * sz);
+                int z = BitConverter.ToInt32(buffer, (3 * i + 2) * sz);
+                v.Set(i, x, y, z);
+            }
+            return v;
+        }
+
+
+        /// <summary>
+        /// convert byte array to IndexArray4i
+        /// </summary>
+        static public IndexArray4i ToIndexArray4i(byte[] buffer)
+        {
+            int sz = sizeof(int);
+            int Nvals = buffer.Length / sz;
+            int Nvecs = Nvals / 4;
+            IndexArray4i v = new IndexArray4i(Nvecs);
+            for (int i = 0; i < Nvecs; i++) {
+                int a = BitConverter.ToInt32(buffer, (4 * i) * sz);
+                int b = BitConverter.ToInt32(buffer, (4 * i + 1) * sz);
+                int c = BitConverter.ToInt32(buffer, (4 * i + 2) * sz);
+                int d = BitConverter.ToInt32(buffer, (4 * i + 3) * sz);
+                v.Set(i, a, b, c, d);
+            }
+            return v;
+        }
+
+
+
 
         /// <summary>
         /// Compress a byte buffer using Deflate/ZLib compression. 
