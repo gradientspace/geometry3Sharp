@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace g3
 {
-    //
-    // convenience functions for setting values in an array in sets of 2/3
-    //   (eg for arrays that are actually a list of vectors)
-    //
+    /// <summary>
+    /// Convenience functions for working with arrays. 
+    ///    - Math functions on arrays of floats/doubles
+    ///    - "automatic" conversion from IEnumerable<T> (via introspection)
+    ///    - byte[] conversions
+    ///    - zlib compress/decompress byte[] buffers
+    /// </summary>
     public class BufferUtil
     {
         static public void SetVertex3(double[] v, int i, double x, double y, double z) {
@@ -302,14 +307,117 @@ namespace g3
 
 
 
+        /// <summary>
+        /// convert byte array to int array
+        /// </summary>
+        static public int[] ToInt(byte[] buffer)
+        {
+            int sz = sizeof(int);
+            int Nvals = buffer.Length / sz;
+            int[] v = new int[Nvals];
+            for (int i = 0; i < Nvals; i++) {
+                v[i] = BitConverter.ToInt32(buffer, i * sz);
+            }
+            return v;
+        }
+
+
+        /// <summary>
+        /// convert byte array to short array
+        /// </summary>
+        static public short[] ToShort(byte[] buffer)
+        {
+            int sz = sizeof(short);
+            int Nvals = buffer.Length / sz;
+            short[] v = new short[Nvals];
+            for (int i = 0; i < Nvals; i++) {
+                v[i] = BitConverter.ToInt16(buffer, i * sz);
+            }
+            return v;
+        }
+
+
+        /// <summary>
+        /// convert byte array to double array
+        /// </summary>
+        static public double[] ToDouble(byte[] buffer)
+        {
+            int sz = sizeof(double);
+            int Nvals = buffer.Length / sz;
+            double[] v = new double[Nvals];
+            for (int i = 0; i < Nvals; i++) {
+                v[i] = BitConverter.ToDouble(buffer, i * sz);
+            }
+            return v;
+        }
+
+
+        /// <summary>
+        /// convert byte array to float array
+        /// </summary>
+        static public float[] ToFloat(byte[] buffer)
+        {
+            int sz = sizeof(float);
+            int Nvals = buffer.Length / sz;
+            float[] v = new float[Nvals];
+            for (int i = 0; i < Nvals; i++) {
+                v[i] = BitConverter.ToSingle(buffer, i * sz);
+            }
+            return v;
+        }
+
+
+
+        /// <summary>
+        /// Compress a byte buffer using Deflate/ZLib compression. 
+        /// </summary>
+        static public byte[] CompressZLib(byte[] buffer, bool bFast)
+        {
+            MemoryStream ms = new MemoryStream();
+            DeflateStream zip = new DeflateStream(ms, (bFast) ? CompressionLevel.Fastest : CompressionLevel.Optimal, true);
+            zip.Write(buffer, 0, buffer.Length);
+            zip.Close();
+            ms.Position = 0;
+
+            byte[] compressed = new byte[ms.Length];
+            ms.Read(compressed, 0, compressed.Length);
+
+            byte[] zBuffer = new byte[compressed.Length + 4];
+            Buffer.BlockCopy(compressed, 0, zBuffer, 4, compressed.Length);
+            Buffer.BlockCopy(BitConverter.GetBytes(buffer.Length), 0, zBuffer, 0, 4);
+            return zBuffer;
+        }
+
+
+        /// <summary>
+        /// Decompress a byte buffer that has been compressed using Deflate/ZLib compression
+        /// </summary>
+        static public byte[] DecompressZLib(byte[] zBuffer)
+        {
+            MemoryStream ms = new MemoryStream();
+            int msgLength = BitConverter.ToInt32(zBuffer, 0);
+            ms.Write(zBuffer, 4, zBuffer.Length - 4);
+
+            byte[] buffer = new byte[msgLength];
+
+            ms.Position = 0;
+            DeflateStream zip = new DeflateStream(ms, CompressionMode.Decompress);
+            zip.Read(buffer, 0, buffer.Length);
+
+            return buffer;
+        }
+
+
     }
 
 
 
 
-    // utility class for porting C++ code that uses this kind of idiom:
-    //    T * ptr = &array[i];
-    //    ptr[k] = value
+    /// <summary>
+    /// utility class for porting C++ code that uses this kind of idiom:
+    ///    T * ptr = &array[i];
+    ///    ptr[k] = value
+    /// </summary>
     public struct ArrayAlias<T>
     {
         public T[] Source;
