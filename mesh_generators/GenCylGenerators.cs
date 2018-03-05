@@ -40,6 +40,7 @@ namespace g3
         public int startCapCenterIndex = -1;
         public int endCapCenterIndex = -1;
 
+        public bool WeighedUV = false;
 
         public TubeGenerator()
         {
@@ -79,10 +80,14 @@ namespace g3
             triangles = new IndexArray3i(nSpanTris + nCapTris);
 
             Frame3f fCur = new Frame3f(Frame);
+            Frame3f fNext = new Frame3f(Frame);
             Vector3d dv = CurveUtils.GetTangent(Vertices, 0); ;
             fCur.Origin = (Vector3f)Vertices[0];
             fCur.AlignAxis(2, (Vector3f)dv);
             Frame3f fStart = new Frame3f(fCur);
+
+            float pathLength = WeighedUV ? (float)CurveUtils.ArcLength(Vertices) : 0;
+            float running_uv_along = 0;
 
             // generate tube
             for (int ri = 0; ri < nRings; ++ri) {
@@ -91,8 +96,6 @@ namespace g3
                 if (ri != 0) {
                     Vector3d tan = CurveUtils.GetTangent(Vertices, ri);
                     fCur.Origin = (Vector3f)Vertices[ri];
-                    if (ri == 11)
-                        dv = tan;
                     fCur.AlignAxis(2, (Vector3f)tan);
                 }
 
@@ -100,16 +103,47 @@ namespace g3
 
                 // generate vertices
                 int nStartR = ri * nRingSize;
-                for (int j = 0; j < nRingSize; ++j) {
-                    float uv_around = (float)j / (float)(nRings);
 
+                double circumference = 0;
+
+                if (WeighedUV) {
+                    // calculate ring circumference
+                    for (int j = 0; j < nRingSize; ++j) {
+                        Vector2d pv = Polygon.Vertices[j % Slices];
+                        Vector2d pvNext = Polygon.Vertices[(j + 1) % Slices];
+                        circumference += pv.Distance(pvNext);
+                    }
+                }
+
+                float running_uv_around = 0;
+
+                for (int j = 0; j < nRingSize; ++j) {
                     int k = nStartR + j;
                     Vector2d pv = Polygon.Vertices[j % Slices];
+                    Vector2d pvNext = Polygon.Vertices[(j + 1) % Slices];
                     Vector3d v = fCur.FromPlaneUV((Vector2f)pv, 2);
                     vertices[k] = v;
-                    uv[k] = new Vector2f(uv_along, uv_around);
+
+                    if (WeighedUV) {
+                        uv[k] = new Vector2f(running_uv_along, running_uv_around);
+                        running_uv_around += (float)(pv.Distance(pvNext) / circumference);
+                    } else {
+                        float uv_around = (float)j / (float)(nRingSize);
+                        uv[k] = new Vector2f(uv_along, uv_around);
+                    }
+
                     Vector3f n = (Vector3f)(v - fCur.Origin).Normalized;
                     normals[k] = n;
+                }
+
+                if (WeighedUV) {
+                    int riNext = (ri + 1) % nRings;
+                    Vector3d tanNext = CurveUtils.GetTangent(Vertices, riNext);
+                    fNext.Origin = (Vector3f)Vertices[riNext];
+                    fNext.AlignAxis(2, (Vector3f)tanNext);
+
+                    float d = fCur.Origin.Distance(fNext.Origin);
+                    running_uv_along += d / pathLength;
                 }
             }
 
