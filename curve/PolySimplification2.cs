@@ -138,8 +138,10 @@ namespace g3
 
                 if ( keep_segments[i0] ) {
                     if (last_i != i0) {
-                        Util.gDevAssert(input[i0].Distance(result[result.Count - 1]) > MathUtil.Epsilonf);
-                        result.Add(input[i0]);
+                        // skip join segment if it is degenerate
+                        double join_dist = input[i0].Distance(result[result.Count - 1]);
+                        if ( join_dist > MathUtil.Epsilon)
+                            result.Add(input[i0]);
                     }
                     result.Add(input[i1]);
                     last_i = i1;
@@ -177,12 +179,16 @@ namespace g3
             }
 
             
-            if ( IsLoop ) { 
+            if ( IsLoop ) {
+                // if we skipped everything, rest of code doesn't work
+                if (result.Count < 3)
+                    return handle_tiny_case(result, input, keep_segments, offset_threshold);
+
                 Line2d last_line = Line2d.FromPoints(input[last_i], input[cur_i % N]);
                 bool collinear_startv = last_line.DistanceSquared(result[0]) < thresh_sqr;
                 bool collinear_starts = last_line.DistanceSquared(result[1]) < thresh_sqr;
-                if (collinear_startv && collinear_starts) {
-                    // last seg is collinaer w/ start seg, merge them
+                if (collinear_startv && collinear_starts && result.Count > 3) {
+                    // last seg is collinear w/ start seg, merge them
                     result[0] = input[last_i];
                     result.RemoveAt(result.Count - 1);
 
@@ -198,6 +204,21 @@ namespace g3
                 result.Add(input[input.Count - 1]);
             }
 
+            return result;
+        }
+
+
+
+        List<Vector2d> handle_tiny_case(List<Vector2d> result, List<Vector2d> input, bool[] keep_segments, double offset_threshold)
+        {
+            int N = input.Count;
+            if (N == 3)
+                return input;       // not much we can really do here...
+
+            result.Clear();
+            result.Add(input[0]);
+            result.Add(input[N/3]);
+            result.Add(input[N-N/3]);
             return result;
         }
 
