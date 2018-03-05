@@ -13,7 +13,7 @@ namespace g3
     /// which is not ideal in many contexts (eg manufacturing).
     /// 
     /// Strategy here is :
-    ///   1) runs of vertices that are very close to straight lines (default 0.01mm deviation tol)
+    ///   1) find runs of vertices that are very close to straight lines (default 0.01mm deviation tol)
     ///   2) find all straight segments longer than threshold distance (default 2mm)
     ///   3) discard vertices that deviate less than tolerance (default = 0.2mm)
     ///      from sequential-points-segment, unless they are required to preserve
@@ -62,6 +62,27 @@ namespace g3
             Vertices = new List<Vector2d>(polycurve.Vertices);
             IsLoop = false;
         }
+
+
+
+        /// <summary>
+        /// simplify outer and holes of a polygon solid with same thresholds
+        /// </summary>
+        public static void Simplify(GeneralPolygon2d solid, double deviationThresh)
+        {
+            PolySimplification2 simp = new PolySimplification2(solid.Outer);
+            simp.SimplifyDeviationThreshold = deviationThresh;
+            simp.Simplify();
+            solid.Outer.SetVertices(simp.Result, true);
+
+            foreach (var hole in solid.Holes) {
+                PolySimplification2 holesimp = new PolySimplification2(hole);
+                holesimp.SimplifyDeviationThreshold = deviationThresh;
+                holesimp.Simplify();
+                hole.SetVertices(holesimp.Result, true);
+            }
+        }
+
 
 
         public void Simplify()
@@ -122,8 +143,12 @@ namespace g3
                     }
                     result.Add(input[i1]);
                     last_i = i1;
-                    cur_i = i1;
                     skip_count = 0;
+                    if (i1 == 0) {
+                        cur_i = NStop;
+                    } else {
+                        cur_i = i1;
+                    }
                     continue;
                 }
 

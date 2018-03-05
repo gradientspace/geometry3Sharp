@@ -96,6 +96,20 @@ namespace g3
             Timestamp++;
         }
 
+
+        public void SetVertices(List<Vector2d> newVertices, bool bTakeOwnership)
+        {
+            if ( bTakeOwnership) {
+                vertices = newVertices;
+            } else {
+                vertices.Clear();
+                int N = newVertices.Count;
+                for (int i = 0; i < N; ++i)
+                    vertices.Add(newVertices[i]);
+            }
+        }
+
+
         public void Reverse()
 		{
 			vertices.Reverse();
