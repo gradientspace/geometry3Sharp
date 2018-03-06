@@ -149,6 +149,9 @@ namespace g3
 
 
         public void resize(int count) {
+            if (Length == count)
+                return;
+
             // figure out how many segments we need
             int nNumSegs = 1 + (int)count / nBlockSize;
 
