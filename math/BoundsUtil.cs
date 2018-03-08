@@ -60,6 +60,18 @@ namespace g3
 
 
         /// <summary>
+        /// compute axis-aligned bounds of set of points after transforming 
+        /// </summary>
+        public static AxisAlignedBox3d Bounds(IEnumerable<Vector3d> values, TransformSequence xform)
+        {
+            AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+            foreach (Vector3d v in values)
+                box.Contain(xform.TransformP(v));
+            return box;
+        }
+
+
+        /// <summary>
         /// compute axis-aligned bounds of set of points after transforming into frame f
         /// </summary>
         public static AxisAlignedBox3d BoundsInFrame(IEnumerable<Vector3d> values, Frame3f f) {
