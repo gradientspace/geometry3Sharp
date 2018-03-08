@@ -43,7 +43,39 @@ namespace g3
         }
 
 
-		public static AxisAlignedBox3d Bounds<T>(IEnumerable<T> values, Func<T, Vector3d> PositionF)
+        public static AxisAlignedBox3d Bounds(IEnumerable<Vector3d> positions)
+        {
+            AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+            foreach (Vector3d v in positions)
+                box.Contain(v);
+            return box;
+        }
+        public static AxisAlignedBox3f Bounds(IEnumerable<Vector3f> positions)
+        {
+            AxisAlignedBox3f box = AxisAlignedBox3f.Empty;
+            foreach (Vector3f v in positions)
+                box.Contain(v);
+            return box;
+        }
+
+
+        public static AxisAlignedBox2d Bounds(IEnumerable<Vector2d> positions)
+        {
+            AxisAlignedBox2d box = AxisAlignedBox2d.Empty;
+            foreach (Vector2d v in positions)
+                box.Contain(v);
+            return box;
+        }
+        public static AxisAlignedBox2f Bounds(IEnumerable<Vector2f> positions)
+        {
+            AxisAlignedBox2f box = AxisAlignedBox2f.Empty;
+            foreach (Vector2f v in positions)
+                box.Contain(v);
+            return box;
+        }
+
+
+        public static AxisAlignedBox3d Bounds<T>(IEnumerable<T> values, Func<T, Vector3d> PositionF)
 		{
 			AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
 			foreach ( T t in values )
