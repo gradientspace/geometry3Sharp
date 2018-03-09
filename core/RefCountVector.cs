@@ -76,13 +76,22 @@ namespace g3
         public int allocate() {
             used_count++;
             if (free_indices.empty) {
+                // [RMS] do we need this branch anymore? 
                 ref_counts.push_back(1);
                 return ref_counts.size - 1;
             } else {
-                int iFree = free_indices.back;
-                free_indices.pop_back();
-                ref_counts[iFree] = 1;
-                return iFree;
+                int iFree = invalid;
+                while (iFree == invalid && free_indices.empty == false) {
+                    iFree = free_indices.back;
+                    free_indices.pop_back();
+                }
+                if (iFree != invalid) {
+                    ref_counts[iFree] = 1;
+                    return iFree;
+                } else {
+                    ref_counts.push_back(1);
+                    return ref_counts.size - 1;
+                }
             }
         }
 
@@ -106,6 +115,73 @@ namespace g3
         }
 
 
+
+        /// <summary>
+        /// allocate at specific index, which must either be larger than current max index,
+        /// or on the free list. If larger, all elements up to this one will be pushed onto
+        /// free list. otherwise we have to do a linear search through free list.
+        /// If you are doing many of these, it is likely faster to use 
+        /// allocate_at_unsafe(), and then rebuild_free_list() after you are done.
+        /// </summary>
+        public bool allocate_at(int index)
+        {
+            if (index >= ref_counts.size) {
+                int j = ref_counts.size;
+                while (j < index) {
+                    ref_counts.push_back(invalid);
+                    free_indices.push_back(j);
+                    ++j;
+                }
+                ref_counts.push_back(1);
+                used_count++;
+                return true;
+
+            } else {
+                if (ref_counts[index] > 0)
+                    return false;
+
+                int N = free_indices.size;
+                for (int i = 0; i < N; ++i) {
+                    if ( free_indices[i] == index ) {
+                        free_indices[i] = invalid;
+                        ref_counts[index] = 1;
+                        used_count++;
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// allocate at specific index, which must be free or larger than current max index.
+        /// However, we do not update free list. So, you probably need to do 
+        /// rebuild_free_list() after calling this.
+        /// </summary>
+        public bool allocate_at_unsafe(int index)
+        {
+            if (index >= ref_counts.size) {
+                int j = ref_counts.size;
+                while (j < index) {
+                    ref_counts.push_back(invalid);
+                    ++j;
+                }
+                ref_counts.push_back(1);
+                used_count++;
+                return true;
+
+            } else {
+                if (ref_counts[index] > 0)
+                    return false;
+                ref_counts[index] = 1;
+                used_count++;
+                return true;
+            }
+        }
+
+
+
         // [RMS] really should not use this!!
         public void set_Unsafe(int index, short count)
         {
@@ -113,7 +189,6 @@ namespace g3
         }
 
         // todo:
-        //   insert
         //   remove
         //   clear
 
