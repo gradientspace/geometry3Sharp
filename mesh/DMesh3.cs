@@ -1033,13 +1033,16 @@ namespace g3
 
         /// <summary>
         /// insert vertex at given index, assuming it is unused
+        /// If bUnsafe, we use fast id allocation that does not update free list.
+        /// You should only be using this between BeginUnsafeVerticesInsert() / EndUnsafeVerticesInsert() calls
         /// </summary>
-        public MeshResult InsertVertex(int vid, ref NewVertexInfo info)
+        public MeshResult InsertVertex(int vid, ref NewVertexInfo info, bool bUnsafe = false)
         {
             if (vertices_refcount.isValid(vid))
                 return MeshResult.Failed_VertexAlreadyExists;
 
-            bool bOK = vertices_refcount.allocate_at(vid);
+            bool bOK = (bUnsafe) ? vertices_refcount.allocate_at_unsafe(vid) :
+                                   vertices_refcount.allocate_at(vid);
             if (bOK == false)
                 return MeshResult.Failed_CannotAllocateVertex;
 
@@ -1078,6 +1081,13 @@ namespace g3
             return InsertVertex(vid, ref info);
         }
 
+
+        public virtual void BeginUnsafeVerticesInsert() {
+            // do nothing...
+        }
+        public virtual void EndUnsafeVerticesInsert() {
+            vertices_refcount.rebuild_free_list();
+        }
 
 
 
@@ -1143,9 +1153,11 @@ namespace g3
 
 
         /// <summary>
-        /// Insert triangle at given index, assuming it is unused
+        /// Insert triangle at given index, assuming it is unused.
+        /// If bUnsafe, we use fast id allocation that does not update free list.
+        /// You should only be using this between BeginUnsafeTrianglesInsert() / EndUnsafeTrianglesInsert() calls
         /// </summary>
-        public MeshResult InsertTriangle(int tid, Index3i tv, int gid = -1)
+        public MeshResult InsertTriangle(int tid, Index3i tv, int gid = -1, bool bUnsafe = false)
         {
             if (triangles_refcount.isValid(tid))
                 return MeshResult.Failed_TriangleAlreadyExists;
@@ -1170,7 +1182,8 @@ namespace g3
                 return MeshResult.Failed_WouldCreateNonmanifoldEdge;
             }
 
-            bool bOK = triangles_refcount.allocate_at(tid);
+            bool bOK = (bUnsafe) ? triangles_refcount.allocate_at_unsafe(tid) :
+                                   triangles_refcount.allocate_at(tid);
             if (bOK == false)
                 return MeshResult.Failed_CannotAllocateTriangle;
 
@@ -1198,6 +1211,12 @@ namespace g3
         }
 
 
+        public virtual void BeginUnsafeTrianglesInsert() {
+            // do nothing...
+        }
+        public virtual void EndUnsafeTrianglesInsert() {
+            triangles_refcount.rebuild_free_list();
+        }
 
 
 

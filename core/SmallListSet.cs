@@ -83,7 +83,13 @@ namespace g3
         public void AllocateAt(int list_index)
         {
             if (list_index >= list_heads.size) {
+                int j = list_heads.size;
                 list_heads.insert(Null, list_index);
+                // need to set intermediate values to null! 
+                while (j < list_index) {
+                    list_heads[j] = Null;
+                    j++;
+                }
             } else {
                 if (list_heads[list_index] != Null)
                     throw new Exception("SmallListSet: list at " + list_index + " is not empty!");

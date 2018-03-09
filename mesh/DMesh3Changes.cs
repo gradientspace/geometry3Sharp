@@ -5,31 +5,34 @@ using System.Text;
 
 namespace g3
 {
-
+    /// <summary>
+    /// Remove triangles from mesh and store necessary data to be able to reverse the change.
+    /// Vertex and Triangle IDs will be restored on Revert()
+    /// Currently does *not* restore the same EdgeIDs
+    /// </summary>
     public class RemoveTrianglesMeshChange
     {
-        public DVector<int> RemovedV;
-        public DVector<Vector3d> Positions;
-        public DVector<Vector3f> Normals;
-        public DVector<Vector3f> Colors;
-        public DVector<Vector2f> UVs;
+        protected DVector<int> RemovedV;
+        protected DVector<Vector3d> Positions;
+        protected DVector<Vector3f> Normals;
+        protected DVector<Vector3f> Colors;
+        protected DVector<Vector2f> UVs;
 
-        public DVector<int> RemovedT;
-        public DVector<Index4i> Triangles;
+        protected DVector<int> RemovedT;
+        protected DVector<Index4i> Triangles;
         
         public RemoveTrianglesMeshChange()
         {
         }
 
-        public void Initialize(DMesh3 mesh, IList<int> triangles)
+
+        public void Initialize(DMesh3 mesh, IEnumerable<int> triangles)
         {
             initialize_buffers(mesh);
             bool has_groups = mesh.HasTriangleGroups;
 
 
-            int N = triangles.Count;
-            for (int i = 0; i < triangles.Count; ++i ) {
-                int tid = triangles[i];
+            foreach ( int tid in triangles ) { 
                 if (!mesh.IsTriangle(tid))
                     continue;
 
@@ -66,28 +69,38 @@ namespace g3
         public void Revert(DMesh3 mesh)
         {
             int NV = RemovedV.size;
-            NewVertexInfo vinfo = new NewVertexInfo(Positions[0]);
-            for ( int i = 0; i < NV; ++i ) {
-                int vid = RemovedV[i];
-                vinfo.v = Positions[i];
-                if ( Normals != null ) { vinfo.bHaveN = true; vinfo.n = Normals[i]; }
-                if ( Colors != null) { vinfo.bHaveC = true; vinfo.c = Colors[i]; }
-                if ( UVs != null) { vinfo.bHaveUV = true; vinfo.uv = UVs[i]; }
-                MeshResult result = mesh.InsertVertex(vid, ref vinfo);
-                if ( result != MeshResult.Ok )
-                    throw new Exception("RemoveTrianglesMeshChange.Revert: error in InsertVertex(" + vid.ToString() + "): " + result.ToString());
+            if (NV > 0) {
+                NewVertexInfo vinfo = new NewVertexInfo(Positions[0]);
+                mesh.BeginUnsafeVerticesInsert();
+                for (int i = 0; i < NV; ++i) {
+                    int vid = RemovedV[i];
+                    vinfo.v = Positions[i];
+                    if (Normals != null) { vinfo.bHaveN = true; vinfo.n = Normals[i]; }
+                    if (Colors != null) { vinfo.bHaveC = true; vinfo.c = Colors[i]; }
+                    if (UVs != null) { vinfo.bHaveUV = true; vinfo.uv = UVs[i]; }
+                    MeshResult result = mesh.InsertVertex(vid, ref vinfo, true);
+                    if (result != MeshResult.Ok)
+                        throw new Exception("RemoveTrianglesMeshChange.Revert: error in InsertVertex(" + vid.ToString() + "): " + result.ToString());
+                }
+                mesh.EndUnsafeVerticesInsert();
             }
 
             int NT = RemovedT.size;
-            for (int i = 0; i < NT; ++i) {
-                int tid = RemovedT[i];
-                Index4i tdata = Triangles[i];
-                Index3i tri = new Index3i(tdata.a, tdata.b, tdata.c);
-                MeshResult result = mesh.InsertTriangle(tid, tri, tdata.d);
-                if (result != MeshResult.Ok)
-                    throw new Exception("RemoveTrianglesMeshChange.Revert: error in InsertTriangle(" + tid.ToString() + "): " + result.ToString());
+            if (NT > 0) {
+                mesh.BeginUnsafeTrianglesInsert();
+                for (int i = 0; i < NT; ++i) {
+                    int tid = RemovedT[i];
+                    Index4i tdata = Triangles[i];
+                    Index3i tri = new Index3i(tdata.a, tdata.b, tdata.c);
+                    MeshResult result = mesh.InsertTriangle(tid, tri, tdata.d, true);
+                    if (result != MeshResult.Ok)
+                        throw new Exception("RemoveTrianglesMeshChange.Revert: error in InsertTriangle(" + tid.ToString() + "): " + result.ToString());
+                }
+                mesh.EndUnsafeTrianglesInsert();
             }
         }
+
+
 
 
         bool save_vertex(DMesh3 mesh, int vid)
