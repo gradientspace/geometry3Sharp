@@ -150,6 +150,20 @@ namespace g3
                 mat.Row1.x * v.x + mat.Row1.y * v.y + mat.Row1.z * v.z,
                 mat.Row2.x * v.x + mat.Row2.y * v.y + mat.Row2.z * v.z);
         }
+
+        public Vector3d Multiply(ref Vector3d v) {
+            return new Vector3d(
+                Row0.x * v.x + Row0.y * v.y + Row0.z * v.z,
+                Row1.x * v.x + Row1.y * v.y + Row1.z * v.z,
+                Row2.x * v.x + Row2.y * v.y + Row2.z * v.z);
+        }
+
+        public void Multiply(ref Vector3d v, ref Vector3d vOut) {
+            vOut.x = Row0.x * v.x + Row0.y * v.y + Row0.z * v.z;
+            vOut.y = Row1.x * v.x + Row1.y * v.y + Row1.z * v.z;
+            vOut.z = Row2.x * v.x + Row2.y * v.y + Row2.z * v.z;
+        }
+
 		public static Matrix3d operator *(Matrix3d mat1, Matrix3d mat2)
 		{
             double m00 = mat1.Row0.x * mat2.Row0.x + mat1.Row0.y * mat2.Row1.x + mat1.Row0.z * mat2.Row2.x;
