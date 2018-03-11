@@ -200,7 +200,7 @@ namespace g3
             } else {
                 foreach (Vector3d v in mesh.Vertices()) {
                     Vector3d vT = TransformF(v);
-                    bounds.Contain(vT);
+                    bounds.Contain(ref vT);
                 }
             }
             return bounds;
@@ -214,7 +214,7 @@ namespace g3
             } else {
                 foreach (int vID in mesh.VertexIndices()) {
                     Vector3d vT = TransformF(mesh.GetVertex(vID));
-                    bounds.Contain(vT);
+                    bounds.Contain(ref vT);
                 }
             }
             return bounds;
@@ -268,9 +268,31 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// calculate extents of mesh along axes of frame, with optional transform
+        /// </summary>
+        public static AxisAlignedBox3d BoundsInFrame(DMesh3 mesh, Frame3f frame, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            if (TransformF == null) {
+                foreach (Vector3d v in mesh.Vertices()) {
+                    Vector3d fv = frame.ToFrameP(v);
+                    bounds.Contain(ref fv);
+                }
+            } else {
+                foreach (Vector3d v in mesh.Vertices()) {
+                    Vector3d vT = TransformF(v);
+                    Vector3d fv = frame.ToFrameP(ref vT);
+                    bounds.Contain(ref fv);
+                }
+            }
+            return bounds;
+        }
 
 
-
+        /// <summary>
+        /// Calculate extents of mesh along an axis, with optional transform
+        /// </summary>
         public static Interval1d ExtentsOnAxis(DMesh3 mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
         {
             Interval1d extent = Interval1d.Empty;

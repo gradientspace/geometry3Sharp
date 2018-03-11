@@ -173,7 +173,25 @@ namespace g3
             Max.z = Math.Max(Max.z, v.z);
         }
 
+        public void Contain(ref Vector3d v) {
+            Min.x = Math.Min(Min.x, v.x);
+            Min.y = Math.Min(Min.y, v.y);
+            Min.z = Math.Min(Min.z, v.z);
+            Max.x = Math.Max(Max.x, v.x);
+            Max.y = Math.Max(Max.y, v.y);
+            Max.z = Math.Max(Max.z, v.z);
+        }
+
         public void Contain(AxisAlignedBox3d box) {
+            Min.x = Math.Min(Min.x, box.Min.x);
+            Min.y = Math.Min(Min.y, box.Min.y);
+            Min.z = Math.Min(Min.z, box.Min.z);
+            Max.x = Math.Max(Max.x, box.Max.x);
+            Max.y = Math.Max(Max.y, box.Max.y);
+            Max.z = Math.Max(Max.z, box.Max.z);
+        }
+
+        public void Contain(ref AxisAlignedBox3d box) {
             Min.x = Math.Min(Min.x, box.Min.x);
             Min.y = Math.Min(Min.y, box.Min.y);
             Min.z = Math.Min(Min.z, box.Min.z);
