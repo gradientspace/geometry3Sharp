@@ -160,11 +160,11 @@ namespace g3
                         break;
 
                     case XFormType.ToFrame:
-                        p = Operations[i].Frame.ToFrameP(p);
+                        p = Operations[i].Frame.ToFrameP(ref p);
                         break;
 
                     case XFormType.FromFrame:
-                        p = Operations[i].Frame.FromFrameP(p);
+                        p = Operations[i].Frame.FromFrameP(ref p);
                         break;
 
                     default:

@@ -167,26 +167,26 @@ namespace g3
 
         public Vector3i ToGrid(Vector3d point) {
             Vector3f pointf = (Vector3f)point;
-            pointf = GridFrame.ToFrameP(pointf);
+            pointf = GridFrame.ToFrameP(ref pointf);
             return (Vector3i)(pointf / CellSize);
         }
 
         public Vector3d ToGridf(Vector3d point) {
-            Vector3f pointf = (Vector3f)point;
-            pointf = GridFrame.ToFrameP(pointf);
-            return (pointf / CellSize);
+            point = GridFrame.ToFrameP(ref point);
+            point.x /= CellSize.x; point.y /= CellSize.y; point.z /= CellSize.z;
+            return point;
         }
 
         public Vector3d FromGrid(Vector3i gridpoint)
         {
             Vector3f pointf = CellSize * (Vector3f)gridpoint;
-            return (Vector3d)GridFrame.FromFrameP(pointf);
+            return (Vector3d)GridFrame.FromFrameP(ref pointf);
         }
 
         public Vector3d FromGrid(Vector3d gridpointf)
         {
             gridpointf *= CellSize;
-            return (Vector3d)GridFrame.FromFrameP(gridpointf);
+            return (Vector3d)GridFrame.FromFrameP(ref gridpointf);
         }
     }
 

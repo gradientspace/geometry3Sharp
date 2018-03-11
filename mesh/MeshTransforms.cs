@@ -91,11 +91,11 @@ namespace g3
             for ( int vid = 0; vid < NV; ++vid ) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d v = mesh.GetVertex(vid);
-                    Vector3d vf = f.ToFrameP((Vector3f)v);
+                    Vector3d vf = f.ToFrameP(ref v);
                     mesh.SetVertex(vid, vf);
                     if ( bHasNormals ) {
                         Vector3f n = mesh.GetVertexNormal(vid);
-                        Vector3f nf = f.ToFrameV(n);
+                        Vector3f nf = f.ToFrameV(ref n);
                         mesh.SetVertexNormal(vid, nf);
                     }
                 }
@@ -110,11 +110,11 @@ namespace g3
             for ( int vid = 0; vid < NV; ++vid ) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d vf = mesh.GetVertex(vid);
-                    Vector3d v = f.FromFrameP((Vector3f)vf);
+                    Vector3d v = f.FromFrameP(ref vf);
                     mesh.SetVertex(vid, v);
                     if ( bHasNormals ) {
                         Vector3f n = mesh.GetVertexNormal(vid);
-                        Vector3f nf = f.FromFrameV(n);
+                        Vector3f nf = f.FromFrameV(ref n);
                         mesh.SetVertexNormal(vid, nf);
                     }
                 }

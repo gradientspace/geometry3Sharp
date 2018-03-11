@@ -43,9 +43,9 @@ namespace g3 {
 
 		public static void ScaleMesh(DMesh3 mesh, Frame3f f, Vector3f vScale) {
 			foreach ( int vid in mesh.VertexIndices() ) {
-				Vector3d v = mesh.GetVertex(vid);
-				Vector3f vScaledInF = f.ToFrameP((Vector3f)v) * vScale;
-				Vector3d vNew = f.FromFrameP(vScaledInF);
+				Vector3f v = (Vector3f)mesh.GetVertex(vid);
+				Vector3f vScaledInF = f.ToFrameP(ref v) * vScale;
+				Vector3d vNew = f.FromFrameP(ref vScaledInF);
 				mesh.SetVertex(vid, vNew);
 
 				// TODO: normals
