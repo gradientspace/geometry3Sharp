@@ -310,6 +310,42 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Calculate the two most extreme vertices along an axis, with optional transform
+        /// </summary>
+        public static Interval1i ExtremeVertices(DMesh3 mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            Interval1d extent = Interval1d.Empty;
+            Interval1i extreme = new Interval1i(DMesh3.InvalidID, DMesh3.InvalidID);
+            if (TransformF == null) {
+                foreach (int vid in mesh.VertexIndices()) {
+                    double t = mesh.GetVertex(vid).Dot(ref axis);
+                    if ( t < extent.a ) {
+                        extent.a = t;
+                        extreme.a = vid;
+                    } else if ( t > extent.b ) {
+                        extent.b = t;
+                        extreme.b = vid;
+                    }
+                }
+            } else {
+                foreach (int vid in mesh.VertexIndices()) {
+                    double t = TransformF(mesh.GetVertex(vid)).Dot(ref axis);
+                    if (t < extent.a) {
+                        extent.a = t;
+                        extreme.a = vid;
+                    } else if (t > extent.b) {
+                        extent.b = t;
+                        extreme.b = vid;
+                    }
+                }
+            }
+            return extreme;
+        }
+
+
+
+
 
         public struct GenusResult
         {
