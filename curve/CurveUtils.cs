@@ -38,6 +38,7 @@ namespace g3
             foreach (Vector3d v in vertices) {
                 if (i++ > 0)
                     sum += (v - prev).Length;
+                prev = v;
             }
             return sum;
         }
