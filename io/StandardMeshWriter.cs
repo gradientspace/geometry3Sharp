@@ -131,6 +131,7 @@ namespace g3
                     CloseStreamF = this.CloseStreamF
                 };
                 var result = writer.Write(w, vMeshes, options);
+                w.Flush();
                 return result;
             } finally {
                 CloseStreamF(stream);
@@ -148,6 +149,7 @@ namespace g3
                 StreamWriter w = new StreamWriter(stream);
                 OFFWriter writer = new OFFWriter();
                 var result = writer.Write(w, vMeshes, options);
+                w.Flush();
                 return result;
             } finally {
                 CloseStreamF(stream);
@@ -166,11 +168,13 @@ namespace g3
                     BinaryWriter w = new BinaryWriter(stream);
                     STLWriter writer = new STLWriter();
                     var result = writer.Write(w, vMeshes, options);
+                    w.Flush();
                     return result;
                 } else {
                     StreamWriter w = new StreamWriter(stream);
                     STLWriter writer = new STLWriter();
                     var result = writer.Write(w, vMeshes, options);
+                    w.Flush();
                     return result;
                 }
             } finally {
@@ -189,6 +193,7 @@ namespace g3
                 BinaryWriter w = new BinaryWriter(stream);
                 BinaryG3Writer writer = new BinaryG3Writer();
                 var result = writer.Write(w, vMeshes, options);
+                w.Flush();
                 return result;
             } finally {
                 CloseStreamF(stream);
