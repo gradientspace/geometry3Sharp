@@ -1997,14 +1997,24 @@ namespace g3
 
 
 
+        /// <summary> returns true if vertices, edges, and triangles are all "dense" (Count == MaxID) </summary>
         public bool IsCompact {
             get { return vertices_refcount.is_dense && edges_refcount.is_dense && triangles_refcount.is_dense; }
         }
+
+        /// <summary> Returns true if vertex count == max vertex id </summary>
         public bool IsCompactV {
             get { return vertices_refcount.is_dense; }
         }
+
+        /// <summary> returns true if triangle count == max triangle id </summary>
         public bool IsCompactT {
             get { return triangles_refcount.is_dense; }
+        }
+
+        /// <summary> returns measure of compactness in range [0,1], where 1 is fully compacted </summary>
+        public double CompactMetric {
+            get { return ((double)VertexCount / (double)MaxVertexID + (double)TriangleCount / (double)MaxTriangleID) * 0.5; }
         }
 
 
