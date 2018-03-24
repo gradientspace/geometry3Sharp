@@ -201,6 +201,8 @@ namespace g3
 			get {
 				double fArea = 0;
 				int N = vertices.Count;
+				if (N == 0)
+					return 0;
 				Vector2d v1 = vertices[0], v2 = Vector2d.Zero;
 				for (int i = 0; i < N; ++i) {
 					v2 = vertices[(i + 1) % N];
