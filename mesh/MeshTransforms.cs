@@ -67,16 +67,22 @@ namespace g3
         }
 
 
-        public static void Scale(IDeformableMesh mesh, double sx, double sy, double sz)
+        public static void Scale(IDeformableMesh mesh, Vector3d scale, Vector3d origin)
         {
             int NV = mesh.MaxVertexID;
-            for ( int vid = 0; vid < NV; ++vid ) {
+            for (int vid = 0; vid < NV; ++vid) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d v = mesh.GetVertex(vid);
-                    v.x *= sx; v.y *= sy; v.z *= sz;
+                    v.x -= origin.x; v.y -= origin.y; v.z -= origin.z;
+                    v.x *= scale.x; v.y *= scale.y; v.z *= scale.z;
+                    v.x += origin.x; v.y += origin.y; v.z += origin.z;
                     mesh.SetVertex(vid, v);
                 }
             }
+        }
+        public static void Scale(IDeformableMesh mesh, double sx, double sy, double sz)
+        {
+            Scale(mesh, new Vector3d(sx, sy, sz), Vector3d.Zero);
         }
         public static void Scale(IDeformableMesh mesh, double s)
         {
