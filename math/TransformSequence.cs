@@ -175,6 +175,49 @@ namespace g3
             return p;
         }
 
+
+
+
+        /// <summary>
+        /// Apply transforms to point
+        /// </summary>
+        public Vector3d TransformV(Vector3d v)
+        {
+            int N = Operations.Count;
+            for (int i = 0; i < N; ++i) {
+                switch (Operations[i].type) {
+                    case XFormType.Translation:
+                        break;
+
+                    case XFormType.QuaternionRotateAroundPoint:
+                    case XFormType.QuaterionRotation:
+                        v = Operations[i].Quaternion * v;
+                        break;
+
+                    case XFormType.ScaleAroundPoint:
+                    case XFormType.Scale:
+                        v *= Operations[i].Scale;
+                        break;
+
+                    case XFormType.ToFrame:
+                        v = Operations[i].Frame.ToFrameV(ref v);
+                        break;
+
+                    case XFormType.FromFrame:
+                        v = Operations[i].Frame.FromFrameV(ref v);
+                        break;
+
+                    default:
+                        throw new NotImplementedException("TransformSequence.TransformV: unhandled type!");
+                }
+            }
+
+            return v;
+        }
+
+
+
+
         /// <summary>
         /// Apply transforms to point
         /// </summary>
@@ -183,6 +226,49 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// construct inverse transformation sequence
+        /// </summary>
+        public TransformSequence MakeInverse()
+        {
+            TransformSequence reverse = new TransformSequence();
+            int N = Operations.Count;
+            for (int i = N-1; i >= 0; --i) {
+                switch (Operations[i].type) {
+                    case XFormType.Translation:
+                        reverse.AppendTranslation(-Operations[i].Translation);
+                        break;
+
+                    case XFormType.QuaterionRotation:
+                        reverse.AppendRotation(Operations[i].Quaternion.Inverse());
+                        break;
+
+                    case XFormType.QuaternionRotateAroundPoint:
+                        reverse.AppendRotation(Operations[i].Quaternion.Inverse(), Operations[i].RotateOrigin);
+                        break;
+
+                    case XFormType.Scale:
+                        reverse.AppendScale(1.0 / Operations[i].Scale);
+                        break;
+
+                    case XFormType.ScaleAroundPoint:
+                        reverse.AppendScale(1.0 / Operations[i].Scale, Operations[i].RotateOrigin);
+                        break;
+
+                    case XFormType.ToFrame:
+                        reverse.AppendFromFrame(Operations[i].Frame);
+                        break;
+
+                    case XFormType.FromFrame:
+                        reverse.AppendToFrame(Operations[i].Frame);
+                        break;
+
+                    default:
+                        throw new NotImplementedException("TransformSequence.MakeInverse: unhandled type!");
+                }
+            }
+            return reverse;
+        }
 
 
 

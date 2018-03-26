@@ -277,6 +277,45 @@ namespace g3
 
 
         /// <summary>
+        /// Apply TransformF to vertices and normals of mesh
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh mesh, Func<Vector3d, Vector3f, Vector3dTuple2> TransformF)
+        {
+            int NV = mesh.MaxVertexID;
+            for (int vid = 0; vid < NV; ++vid) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3dTuple2 newPN = TransformF(mesh.GetVertex(vid), mesh.GetVertexNormal(vid));
+                    mesh.SetVertex(vid, newPN.V0);
+                    mesh.SetVertexNormal(vid, (Vector3f)newPN.V1);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Apply Transform to vertices and normals of mesh
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh mesh, TransformSequence xform)
+        {
+            int NV = mesh.MaxVertexID;
+            if (mesh.HasVertexNormals) {
+                for (int vid = 0; vid < NV; ++vid) {
+                    if (mesh.IsVertex(vid)) {
+                        mesh.SetVertex(vid, xform.TransformP(mesh.GetVertex(vid)));
+                        mesh.SetVertexNormal(vid, (Vector3f)xform.TransformV(mesh.GetVertexNormal(vid)));
+                    }
+                }
+            } else {
+                for (int vid = 0; vid < NV; ++vid) {
+                    if (mesh.IsVertex(vid)) 
+                        mesh.SetVertex(vid, xform.TransformP(mesh.GetVertex(vid)));
+                }
+            }
+        }
+
+
+
+        /// <summary>
         /// Apply TransformF to subset of vertices of mesh
         /// </summary>
         public static void PerVertexTransform(IDeformableMesh mesh, IEnumerable<int> vertices, Func<Vector3d, int, Vector3d> TransformF)
