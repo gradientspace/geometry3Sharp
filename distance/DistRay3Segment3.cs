@@ -57,7 +57,7 @@ namespace g3
 
         public double GetSquared()
         {
-            if (DistanceSquared > 0)
+            if (DistanceSquared >= 0)
                 return DistanceSquared;
 
             Vector3d diff = ray.Origin - segment.Center;

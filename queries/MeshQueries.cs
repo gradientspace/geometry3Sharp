@@ -124,7 +124,7 @@ namespace g3
                 return false;
             Vector3d surfPt = ray.PointAt(isect.RayParameter);
             if (mesh.HasVertexNormals)
-                hitPosFrame = SurfaceFrame(mesh, tid, surfPt);
+                hitPosFrame = SurfaceFrame(mesh, tid, surfPt);      // TODO isect has bary-coords already!!
             else
                 hitPosFrame = new Frame3f(surfPt, mesh.GetTriNormal(tid));
             return true;
@@ -151,7 +151,17 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Get barycentric coords of point in triangle
+        /// </summary>
+        public static Vector3d BaryCoords(DMesh3 mesh, int tID, Vector3d point)
+        {
+            if (!mesh.IsTriangle(tID))
+                throw new Exception("MeshQueries.SurfaceFrame: triangle " + tID + " does not exist!");
+            Triangle3d tri = new Triangle3d();
+            mesh.GetTriVertices(tID, ref tri.V0, ref tri.V1, ref tri.V2);
+            return tri.BarycentricCoords(point);
+        }
 
 
         /// <summary>

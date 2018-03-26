@@ -262,6 +262,8 @@ namespace g3
 			public int eNewBN;      // new edge [vNew,vB] (original was AB)
 			public int eNewCN;      // new edge [vNew,vC] (C is "first" other vtx in ring)
 			public int eNewDN;		// new edge [vNew,vD] (D is "second" other, which doesn't exist on bdry)
+            public int eNewT2;
+            public int eNewT3;
 		}
 		public MeshResult SplitEdge(int vA, int vB, out EdgeSplitInfo split)
 		{
@@ -339,6 +341,8 @@ namespace g3
                 split.eNewBN = efb;
 				split.eNewCN = efc;
 				split.eNewDN = InvalidID;
+                split.eNewT2 = t2;
+                split.eNewT3 = InvalidID;
 
 				updateTimeStamp(true);
 				return MeshResult.Ok;
@@ -403,8 +407,10 @@ namespace g3
                 split.eNewBN = efb;
 				split.eNewCN = efc;
 				split.eNewDN = edf;
+                split.eNewT2 = t2;
+                split.eNewT3 = t3;
 
-				updateTimeStamp(true);
+                updateTimeStamp(true);
 				return MeshResult.Ok;
 			}
 
