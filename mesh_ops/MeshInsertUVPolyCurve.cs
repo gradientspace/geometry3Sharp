@@ -199,6 +199,10 @@ namespace g3
             HashSet<int> ZeroVertices = new HashSet<int>();
             OnCutEdges = new HashSet<int>();
 
+            HashSet<int> NewEdges = new HashSet<int>();
+            HashSet<int> NewCutVertices = new HashSet<int>();
+            sbyte[] signs = new sbyte[2 * Mesh.MaxVertexID + 2*Curve.VertexCount];
+
             // loop over segments, insert each one in sequence
             int N = (IsLoop) ? Curve.VertexCount : Curve.VertexCount - 1;
             for ( int si = 0; si < N; ++si ) {
@@ -219,7 +223,8 @@ namespace g3
                 // compute edge-crossing signs
                 // [TODO] could walk along mesh from a to b, rather than computing for entire mesh?
                 int MaxVID = Mesh.MaxVertexID;
-                int[] signs = new int[MaxVID];
+                if ( signs.Length < MaxVID )
+                    signs = new sbyte[2*MaxVID];
                 gParallel.ForEach(Interval1i.Range(MaxVID), (vid) => {
                     if (Mesh.IsVertex(vid)) {
                         if (vid == i0_vid || vid == i1_vid) {
@@ -227,18 +232,18 @@ namespace g3
                         } else {
                             Vector2d v2 = PointF(vid);
                             // tolerance defines band in which we will consider values to be zero
-                            signs[vid] = seg.WhichSide(v2, MathUtil.ZeroTolerance);
+                            signs[vid] = (sbyte)seg.WhichSide(v2, MathUtil.ZeroTolerance);
                         }
                     } else
-                        signs[vid] = int.MaxValue;
+                        signs[vid] = sbyte.MaxValue;
                 });
 
                 // have to skip processing of new edges. If edge id
                 // is > max at start, is new. Otherwise if in NewEdges list, also new.
                 // (need both in case we re-use an old edge index)
                 int MaxEID = Mesh.MaxEdgeID;
-                HashSet<int> NewEdges = new HashSet<int>();
-                HashSet<int> NewCutVertices = new HashSet<int>();
+                NewEdges.Clear();
+                NewCutVertices.Clear();
                 NewCutVertices.Add(i0_vid);
                 NewCutVertices.Add(i1_vid);
 
