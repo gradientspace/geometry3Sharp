@@ -309,6 +309,23 @@ namespace g3
                 indices[i] = map[indices[i]];
         }
 
+
+
+        
+        public static void TrianglesToVertices(DMesh3 mesh, HashSet<int> triangles, HashSet<int> vertices) {
+            foreach ( int tid in triangles ) {
+                Index3i tv = mesh.GetTriangle(tid);
+                vertices.Add(tv.a); vertices.Add(tv.b); vertices.Add(tv.c);
+            }
+        }
+
+        public static void TrianglesToEdges(DMesh3 mesh, HashSet<int> triangles, HashSet<int> edges) {
+            foreach ( int tid in triangles ) {
+                Index3i te = mesh.GetTriEdges(tid);
+                edges.Add(te.a); edges.Add(te.b); edges.Add(te.c);
+            }
+        }
+
     }
 
 

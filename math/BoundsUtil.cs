@@ -28,7 +28,13 @@ namespace g3
             return box;
         }
 
-
+        public static AxisAlignedBox2d Bounds(ref Vector2d v0, ref Vector2d v1, ref Vector2d v2)
+        {
+            AxisAlignedBox2d box;
+            MathUtil.MinMax(v0.x, v1.x, v2.x, out box.Min.x, out box.Max.x);
+            MathUtil.MinMax(v0.y, v1.y, v2.y, out box.Min.y, out box.Max.y);
+            return box;
+        }
 
         // AABB of transformed AABB (corners)
         public static AxisAlignedBox3d Bounds(ref AxisAlignedBox3d boxIn, Func<Vector3d,Vector3d> TransformF)

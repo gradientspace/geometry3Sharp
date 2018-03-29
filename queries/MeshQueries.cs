@@ -23,7 +23,7 @@ namespace g3
         }
 
         /// <summary>
-        /// Find point-normal frame at closest point to queryPoint on mesh.
+        /// Find point-normal(Z) frame at closest point to queryPoint on mesh.
         /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
         public static Frame3f NearestPointFrame(DMesh3 mesh, ISpatial spatial, Vector3d queryPoint)
