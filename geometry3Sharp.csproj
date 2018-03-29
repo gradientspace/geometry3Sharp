@@ -297,6 +297,7 @@
     <Compile Include="spatial\GridIndexing.cs" />
     <Compile Include="spatial\MeshSignedDistanceGrid.cs" />
     <Compile Include="spatial\NormalHistogram.cs" />
+    <Compile Include="spatial\TriangleBinsGrid2d.cs" />
     <Compile Include="spatial\PointHashGrid2d.cs" />
     <Compile Include="spatial\PointHashGrid3d.cs" />
     <Compile Include="spatial\Polygon2dBoxTree.cs" />
