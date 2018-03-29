@@ -26,6 +26,8 @@ namespace g3
         // the spans & loops take some compute time and can be disabled if you don't need it...
         public bool EnableCutSpansAndLoops = true;
 
+        // probably always makes sense to use this...maybe not for very small problems?
+        bool UseTriSpatial = true;
 
         // Results
 
@@ -96,37 +98,93 @@ namespace g3
 		}
 
 
+
+        // we use this simple 2D bins data structure to speed up containment queries
+
+        TriangleBinsGrid2d triSpatial;
+
+        void spatial_add_triangle(int tid) {
+            if (triSpatial == null)
+                return;
+            Index3i tv = Mesh.GetTriangle(tid);
+            Vector2d a = PointF(tv.a), b = PointF(tv.b), c = PointF(tv.c);
+            triSpatial.InsertTriangleUnsafe(tid, ref a, ref b, ref c);
+        }
+        void spatial_add_triangles(int t0, int t1) {
+            if (triSpatial == null)
+                return;
+            spatial_add_triangle(t0);
+            if (t1 != DMesh3.InvalidID)
+                spatial_add_triangle(t1);
+        }
+        void spatial_remove_triangle(int tid) {
+            if (triSpatial == null)
+                return;
+            Index3i tv = Mesh.GetTriangle(tid);
+            Vector2d a = PointF(tv.a), b = PointF(tv.b), c = PointF(tv.c);
+            triSpatial.RemoveTriangleUnsafe(tid, ref a, ref b, ref c);
+        }
+        void spatial_remove_triangles(int t0, int t1) {
+            if (triSpatial == null)
+                return;
+            spatial_remove_triangle(t0);
+            if (t1 != DMesh3.InvalidID)
+                spatial_remove_triangle(t1);
+        }
+
+
         // (sequentially) find each triangle that path point lies in, and insert a vertex for
         // that point into mesh.
         void insert_corners()
         {
             PrimalQuery2d query = new PrimalQuery2d(PointF);
 
-            // [TODO] can do everythnig up to PokeTriangle in parallel, 
-            // except if we are poking same tri w/ multiple points!
+            if (UseTriSpatial) {
+                AxisAlignedBox3d bounds3 = Mesh.CachedBounds;
+                AxisAlignedBox2d bounds2 = new AxisAlignedBox2d(bounds3.Min.xy, bounds3.Max.xy);
+                triSpatial = new TriangleBinsGrid2d(bounds2, 32);
+                foreach (int tid in Mesh.TriangleIndices())
+                    spatial_add_triangle(tid);
+            }
+
+            Func<int, Vector2d, bool> inTriangleF = (tid, pos) => {
+                Index3i tv = Mesh.GetTriangle(tid);
+                int query_result = query.ToTriangleUnsigned(pos, tv.a, tv.b, tv.c);
+                return (query_result == -1 || query_result == 0);
+            };
 
             CurveVertices = new int[Curve.VertexCount];
             for ( int i = 0; i < Curve.VertexCount; ++i ) {
                 Vector2d vInsert = Curve[i];
                 bool inserted = false;
 
-                foreach (int tid in Mesh.TriangleIndices()) {
-                    Index3i tv = Mesh.GetTriangle(tid);
-                    // [RMS] using unsigned query here because we do not need to care about tri CW/CCW orientation
-                    //   (right? otherwise we have to explicitly invert mesh. Nothing else we do depends on tri orientation)
-                    //int query_result = query.ToTriangle(vInsert, tv.a, tv.b, tv.c);
-                    int query_result = query.ToTriangleUnsigned(vInsert, tv.a, tv.b, tv.c);
-                    if (query_result == -1 || query_result == 0) {
-                        Vector3d bary = MathUtil.BarycentricCoords(vInsert, PointF(tv.a), PointF(tv.b), PointF(tv.c));
-                        int vid = insert_corner_from_bary(i, tid, bary);
-                        if ( vid > 0 ) {    // this should be always happening..
-                            CurveVertices[i] = vid;
-                            inserted = true;
-
-                            //Util.WriteDebugMesh(Mesh, string.Format("C:\\git\\geometry3SharpDemos\\geometry3Test\\test_output\\after_insert_corner_{0}.obj", i));
+                int contain_tid = DMesh3.InvalidID;
+                if (triSpatial != null) {
+                    contain_tid = triSpatial.FindContainingTriangle(vInsert, inTriangleF);
+                } else {
+                    foreach (int tid in Mesh.TriangleIndices()) {
+                        Index3i tv = Mesh.GetTriangle(tid);
+                        // [RMS] using unsigned query here because we do not need to care about tri CW/CCW orientation
+                        //   (right? otherwise we have to explicitly invert mesh. Nothing else we do depends on tri orientation)
+                        //int query_result = query.ToTriangle(vInsert, tv.a, tv.b, tv.c);
+                        int query_result = query.ToTriangleUnsigned(vInsert, tv.a, tv.b, tv.c);
+                        if (query_result == -1 || query_result == 0) {
+                            contain_tid = tid;
                             break;
                         }
-                    } 
+                    }
+                }
+
+                if (contain_tid != DMesh3.InvalidID ) {
+                    Index3i tv = Mesh.GetTriangle(contain_tid);
+                    Vector3d bary = MathUtil.BarycentricCoords(vInsert, PointF(tv.a), PointF(tv.b), PointF(tv.c));
+                    int vid = insert_corner_from_bary(i, contain_tid, bary);
+                    if (vid > 0) {    // this should be always happening..
+                        CurveVertices[i] = vid;
+                        inserted = true;
+                    } else {
+                        throw new Exception("MeshInsertUVPolyCurve.insert_corners: failed to insert vertex " + i.ToString());
+                    }
                 }
 
                 if (inserted == false) {
@@ -164,19 +222,32 @@ namespace g3
             if (split_edge >= 0) {
                 int eid = Mesh.GetTriEdge(tid, split_edge);
 
+                Index2i ev = Mesh.GetEdgeT(eid);
+                spatial_remove_triangles(ev.a, ev.b);
+
                 DMesh3.EdgeSplitInfo split_info;
                 MeshResult splitResult = Mesh.SplitEdge(eid, out split_info);
                 if (splitResult != MeshResult.Ok)
-                    throw new Exception("MeshInsertUVPolyCurve.insert_corner_special: edge split failed in case sum==2");
+                    throw new Exception("MeshInsertUVPolyCurve.insert_corner_from_bary: edge split failed in case sum==2 - " + splitResult.ToString());
                 SetPointF(split_info.vNew, vInsert);
+
+                spatial_add_triangles(ev.a, ev.b);
+                spatial_add_triangles(split_info.eNewT2, split_info.eNewT3);
+
                 return split_info.vNew;
             }
+
+            spatial_remove_triangle(tid);
 
             // otherwise corner is inside triangle
             DMesh3.PokeTriangleInfo pokeinfo;
             MeshResult result = Mesh.PokeTriangle(tid, bary_coords, out pokeinfo);
             if (result != MeshResult.Ok)
-                throw new Exception("MeshInsertUVPolyCurve.insert_corner_special: face poke failed!");
+                throw new Exception("MeshInsertUVPolyCurve.insert_corner_from_bary: face poke failed - " + result.ToString());
+
+            spatial_add_triangle(tid);
+            spatial_add_triangle(pokeinfo.new_t1);
+            spatial_add_triangle(pokeinfo.new_t2);
 
             SetPointF(pokeinfo.new_vid, vInsert);
             return pokeinfo.new_vid;
@@ -203,6 +274,10 @@ namespace g3
             HashSet<int> NewCutVertices = new HashSet<int>();
             sbyte[] signs = new sbyte[2 * Mesh.MaxVertexID + 2*Curve.VertexCount];
 
+            HashSet<int> segTriangles = new HashSet<int>();
+            HashSet<int> segVertices = new HashSet<int>();
+            HashSet<int> segEdges = new HashSet<int>();
+
             // loop over segments, insert each one in sequence
             int N = (IsLoop) ? Curve.VertexCount : Curve.VertexCount - 1;
             for ( int si = 0; si < N; ++si ) {
@@ -220,12 +295,25 @@ namespace g3
                     continue;
                 }
 
+                if (triSpatial != null) {
+                    segTriangles.Clear(); segVertices.Clear(); segEdges.Clear();
+                    AxisAlignedBox2d segBounds = new AxisAlignedBox2d(seg.P0); segBounds.Contain(seg.P1);
+                    segBounds.Expand(MathUtil.ZeroTolerancef * 10);
+                    triSpatial.FindTrianglesInRange(segBounds, segTriangles);
+                    IndexUtil.TrianglesToVertices(Mesh, segTriangles, segVertices);
+                    IndexUtil.TrianglesToEdges(Mesh, segTriangles, segEdges);
+                }
+
+                int MaxVID = Mesh.MaxVertexID;
+                IEnumerable<int> vertices = Interval1i.Range(MaxVID);
+                if (triSpatial != null)
+                    vertices = segVertices;
+
                 // compute edge-crossing signs
                 // [TODO] could walk along mesh from a to b, rather than computing for entire mesh?
-                int MaxVID = Mesh.MaxVertexID;
                 if ( signs.Length < MaxVID )
                     signs = new sbyte[2*MaxVID];
-                gParallel.ForEach(Interval1i.Range(MaxVID), (vid) => {
+                gParallel.ForEach(vertices, (vid) => {
                     if (Mesh.IsVertex(vid)) {
                         if (vid == i0_vid || vid == i1_vid) {
                             signs[vid] = 0;
@@ -248,7 +336,10 @@ namespace g3
                 NewCutVertices.Add(i1_vid);
 
                 // cut existing edges with segment
-                for (int eid = 0; eid < MaxEID; ++eid) {
+                IEnumerable<int> edges = Interval1i.Range(MaxEID);
+                if (triSpatial != null)
+                    edges = segEdges;
+                foreach ( int eid in edges ) { 
                     if (Mesh.IsEdge(eid) == false)
                         continue;
                     if (eid >= MaxEID || NewEdges.Contains(eid))
@@ -312,13 +403,18 @@ namespace g3
                         continue;
                     }
 
+                    spatial_remove_triangles(ev.a, ev.b);
+
                     // split edge at this segment
                     DMesh3.EdgeSplitInfo splitInfo;
                     MeshResult result = Mesh.SplitEdge(eid, out splitInfo);
                     if (result != MeshResult.Ok) {
-                        throw new Exception("MeshInsertUVSegment.Cut: failed in SplitEdge");
+                        throw new Exception("MeshInsertUVSegment.Apply: SplitEdge failed - " + result.ToString());
                         //return false;
                     }
+
+                    spatial_add_triangles(ev.a, ev.b);
+                    spatial_add_triangles(splitInfo.eNewT2, splitInfo.eNewT3);
 
                     // move split point to intersection position
                     SetPointF(splitInfo.vNew, x);
