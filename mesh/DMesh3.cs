@@ -15,6 +15,7 @@ namespace g3
         Failed_NotAnEdge = 3,
 
         Failed_BrokenTopology = 10,
+        Failed_HitValenceLimit = 11,
 
         Failed_IsBoundaryEdge = 20,
         Failed_FlippedEdgeExists = 21,
@@ -29,8 +30,6 @@ namespace g3
         Failed_WouldCreateBowtie = 30,
         Failed_VertexAlreadyExists = 31,
         Failed_CannotAllocateVertex = 32,
-
-
 
         Failed_WouldCreateNonmanifoldEdge = 50,
         Failed_TriangleAlreadyExists = 51,

@@ -289,24 +289,25 @@ namespace g3
 			Index3i T0tv = GetTriangle(t0);
 			int[] T0tv_array = T0tv.array;
 			int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, T0tv_array);
-
-			// create new vertex
-			Vector3d vNew = 0.5 * ( GetVertex(a) + GetVertex(b) );
-			int f = AppendVertex( vNew );
-            if (HasVertexNormals) 
-                SetVertexNormal(f, (GetVertexNormal(a) + GetVertexNormal(b)).Normalized);
-            if (HasVertexColors)
-                SetVertexColor(f, 0.5f * (GetVertexColor(a) + GetVertexColor(b)) );
-            if (HasVertexUVs)
-                SetVertexUV(f, 0.5f * (GetVertexUV(a) + GetVertexUV(b)));
-
+            if (vertices_refcount.rawRefCount(c) > 32764)
+                return MeshResult.Failed_HitValenceLimit;
 
             // quite a bit of code is duplicated between boundary and non-boundary case, but it
             //  is too hard to follow later if we factor it out...
             if ( IsBoundaryEdge(eab) ) {
 
-				// look up edge bc, which needs to be modified
-				Index3i T0te = GetTriEdges(t0);
+                // create new vertex
+                Vector3d vNew = 0.5 * (GetVertex(a) + GetVertex(b));
+                int f = AppendVertex(vNew);
+                if (HasVertexNormals)
+                    SetVertexNormal(f, (GetVertexNormal(a) + GetVertexNormal(b)).Normalized);
+                if (HasVertexColors)
+                    SetVertexColor(f, 0.5f * (GetVertexColor(a) + GetVertexColor(b)));
+                if (HasVertexUVs)
+                    SetVertexUV(f, 0.5f * (GetVertexUV(a) + GetVertexUV(b)));
+
+                // look up edge bc, which needs to be modified
+                Index3i T0te = GetTriEdges(t0);
 				int ebc = T0te[ IndexUtil.find_edge_index_in_tri(b, c, T0tv_array) ];
 
 				// rewrite existing triangle
@@ -354,10 +355,22 @@ namespace g3
 				Index3i T1tv = GetTriangle(t1);
 				int[] T1tv_array = T1tv.array;
 				int d = IndexUtil.find_tri_other_vtx( a, b, T1tv_array );
+                if (vertices_refcount.rawRefCount(d) > 32764) 
+                    return MeshResult.Failed_HitValenceLimit;
 
-				// look up edges that we are going to need to update
-				// [TODO OPT] could use ordering to reduce # of compares here
-				Index3i T0te = GetTriEdges(t0);
+                // create new vertex
+                Vector3d vNew = 0.5 * (GetVertex(a) + GetVertex(b));
+                int f = AppendVertex(vNew);
+                if (HasVertexNormals)
+                    SetVertexNormal(f, (GetVertexNormal(a) + GetVertexNormal(b)).Normalized);
+                if (HasVertexColors)
+                    SetVertexColor(f, 0.5f * (GetVertexColor(a) + GetVertexColor(b)));
+                if (HasVertexUVs)
+                    SetVertexUV(f, 0.5f * (GetVertexUV(a) + GetVertexUV(b)));
+
+                // look up edges that we are going to need to update
+                // [TODO OPT] could use ordering to reduce # of compares here
+                Index3i T0te = GetTriEdges(t0);
 				int ebc = T0te[IndexUtil.find_edge_index_in_tri( b, c, T0tv_array )];
 				Index3i T1te = GetTriEdges(t1);
 				int edb = T1te[IndexUtil.find_edge_index_in_tri( d, b, T1tv_array )];

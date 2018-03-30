@@ -4,15 +4,19 @@ using System.Collections;
 namespace g3
 {
 
-    // this class allows you to keep track of refences to indices,
-    // with a free list so unreferenced indices can be re-used.
-    //
-    // the enumerator iterates over valid indices
-    //
+    /// <summary>
+    /// RefCountedVector is used to keep track of which indices in a linear index list are in use/referenced.
+    /// A free list is tracked so that unreferenced indices can be re-used.
+    ///
+    /// The enumerator iterates over valid indices (ie where refcount > 0)
+    /// 
+    /// **refcounts are shorts** so the maximum count is 65536. 
+    /// No overflow checking is done in release builds.
+    /// 
+    /// </summary>
     public class RefCountVector : System.Collections.IEnumerable
     {
         public static readonly short invalid = -1;
-
 
         DVector<short> ref_counts;
         DVector<int> free_indices;
@@ -71,6 +75,9 @@ namespace g3
             int n = ref_counts[index];
             return (n == invalid) ? 0 : n;
         }
+        public int rawRefCount(int index) {
+            return ref_counts[index];
+        }
 
 
         public int allocate() {
@@ -99,6 +106,8 @@ namespace g3
 
         public int increment(int index, short increment = 1) {
             Util.gDevAssert( isValid(index)  );
+            // debug check for overflow...
+            Util.gDevAssert(  (short)(ref_counts[index] + increment) > 0 );
             ref_counts[index] += increment;
             return ref_counts[index];       
         }
