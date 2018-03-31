@@ -99,17 +99,18 @@ namespace g3
 
         // for all vertices in loopV, constrain to target
         // for all edges in loopV, disable flips and constrain to target
-        public static void ConstrainVtxLoopTo(MeshConstraints cons, DMesh3 mesh, int[] loopV, IProjectionTarget target, int setID = -1)
+        public static void ConstrainVtxLoopTo(MeshConstraints cons, DMesh3 mesh, IList<int> loopV, IProjectionTarget target, int setID = -1)
         {
             VertexConstraint vc = new VertexConstraint(target);
-            for (int i = 0; i < loopV.Length; ++i)
+            int N = loopV.Count;
+            for (int i = 0; i < N; ++i)
                 cons.SetOrUpdateVertexConstraint(loopV[i], vc);
 
             EdgeConstraint ec = new EdgeConstraint(EdgeRefineFlags.NoFlip, target);
             ec.TrackingSetID = setID;
-            for ( int i = 0; i < loopV.Length; ++i ) {
+            for ( int i = 0; i < N; ++i ) {
                 int v0 = loopV[i];
-                int v1 = loopV[(i + 1) % loopV.Length];
+                int v1 = loopV[(i + 1) % N];
 
                 int eid = mesh.FindEdge(v0, v1);
                 Debug.Assert(eid != DMesh3.InvalidID);
@@ -124,6 +125,42 @@ namespace g3
                 r.SetExternalConstraints(new MeshConstraints());
             ConstrainVtxLoopTo(r.Constraints, r.Mesh, loopV, target);
         }
+
+
+
+
+
+        // for all vertices in loopV, constrain to target
+        // for all edges in loopV, disable flips and constrain to target
+        public static void ConstrainVtxSpanTo(MeshConstraints cons, DMesh3 mesh, IList<int> spanV, IProjectionTarget target, int setID = -1)
+        {
+            VertexConstraint vc = new VertexConstraint(target);
+            int N = spanV.Count;
+            for (int i = 0; i < N; ++i)
+                cons.SetOrUpdateVertexConstraint(spanV[i], vc);
+
+            EdgeConstraint ec = new EdgeConstraint(EdgeRefineFlags.NoFlip, target);
+            ec.TrackingSetID = setID;
+            for (int i = 0; i < N-1; ++i) {
+                int v0 = spanV[i];
+                int v1 = spanV[i + 1];
+
+                int eid = mesh.FindEdge(v0, v1);
+                Debug.Assert(eid != DMesh3.InvalidID);
+                if (eid != DMesh3.InvalidID)
+                    cons.SetOrUpdateEdgeConstraint(eid, ec);
+            }
+
+        }
+        public static void ConstrainVtxSpanTo(Remesher r, int[] spanV, IProjectionTarget target, int setID = -1)
+        {
+            if (r.Constraints == null)
+                r.SetExternalConstraints(new MeshConstraints());
+            ConstrainVtxSpanTo(r.Constraints, r.Mesh, spanV, target);
+        }
+
+
+
 
 
 

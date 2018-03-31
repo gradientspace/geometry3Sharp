@@ -40,6 +40,14 @@ namespace g3
         }
 
 
+        public HashSet<int> ExtractSelected()
+        {
+            var ret = Selected;
+            Selected = new HashSet<int>();
+            return ret;
+        }
+
+
         public IEnumerator<int> GetEnumerator() {
             return Selected.GetEnumerator();
         }
@@ -106,6 +114,22 @@ namespace g3
             foreach ( int tid in triangles ) {
                 Index3i tri = Mesh.GetTriangle(tid);
                 add(tri.a); add(tri.b); add(tri.c);
+            }
+        }
+
+
+
+        public void SelectEdgeVertices(int[] edges)
+        {
+            for (int i = 0; i < edges.Length; ++i) {
+                Index2i ev = Mesh.GetEdgeV(edges[i]);
+                add(ev.a); add(ev.b);
+            }
+        }
+        public void SelectEdgeVertices(IEnumerable<int> edges) {
+            foreach (int eid in edges) {
+                Index2i ev = Mesh.GetEdgeV(eid);
+                add(ev.a); add(ev.b);
             }
         }
 
