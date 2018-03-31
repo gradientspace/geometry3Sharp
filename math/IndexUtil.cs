@@ -54,6 +54,13 @@ namespace g3
 			if (tri_verts.c == a) return 2;
 			return DMesh3.InvalidID;
 		}
+        public static int find_tri_index(int a, ref Index3i tri_verts)
+        {
+            if (tri_verts.a == a) return 0;
+            if (tri_verts.b == a) return 1;
+            if (tri_verts.c == a) return 2;
+            return DMesh3.InvalidID;
+        }
 
         // return index of a in tri_verts, or InvalidID if not found
         public static int find_edge_index_in_tri(int a, int b, int[] tri_verts )

@@ -16,6 +16,14 @@ namespace g3
         public bool AllowCollapseFixedVertsWithSameSetID = true;
 
 
+        /// <summary>
+        /// If normals dot product is less than this, we consider it a normal flip. default = 0
+        /// </summary>
+        public double EdgeFlipTolerance {
+            get { return edge_flip_tol; }
+            set { edge_flip_tol = MathUtil.Clamp(value, -1.0, 1.0); }
+        }
+        protected double edge_flip_tol = 0.0f;
 
 
         public MeshRefinerBase(DMesh3 mesh) {
@@ -42,6 +50,15 @@ namespace g3
         }
 
 
+        protected double edge_flip_metric(ref Vector3d n0, ref Vector3d n1)
+        {
+            if (edge_flip_tol == 0) {
+                return n0.Dot(n1);
+            } else {
+                return n0.Normalized.Dot(n1.Normalized);
+            }
+        }
+
 
         /// <summary>
         /// check if edge collapse will create a face-normal flip. 
@@ -65,16 +82,16 @@ namespace g3
                 double sign = 0;
                 if (curt.a == vid) {
                     Vector3d nnew = (vb - newv).Cross(vc - newv);
-                    sign = ncur.Dot(ref nnew);
+                    sign = edge_flip_metric(ref ncur, ref nnew);
                 } else if (curt.b == vid) {
                     Vector3d nnew = (newv - va).Cross(vc - va);
-                    sign = ncur.Dot(ref nnew);
+                    sign = edge_flip_metric(ref ncur, ref nnew);
                 } else if (curt.c == vid) {
                     Vector3d nnew = (vb - va).Cross(newv - va);
-                    sign = ncur.Dot(ref nnew);
+                    sign = edge_flip_metric(ref ncur, ref nnew);
                 } else
                     throw new Exception("should never be here!");
-                if (sign <= 0.0)
+                if (sign <= edge_flip_tol)
                     return true;
             }
             return false;
@@ -98,10 +115,10 @@ namespace g3
             Vector3d n0 = MathUtil.FastNormalDirection(ref vOA, ref vOB, ref vC);
             Vector3d n1 = MathUtil.FastNormalDirection(ref vOB, ref vOA, ref vD);
             Vector3d f0 = MathUtil.FastNormalDirection(ref vC, ref vD, ref vOB);
-            if (n0.Dot(f0) < 0 || n1.Dot(f0) < 0)
+            if ( edge_flip_metric(ref n0, ref f0) <= edge_flip_tol || edge_flip_metric(ref n1, ref f0) <= edge_flip_tol)
                 return true;
             Vector3d f1 = MathUtil.FastNormalDirection(ref vD, ref vC, ref vOA);
-            if ( n0.Dot(f1) < 0 || n1.Dot(f1) < 0 )
+            if (edge_flip_metric(ref n0, ref f1) <= edge_flip_tol || edge_flip_metric(ref n1, ref f1) <= edge_flip_tol)
                 return true;
 
             // this only checks if output faces are pointing towards eachother, which seems 

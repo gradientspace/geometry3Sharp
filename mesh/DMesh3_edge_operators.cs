@@ -59,7 +59,7 @@ namespace g3
                 if ( bPreserveManifold ) {
                     foreach ( int tid in VtxTrianglesItr(vID) ) {
                         Index3i tri = GetTriangle(tid);
-                        int j = IndexUtil.find_tri_index(vID, tri);
+                        int j = IndexUtil.find_tri_index(vID, ref tri);
                         int oa = tri[(j + 1) % 3], ob = tri[(j + 2) % 3];
                         int eid = find_edge(oa,ob);
                         if (IsBoundaryEdge(eid))
