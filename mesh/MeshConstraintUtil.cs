@@ -8,6 +8,22 @@ namespace g3
 {
     public static class MeshConstraintUtil
     {
+
+        // for all edges, disable flip/split/collapse
+        // for all vertices, pin in current position
+        public static void FixEdges(MeshConstraints cons, DMesh3 mesh, IEnumerable<int> edges)
+        {
+            foreach ( int ei in edges ) { 
+                if (mesh.IsEdge(ei)) {
+                    cons.SetOrUpdateEdgeConstraint(ei, EdgeConstraint.FullyConstrained);
+                    Index2i ev = mesh.GetEdgeV(ei);
+                    cons.SetOrUpdateVertexConstraint(ev.a, VertexConstraint.Pinned);
+                    cons.SetOrUpdateVertexConstraint(ev.b, VertexConstraint.Pinned);
+                }
+            }
+        }
+
+
         // for all mesh boundary edges, disable flip/split/collapse
         // for all mesh boundary vertices, pin in current position
         public static void FixAllBoundaryEdges(MeshConstraints cons, DMesh3 mesh)
