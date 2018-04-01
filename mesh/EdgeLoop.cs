@@ -127,9 +127,11 @@ namespace g3
         }
 
 
-        public DCurve3 ToCurve()
+        public DCurve3 ToCurve(DMesh3 sourceMesh = null)
         {
-            DCurve3 curve = MeshUtil.ExtractLoopV(Mesh, Vertices);
+            if (sourceMesh == null)
+                sourceMesh = Mesh;
+            DCurve3 curve = MeshUtil.ExtractLoopV(sourceMesh, Vertices);
             curve.Closed = true;
             return curve;
         }

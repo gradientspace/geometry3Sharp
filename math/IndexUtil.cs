@@ -333,6 +333,14 @@ namespace g3
             }
         }
 
+        public static void EdgesToVertices(DMesh3 mesh, HashSet<int> edges, HashSet<int> vertices)
+        {
+            foreach (int eid in edges) { 
+                Index2i ev = mesh.GetEdgeV(eid);
+                vertices.Add(ev.a); vertices.Add(ev.b);
+            }
+        }
+
     }
 
 
