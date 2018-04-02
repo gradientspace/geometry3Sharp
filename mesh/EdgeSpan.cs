@@ -63,6 +63,27 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// construct EdgeSpan from a list of vertices of mesh
+        /// </summary>
+        public static EdgeSpan FromVertices(DMesh3 mesh, IList<int> vertices)
+        {
+            int NV = vertices.Count;
+            int[] Vertices = new int[NV];
+            for (int i = 0; i < NV; ++i)
+                Vertices[i] = vertices[i];
+            int NE = NV - 1;
+            int[] Edges = new int[NE];
+            for ( int i = 0; i < NE; ++i ) {
+                Edges[i] = mesh.FindEdge(Vertices[i], Vertices[i + 1]);
+                if (Edges[i] == DMesh3.InvalidID)
+                    throw new Exception("EdgeSpan.FromVertices: vertices are not connected by edge!");
+            }
+            return new EdgeSpan(mesh, Vertices, Edges, false);
+        }
+
+
+
         public int VertexCount {
             get { return Vertices.Length; }
         }
