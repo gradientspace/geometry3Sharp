@@ -20,7 +20,10 @@ namespace g3
 
         protected DVector<int> RemovedT;
         protected DVector<Index4i> Triangles;
-        
+
+        public Action<IEnumerable<int>,IEnumerable<int>> OnApplyF;
+        public Action<IEnumerable<int>, IEnumerable<int>> OnRevertF;
+
         public RemoveTrianglesMeshChange()
         {
         }
@@ -100,6 +103,7 @@ namespace g3
                 if (result != MeshResult.Ok)
                     throw new Exception("RemoveTrianglesMeshChange.Apply: error in RemoveTriangle(" + tid.ToString() + "): " + result.ToString());
             }
+            OnApplyF(RemovedV, RemovedT);
         }
 
 
@@ -135,6 +139,8 @@ namespace g3
                 }
                 mesh.EndUnsafeTrianglesInsert();
             }
+
+            OnRevertF(RemovedV, RemovedT);
         }
 
 
@@ -197,6 +203,10 @@ namespace g3
         protected DVector<int> AddedT;
         protected DVector<Index4i> Triangles;
 
+        public Action<IEnumerable<int>, IEnumerable<int>> OnApplyF;
+        public Action<IEnumerable<int>, IEnumerable<int>> OnRevertF;
+
+
         public AddTrianglesMeshChange()
         {
         }
@@ -207,9 +217,11 @@ namespace g3
             initialize_buffers(mesh);
             bool has_groups = mesh.HasTriangleGroups;
 
-            foreach (int vid in added_v) {
-                Util.gDevAssert(mesh.IsVertex(vid));
-                append_vertex(mesh, vid);
+            if (added_v != null) {
+                foreach (int vid in added_v) {
+                    Util.gDevAssert(mesh.IsVertex(vid));
+                    append_vertex(mesh, vid);
+                }
             }
 
             foreach (int tid in added_t) {
@@ -256,6 +268,8 @@ namespace g3
                 }
                 mesh.EndUnsafeTrianglesInsert();
             }
+
+            OnApplyF(AddedV, AddedT);
         }
 
 
@@ -268,6 +282,8 @@ namespace g3
                 if (result != MeshResult.Ok)
                     throw new Exception("AddTrianglesMeshChange.Apply: error in RemoveTriangle(" + tid.ToString() + "): " + result.ToString());
             }
+
+            OnRevertF(AddedV, AddedT);
         }
 
 
