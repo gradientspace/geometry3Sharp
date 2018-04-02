@@ -14,6 +14,7 @@ namespace g3
     /// Construction is somewhat complicated, but see shortcut static
     /// methods at end of file for common construction cases:
     ///   - MeshVertices(mesh) - compute on vertices of mesh
+    ///   - MeshVertices(mesh) - compute on vertices of mesh
     /// 
     /// </summary>
     public class DijkstraGraphDistance
@@ -113,10 +114,30 @@ namespace g3
                 foreach (var v in seeds)
                     AddSeed((int)v.x, (float)v.y);
             }
-
         }
 
 
+        /// <summary>
+        /// shortcut to construct graph for mesh vertices
+        /// </summary>
+        public static DijkstraGraphDistance MeshVertices(DMesh3 mesh, bool bSparse = false)
+        {
+            return (bSparse) ?
+                new DijkstraGraphDistance( mesh.MaxVertexID, true,
+                (id) => { return mesh.IsVertex(id); },
+                (a, b) => { return (float)mesh.GetVertex(a).Distance(mesh.GetVertex(b)); },
+                mesh.VtxVerticesItr, null) 
+            :  new DijkstraGraphDistance( mesh.MaxVertexID, false,
+                (id) => { return true; },
+                (a, b) => { return (float)mesh.GetVertex(a).Distance(mesh.GetVertex(b)); },
+                mesh.VtxVerticesItr, null);
+        }
+
+
+
+        /// <summary>
+        /// reset internal data structures/etc
+        /// </summary>
         public void Reset()
         {
             if ( SparseNodes != null ) {
@@ -145,7 +166,7 @@ namespace g3
                 SparseQueue.Enqueue(g, seed_dist);
             } else {
                 Debug.Assert(DenseQueue.Contains(id) == false);
-                enqueue_node_dense(id, seed_dist);
+                enqueue_node_dense(id, seed_dist, -1);
             }
             Seeds.Add(id);
         }
@@ -242,6 +263,60 @@ namespace g3
         }
 
 
+
+
+        /// <summary>
+        /// Compute distances until node_id is frozen, or (optional) max distance is reached
+        /// Terminates early, so Queue may not be empty
+        /// </summary>
+        public void ComputeToNode(int node_id, float fMaxDistance = float.MaxValue)
+        {
+            if (TrackOrder == true)
+                order = new List<int>();
+
+            if (SparseNodes != null)
+                ComputeToNode_Sparse(node_id, fMaxDistance);
+            else
+                ComputeToNode_Dense(node_id, fMaxDistance);
+        }
+        protected void ComputeToNode_Sparse(int node_id, float fMaxDistance)
+        {
+            while (SparseQueue.Count > 0) {
+                GraphNode g = SparseQueue.Dequeue();
+                max_value = Math.Max(g.priority, max_value);
+                if (max_value > fMaxDistance)
+                    return;
+                g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
+                if (g.id == node_id)
+                    return;
+                update_neighbours_sparse(g);
+            }
+        }
+        protected void ComputeToNode_Dense(int node_id, float fMaxDistance)
+        {
+            while (DenseQueue.Count > 0) {
+                float idx_priority = DenseQueue.FirstPriority;
+                max_value = Math.Max(idx_priority, max_value);
+                if (max_value > fMaxDistance)
+                    return;
+                int idx = DenseQueue.Dequeue();
+                GraphNodeStruct g = DenseNodes[idx];
+                g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
+                g.distance = max_value;
+                DenseNodes[idx] = g;
+                if (g.id == node_id)
+                    return;
+                update_neighbours_dense(g.id);
+            }
+        }
+
+
+
+
         /// <summary>
         /// Get the maximum distance encountered during the Compute()
         /// </summary>
@@ -268,12 +343,53 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Get (internal) list of frozen nodes in increasing distance-order.
+        /// Requries that TrackOrder=true before Compute call.
+        /// </summary>
         public List<int> GetOrder()
         {
             if (TrackOrder == false)
                 throw new InvalidOperationException("DijkstraGraphDistance.GetOrder: Must set TrackOrder = true");
             return order;
         }
+
+
+
+        /// <summary>
+        /// Walk from node fromv back to the (graph-)nearest seed point.
+        /// </summary>
+        public bool GetPathToSeed(int fromv, List<int> path)
+        {
+            if ( SparseNodes != null ) {
+                GraphNode g = get_node(fromv);
+                if (g.frozen == false)
+                    return false;
+                path.Add(fromv);
+                while (g.parent != null) {
+                    path.Add(g.parent.id);
+                    g = g.parent;
+                }
+                return true;
+            } else {
+                GraphNodeStruct g = DenseNodes[fromv];
+                if (g.frozen == false)
+                    return false;
+                path.Add(fromv);
+                while ( g.parent != -1 ) {
+                    path.Add(g.parent);
+                    g = DenseNodes[g.parent];
+                }
+                return true;
+            }
+        }
+
+
+
+
+        /*
+         * Internals below here
+         */
 
 
 
@@ -309,6 +425,7 @@ namespace g3
                         SparseQueue.Update(nbr, nbr_dist);
                     }
                 } else {
+                    nbr.parent = parent;
                     SparseQueue.Enqueue(nbr, nbr_dist);
                 }
             }
@@ -317,9 +434,9 @@ namespace g3
 
 
 
-        void enqueue_node_dense(int id, float dist)
+        void enqueue_node_dense(int id, float dist, int parent_id)
         {
-            GraphNodeStruct g = new GraphNodeStruct(id, -1, dist);
+            GraphNodeStruct g = new GraphNodeStruct(id, parent_id, dist);
             DenseNodes[id] = g;
             DenseQueue.Insert(id, dist);
         }
@@ -344,24 +461,12 @@ namespace g3
                         DenseNodes[nbr_id] = nbr;
                     }
                 } else {
-                    enqueue_node_dense(nbr_id, nbr_dist);
+                    enqueue_node_dense(nbr_id, nbr_dist, parent_id);
                 }
             }
         }
 
 
-
-        /// <summary>
-        /// shortcut to setup functions for mesh vertices
-        /// </summary>
-        public static DijkstraGraphDistance MeshVertices(DMesh3 mesh)
-        {
-            return new DijkstraGraphDistance(
-                mesh.MaxVertexID, false,
-                (id) => { return true; },
-                (a, b) => { return (float)mesh.GetVertex(a).Distance(mesh.GetVertex(b)); },
-                mesh.VtxVerticesItr);
-        }
 
     }
 }
