@@ -175,6 +175,74 @@ namespace g3
 
 
         /// <summary>
+        /// Find the vertex closest to p, within distance fMaxDist, or return InvalidID
+        /// </summary>
+        public virtual int FindNearestVertex(Vector3d p, double fMaxDist = double.MaxValue)
+        {
+            if (mesh_timestamp != mesh.ShapeTimestamp)
+                throw new Exception("DMeshAABBTree3.FindNearestVertex: mesh has been modified since tree construction");
+
+            double fNearestSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
+            int vNearID = DMesh3.InvalidID;
+            find_nearest_vtx(root_index, p, ref fNearestSqr, ref vNearID);
+            return vNearID;
+        }
+        protected void find_nearest_vtx(int iBox, Vector3d p, ref double fNearestSqr, ref int vid)
+        {
+            int idx = box_to_index[iBox];
+            if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i) {
+                    int ti = index_list[idx + i];
+                    if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                        continue;
+                    Vector3i tv = mesh.GetTriangle(ti);
+                    for ( int j = 0; j < 3; ++j ) {
+                        double dsqr = mesh.GetVertex(tv[j]).DistanceSquared(ref p);
+                        if (  dsqr < fNearestSqr ) {
+                            fNearestSqr = dsqr;
+                            vid = tv[j];
+                        }
+                    }
+                }
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    double fChild1DistSqr = box_distance_sqr(iChild1, p);
+                    if (fChild1DistSqr <= fNearestSqr)
+                        find_nearest_vtx(iChild1, p, ref fNearestSqr, ref vid);
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    double fChild1DistSqr = box_distance_sqr(iChild1, p);
+                    double fChild2DistSqr = box_distance_sqr(iChild2, p);
+                    if (fChild1DistSqr < fChild2DistSqr) {
+                        if (fChild1DistSqr < fNearestSqr) {
+                            find_nearest_vtx(iChild1, p, ref fNearestSqr, ref vid);
+                            if (fChild2DistSqr < fNearestSqr)
+                                find_nearest_vtx(iChild2, p, ref fNearestSqr, ref vid);
+                        }
+                    } else {
+                        if (fChild2DistSqr < fNearestSqr) {
+                            find_nearest_vtx(iChild2, p, ref fNearestSqr, ref vid);
+                            if (fChild1DistSqr < fNearestSqr)
+                                find_nearest_vtx(iChild1, p, ref fNearestSqr, ref vid);
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+
+
+        /// <summary>
         /// Does this ISpatial implementation support ray-triangle intersection? (yes)
         /// </summary>
         public bool SupportsTriangleRayIntersection { get { return true; } }
