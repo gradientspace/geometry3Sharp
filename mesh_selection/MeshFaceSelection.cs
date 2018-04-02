@@ -145,6 +145,11 @@ namespace g3
             Select(temp);
         }
 
+
+        public void SelectVertexOneRing(int vid) {
+            foreach (int tid in Mesh.VtxTrianglesItr(vid))
+                add(tid);
+        }
         public void SelectVertexOneRings(int[] vertices)
         {
             for ( int i = 0; i < vertices.Length; ++i ) {

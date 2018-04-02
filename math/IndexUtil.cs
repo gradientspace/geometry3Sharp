@@ -318,7 +318,12 @@ namespace g3
 
 
 
-        
+        public static void TrianglesToVertices(DMesh3 mesh, IEnumerable<int> triangles, HashSet<int> vertices) {
+            foreach ( int tid in triangles ) {
+                Index3i tv = mesh.GetTriangle(tid);
+                vertices.Add(tv.a); vertices.Add(tv.b); vertices.Add(tv.c);
+            }
+        }        
         public static void TrianglesToVertices(DMesh3 mesh, HashSet<int> triangles, HashSet<int> vertices) {
             foreach ( int tid in triangles ) {
                 Index3i tv = mesh.GetTriangle(tid);
@@ -326,6 +331,13 @@ namespace g3
             }
         }
 
+
+        public static void TrianglesToEdges(DMesh3 mesh, IEnumerable<int> triangles, HashSet<int> edges) {
+            foreach ( int tid in triangles ) {
+                Index3i te = mesh.GetTriEdges(tid);
+                edges.Add(te.a); edges.Add(te.b); edges.Add(te.c);
+            }
+        }
         public static void TrianglesToEdges(DMesh3 mesh, HashSet<int> triangles, HashSet<int> edges) {
             foreach ( int tid in triangles ) {
                 Index3i te = mesh.GetTriEdges(tid);
@@ -333,8 +345,15 @@ namespace g3
             }
         }
 
-        public static void EdgesToVertices(DMesh3 mesh, HashSet<int> edges, HashSet<int> vertices)
-        {
+
+
+        public static void EdgesToVertices(DMesh3 mesh, IEnumerable<int> edges, HashSet<int> vertices) {
+            foreach (int eid in edges) { 
+                Index2i ev = mesh.GetEdgeV(eid);
+                vertices.Add(ev.a); vertices.Add(ev.b);
+            }
+        }
+        public static void EdgesToVertices(DMesh3 mesh, HashSet<int> edges, HashSet<int> vertices) {
             foreach (int eid in edges) { 
                 Index2i ev = mesh.GetEdgeV(eid);
                 vertices.Add(ev.a); vertices.Add(ev.b);
