@@ -87,6 +87,9 @@ namespace g3
         // grid of per-cell crossing or parity counts
         public bool WantIntersectionsGrid = false;
 
+        /// <summary> if this function returns true, we should abort calculation </summary>
+        public Func<bool> CancelF = () => { return false; };
+
 
         public bool DebugPrint = false;
 
@@ -196,6 +199,8 @@ namespace g3
             double ox = (double)origin[0], oy = (double)origin[1], oz = (double)origin[2];
             Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
             foreach (int tid in Mesh.TriangleIndices()) {
+                if (tid % 100 == 0 && CancelF())
+                    break;
                 Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
 
                 // real ijk coordinates of xp/xq/xr
@@ -226,20 +231,27 @@ namespace g3
                     }
                 }
             }
+            if (CancelF())
+                return;
 
             if (ComputeSigns == true) {
 
                 if (DebugPrint) System.Console.WriteLine("done narrow-band");
 
                 compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+                if (CancelF())
+                    return;
 
                 if (DebugPrint) System.Console.WriteLine("done intersections");
 
                 if (ComputeMode == ComputeModes.FullGrid) {
                     // and now we fill in the rest of the distances with fast sweeping
-                    for (int pass = 0; pass < 2; ++pass)
+                    for (int pass = 0; pass < 2; ++pass) {
                         sweep_pass(origin, dx, distances, closest_tri);
-                    if (DebugPrint) System.Console.WriteLine("done sweeping");
+                        if (CancelF())
+                            return;
+                    }
+                        if (DebugPrint) System.Console.WriteLine("done sweeping");
                 } else {
                     // nothing!
                     if (DebugPrint) System.Console.WriteLine("skipped sweeping");
@@ -248,6 +260,8 @@ namespace g3
 
                 // then figure out signs (inside/outside) from intersection counts
                 compute_signs(ni, nj, nk, distances, intersection_count);
+                if (CancelF())
+                    return;
 
                 if (DebugPrint) System.Console.WriteLine("done signs");
 
@@ -297,7 +311,13 @@ namespace g3
             int wi = ni / 2, wj = nj / 2, wk = nk / 2;
             SpinLock[] grid_locks = new SpinLock[8];
 
+            bool abort = false;
             gParallel.ForEach(Mesh.TriangleIndices(), (tid) => {
+                if (tid % 100 == 0)
+                    abort = CancelF();
+                if (abort)
+                    return;
+
                 Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
                 Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
 
@@ -339,19 +359,26 @@ namespace g3
                 }
             });
 
+            if (CancelF())
+                return;
 
             if (ComputeSigns == true) {
 
                 if (DebugPrint) System.Console.WriteLine("done narrow-band");
 
                 compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+                if (CancelF())
+                    return;
 
                 if (DebugPrint) System.Console.WriteLine("done intersections");
 
                 if (ComputeMode == ComputeModes.FullGrid) {
                     // and now we fill in the rest of the distances with fast sweeping
-                    for (int pass = 0; pass < 2; ++pass)
+                    for (int pass = 0; pass < 2; ++pass) {
                         sweep_pass(origin, dx, distances, closest_tri);
+                        if (CancelF())
+                            return;
+                    }
                     if (DebugPrint) System.Console.WriteLine("done sweeping");
                 } else {
                     // nothing!
@@ -362,6 +389,8 @@ namespace g3
 
                 // then figure out signs (inside/outside) from intersection counts
                 compute_signs(ni, nj, nk, distances, intersection_count);
+                if (CancelF())
+                    return;
 
                 if (WantIntersectionsGrid)
                     intersections_grid = intersection_count;
