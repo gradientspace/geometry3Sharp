@@ -140,9 +140,13 @@ namespace g3
             PrimalQuery2d query = new PrimalQuery2d(PointF);
 
             if (UseTriSpatial) {
+                int count = Mesh.TriangleCount + Curve.VertexCount;
+                int bins = 32;
+                if (count < 25) bins = 8;
+                else if (count < 100) bins = 16;
                 AxisAlignedBox3d bounds3 = Mesh.CachedBounds;
                 AxisAlignedBox2d bounds2 = new AxisAlignedBox2d(bounds3.Min.xy, bounds3.Max.xy);
-                triSpatial = new TriangleBinsGrid2d(bounds2, 32);
+                triSpatial = new TriangleBinsGrid2d(bounds2, bins);
                 foreach (int tid in Mesh.TriangleIndices())
                     spatial_add_triangle(tid);
             }
