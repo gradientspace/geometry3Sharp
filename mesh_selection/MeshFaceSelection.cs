@@ -167,6 +167,15 @@ namespace g3
         }
 
 
+        public void SelectEdgeTris(int eid)
+        {
+            Index2i et = Mesh.GetEdgeT(eid);
+            add(et.a);
+            if (et.b != DMesh3.InvalidID)
+                add(et.b);
+        }
+
+
         public void Deselect(int tid) {
             remove(tid);
         }

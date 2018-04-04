@@ -722,6 +722,11 @@ namespace g3
             boxgen.MakeMesh(mesh);
             AppendMesh(mesh, Mesh.AllocateTriangleGroup());
         }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos), size);
+        }
 
 
 
