@@ -457,6 +457,66 @@ namespace g3
 
 
 
+        /// <summary>
+        /// separate triangle one-ring at vertex into connected components, and
+        /// then duplicate vertex once for each component
+        /// </summary>
+        public void DisconnectBowtie(int vid)
+        {
+            List<List<int>> sets = new List<List<int>>();
+            foreach ( int tid in Mesh.VtxTrianglesItr(vid)) {
+                Index3i nbrs = Mesh.GetTriNeighbourTris(tid);
+                bool found = false;
+                foreach ( List<int> set in sets ) {
+                    if ( set.Contains(nbrs.a) || set.Contains(nbrs.b) || set.Contains(nbrs.c) ) {
+                        set.Add(tid);
+                        found = true;
+                        break;
+                    }
+                }
+                if ( found == false ) {
+                    List<int> set = new List<int>() { tid };
+                    sets.Add(set);
+                }
+            }
+            if (sets.Count == 1)
+                return;  // not a bowtie!
+            sets.Sort(bowtie_sorter);
+            for ( int k = 1; k < sets.Count; ++k ) {
+                int copy_vid = Mesh.AppendVertex(Mesh, vid);
+                List<int> tris = sets[k];
+                foreach ( int tid in tris ) {
+                    Index3i t = Mesh.GetTriangle(tid);
+                    if (t.a == vid) t.a = copy_vid;
+                    else if (t.b == vid) t.b = copy_vid;
+                    else t.c = copy_vid;
+                    Mesh.SetTriangle(tid, t, false);
+                }
+            }
+        }
+        static int bowtie_sorter(List<int> l1, List<int> l2) {
+            if (l1.Count == l2.Count) return 0;
+            return (l1.Count > l2.Count) ? -1 : 1;
+        }
+
+
+
+        /// <summary>
+        /// Disconnect all bowtie vertices in mesh. Iterates because sometimes
+        /// disconnecting a bowtie creates new bowties (how??)
+        /// </summary>
+        public void DisconnectAllBowties(int nMaxIters = 10)
+        {
+            List<int> bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
+            int iter = 0;
+            while (bowties.Count > 0 && iter++ < nMaxIters) {
+                foreach (int vid in bowties) 
+                    DisconnectBowtie(vid);
+                bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
+            }
+        }
+
+
 
 
         // in ReinsertSubmesh, a problem can arise where the mesh we are inserting has duplicate triangles of
