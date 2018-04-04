@@ -485,7 +485,7 @@ namespace g3
                 return false;
             vinfo.v.Set(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]);
             vinfo.bHaveN = vinfo.bHaveUV = vinfo.bHaveC = false;
-            if (HasVertexColors && bWantNormals) {
+            if (HasVertexNormals && bWantNormals) {
                 vinfo.bHaveN = true;
                 vinfo.n.Set(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]);
             }
