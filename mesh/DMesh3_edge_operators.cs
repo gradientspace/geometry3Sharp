@@ -838,9 +838,14 @@ namespace g3
 			merge_info.eKept = eab;
 			merge_info.eRemoved = ecd;
 
-			// [TODO] this acts on each interior tri twice. could avoid using vtx-tri iterator?
+            // if a/c or b/d are connected by an existing edge, we can't merge
+            if (a != c && find_edge(a,c) != DMesh3.InvalidID )
+                return MeshResult.Failed_InvalidNeighbourhood;
+            if (b != d && find_edge(b, d) != DMesh3.InvalidID)
+                return MeshResult.Failed_InvalidNeighbourhood;
 
-			if (a != c) {
+            // [TODO] this acts on each interior tri twice. could avoid using vtx-tri iterator?
+            if (a != c) {
 				// replace c w/ a in edges and tris connected to c, and move edges to a
                 foreach ( int eid in vertex_edges.ValueItr(c)) { 
 					if (eid == eDiscard)
@@ -924,6 +929,7 @@ namespace g3
 				bool found = false;
 				// in this loop, we compare 'other' vert_1 and vert_2 of edges around v1.
 				// problem case is when vert_1 == vert_2  (ie two edges w/ same other vtx).
+                //restart_merge_loop:
 				for (int i = 0; i < Nedges && found == false; ++i) {
 					int edge_1 = edges_v[i];
 					if ( IsBoundaryEdge(edge_1) == false)
@@ -944,11 +950,12 @@ namespace g3
 							merge_info.eRemovedExtra[vi] = edge_2;
 							merge_info.eKeptExtra[vi] = edge_1;
 
-							//Nedges = edges_v.Count; // this code allows us to continue checking, ie in case we had
-							//i--;					  // multiple such edges. but I don't think it's possible.
-							found = true;			  // exit outer i loop
-							break;					  // exit inner j loop
-						}
+                            //edges_v = vertex_edges_list(v1);      // this code allows us to continue checking, ie in case we had
+                            //Nedges = edges_v.Count;               // multiple such edges. but I don't think it's possible.
+                            //goto restart_merge_loop;
+                            found = true;			  // exit outer i loop
+                            break;					  // exit inner j loop
+                        }
 					}
 				}
 			}
