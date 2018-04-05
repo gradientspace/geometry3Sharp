@@ -50,6 +50,19 @@ namespace g3
             Timestamp = 1;
         }
 
+        public DCurve3(Polygon2d poly, int ix = 0, int iy = 1)
+        {
+            int NV = poly.VertexCount;
+            this.vertices = new List<Vector3d>(NV);
+            for (int k = 0; k < NV; ++k) {
+                Vector3d v = Vector3d.Zero;
+                v[ix] = poly[k].x; v[iy] = poly[k].y;
+                this.vertices.Add(v);
+            }
+            Closed = true;
+            Timestamp = 1;
+        }
+
         public void AppendVertex(Vector3d v) {
             vertices.Add(v);
             Timestamp++;
