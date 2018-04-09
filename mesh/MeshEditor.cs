@@ -24,6 +24,42 @@ namespace g3
 
 
 
+        public virtual int[] AddTriangleStrip(IList<Frame3f> frames, IList<Interval1d> spans, int group_id = -1)
+        {
+            int N = frames.Count;
+            if (N != spans.Count)
+                throw new Exception("MeshEditor.AddTriangleStrip: spans list is not the same size!");
+            int[] new_tris = new int[2*(N-1)];
+
+            int prev_a = -1, prev_b = -1;
+            int i = 0, ti = 0;
+            for (i = 0; i < N; ++i) {
+                Frame3f f = frames[i];
+                Interval1d span = spans[i];
+
+                Vector3d va = f.Origin + (float)span.a * f.Y;
+                Vector3d vb = f.Origin + (float)span.b * f.Y;
+
+                // [TODO] could compute normals here...
+
+                int a = Mesh.AppendVertex(va);
+                int b = Mesh.AppendVertex(vb);
+
+                if ( prev_a != -1 ) {
+                    new_tris[ti++] = Mesh.AppendTriangle(prev_a, b, prev_b);
+                    new_tris[ti++] = Mesh.AppendTriangle(prev_a, a, b);
+
+                }
+                prev_a = a; prev_b = b;
+            }
+
+            return new_tris;
+        }
+
+
+
+
+
         public virtual int[] AddTriangleFan_OrderedVertexLoop(int center, int[] vertex_loop, int group_id = -1)
         {
             int N = vertex_loop.Length;
@@ -49,7 +85,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, i) == false)
-                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedVertexLoop: failed to add fan, and also falied to back out changes.");
+                        throw new Exception("MeshEditor.AddTriangleFan_OrderedVertexLoop: failed to add fan, and also falied to back out changes.");
                 }
                 return null;
         }
@@ -86,7 +122,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, i-1) == false)
-                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -134,7 +170,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, 2*(i-1)) == false)
-                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -195,7 +231,7 @@ namespace g3
             // remove what we added so far
             if (i > 0) {
                 if (remove_triangles(new_tris, 2 * (i - 1)) == false)
-                    throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                    throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
             }
             return null;
         }
@@ -246,7 +282,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, 2*(i-1)) == false)
-                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
                 }
                 return null;
         }
