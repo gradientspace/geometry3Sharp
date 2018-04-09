@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-#if !G3_USING_UNITY
+#if !(NET_2_0 || NET_2_0_SUBSET)
 using System.Threading.Tasks;
 #endif
 
@@ -20,7 +20,7 @@ namespace g3
         }
         public static void ForEach<T>( IEnumerable<T> source, Action<T> body )
         {
-#if G3_USING_UNITY
+#if G3_USING_UNITY && (NET_2_0 || NET_2_0_SUBSET)
             for_each<T>(source, body);
 #else
             Parallel.ForEach<T>(source, body);
