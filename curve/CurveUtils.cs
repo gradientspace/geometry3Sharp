@@ -8,27 +8,40 @@ namespace g3
     public class CurveUtils
     {
 
-        public static Vector3d GetTangent(List<Vector3d> vertices, int i)
+        public static Vector3d GetTangent(List<Vector3d> vertices, int i, bool bLoop = false)
         {
-            if (i == 0)
-                return (vertices[1] - vertices[0]).Normalized;
-            else if (i == vertices.Count - 1)
-                return (vertices[vertices.Count - 1] - vertices[vertices.Count - 2]).Normalized;
-            else
-                return (vertices[i + 1] - vertices[i - 1]).Normalized;
+            if (bLoop) {
+                int NV = vertices.Count;
+                if (i == 0)
+                    return (vertices[1] - vertices[NV-1]).Normalized;
+                else
+                    return (vertices[(i+1)%NV] - vertices[i-1]).Normalized;
+            } else {
+                if (i == 0)
+                    return (vertices[1] - vertices[0]).Normalized;
+                else if (i == vertices.Count - 1)
+                    return (vertices[vertices.Count - 1] - vertices[vertices.Count - 2]).Normalized;
+                else
+                    return (vertices[i + 1] - vertices[i - 1]).Normalized;
+            }
         }
 
 
-        public static double ArcLength(List<Vector3d> vertices) {
+        public static double ArcLength(List<Vector3d> vertices, bool bLoop = false) {
             double sum = 0;
-            for (int i = 1; i < vertices.Count; ++i)
-                sum += (vertices[i] - vertices[i - 1]).Length;
+            int NV = vertices.Count;
+            for (int i = 1; i < NV; ++i)
+                sum += vertices[i].Distance(vertices[i-1]);
+            if (bLoop)
+                sum += vertices[NV-1].Distance(vertices[0]);
             return sum;
         }
-        public static double ArcLength(Vector3d[] vertices) {
+        public static double ArcLength(Vector3d[] vertices, bool bLoop = false) {
             double sum = 0;
             for (int i = 1; i < vertices.Length ; ++i)
-                sum += (vertices[i] - vertices[i - 1]).Length;
+                sum += vertices[i].Distance(vertices[i-1]);
+            if (bLoop)
+                sum += vertices[vertices.Length-1].Distance(vertices[0]);
             return sum;
         }
         public static double ArcLength(IEnumerable<Vector3d> vertices) {

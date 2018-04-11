@@ -29,6 +29,12 @@ namespace g3
 			Timestamp = 0;
         }
 
+        public Polygon2d(IEnumerable<Vector2d> copy)
+        {
+            vertices = new List<Vector2d>(copy);
+            Timestamp = 0;
+        }
+
         public Polygon2d(Vector2d[] v)
         {
             vertices = new List<Vector2d>(v);
