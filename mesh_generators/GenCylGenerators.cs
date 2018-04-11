@@ -64,6 +64,14 @@ namespace g3
             ClosedLoop = false;
             Capped = true;
         }
+        public TubeGenerator(DCurve3 tubePath, Polygon2d tubeShape)
+        {
+            Vertices = new List<Vector3d>(tubePath.Vertices);
+            Polygon = new Polygon2d(tubeShape);
+            ClosedLoop = tubePath.Closed;
+            Capped = ! ClosedLoop;
+        }
+
 
 
         override public MeshGenerator Generate()
