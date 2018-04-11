@@ -103,7 +103,9 @@ namespace g3
                 if (result != MeshResult.Ok)
                     throw new Exception("RemoveTrianglesMeshChange.Apply: error in RemoveTriangle(" + tid.ToString() + "): " + result.ToString());
             }
-            OnApplyF(RemovedV, RemovedT);
+
+            if ( OnApplyF != null )
+                OnApplyF(RemovedV, RemovedT);
         }
 
 
@@ -140,7 +142,8 @@ namespace g3
                 mesh.EndUnsafeTrianglesInsert();
             }
 
-            OnRevertF(RemovedV, RemovedT);
+            if (OnRevertF != null)
+                OnRevertF(RemovedV, RemovedT);
         }
 
 
@@ -269,7 +272,8 @@ namespace g3
                 mesh.EndUnsafeTrianglesInsert();
             }
 
-            OnApplyF(AddedV, AddedT);
+            if (OnApplyF != null)
+                OnApplyF(AddedV, AddedT);
         }
 
 
@@ -283,7 +287,8 @@ namespace g3
                     throw new Exception("AddTrianglesMeshChange.Apply: error in RemoveTriangle(" + tid.ToString() + "): " + result.ToString());
             }
 
-            OnRevertF(AddedV, AddedT);
+            if ( OnRevertF != null )
+                OnRevertF(AddedV, AddedT);
         }
 
 
