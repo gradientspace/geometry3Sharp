@@ -763,6 +763,18 @@ namespace g3
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(new Frame3f(pos), size);
         }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos, normal), size);
+        }
+        public static void AppendLine(DMesh3 mesh, Segment3d seg, float size)
+        {
+            Frame3f f = new Frame3f(seg.Center);
+            f.AlignAxis(2, (Vector3f)seg.Direction);
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(f, new Vector3f(size, size, seg.Extent));
+        }
 
 
 

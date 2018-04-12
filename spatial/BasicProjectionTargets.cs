@@ -42,6 +42,20 @@ namespace g3
             else
                 return new MeshProjectionTarget(mesh);
         }
+
+
+        /// <summary>
+        /// Automatically construct fastest projection target for region of mesh
+        /// </summary>
+        public static MeshProjectionTarget Auto(DMesh3 mesh, IEnumerable<int> triangles, int nExpandRings = 5)
+        {
+            MeshFaceSelection targetRegion = new MeshFaceSelection(mesh);
+            targetRegion.Select(triangles);
+            targetRegion.ExpandToOneRingNeighbours(nExpandRings);
+            DSubmesh3 submesh = new DSubmesh3(mesh, targetRegion);
+            return new MeshProjectionTarget(submesh.SubMesh); 
+        }
+
     }
 
 

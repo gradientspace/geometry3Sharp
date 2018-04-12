@@ -146,6 +146,16 @@ namespace g3
             foreach ( int vid in vertices )
                 remove(vid);
         }
+        public void DeselectEdge(int eid) {
+            Index2i ev = Mesh.GetEdgeV(eid);
+            remove(ev.a); remove(ev.b);
+        }
+        public void DeselectEdges(IEnumerable<int> edges) {
+            foreach ( int eid in edges ) {
+                Index2i ev = Mesh.GetEdgeV(eid);
+                remove(ev.a); remove(ev.b);
+            }
+        }
 
         public int[] ToArray()
         {
