@@ -13,7 +13,41 @@ namespace g3
 
         public TrivialRectGenerator.UVModes UVMode = TrivialRectGenerator.UVModes.FullUVSquare;
 
+
         override public MeshGenerator Generate()
+        {
+            MeshInsertPolygon insert;
+            DMesh3 base_mesh = ComputeResult(out insert);
+
+            DMesh3 compact = new DMesh3(base_mesh, true);
+
+            int NV = compact.VertexCount;
+            vertices = new VectorArray3d(NV);
+            uv = new VectorArray2f(NV);
+            normals = new VectorArray3f(NV);
+            for (int vi = 0; vi < NV; ++vi) {
+                vertices[vi] = compact.GetVertex(vi);
+                uv[vi] = compact.GetVertexUV(vi);
+                normals[vi] = FixedNormal;
+            }
+
+            int NT = compact.TriangleCount;
+            triangles = new IndexArray3i(NT);
+            for (int ti = 0; ti < NT; ++ti)
+                triangles[ti] = compact.GetTriangle(ti);
+
+            return this;
+        }
+
+
+
+
+        /// <summary>
+        /// Actually computes the insertion. In some cases we would like more info
+        /// coming back than we get by using Generate() api. Note that resulting
+        /// mesh is *not* compacted.
+        /// </summary>
+        public DMesh3 ComputeResult(out MeshInsertPolygon insertion)
         {
             AxisAlignedBox2d bounds = Polygon.Bounds;
             double padding = 0.1 * bounds.DiagonalLength;
@@ -44,26 +78,16 @@ namespace g3
             MeshEditor editor = new MeshEditor(base_mesh);
             editor.RemoveTriangles((tid) => { return selected.IsSelected(tid) == false; }, true);
 
-            DMesh3 compact = new DMesh3(base_mesh, true);
-
-            int NV = compact.VertexCount;
-            vertices = new VectorArray3d(NV);
-            uv = new VectorArray2f(NV);
-            normals = new VectorArray3f(NV);
             Vector3d shift3 = new Vector3d(shift.x, shift.y, 0);
-            for (int vi = 0; vi < NV; ++vi) {
-                vertices[vi] = compact.GetVertex(vi) + shift3;
-                uv[vi] = compact.GetVertexUV(vi);
-                normals[vi] = FixedNormal;
-            }
+            MeshTransforms.Translate(base_mesh, shift3);
 
-            int NT = compact.TriangleCount;
-            triangles = new IndexArray3i(NT);
-            for (int ti = 0; ti < NT; ++ti)
-                triangles[ti] = compact.GetTriangle(ti);
-
-            return this;
+            insertion = insert;
+            return base_mesh;
         }
+
+
+
+
     }
 
 
