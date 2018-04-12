@@ -10,6 +10,14 @@ namespace g3
     /// Assumptions:
     ///   - mesh vertex x/y coordinates are 2D coordinates we want to use. Replace PointF if this is not the case.
     ///   - segments of Curve lie entirely within UV-triangles
+    ///   
+    /// Limitations:
+    ///   - currently not robust to near-parallel line segments that are within epsilon-band of the
+    ///     input loop. In this case, we will include all such segments in the 'cut' set, but we
+    ///     will probably not be able to find a connected path through them. 
+    ///   - not robust to degenerate geometry. Strongly recommend that you use Validate() and/or
+    ///     preprocess the input mesh to remove degenerate faces/edges
+    /// 
     /// </summary>
     public class MeshInsertUVPolyCurve
 	{
@@ -27,7 +35,10 @@ namespace g3
         public bool EnableCutSpansAndLoops = true;
 
         // probably always makes sense to use this...maybe not for very small problems?
-        bool UseTriSpatial = true;
+        public bool UseTriSpatial = true;
+
+        // points/edges within this distance are considered the same
+        public double SpatialEpsilon = MathUtil.ZeroTolerance;
 
         // Results
 
@@ -182,7 +193,8 @@ namespace g3
                 if (contain_tid != DMesh3.InvalidID ) {
                     Index3i tv = Mesh.GetTriangle(contain_tid);
                     Vector3d bary = MathUtil.BarycentricCoords(vInsert, PointF(tv.a), PointF(tv.b), PointF(tv.c));
-                    int vid = insert_corner_from_bary(i, contain_tid, bary);
+                    // SpatialEpsilon is our zero-tolerance, so merge if we are closer than that
+                    int vid = insert_corner_from_bary(i, contain_tid, bary, 0.01, 100*SpatialEpsilon);
                     if (vid > 0) {    // this should be always happening..
                         CurveVertices[i] = vid;
                         inserted = true;
@@ -202,43 +214,51 @@ namespace g3
 
         // insert point at bary_coords inside tid. If point is at vtx, just use that vtx.
         // If it is on an edge, do an edge split. Otherwise poke face.
-        int insert_corner_from_bary(int iCorner, int tid, Vector3d bary_coords, double tol = MathUtil.ZeroTolerance)
+        int insert_corner_from_bary(int iCorner, int tid, Vector3d bary_coords, 
+            double bary_tol = MathUtil.ZeroTolerance, double spatial_tol = MathUtil.ZeroTolerance)
         {
             Vector2d vInsert = Curve[iCorner];
             Index3i tv = Mesh.GetTriangle(tid);
 
             // handle cases where corner is on a vertex
-            if (bary_coords.x > 1 - tol)
-                return tv.a;
-            else if (bary_coords.y > 1 - tol)
-                return tv.b;
-            else if ( bary_coords.z > 1 - tol )
-                return tv.c;
+            int cornerv = -1;
+            if (bary_coords.x > 1 - bary_tol)
+                cornerv = tv.a;
+            else if (bary_coords.y > 1 - bary_tol)
+                cornerv = tv.b;
+            else if (bary_coords.z > 1 - bary_tol)
+                cornerv = tv.c;
+            if ( cornerv != -1 && PointF(cornerv).Distance(vInsert) < spatial_tol )
+                return cornerv;
 
             // handle cases where corner is on an edge
             int split_edge = -1;
-            if (bary_coords.x < tol)
+            if (bary_coords.x < bary_tol)
                 split_edge = 1;
-            else if (bary_coords.y < tol)
+            else if (bary_coords.y < bary_tol)
                 split_edge = 2;
-            else if (bary_coords.z < tol)
+            else if (bary_coords.z < bary_tol)
                 split_edge = 0;
             if (split_edge >= 0) {
                 int eid = Mesh.GetTriEdge(tid, split_edge);
 
-                Index2i ev = Mesh.GetEdgeT(eid);
-                spatial_remove_triangles(ev.a, ev.b);
+                Index2i ev = Mesh.GetEdgeV(eid);
+                Segment2d seg = new Segment2d(PointF(ev.a), PointF(ev.b));
+                if (seg.DistanceSquared(vInsert) < spatial_tol*spatial_tol) {
+                    Index2i et = Mesh.GetEdgeT(eid);
+                    spatial_remove_triangles(et.a, et.b);
 
-                DMesh3.EdgeSplitInfo split_info;
-                MeshResult splitResult = Mesh.SplitEdge(eid, out split_info);
-                if (splitResult != MeshResult.Ok)
-                    throw new Exception("MeshInsertUVPolyCurve.insert_corner_from_bary: edge split failed in case sum==2 - " + splitResult.ToString());
-                SetPointF(split_info.vNew, vInsert);
+                    DMesh3.EdgeSplitInfo split_info;
+                    MeshResult splitResult = Mesh.SplitEdge(eid, out split_info);
+                    if (splitResult != MeshResult.Ok)
+                        throw new Exception("MeshInsertUVPolyCurve.insert_corner_from_bary: edge split failed in case sum==2 - " + splitResult.ToString());
+                    SetPointF(split_info.vNew, vInsert);
 
-                spatial_add_triangles(ev.a, ev.b);
-                spatial_add_triangles(split_info.eNewT2, split_info.eNewT3);
+                    spatial_add_triangles(et.a, et.b);
+                    spatial_add_triangles(split_info.eNewT2, split_info.eNewT3);
 
-                return split_info.vNew;
+                    return split_info.vNew;
+                }
             }
 
             spatial_remove_triangle(tid);
@@ -295,7 +315,7 @@ namespace g3
                 // If these vertices are already connected by an edge, we can just continue.
                 int existing_edge = Mesh.FindEdge(i0_vid, i1_vid);
                 if ( existing_edge != DMesh3.InvalidID ) {
-                    OnCutEdges.Add(existing_edge);
+                    add_cut_edge(existing_edge);
                     continue;
                 }
 
@@ -324,7 +344,7 @@ namespace g3
                         } else {
                             Vector2d v2 = PointF(vid);
                             // tolerance defines band in which we will consider values to be zero
-                            signs[vid] = (sbyte)seg.WhichSide(v2, MathUtil.ZeroTolerance);
+                            signs[vid] = (sbyte)seg.WhichSide(v2, SpatialEpsilon);
                         }
                     } else
                         signs[vid] = sbyte.MaxValue;
@@ -359,10 +379,10 @@ namespace g3
 
                     bool eva_in_segment = false;
                     if ( eva_sign == 0 ) 
-                        eva_in_segment = Math.Abs(seg.Project(PointF(ev.a))) < (seg.Extent + MathUtil.ZeroTolerance);
+                        eva_in_segment = Math.Abs(seg.Project(PointF(ev.a))) < (seg.Extent + SpatialEpsilon);
                     bool evb_in_segment = false;
                     if (evb_sign == 0)
-                        evb_in_segment = Math.Abs(seg.Project(PointF(ev.b))) < (seg.Extent + MathUtil.ZeroTolerance);
+                        evb_in_segment = Math.Abs(seg.Project(PointF(ev.b))) < (seg.Extent + SpatialEpsilon);
 
                     // If one or both vertices are on-segment, we have special case.
                     // If just one vertex is on the segment, we can skip this edge.
@@ -370,9 +390,12 @@ namespace g3
                     if (eva_in_segment || evb_in_segment) {
                         if (eva_in_segment && evb_in_segment) {
                             ZeroEdges.Add(eid);
-                            OnCutEdges.Add(eid); 
+                            add_cut_edge(eid);
+                            NewCutVertices.Add(ev.a); NewCutVertices.Add(ev.b);
                         } else {
-                            ZeroVertices.Add(eva_in_segment ? ev.a : ev.b);
+                            int zvid = eva_in_segment ? ev.a : ev.b;
+                            ZeroVertices.Add(zvid);
+                            NewCutVertices.Add(zvid);
                         }
                         continue;
                     }
@@ -391,7 +414,8 @@ namespace g3
                         // [RMS] we should have already caught this above, so if it happens here it is probably spurious?
                         // we should have caught this case above, but numerics are different so it might occur again
                         ZeroEdges.Add(eid);
-                        OnCutEdges.Add(eid);
+                        NewCutVertices.Add(ev.a); NewCutVertices.Add(ev.b);
+                        add_cut_edge(eid);
                         continue;
                     } else if (intr.Type != IntersectionType.Point) {
                         continue; // no intersection
@@ -402,7 +426,7 @@ namespace g3
                     // is within epsilon of one end of the edge. This is a spurious t-intersection and we
                     // can ignore it. Some other edge should exist that picks up this vertex as part of it.
                     // [TODO] what about if this edge is degenerate?
-                    bool x_in_segment = Math.Abs(edge_seg.Project(x)) < (edge_seg.Extent - MathUtil.ZeroTolerance);
+                    bool x_in_segment = Math.Abs(edge_seg.Project(x)) < (edge_seg.Extent - SpatialEpsilon);
                     if (! x_in_segment ) {
                         continue;
                     }
@@ -431,24 +455,17 @@ namespace g3
                     // the polypath. We want to keep track of these edges so we can extract loop later.
                     Index2i ecn = Mesh.GetEdgeV(splitInfo.eNewCN);
                     if (NewCutVertices.Contains(ecn.a) && NewCutVertices.Contains(ecn.b))
-                        OnCutEdges.Add(splitInfo.eNewCN);
+                        add_cut_edge(splitInfo.eNewCN);
 
                     // since we don't handle bdry edges this should never be false, but maybe we will handle bdry later...
                     if (splitInfo.eNewDN != DMesh3.InvalidID) {
                         NewEdges.Add(splitInfo.eNewDN);
                         Index2i edn = Mesh.GetEdgeV(splitInfo.eNewDN);
                         if (NewCutVertices.Contains(edn.a) && NewCutVertices.Contains(edn.b))
-                            OnCutEdges.Add(splitInfo.eNewDN);
+                            add_cut_edge(splitInfo.eNewDN);
                     }
                 }
             }
-
-
-            //MeshEditor editor = new MeshEditor(Mesh);
-            //foreach (int eid in OnCutEdges)
-            //    editor.AppendBox(new Frame3f(Mesh.GetEdgePoint(eid, 0.5)), 0.1f);
-            //Util.WriteDebugMesh(Mesh, string.Format("C:\\git\\geometry3SharpDemos\\geometry3Test\\test_output\\after_inserted.obj"));
-
 
             // extract the cut paths
             if (EnableCutSpansAndLoops)
@@ -459,7 +476,10 @@ namespace g3
 		} // Apply()
 
 
-
+        // useful to have all these calls centralized for debugging...
+        void add_cut_edge(int eid) {
+            OnCutEdges.Add(eid);
+        }
 
 
 
@@ -609,7 +629,7 @@ namespace g3
             bool done = false;
             while (!done) {
 
-                // fink outgoing edge in set and connected to current pivot vtx
+                // find outgoing edge in set and connected to current pivot vtx
                 int next_edge = -1;
                 foreach (int nbr_edge in mesh.VtxEdgesItr(cur_pivot_v)) {
                     if (EdgeSet.Contains(nbr_edge)) {
