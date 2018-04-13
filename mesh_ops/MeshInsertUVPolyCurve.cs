@@ -146,7 +146,7 @@ namespace g3
 
         // (sequentially) find each triangle that path point lies in, and insert a vertex for
         // that point into mesh.
-        void insert_corners()
+        void insert_corners(HashSet<int> MeshVertsOnCurve)
         {
             PrimalQuery2d query = new PrimalQuery2d(PointF);
 
@@ -194,9 +194,12 @@ namespace g3
                     Index3i tv = Mesh.GetTriangle(contain_tid);
                     Vector3d bary = MathUtil.BarycentricCoords(vInsert, PointF(tv.a), PointF(tv.b), PointF(tv.c));
                     // SpatialEpsilon is our zero-tolerance, so merge if we are closer than that
-                    int vid = insert_corner_from_bary(i, contain_tid, bary, 0.01, 100*SpatialEpsilon);
+                    bool is_existing_v;
+                    int vid = insert_corner_from_bary(i, contain_tid, bary, 0.01, 100*SpatialEpsilon, out is_existing_v);
                     if (vid > 0) {    // this should be always happening..
                         CurveVertices[i] = vid;
+                        if (is_existing_v)
+                            MeshVertsOnCurve.Add(vid);
                         inserted = true;
                     } else {
                         throw new Exception("MeshInsertUVPolyCurve.insert_corners: failed to insert vertex " + i.ToString());
@@ -215,8 +218,9 @@ namespace g3
         // insert point at bary_coords inside tid. If point is at vtx, just use that vtx.
         // If it is on an edge, do an edge split. Otherwise poke face.
         int insert_corner_from_bary(int iCorner, int tid, Vector3d bary_coords, 
-            double bary_tol = MathUtil.ZeroTolerance, double spatial_tol = MathUtil.ZeroTolerance)
+            double bary_tol, double spatial_tol, out bool is_existing_v)
         {
+            is_existing_v = false;
             Vector2d vInsert = Curve[iCorner];
             Index3i tv = Mesh.GetTriangle(tid);
 
@@ -228,8 +232,10 @@ namespace g3
                 cornerv = tv.b;
             else if (bary_coords.z > 1 - bary_tol)
                 cornerv = tv.c;
-            if ( cornerv != -1 && PointF(cornerv).Distance(vInsert) < spatial_tol )
+            if (cornerv != -1 && PointF(cornerv).Distance(vInsert) < spatial_tol) {
+                is_existing_v = true;
                 return cornerv;
+            }
 
             // handle cases where corner is on an edge
             int split_edge = -1;
@@ -284,7 +290,8 @@ namespace g3
 
         public virtual bool Apply()
 		{
-            insert_corners();
+            HashSet<int> OnCurveVerts = new HashSet<int>();     // original vertices that were epsilon-coincident w/ curve vertices
+            insert_corners(OnCurveVerts);
 
             // [RMS] not using this?
             //HashSet<int> corner_v = new HashSet<int>(CurveVertices);
@@ -377,12 +384,15 @@ namespace g3
                     int eva_sign = signs[ev.a];
                     int evb_sign = signs[ev.b];
 
+                    // [RMS] should we be using larger epsilon here? If we don't track OnCurveVerts explicitly, we 
+                    // need to at least use same epsilon we passed to insert_corner_from_bary...do we still also
+                    // need that to catch the edges we split in the poke?
                     bool eva_in_segment = false;
                     if ( eva_sign == 0 ) 
-                        eva_in_segment = Math.Abs(seg.Project(PointF(ev.a))) < (seg.Extent + SpatialEpsilon);
+                        eva_in_segment = OnCurveVerts.Contains(ev.a) || Math.Abs(seg.Project(PointF(ev.a))) < (seg.Extent + SpatialEpsilon);
                     bool evb_in_segment = false;
                     if (evb_sign == 0)
-                        evb_in_segment = Math.Abs(seg.Project(PointF(ev.b))) < (seg.Extent + SpatialEpsilon);
+                        evb_in_segment = OnCurveVerts.Contains(ev.b) || Math.Abs(seg.Project(PointF(ev.b))) < (seg.Extent + SpatialEpsilon);
 
                     // If one or both vertices are on-segment, we have special case.
                     // If just one vertex is on the segment, we can skip this edge.
