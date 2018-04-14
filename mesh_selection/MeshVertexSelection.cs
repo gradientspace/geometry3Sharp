@@ -118,6 +118,33 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Select vertices that are not on 
+        /// </summary>
+        public void SelectInteriorVertices(MeshFaceSelection triangles, bool bIncludeBoundaryVertices = true)
+        {
+            foreach (int tid in triangles) {
+                Index3i nbrs = Mesh.GetTriNeighbourTris(tid);
+
+                if ( bIncludeBoundaryVertices ) {
+                    if ( (nbrs.a != DMesh3.InvalidID && triangles.IsSelected(nbrs.a) == false) ||
+                         (nbrs.b != DMesh3.InvalidID && triangles.IsSelected(nbrs.a) == false) ||
+                         (nbrs.c != DMesh3.InvalidID && triangles.IsSelected(nbrs.a) == false))
+                        continue;
+                } else {
+                    if (triangles.IsSelected(nbrs.a) == false ||
+                        triangles.IsSelected(nbrs.b) == false ||
+                        triangles.IsSelected(nbrs.c) == false)
+                        continue;
+                }
+
+                Index3i tri = Mesh.GetTriangle(tid);
+                add(tri.a); add(tri.b); add(tri.c);
+            }
+        }
+
+
+
 
         public void SelectEdgeVertices(int[] edges)
         {

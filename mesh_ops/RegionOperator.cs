@@ -65,6 +65,22 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// find base-mesh interior vertices of region (ie does not include region boundary vertices)
+        /// </summary>
+        public HashSet<int> CurrentBaseInteriorVertices()
+        {
+            HashSet<int> verts = new HashSet<int>();
+            IndexHashSet borderv = Region.BaseBorderV;
+            foreach ( int tid in cur_base_tris ) {
+                Index3i tv = BaseMesh.GetTriangle(tid);
+                if (borderv[tv.a] == false) verts.Add(tv.a);
+                if (borderv[tv.b] == false) verts.Add(tv.b);
+                if (borderv[tv.c] == false) verts.Add(tv.c);
+            }
+            return verts;
+        }
+
         // After remeshing we may create an internal edge between two boundary vertices [a,b].
         // Those vertices will be merged with vertices c and d in the base mesh. If the edge
         // [c,d] already exists in the base mesh, then after the merge we would have at least

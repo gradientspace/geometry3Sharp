@@ -27,9 +27,9 @@ namespace g3
         public DVector<int> SubToBaseT;         // triangle index map from submesh to base mesh. Only computed if ComputeTriMaps = true.
 
         // boundary info
-        public IndexHashSet BaseBorderE;        // list of internal border edge indices on base mesh
+        public IndexHashSet BaseBorderE;        // list of internal border edge indices on base mesh. Does not include mesh boundary edges.
         public IndexHashSet BaseBoundaryE;      // list of mesh-boundary edges on base mesh that are in submesh
-        public IndexHashSet BaseBorderV;        // list of border vertex indices on base mesh (ie verts of BaseBorderE)
+        public IndexHashSet BaseBorderV;        // list of border vertex indices on base mesh (ie verts of BaseBorderE - does not include mesh boundary vertices)
 
 
         public DSubmesh3(DMesh3 mesh, int[] subTriangles)
