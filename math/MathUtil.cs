@@ -483,6 +483,19 @@ namespace g3
 		}
 
 
+        /// <summary>
+        /// aspect ratio of triangle 
+        /// </summary>
+        public static double AspectRatio(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3)
+        {
+            double a = v1.Distance(ref v2), b = v2.Distance(ref v3), c = v3.Distance(ref v1);
+            double s = (a + b + c) / 2.0;
+            return (a * b * c) / (8.0 * (s - a) * (s - b) * (s - c));
+        }
+        public static double AspectRatio(Vector3d v1, Vector3d v2, Vector3d v3) {
+            return AspectRatio(ref v1, ref v2, ref v3);
+        }
+
 
 		//! fast cotangent between two normalized vectors 
 		//! cot = cos/sin, both of which can be computed from vector identities

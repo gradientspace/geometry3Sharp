@@ -832,6 +832,27 @@ namespace g3
 
 
 
+        /// <summary>
+        /// compute internal angle at vertex i of triangle (where i is 0,1,2);
+        /// TODO can be more efficient here, probably...
+        /// </summary>
+        public double GetTriInternalAngleR(int tID, int i)
+        {
+            int ti = 3 * tID;
+            int ta = 3 * triangles[ti];
+            Vector3d a = new Vector3d(vertices[ta], vertices[ta + 1], vertices[ta + 2]);
+            int tb = 3 * triangles[ti + 1];
+            Vector3d b = new Vector3d(vertices[tb], vertices[tb + 1], vertices[tb + 2]);
+            int tc = 3 * triangles[ti + 2];
+            Vector3d c = new Vector3d(vertices[tc], vertices[tc + 1], vertices[tc + 2]);
+            if ( i == 0 )
+                return (b-a).Normalized.AngleR((c-a).Normalized);
+            else if ( i == 1 )
+                return (a-b).Normalized.AngleR((c-b).Normalized);
+            else
+                return (a-c).Normalized.AngleR((b-c).Normalized);
+        }
+
 
 
         public Index2i GetEdgeV(int eID) {

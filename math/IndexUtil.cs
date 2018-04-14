@@ -129,6 +129,21 @@ namespace g3
 			return DMesh3.InvalidID;
 		}
 
+
+        /// <summary>
+        /// assuming a is in tri-verts, returns other two vertices, in correct order (or Index2i.Max if not found)
+        /// </summary>
+        public static Index2i find_tri_other_verts(int a, ref Index3i tri_verts)
+        {
+            if (tri_verts.a == a)
+                return new Index2i(tri_verts.b, tri_verts.c);
+            else if (tri_verts.b == a)
+                return new Index2i(tri_verts.c, tri_verts.a);
+            else if (tri_verts.c == a)
+                return new Index2i(tri_verts.a, tri_verts.b);
+            return Index2i.Max;
+        }
+
         // find sequence [a,b] in tri_verts (mod3) then return the third **index**, or InvalidID if not found
         public static int find_tri_other_index(int a, int b, int[] tri_verts)
         {

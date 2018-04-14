@@ -66,6 +66,10 @@ namespace g3
         public Index2i MapVerticesToSubmesh(Index2i v) {
             return new Index2i(BaseToSubV[v.a], BaseToSubV[v.b]);
         }
+        public Index2i MapVerticesToBaseMesh(Index2i v) {
+            return new Index2i(MapVertexToBaseMesh(v.a), MapVertexToBaseMesh(v.b));
+        }
+
         public void MapVerticesToSubmesh(int[] vertices)
         {
             for (int i = 0; i < vertices.Length; ++i)
@@ -83,6 +87,13 @@ namespace g3
         {
             for (int i = 0; i < edges.Length; ++i)
                 edges[i] = MapEdgeToSubmesh(edges[i]);
+        }
+
+        public int MapEdgeToBaseMesh(int sub_eid)
+        {
+            Index2i sub_ev = SubMesh.GetEdgeV(sub_eid);
+            Index2i base_ev = MapVerticesToBaseMesh(sub_ev);
+            return BaseMesh.FindEdge(base_ev.a, base_ev.b);
         }
 
 

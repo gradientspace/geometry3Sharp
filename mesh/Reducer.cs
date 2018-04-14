@@ -24,7 +24,7 @@ namespace g3
 		public bool MinimizeQuadricPositionError = true;
 
         // if true, we try to keep boundary vertices on boundary. You probably want this.
-        public bool PreserveBoundary = true;
+        public bool PreserveBoundaryShape = true;
 
 		// [RMS] this is a debugging aid, will break to debugger if these edges are touched, in debug builds
 		public List<int> DebugEdges = new List<int>();
@@ -326,7 +326,7 @@ namespace g3
 
             // if we would like to preserve boundary, we need to know that here
             // so that we properly score these edges
-            if (HaveBoundary && PreserveBoundary) {
+            if (HaveBoundary && PreserveBoundaryShape) {
                 if (mesh.IsBoundaryEdge(eid)) {
                     return (mesh.GetVertex(ea) + mesh.GetVertex(eb)) * 0.5;
                 } else {
@@ -513,7 +513,7 @@ namespace g3
 				return ProcessResult.Ignored_Constrained;
 
             // if we have a boundary, we want to collapse to boundary
-            if (PreserveBoundary && HaveBoundary) {
+            if (PreserveBoundaryShape && HaveBoundary) {
                 if (collapse_to != -1) {
                     if (( IsBoundaryV(b) && collapse_to != b) ||
                          ( IsBoundaryV(a) && collapse_to != a))
