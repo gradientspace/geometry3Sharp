@@ -30,19 +30,25 @@ namespace g3
 
         int[] cur_base_tris;
 
-        public RegionOperator(DMesh3 mesh, int[] regionTris)
+        public RegionOperator(DMesh3 mesh, int[] regionTris, Action<DSubmesh3> submeshConfigF = null)
         {
             BaseMesh = mesh;
-            Region = new DSubmesh3(mesh, regionTris);
+            Region = new DSubmesh3(mesh);
+            if (submeshConfigF != null)
+                submeshConfigF(Region);
+            Region.Compute(regionTris);
             Region.ComputeBoundaryInfo(regionTris);
 
             cur_base_tris = (int[])regionTris.Clone();
         }
 
-        public RegionOperator(DMesh3 mesh, IEnumerable<int> regionTris)
+        public RegionOperator(DMesh3 mesh, IEnumerable<int> regionTris, Action<DSubmesh3> submeshConfigF = null)
         {
             BaseMesh = mesh;
-            Region = new DSubmesh3(mesh, regionTris);
+            Region = new DSubmesh3(mesh);
+            if (submeshConfigF != null)
+                submeshConfigF(Region);
+            Region.Compute(regionTris);
             int count = regionTris.Count();
             Region.ComputeBoundaryInfo(regionTris, count);
 
