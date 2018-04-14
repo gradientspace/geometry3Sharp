@@ -119,27 +119,30 @@ namespace g3
 
 
         /// <summary>
-        /// Select vertices that are not on 
+        /// for each vertex of input triangle set, select vertex if all
+        /// one-ring triangles are contained in triangle set (ie vertex is not on boundary of triangle set).
         /// </summary>
-        public void SelectInteriorVertices(MeshFaceSelection triangles, bool bIncludeBoundaryVertices = true)
+        public void SelectInteriorVertices(MeshFaceSelection triangles)
         {
-            foreach (int tid in triangles) {
-                Index3i nbrs = Mesh.GetTriNeighbourTris(tid);
-
-                if ( bIncludeBoundaryVertices ) {
-                    if ( (nbrs.a != DMesh3.InvalidID && triangles.IsSelected(nbrs.a) == false) ||
-                         (nbrs.b != DMesh3.InvalidID && triangles.IsSelected(nbrs.a) == false) ||
-                         (nbrs.c != DMesh3.InvalidID && triangles.IsSelected(nbrs.a) == false))
+            HashSet<int> borderv = new HashSet<int>();
+            foreach ( int tid in triangles ) {
+                Index3i tv = Mesh.GetTriangle(tid);
+                for ( int j = 0; j < 3; ++j ) {
+                    int vid = tv[j];
+                    if (Selected.Contains(vid) || borderv.Contains(vid))
                         continue;
-                } else {
-                    if (triangles.IsSelected(nbrs.a) == false ||
-                        triangles.IsSelected(nbrs.b) == false ||
-                        triangles.IsSelected(nbrs.c) == false)
-                        continue;
+                    bool full_ring = true;
+                    foreach (int ring_tid in Mesh.VtxTrianglesItr(vid)) {
+                        if (triangles.IsSelected(ring_tid) == false) {
+                            full_ring = false;
+                            break;
+                        }
+                    }
+                    if (full_ring)
+                        add(vid);
+                    else
+                        borderv.Add(vid);
                 }
-
-                Index3i tri = Mesh.GetTriangle(tid);
-                add(tri.a); add(tri.b); add(tri.c);
             }
         }
 

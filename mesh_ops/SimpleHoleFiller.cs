@@ -70,7 +70,7 @@ namespace g3
 
             // if fill failed, back out vertex-add
             if ( NewTriangles == null ) {
-                Mesh.RemoveVertex(NewVertex);
+                Mesh.RemoveVertex(NewVertex, true, false);
                 NewVertex = DMesh3.InvalidID;
             }
 
