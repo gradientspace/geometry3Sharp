@@ -127,21 +127,24 @@ namespace g3
             return x * v2.x + y * v2.y + z * v2.z;
         }
 
-        public static double Dot(Vector3d v1, Vector3d v2)
-        {
-            return v1.Dot(v2);
+        public static double Dot(Vector3d v1, Vector3d v2) {
+            return v1.Dot(ref v2);
         }
 
-        public Vector3d Cross(Vector3d v2)
-        {
+        public Vector3d Cross(Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
                 x * v2.y - y * v2.x);
         }
-        public static Vector3d Cross(Vector3d v1, Vector3d v2)
-        {
-            return v1.Cross(v2);
+        public Vector3d Cross(ref Vector3d v2) {
+            return new Vector3d(
+                y * v2.z - z * v2.y,
+                z * v2.x - x * v2.z,
+                x * v2.y - y * v2.x);
+        }
+        public static Vector3d Cross(Vector3d v1, Vector3d v2) {
+            return v1.Cross(ref v2);
         }
 
         public Vector3d UnitCross(Vector3d v2)

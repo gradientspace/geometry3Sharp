@@ -278,15 +278,21 @@ namespace g3
                     if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                         continue;
 
-                    // [TODO] optimize this
                     mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
-                    IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
-                    if ( ray_tri_hit.Find() ) {
-                        if ( ray_tri_hit.RayParameter < fNearestT ) {
-                            fNearestT = ray_tri_hit.RayParameter;
+                    double rayt;
+                    if (IntrRay3Triangle3.Intersects(ref ray, ref tri.V0, ref tri.V1, ref tri.V2, out rayt)) {
+                        if (rayt < fNearestT) {
+                            fNearestT = rayt;
                             tID = ti;
                         }
                     }
+                    //IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
+                    //if ( ray_tri_hit.Find() ) {
+                    //    if ( ray_tri_hit.RayParameter < fNearestT ) {
+                    //        fNearestT = ray_tri_hit.RayParameter;
+                    //        tID = ti;
+                    //    }
+                    //}
                 }
 
             } else {                                // internal node, either 1 or 2 child boxes
@@ -365,16 +371,23 @@ namespace g3
                     if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                         continue;
 
-                    // [TODO] optimize this
                     mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
-                    IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
-                    if (ray_tri_hit.Find()) {
-                        if (ray_tri_hit.RayParameter < fMaxDist) {
+                    double rayt;
+                    if (IntrRay3Triangle3.Intersects(ref ray, ref tri.V0, ref tri.V1, ref tri.V2, out rayt)) {
+                        if (rayt < fMaxDist) {
                             if (hitTriangles != null)
                                 hitTriangles.Add(ti);
                             hit_count++;
                         }
                     }
+                    //IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
+                    //if (ray_tri_hit.Find()) {
+                    //    if (ray_tri_hit.RayParameter < fMaxDist) {
+                    //        if (hitTriangles != null)
+                    //            hitTriangles.Add(ti);
+                    //        hit_count++;
+                    //    }
+                    //}
                 }
 
             } else {                                // internal node, either 1 or 2 child boxes
