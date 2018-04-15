@@ -75,6 +75,9 @@ namespace g3
         public int VertexCount {
             get { return vertices.Count; }
         }
+        public int SegmentCount {
+            get { return Closed ? vertices.Count : vertices.Count - 1; }
+        }
 
         public Vector3d GetVertex(int i) {
             return vertices[i];
@@ -136,7 +139,7 @@ namespace g3
             get { return vertices[0]; }
         }
         public Vector3d End {
-            get { return vertices.Last(); }
+            get { return (Closed) ? vertices[0] : vertices.Last(); }
         }
 
         public IEnumerable<Vector3d> Vertices {
@@ -144,15 +147,29 @@ namespace g3
         }
 
 
-        public Segment3d Segment(int iSegment)
+        public Segment3d GetSegment(int iSegment)
         {
-            return new Segment3d(vertices[iSegment], vertices[iSegment + 1]);
+            return (Closed) ? new Segment3d(vertices[iSegment], vertices[(iSegment+1)%vertices.Count])
+                : new Segment3d(vertices[iSegment], vertices[iSegment + 1]);
         }
 
         public IEnumerable<Segment3d> SegmentItr()
         {
-            for (int i = 0; i < vertices.Count - 1; ++i)
-                yield return new Segment3d(vertices[i], vertices[i + 1]);
+            if (Closed) {
+                int NV = vertices.Count - 1;
+                for (int i = 0; i < NV; ++i)
+                    yield return new Segment3d(vertices[i], vertices[i + 1]);
+            } else {
+                int NV = vertices.Count;
+                for (int i = 0; i < vertices.Count; ++i)
+                    yield return new Segment3d(vertices[i], vertices[(i + 1)%NV]);
+            }
+        }
+
+        public Vector3d PointAt(int iSegment, double fSegT)
+        {
+            Segment3d seg = new Segment3d(vertices[iSegment], vertices[(iSegment + 1) % vertices.Count]);
+            return seg.PointAt(fSegT);
         }
 
 

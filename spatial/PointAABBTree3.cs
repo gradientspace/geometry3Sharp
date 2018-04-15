@@ -7,8 +7,7 @@ using System.Diagnostics;
 namespace g3
 {
     /// <summary>
-    /// Hierarchical Axis-Aligned-Bounding-Box tree for a DMesh3 mesh.
-    /// This class supports a variety of spatial queries, listed below.
+    /// Hierarchical Axis-Aligned-Bounding-Box tree for an IPointSet
     /// 
     /// 
     /// TODO: no timestamp support right now...

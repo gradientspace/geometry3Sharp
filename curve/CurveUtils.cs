@@ -165,7 +165,15 @@ namespace g3
         public bool Closed { get; set; }
 
         public int VertexCount { get { return (VertexList == null) ? 0 : VertexList.Count; } }
+        public int SegmentCount { get { return Closed ? VertexCount : VertexCount - 1; } }
+
         public Vector3d GetVertex(int i) { return VertexList[i]; }
+        public Segment3d GetSegment(int iSegment) {
+            return (Closed) ? new Segment3d(VertexList[iSegment], VertexList[(iSegment + 1) % VertexList.Count])
+                : new Segment3d(VertexList[iSegment], VertexList[iSegment + 1]);
+        }
+
+
         public IEnumerable<Vector3d> Vertices { get { return VertexList; } }
     }
 

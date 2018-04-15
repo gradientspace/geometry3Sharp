@@ -15,12 +15,12 @@ namespace g3
         // basic ray-sphere intersection
         public static bool Sphere(Vector3f vOrigin, Vector3f vDirection, Vector3f vCenter, float fRadius, out float fRayT)
         {
-            bool bHit = SphereSigned(vOrigin, vDirection, vCenter, fRadius, out fRayT);
+            bool bHit = SphereSigned(ref vOrigin, ref vDirection, ref vCenter, fRadius, out fRayT);
             fRayT = Math.Abs(fRayT);
             return bHit;
         }
 
-        public static bool SphereSigned(Vector3f vOrigin, Vector3f vDirection, Vector3f vCenter, float fRadius, out float fRayT)
+        public static bool SphereSigned(ref Vector3f vOrigin, ref Vector3f vDirection, ref Vector3f vCenter, float fRadius, out float fRayT)
         {
             fRayT = 0.0f;
             Vector3f m = vOrigin - vCenter;
@@ -44,11 +44,11 @@ namespace g3
 
 
 
-        public static bool SphereSigned(Vector3d vOrigin, Vector3d vDirection, Vector3d vCenter, double fRadius, out double fRayT)
+        public static bool SphereSigned(ref Vector3d vOrigin, ref Vector3d vDirection, ref Vector3d vCenter, double fRadius, out double fRayT)
         {
             fRayT = 0.0;
             Vector3d m = vOrigin - vCenter;
-            double b = m.Dot(vDirection);
+            double b = m.Dot(ref vDirection);
             double c = m.Dot(m) - fRadius * fRadius;
 
             // Exit if r’s origin outside s (c > 0) and r pointing away from s (b > 0) 

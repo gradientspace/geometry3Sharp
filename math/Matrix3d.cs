@@ -68,7 +68,17 @@ namespace g3
                 Row2 = new Vector3d(v1.z, v2.z, v3.z);
             }
         }
-		public Matrix3d(double m00, double m01, double m02, double m10, double m11, double m12, double m20, double m21, double m22) {
+        public Matrix3d(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3, bool bRows)
+        {
+            if (bRows) {
+                Row0 = v1; Row1 = v2; Row2 = v3;
+            } else {
+                Row0 = new Vector3d(v1.x, v2.x, v3.x);
+                Row1 = new Vector3d(v1.y, v2.y, v3.y);
+                Row2 = new Vector3d(v1.z, v2.z, v3.z);
+            }
+        }
+        public Matrix3d(double m00, double m01, double m02, double m10, double m11, double m12, double m20, double m21, double m22) {
             Row0 = new Vector3d(m00, m01, m02);
             Row1 = new Vector3d(m10, m11, m12);
             Row2 = new Vector3d(m20, m21, m22);
