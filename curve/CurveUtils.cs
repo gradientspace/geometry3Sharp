@@ -75,31 +75,27 @@ namespace g3
 
 
 
-        public static bool FindClosestRayIntersection(ISampledCurve3d c, double segRadius, Ray3d ray, out double rayT)
+        public static bool FindClosestRayIntersection(ISampledCurve3d c, double segRadius, Ray3d ray, out double minRayT)
         {
-            rayT = double.MaxValue;
+            minRayT = double.MaxValue;
             int nNearSegment = -1;
-            //double fNearSegT = 0.0;
 
-            int N = c.VertexCount;
-            int iStop = (c.Closed) ? N : N - 1;
-            for (int i = 0; i < iStop; ++i) {
-                DistRay3Segment3 dist = new DistRay3Segment3(ray,
-                    new Segment3d(c.GetVertex(i), c.GetVertex( (i + 1) % N )));
+            int nSegs = c.SegmentCount;
+            for (int i = 0; i < nSegs; ++i) {
+                Segment3d seg = c.GetSegment(i);
 
                 // raycast to line bounding-sphere first (is this going ot be faster??)
                 double fSphereHitT;
-                bool bHitBoundSphere = RayIntersection.SphereSigned(ray.Origin, ray.Direction,
-                    dist.Segment.Center, dist.Segment.Extent + segRadius, out fSphereHitT);
+                bool bHitBoundSphere = RayIntersection.SphereSigned(ref ray.Origin, ref ray.Direction,
+                    ref seg.Center, seg.Extent + segRadius, out fSphereHitT);
                 if (bHitBoundSphere == false)
                     continue;
 
-                // find ray/seg min-distance and use ray T
-                double dSqr = dist.GetSquared();
+                double rayt, segt;
+                double dSqr = DistRay3Segment3.SquaredDistance(ref ray, ref seg, out rayt, out segt);
                 if ( dSqr < segRadius*segRadius) {
-                    if (dist.RayParameter < rayT) {
-                        rayT = dist.RayParameter;
-                        //fNearSegT = dist.SegmentParameter;
+                    if (rayt < minRayT) {
+                        minRayT = rayt;
                         nNearSegment = i;
                     }
                 }
