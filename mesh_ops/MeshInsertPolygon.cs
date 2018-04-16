@@ -26,7 +26,9 @@ namespace g3
         {
             OuterInsert = new MeshInsertUVPolyCurve(Mesh, Polygon.Outer);
             Util.gDevAssert(OuterInsert.Validate() == ValidationStatus.Ok);
-            OuterInsert.Apply();
+            bool outerApplyOK = OuterInsert.Apply();
+            if (outerApplyOK == false || OuterInsert.Loops.Count == 0)
+                return false;
             if (SimplifyInsertion)
                 OuterInsert.Simplify();
 

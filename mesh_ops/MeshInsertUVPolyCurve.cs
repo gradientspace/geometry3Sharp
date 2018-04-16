@@ -432,6 +432,7 @@ namespace g3
                         continue; // no intersection
                     }
                     Vector2d x = intr.Point0;
+                    double t = Math.Sqrt(x.DistanceSquared(va) / va.DistanceSquared(vb));
 
                     // this case happens if we aren't "on-segment" but after we do the test the intersection pt 
                     // is within epsilon of one end of the edge. This is a spurious t-intersection and we
@@ -447,7 +448,7 @@ namespace g3
 
                     // split edge at this segment
                     DMesh3.EdgeSplitInfo splitInfo;
-                    MeshResult result = Mesh.SplitEdge(eid, out splitInfo);
+                    MeshResult result = Mesh.SplitEdge(eid, out splitInfo, t);
                     if (result != MeshResult.Ok) {
                         throw new Exception("MeshInsertUVSegment.Apply: SplitEdge failed - " + result.ToString());
                         //return false;

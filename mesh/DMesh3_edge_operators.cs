@@ -274,7 +274,11 @@ namespace g3
 			}
 			return SplitEdge(eid, out split);
 		}
-		public MeshResult SplitEdge(int eab, out EdgeSplitInfo split)
+        /// <summary>
+        /// Split edge eab. 
+        /// split_t defines position along edge, and is assumed to be based on order of vertices returned by GetEdgeV()
+        /// </summary>
+		public MeshResult SplitEdge(int eab, out EdgeSplitInfo split, double split_t = 0.5)
 		{
 			split = new EdgeSplitInfo();
 			if (! IsEdge(eab) )
@@ -291,20 +295,22 @@ namespace g3
 			int c = IndexUtil.orient_tri_edge_and_find_other_vtx(ref a, ref b, T0tv_array);
             if (vertices_refcount.rawRefCount(c) > 32764)
                 return MeshResult.Failed_HitValenceLimit;
+            if (a != edges[eab_i])
+                split_t = 1.0 - split_t;    // if we flipped a/b order we need to reverse t
 
             // quite a bit of code is duplicated between boundary and non-boundary case, but it
             //  is too hard to follow later if we factor it out...
             if ( IsBoundaryEdge(eab) ) {
 
                 // create new vertex
-                Vector3d vNew = 0.5 * (GetVertex(a) + GetVertex(b));
+                Vector3d vNew = Vector3d.Lerp(GetVertex(a), GetVertex(b), split_t);
                 int f = AppendVertex(vNew);
                 if (HasVertexNormals)
-                    SetVertexNormal(f, (GetVertexNormal(a) + GetVertexNormal(b)).Normalized);
+                    SetVertexNormal(f, Vector3f.Lerp(GetVertexNormal(a), GetVertexNormal(b), (float)split_t).Normalized);
                 if (HasVertexColors)
-                    SetVertexColor(f, 0.5f * (GetVertexColor(a) + GetVertexColor(b)));
+                    SetVertexColor(f, Colorf.Lerp(GetVertexColor(a), GetVertexColor(b), (float)split_t));
                 if (HasVertexUVs)
-                    SetVertexUV(f, 0.5f * (GetVertexUV(a) + GetVertexUV(b)));
+                    SetVertexUV(f, Vector2f.Lerp(GetVertexUV(a), GetVertexUV(b), (float)split_t));
 
                 // look up edge bc, which needs to be modified
                 Index3i T0te = GetTriEdges(t0);
@@ -359,14 +365,14 @@ namespace g3
                     return MeshResult.Failed_HitValenceLimit;
 
                 // create new vertex
-                Vector3d vNew = 0.5 * (GetVertex(a) + GetVertex(b));
+                Vector3d vNew = Vector3d.Lerp(GetVertex(a), GetVertex(b), split_t);
                 int f = AppendVertex(vNew);
                 if (HasVertexNormals)
-                    SetVertexNormal(f, (GetVertexNormal(a) + GetVertexNormal(b)).Normalized);
+                    SetVertexNormal(f, Vector3f.Lerp(GetVertexNormal(a), GetVertexNormal(b), (float)split_t).Normalized);
                 if (HasVertexColors)
-                    SetVertexColor(f, 0.5f * (GetVertexColor(a) + GetVertexColor(b)));
+                    SetVertexColor(f, Colorf.Lerp(GetVertexColor(a), GetVertexColor(b), (float)split_t));
                 if (HasVertexUVs)
-                    SetVertexUV(f, 0.5f * (GetVertexUV(a) + GetVertexUV(b)));
+                    SetVertexUV(f, Vector2f.Lerp(GetVertexUV(a), GetVertexUV(b), (float)split_t));
 
                 // look up edges that we are going to need to update
                 // [TODO OPT] could use ordering to reduce # of compares here
