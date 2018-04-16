@@ -323,6 +323,15 @@ namespace g3
         }
 
 
+        // [TODO] should we be normalizing in these casts??
+        public static implicit operator Quaterniond(Quaternionf q) {
+            return new Quaterniond(q.x, q.y, q.z, q.w);
+        }
+        public static explicit operator Quaternionf(Quaterniond q) {
+            return new Quaternionf((float)q.x, (float)q.y, (float)q.z, (float)q.w);
+        }
+
+
         public override string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", x, y, z, w);
         }

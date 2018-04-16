@@ -37,6 +37,12 @@ namespace g3
             f.Origin = (Vector3f)Rotate(f.Origin, origin, rotation);
             return f;
         }
+        public static Frame3f Rotate(Frame3f f, Vector3d origin, Quaterniond rotation)
+        {
+            f.Rotate((Quaternionf)rotation);
+            f.Origin = (Vector3f)Rotate(f.Origin, origin, rotation);
+            return f;
+        }
         public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaternionf rotation)
         {
             int NV = mesh.MaxVertexID;
