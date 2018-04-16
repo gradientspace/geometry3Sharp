@@ -441,7 +441,8 @@ namespace g3
                         continue;
                     }
 
-                    spatial_remove_triangles(ev.a, ev.b);
+                    Index2i et = Mesh.GetEdgeT(eid);
+                    spatial_remove_triangles(et.a, et.b);
 
                     // split edge at this segment
                     DMesh3.EdgeSplitInfo splitInfo;
@@ -451,7 +452,7 @@ namespace g3
                         //return false;
                     }
 
-                    spatial_add_triangles(ev.a, ev.b);
+                    spatial_add_triangles(et.a, et.b);
                     spatial_add_triangles(splitInfo.eNewT2, splitInfo.eNewT3);
 
                     // move split point to intersection position
