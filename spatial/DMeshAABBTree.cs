@@ -476,9 +476,7 @@ namespace g3
                     if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                         continue;
                     mesh.GetTriVertices(ti, ref box_tri.V0, ref box_tri.V1, ref box_tri.V2);
-
-                    IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(triangle, box_tri);
-                    if (intr.Test())
+                    if ( IntrTriangle3Triangle3.Intersects(ref triangle, ref box_tri))
                         return ti;
                 }
             } else {                                // internal node, either 1 or 2 child boxes
@@ -535,7 +533,7 @@ namespace g3
                 int num_tris = index_list[idx], onum_tris = otherTree.index_list[odx];
 
                 // can re-use because Test() doesn't cache anything
-                IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
+                //IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
 
                 // outer iteration is "other" tris that need to be transformed (more expensive)
                 for (int j = 1; j <= onum_tris; ++j) {
@@ -548,7 +546,6 @@ namespace g3
                         otri.V1 = TransformF(otri.V1);
                         otri.V2 = TransformF(otri.V2);
                     }
-                    intr.Triangle0 = otri;
 
                     // inner iteration over "our" triangles
                     for (int i = 1; i <= num_tris; ++i) {
@@ -556,8 +553,7 @@ namespace g3
                         if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                             continue;
                         mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
-                        intr.Triangle1 = tri;
-                        if (intr.Test())
+                        if (IntrTriangle3Triangle3.Intersects(ref otri, ref tri))
                             return true;
                     }
                 }
@@ -668,13 +664,15 @@ namespace g3
             result.Points = new List<PointIntersection>();
             result.Segments = new List<SegmentIntersection>();
 
-            find_intersections(root_index, otherTree, TransformF, otherTree.root_index, 0, result);
+            IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
+            find_intersections(root_index, otherTree, TransformF, otherTree.root_index, 0, intr, result);
 
             return result;
         }
 
         protected void find_intersections(int iBox, DMeshAABBTree3 otherTree, Func<Vector3d, Vector3d> TransformF, 
-                                int oBox, int depth, IntersectionsQueryResult result)
+                                          int oBox, int depth,
+                                          IntrTriangle3Triangle3 intr, IntersectionsQueryResult result)
         {
             int idx = box_to_index[iBox];
             int odx = otherTree.box_to_index[oBox];
@@ -683,9 +681,6 @@ namespace g3
                 // ok we are at triangles for both trees, do triangle-level testing
                 Triangle3d tri = new Triangle3d(), otri = new Triangle3d();
                 int num_tris = index_list[idx], onum_tris = otherTree.index_list[odx];
-
-                // can re-use
-                IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
 
                 // outer iteration is "other" tris that need to be transformed (more expensive)
                 for (int j = 1; j <= onum_tris; ++j) {
@@ -708,16 +703,20 @@ namespace g3
                         mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
                         intr.Triangle1 = tri;
 
-                        if (intr.Find()) {
-                            if (intr.Quantity == 1) {
-                                result.Points.Add(new PointIntersection() 
-                                        { t0 = ti, t1 = tj, point = intr.Points[0] });
-                            } else if (intr.Quantity == 2) {
-                                result.Segments.Add( new SegmentIntersection() 
-                                        { t0 = ti, t1 = tj, point0 = intr.Points[0], point1 = intr.Points[1] });
-                            } else {
-                                throw new Exception("DMeshAABBTree.find_intersections: found quantity " + intr.Quantity );
-                            }
+                        // [RMS] Test() is much faster than Find() so it makes sense to call it first, as most
+                        // triangles will not intersect (right?)
+                        if (intr.Test()) {
+                            if ( intr.Find() ) { 
+                                if (intr.Quantity == 1) {
+                                    result.Points.Add(new PointIntersection() 
+                                            { t0 = ti, t1 = tj, point = intr.Points[0] });
+                                } else if (intr.Quantity == 2) {
+                                    result.Segments.Add( new SegmentIntersection() 
+                                            { t0 = ti, t1 = tj, point0 = intr.Points[0], point1 = intr.Points[1] });
+                                } else {
+                                    throw new Exception("DMeshAABBTree.find_intersections: found quantity " + intr.Quantity );
+                                }
+                                }
                         }
                     }
                 }
@@ -748,19 +747,19 @@ namespace g3
                     oChild1 = (-oChild1) - 1;
                     AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1, TransformF);
                     if (oChild1Box.Intersects(bounds) )
-                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, result);
+                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, intr, result);
 
                 } else {                            // 2 children
                     oChild1 = oChild1 - 1;
 
                     AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1, TransformF);
                     if ( oChild1Box.Intersects(bounds) ) 
-                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, result);
+                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, intr, result);
 
                     int oChild2 = otherTree.index_list[odx + 1] - 1;
                     AxisAlignedBox3d oChild2Box = otherTree.get_boxd(oChild2, TransformF);
                     if ( oChild2Box.Intersects(bounds) )
-                        find_intersections(iBox, otherTree, TransformF, oChild2, depth + 1, result);
+                        find_intersections(iBox, otherTree, TransformF, oChild2, depth + 1, intr, result);
                 }
 
             } else {
@@ -771,16 +770,16 @@ namespace g3
                 if ( iChild1 < 0 ) {                 // 1 child, descend if nearer than cur min-dist
                     iChild1 = (-iChild1) - 1;
                     if ( box_box_intersect(iChild1, ref oBounds) )
-                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, result);
+                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, intr, result);
 
                 } else {                            // 2 children
                     iChild1 = iChild1 - 1;          
                     if ( box_box_intersect(iChild1, ref oBounds) ) 
-                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, result);
+                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, intr, result);
 
                     int iChild2 = index_list[idx + 1] - 1;
                     if ( box_box_intersect(iChild2, ref oBounds) )
-                        find_intersections(iChild2, otherTree, TransformF, oBox, depth + 1, result);
+                        find_intersections(iChild2, otherTree, TransformF, oBox, depth + 1, intr, result);
                 }
 
             }

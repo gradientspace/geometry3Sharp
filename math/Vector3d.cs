@@ -147,8 +147,7 @@ namespace g3
             return v1.Cross(ref v2);
         }
 
-        public Vector3d UnitCross(Vector3d v2)
-        {
+        public Vector3d UnitCross(ref Vector3d v2) {
             Vector3d n = new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
@@ -156,6 +155,10 @@ namespace g3
             n.Normalize();
             return n;
         }
+        public Vector3d UnitCross(Vector3d v2) {
+            return UnitCross(ref v2);
+        }
+
 
         public double AngleD(Vector3d v2)
         {
