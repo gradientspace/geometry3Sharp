@@ -275,11 +275,12 @@ namespace g3
             if (result != MeshResult.Ok)
                 throw new Exception("MeshInsertUVPolyCurve.insert_corner_from_bary: face poke failed - " + result.ToString());
 
+            SetPointF(pokeinfo.new_vid, vInsert);
+
             spatial_add_triangle(tid);
             spatial_add_triangle(pokeinfo.new_t1);
             spatial_add_triangle(pokeinfo.new_t2);
 
-            SetPointF(pokeinfo.new_vid, vInsert);
             return pokeinfo.new_vid;
         }
 
@@ -452,15 +453,15 @@ namespace g3
                         //return false;
                     }
 
-                    spatial_add_triangles(et.a, et.b);
-                    spatial_add_triangles(splitInfo.eNewT2, splitInfo.eNewT3);
-
                     // move split point to intersection position
                     SetPointF(splitInfo.vNew, x);
                     NewCutVertices.Add(splitInfo.vNew);
 
                     NewEdges.Add(splitInfo.eNewBN);
                     NewEdges.Add(splitInfo.eNewCN);
+
+                    spatial_add_triangles(et.a, et.b);
+                    spatial_add_triangles(splitInfo.eNewT2, splitInfo.eNewT3);
 
                     // some splits - but not all - result in new 'other' edges that are on
                     // the polypath. We want to keep track of these edges so we can extract loop later.
