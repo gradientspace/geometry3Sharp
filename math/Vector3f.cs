@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 #if G3_USING_UNITY
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace g3
 {
+    [Serializable]
     public struct Vector3f : IComparable<Vector3f>, IEquatable<Vector3f>
     {
         public float x;
@@ -259,6 +261,8 @@ namespace g3
         }
         public override bool Equals(object obj)
         {
+            if (obj == null) return false;
+            if (obj.GetType() != GetType()) return false;
             return this == (Vector3f)obj;
         }
         public override int GetHashCode()
