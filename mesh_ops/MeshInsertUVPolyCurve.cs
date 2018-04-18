@@ -19,9 +19,11 @@ namespace g3
 
         // This function provides the UV-space coordinates. Default is to return vertex_pos.xy
         public Func<int, Vector2d> PointF;
+	    
+        public Func<int, bool> FilterTriF;
 
         // this function sets UV-space coordinates. Default is to set x=x, y=y, z=0
-        public Action<int, Vector2d> SetPointF;
+        public Action<int, Vector2d, Vector3f?> SetPointF;
 
         // the spans & loops take some compute time and can be disabled if you don't need it...
         public bool EnableCutSpansAndLoops = true;
@@ -49,7 +51,7 @@ namespace g3
             IsLoop = isLoop;
 
             PointF = (vid) => { return Mesh.GetVertex(vid).xy; };
-            SetPointF = (vid, pos) => { Mesh.SetVertex(vid, new Vector3d(pos.x, pos.y, 0)); };
+            SetPointF = (vid, pos, t) => { Mesh.SetVertex(vid, new Vector3d(pos.x, pos.y, 0)); };
         }
 
 
@@ -60,7 +62,7 @@ namespace g3
             IsLoop = true;
 
             PointF = (vid) => { return Mesh.GetVertex(vid).xy; };
-            SetPointF = (vid, pos) => { Mesh.SetVertex(vid, new Vector3d(pos.x, pos.y, 0)); };
+            SetPointF = (vid, pos, t) => { Mesh.SetVertex(vid, new Vector3d(pos.x, pos.y, 0)); };
         }
 
         public MeshInsertUVPolyCurve(DMesh3 mesh, PolyLine2d path)
@@ -70,7 +72,7 @@ namespace g3
             IsLoop = false;
 
             PointF = (vid) => { return Mesh.GetVertex(vid).xy; };
-            SetPointF = (vid, pos) => { Mesh.SetVertex(vid, new Vector3d(pos.x, pos.y, 0)); };
+            SetPointF = (vid, pos, t) => { Mesh.SetVertex(vid, new Vector3d(pos.x, pos.y, 0)); };
         }
 
 
@@ -112,6 +114,13 @@ namespace g3
 
                 foreach (int tid in Mesh.TriangleIndices()) {
                     Index3i tv = Mesh.GetTriangle(tid);
+                    
+                    // make sure that the triangle satisfies the filter if filter is specified
+                    if (FilterTriF != null && FilterTriF(tid) == false)
+                    {
+                        continue;
+                    }
+                    
                     // [RMS] using unsigned query here because we do not need to care about tri CW/CCW orientation
                     //   (right? otherwise we have to explicitly invert mesh. Nothing else we do depends on tri orientation)
                     //int query_result = query.ToTriangle(vInsert, tv.a, tv.b, tv.c);
@@ -168,7 +177,7 @@ namespace g3
                 MeshResult splitResult = Mesh.SplitEdge(eid, out split_info);
                 if (splitResult != MeshResult.Ok)
                     throw new Exception("MeshInsertUVPolyCurve.insert_corner_special: edge split failed in case sum==2");
-                SetPointF(split_info.vNew, vInsert);
+                SetPointF(split_info.vNew, vInsert, null);
                 return split_info.vNew;
             }
 
@@ -178,7 +187,8 @@ namespace g3
             if (result != MeshResult.Ok)
                 throw new Exception("MeshInsertUVPolyCurve.insert_corner_special: face poke failed!");
 
-            SetPointF(pokeinfo.new_vid, vInsert);
+            var point3d = Mesh.GetTriBaryPoint(tid, bary_coords.x, bary_coords.y, bary_coords.z);
+            SetPointF(pokeinfo.new_vid, vInsert, (Vector3f?) point3d);
             return pokeinfo.new_vid;
         }
 
@@ -252,6 +262,16 @@ namespace g3
                     // cannot cut boundary edges?
                     if (Mesh.IsBoundaryEdge(eid))
                         continue;
+                    
+                    // check if the edge is from triangles that satisfy filter
+                    if (FilterTriF != null)
+                    {
+                        var edgeT = Mesh.GetEdgeT(eid);
+                        if (!FilterTriF(edgeT.a) || !FilterTriF(edgeT.b))
+                        {
+                            continue;
+                        }
+                    }
 
                     Index2i ev = Mesh.GetEdgeV(eid);
                     int eva_sign = signs[ev.a];
@@ -285,7 +305,7 @@ namespace g3
                     Vector2d va = PointF(ev.a);
                     Vector2d vb = PointF(ev.b);
                     Segment2d edge_seg = new Segment2d(va, vb);
-                    IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, edge_seg);
+                    IntrSegment2Segment2 intr = new IntrSegment2Segment2(edge_seg, seg);
                     intr.Compute();
                     if (intr.Type == IntersectionType.Segment) {
                         // [RMS] we should have already caught this above, so if it happens here it is probably spurious?
@@ -314,9 +334,14 @@ namespace g3
                         throw new Exception("MeshInsertUVSegment.Cut: failed in SplitEdge");
                         //return false;
                     }
+                    
+                    // identify the parameter t of the intersection
+                    var t = intr.Parameter0;
+                    
+                    var newPos = (1 - t) * Mesh.GetVertex(ev.a) + t * Mesh.GetVertex(ev.b);
 
                     // move split point to intersection position
-                    SetPointF(splitInfo.vNew, x);
+                    SetPointF(splitInfo.vNew, x, (Vector3f?) newPos);
                     NewCutVertices.Add(splitInfo.vNew);
 
                     NewEdges.Add(splitInfo.eNewBN);
