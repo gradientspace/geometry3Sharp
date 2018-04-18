@@ -292,6 +292,7 @@
     <Compile Include="shapes3\Circle3.cs" />
     <Compile Include="spatial\BiGrid3.cs" />
     <Compile Include="spatial\Bitmap3.cs" />
+    <Compile Include="spatial\DCurveBoxTree.cs" />
     <Compile Include="spatial\DCurveProjection.cs" />
     <Compile Include="spatial\DenseGrid3.cs" />
     <Compile Include="spatial\PointAABBTree3.cs" />

@@ -24,9 +24,6 @@ namespace g3
 
         public DCurve3BoxTree(DCurve3 curve)
         {
-            if (curve.Closed == false)
-                throw new NotImplementedException("not done yet");
-
             Curve = curve;
             build_sequential(curve);
         }
@@ -82,7 +79,7 @@ namespace g3
                     min_dist_seg = seg_i;
                     min_dist_segt = segt;
                 }
-                if ((seg_i + 1) < Curve.VertexCount) {
+                if ( (seg_i+1) < Curve.SegmentCount ) {
                     Segment3d seg_b = Curve.GetSegment(seg_i + 1);
                     segdist = seg_b.DistanceSquared(pt, out segt);
                     if (segdist <= min_dist) {
@@ -150,7 +147,7 @@ namespace g3
                     min_dist_segt = segt;
                     min_dist_rayt = rayt;
                 }
-                if ((seg_i + 1) < Curve.VertexCount) {
+                if ((seg_i + 1) < Curve.SegmentCount) {
                     Segment3d seg_b = Curve.GetSegment(seg_i + 1);
                     segdist_sqr = DistRay3Segment3.SquaredDistance(ref ray, ref seg_b, out rayt, out segt);
                     segdist = Math.Sqrt(segdist_sqr);
@@ -218,7 +215,7 @@ namespace g3
                     nearestSegment = seg_i;
                     nearest_ray_t = rayt;
                 }
-                if ((seg_i + 1) < Curve.VertexCount) {
+                if ((seg_i + 1) < Curve.SegmentCount) {
                     Segment3d seg_b = Curve.GetSegment(seg_i + 1);
                     segdist_sqr = DistRay3Segment3.SquaredDistance(ref ray, ref seg_b, out rayt, out segt);
                     if (segdist_sqr <= radius * radius && rayt < nearest_ray_t) {
@@ -258,7 +255,7 @@ namespace g3
         void build_sequential(DCurve3 curve)
         {
             int NV = curve.VertexCount;
-            int N = NV;
+            int N = (curve.Closed) ? NV : NV - 1;
             int boxCount = 0;
             layers = 0;
             layer_counts = new List<int>();
@@ -274,13 +271,20 @@ namespace g3
                 bi += layer_boxes;
                 layers++;
             }
-
+            // [RMS] this case happens if N = 1, previous loop is skipped and we have to 
+            // hardcode initialization to this redundant box
+            if ( layers == 0 ) {
+                layers = 1;
+                boxCount = 1;
+                layer_counts = new List<int>() { 1 };
+            }
 
             boxes = new Box3d[boxCount];
             bi = 0;
 
             // make first layer
-            for (int si = 0; si < NV; si += 2) {
+            int NStop = (curve.Closed) ? NV : NV - 1;
+            for (int si = 0; si < NStop; si += 2) {
                 Vector3d v1 = curve[(si + 1) % NV];
                 Segment3d seg1 = new Segment3d(curve[si], v1);
                 Box3d box = new Box3d(seg1);
@@ -294,6 +298,8 @@ namespace g3
 
             // repeatedly build layers until we hit a single box
             N = bi;
+            if (N == 1)
+                return;
             int prev_layer_start = 0;
             bool done = false;
             while (done == false) {

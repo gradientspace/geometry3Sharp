@@ -156,13 +156,13 @@ namespace g3
         public IEnumerable<Segment3d> SegmentItr()
         {
             if (Closed) {
+                int NV = vertices.Count;
+                for (int i = 0; i < NV; ++i)
+                    yield return new Segment3d(vertices[i], vertices[(i + 1)%NV]);
+            } else {
                 int NV = vertices.Count - 1;
                 for (int i = 0; i < NV; ++i)
                     yield return new Segment3d(vertices[i], vertices[i + 1]);
-            } else {
-                int NV = vertices.Count;
-                for (int i = 0; i < vertices.Count; ++i)
-                    yield return new Segment3d(vertices[i], vertices[(i + 1)%NV]);
             }
         }
 
