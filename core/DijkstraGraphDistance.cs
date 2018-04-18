@@ -268,6 +268,7 @@ namespace g3
         /// <summary>
         /// Compute distances until node_id is frozen, or (optional) max distance is reached
         /// Terminates early, so Queue may not be empty
+        /// [TODO] can reimplement this w/ internal call to ComputeToNode(func) ?
         /// </summary>
         public void ComputeToNode(int node_id, float fMaxDistance = float.MaxValue)
         {
@@ -313,6 +314,66 @@ namespace g3
                 update_neighbours_dense(g.id);
             }
         }
+
+
+
+
+
+
+
+        /// <summary>
+        /// Compute distances until node_id is frozen, or (optional) max distance is reached
+        /// Terminates early, so Queue may not be empty
+        /// </summary>
+        public int ComputeToNode(Func<int, bool> terminatingNodeF, float fMaxDistance = float.MaxValue)
+        {
+            if (TrackOrder == true)
+                order = new List<int>();
+
+            if (SparseNodes != null)
+                return ComputeToNode_Sparse(terminatingNodeF, fMaxDistance);
+            else
+                return ComputeToNode_Dense(terminatingNodeF, fMaxDistance);
+        }
+        protected int ComputeToNode_Sparse(Func<int, bool> terminatingNodeF, float fMaxDistance)
+        {
+            while (SparseQueue.Count > 0) {
+                GraphNode g = SparseQueue.Dequeue();
+                max_value = Math.Max(g.priority, max_value);
+                if (max_value > fMaxDistance)
+                    return -1;
+                g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
+                if (terminatingNodeF(g.id))
+                    return g.id;
+                update_neighbours_sparse(g);
+            }
+            return -1;
+        }
+        protected int ComputeToNode_Dense(Func<int, bool> terminatingNodeF, float fMaxDistance)
+        {
+            while (DenseQueue.Count > 0) {
+                float idx_priority = DenseQueue.FirstPriority;
+                max_value = Math.Max(idx_priority, max_value);
+                if (max_value > fMaxDistance)
+                    return -1;
+                int idx = DenseQueue.Dequeue();
+                GraphNodeStruct g = DenseNodes[idx];
+                g.frozen = true;
+                if (TrackOrder)
+                    order.Add(g.id);
+                g.distance = max_value;
+                DenseNodes[idx] = g;
+                if (terminatingNodeF(g.id))
+                    return g.id;
+                update_neighbours_dense(g.id);
+            }
+            return -1;
+        }
+
+
+
 
 
 
