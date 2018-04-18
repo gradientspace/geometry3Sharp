@@ -166,6 +166,9 @@ namespace g3
         public float this[int i, int j, int k] {
             get { return grid[i, j, k]; }
         }
+        public float this[Vector3i idx] {
+            get { return grid[idx.x, idx.y, idx.z]; }
+        }
 
         public Vector3f CellCenter(int i, int j, int k)
         {
@@ -576,7 +579,7 @@ namespace g3
 
 
         // find distance x0 is from segment x1-x2
-        static float point_segment_distance(ref Vector3f x0, ref Vector3f x1, ref Vector3f x2)
+        static public float point_segment_distance(ref Vector3f x0, ref Vector3f x1, ref Vector3f x2)
         {
             Vector3f dx = x2 - x1;
             float m2 = dx.LengthSquared;
@@ -593,7 +596,7 @@ namespace g3
 
 
         // find distance x0 is from segment x1-x2
-        static double point_segment_distance(ref Vector3d x0, ref Vector3d x1, ref Vector3d x2)
+        static public double point_segment_distance(ref Vector3d x0, ref Vector3d x1, ref Vector3d x2)
         {
             Vector3d dx = x2 - x1;
             double m2 = dx.LengthSquared;
@@ -611,7 +614,7 @@ namespace g3
 
 
         // find distance x0 is from triangle x1-x2-x3
-        static float point_triangle_distance(ref Vector3f x0, ref Vector3f x1, ref Vector3f x2, ref Vector3f x3)
+        static public float point_triangle_distance(ref Vector3f x0, ref Vector3f x1, ref Vector3f x2, ref Vector3f x3)
         {
             // first find barycentric coordinates of closest point on infinite plane
             Vector3f x13 = (x1 - x3);
@@ -638,7 +641,7 @@ namespace g3
 
 
         // find distance x0 is from triangle x1-x2-x3
-        static double point_triangle_distance(ref Vector3d x0, ref Vector3d x1, ref Vector3d x2, ref Vector3d x3)
+        static public double point_triangle_distance(ref Vector3d x0, ref Vector3d x1, ref Vector3d x2, ref Vector3d x3)
         {
             // first find barycentric coordinates of closest point on infinite plane
             Vector3d x13 = (x1 - x3);
@@ -668,7 +671,7 @@ namespace g3
 
         // calculate twice signed area of triangle (0,0)-(x1,y1)-(x2,y2)
         // return an SOS-determined sign (-1, +1, or 0 only if it's a truly degenerate triangle)
-        static int orientation(double x1, double y1, double x2, double y2, out double twice_signed_area)
+        static public int orientation(double x1, double y1, double x2, double y2, out double twice_signed_area)
         {
             twice_signed_area = y1 * x2 - x1 * y2;
             if (twice_signed_area > 0) return 1;
@@ -683,7 +686,7 @@ namespace g3
 
         // robust test of (x0,y0) in the triangle (x1,y1)-(x2,y2)-(x3,y3)
         // if true is returned, the barycentric coordinates are set in a,b,c.
-        static bool point_in_triangle_2d(double x0, double y0,
+        static public bool point_in_triangle_2d(double x0, double y0,
                                          double x1, double y1, double x2, double y2, double x3, double y3,
                                          out double a, out double b, out double c)
         {
