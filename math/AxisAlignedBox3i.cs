@@ -246,6 +246,27 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Clamp v to grid bounds [min, max]
+        /// </summary>
+        public Vector3i ClampInclusive(Vector3i v) {
+            return new Vector3i(
+                MathUtil.Clamp(v.x, Min.x, Max.x),
+                MathUtil.Clamp(v.y, Min.y, Max.y),
+                MathUtil.Clamp(v.z, Min.z, Max.z));
+        }
+
+        /// <summary>
+        /// clamp v to grid bounds [min,max)
+        /// </summary>
+        public Vector3i ClampExclusive(Vector3i v) {
+            return new Vector3i(
+                MathUtil.Clamp(v.x, Min.x, Max.x-1),
+                MathUtil.Clamp(v.y, Min.y, Max.y-1),
+                MathUtil.Clamp(v.z, Min.z, Max.z-1));
+        }
+
+
 
         //! relative translation
         public void Translate(Vector3i vTranslate)

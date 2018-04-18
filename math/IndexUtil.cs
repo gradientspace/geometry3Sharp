@@ -383,6 +383,22 @@ namespace g3
 
     public static class gIndices
     {
+        // integer indices offsets in x/y directions
+        public static readonly Vector2i[] GridOffsets4 = new Vector2i[] {
+            new Vector2i( -1, 0), new Vector2i( 1, 0),
+            new Vector2i( 0, -1), new Vector2i( 0, 1)
+        };
+
+        // integer indices offsets in x/y directions and diagonals
+        public static readonly Vector2i[] GridOffsets8 = new Vector2i[] {
+            new Vector2i( -1, 0), new Vector2i( 1, 0),
+            new Vector2i( 0, -1), new Vector2i( 0, 1),
+            new Vector2i( -1, 1), new Vector2i( 1, 1),
+            new Vector2i( -1, -1), new Vector2i( 1, -1)
+        };
+
+
+
         // Corner vertices of box faces  -  see Box.Corner for points associated w/ indexing
         // Note that 
         public static readonly int[,] BoxFaces = new int[6, 4] {
