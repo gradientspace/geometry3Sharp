@@ -19,6 +19,7 @@ namespace g3
     /// </summary>
     public class DijkstraGraphDistance
     {
+        public const float InvalidValue = float.MaxValue;
 
         /// <summary>
         /// if you enable this, then you can call GetOrder()
@@ -59,7 +60,7 @@ namespace g3
             {
                 return id == other.id;
             }
-            public static readonly GraphNodeStruct Zero = new GraphNodeStruct() { id = -1, parent = -1, distance = float.MaxValue, frozen = false };
+            public static readonly GraphNodeStruct Zero = new GraphNodeStruct() { id = -1, parent = -1, distance = InvalidValue, frozen = false };
         }
 
 
@@ -270,7 +271,7 @@ namespace g3
         /// Terminates early, so Queue may not be empty
         /// [TODO] can reimplement this w/ internal call to ComputeToNode(func) ?
         /// </summary>
-        public void ComputeToNode(int node_id, float fMaxDistance = float.MaxValue)
+        public void ComputeToNode(int node_id, float fMaxDistance = InvalidValue)
         {
             if (TrackOrder == true)
                 order = new List<int>();
@@ -325,7 +326,7 @@ namespace g3
         /// Compute distances until node_id is frozen, or (optional) max distance is reached
         /// Terminates early, so Queue may not be empty
         /// </summary>
-        public int ComputeToNode(Func<int, bool> terminatingNodeF, float fMaxDistance = float.MaxValue)
+        public int ComputeToNode(Func<int, bool> terminatingNodeF, float fMaxDistance = InvalidValue)
         {
             if (TrackOrder == true)
                 order = new List<int>();
@@ -387,18 +388,18 @@ namespace g3
 
 
         /// <summary>
-        /// Get the computed distance at node id. returns float.MaxValue if node was not computed.
+        /// Get the computed distance at node id. returns InvalidValue if node was not computed.
         /// </summary>
         public float GetDistance(int id)
         {
             if (SparseNodes != null) {
                 GraphNode g = SparseNodes[id];
                 if (g == null)
-                    return float.MaxValue;
+                    return InvalidValue;
                 return g.priority;
             } else {
                 GraphNodeStruct g = DenseNodes[id];
-                return (g.frozen) ? g.distance : float.MaxValue;
+                return (g.frozen) ? g.distance : InvalidValue;
             }
         }
 
@@ -480,6 +481,9 @@ namespace g3
                     continue;
 
                 float nbr_dist = NodeDistanceF(parent.id, nbr_id) + cur_dist;
+                if (nbr_dist == InvalidValue)
+                    continue;
+
                 if (SparseQueue.Contains(nbr)) {
                     if (nbr_dist < nbr.priority) {
                         nbr.parent = parent;
@@ -515,6 +519,9 @@ namespace g3
                     continue;
 
                 float nbr_dist = NodeDistanceF(parent_id, nbr_id) + cur_dist;
+                if (nbr_dist == InvalidValue)
+                    continue;
+
                 if (DenseQueue.Contains(nbr_id)) {
                     if (nbr_dist < nbr.distance) {
                         nbr.parent = parent_id;
