@@ -218,6 +218,9 @@ namespace g3
 				return fArea * 0.5;	
 			}
 		}
+        public double Area {
+            get { return Math.Abs(SignedArea); }
+        }
 
 
 

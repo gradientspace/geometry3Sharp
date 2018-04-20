@@ -215,5 +215,38 @@ namespace g3
 
 
 
+
+        /// <summary>
+        /// Remove polygons and polygon-holes smaller than minArea
+        /// </summary>
+        public static List<GeneralPolygon2d> FilterDegenerate(List<GeneralPolygon2d> polygons, double minArea)
+        {
+            List<GeneralPolygon2d> result = new List<GeneralPolygon2d>(polygons.Count);
+            List<Polygon2d> filteredHoles = new List<Polygon2d>();
+            foreach (var poly in polygons) {
+                if (poly.Outer.Area < minArea)
+                    continue;
+                if (poly.Holes.Count == 0) {
+                    result.Add(poly);
+                    continue;
+                }
+                filteredHoles.Clear();
+                for ( int i = 0; i < poly.Holes.Count; ++i ) {
+                    Polygon2d hole = poly.Holes[i];
+                    if (hole.Area > minArea)
+                        filteredHoles.Add(hole);
+                }
+                if ( filteredHoles.Count != poly.Holes.Count ) {
+                    poly.ClearHoles();
+                    foreach (var h in filteredHoles)
+                        poly.AddHole(h, false, false);
+                }
+                result.Add(poly);
+            }
+            return result;
+        }
+
+
+
     }
 }
