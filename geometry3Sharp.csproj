@@ -294,6 +294,7 @@
     <Compile Include="spatial\Bitmap3.cs" />
     <Compile Include="spatial\DCurveBoxTree.cs" />
     <Compile Include="spatial\DCurveProjection.cs" />
+    <Compile Include="spatial\DenseGrid2.cs" />
     <Compile Include="spatial\DenseGrid3.cs" />
     <Compile Include="spatial\PointAABBTree3.cs" />
     <Compile Include="spatial\DMeshAABBTree.cs" />
