@@ -173,14 +173,25 @@ namespace g3
                 for (int i = 0; i < N; ++i ) {
                     Vector2d curpos = poly[i];
                     Vector2d smoothpos = (poly[(i + N - 1) % N] + poly[(i + 1) % N]) * 0.5;
-                    bool contained = true;
-                    if (bAllowShrink == false || bAllowGrow == false)
-                        contained = origPoly.Contains(smoothpos);
+
                     bool do_smooth = true;
-                    if (bAllowShrink && contained == false)
-                        do_smooth = false;
-                    if (bAllowGrow && contained == true)
-                        do_smooth = false;
+                    if (bAllowShrink == false || bAllowGrow == false) {
+                        bool is_inside = origPoly.Contains(smoothpos);
+                        if (is_inside == true)
+                            do_smooth = bAllowShrink;
+                        else
+                            do_smooth = bAllowGrow;
+                    }
+
+                    // [RMS] this is old code...I think not correct?
+                    //bool contained = true;
+                    //if (bAllowShrink == false || bAllowGrow == false)
+                    //    contained = origPoly.Contains(smoothpos);
+                    //bool do_smooth = true;
+                    //if (bAllowShrink && contained == false)
+                    //    do_smooth = false;
+                    //if (bAllowGrow && contained == true)
+                    //    do_smooth = false;
 
                     if ( do_smooth ) { 
                         Vector2d newpos = beta * curpos + alpha * smoothpos;
@@ -211,6 +222,37 @@ namespace g3
             foreach (Polygon2d hole in solid.Holes) {
                 CurveUtils2.LaplacianSmoothConstrained(hole, alpha, iterations, max_dist, bAllowShrink, bAllowGrow);
             }
+        }
+
+
+
+
+        public static Polygon2d SplitToTargetLength(Polygon2d poly, double length)
+        {
+            Polygon2d result = new Polygon2d();
+            result.AppendVertex(poly[0]);
+            for (int j = 0; j < poly.VertexCount; ++j) {
+                int next = (j + 1) % poly.VertexCount;
+                double len = poly[j].Distance(poly[next]);
+                if (len < length) {
+                    result.AppendVertex(poly[next]);
+                    continue;
+                }
+
+                int steps = (int)Math.Ceiling(len / length);
+                for (int k = 1; k < steps; ++k) {
+                    double t = (double)(k) / (double)steps;
+                    Vector2d v = (1.0 - t) * poly[j] + (t) * poly[next];
+                    result.AppendVertex(v);
+                }
+
+                if (j < poly.VertexCount - 1) {
+                    Util.gDevAssert(poly[j].Distance(result.Vertices[result.VertexCount - 1]) > 0.0001);
+                    result.AppendVertex(poly[next]);
+                }
+            }
+
+            return result;
         }
 
 
