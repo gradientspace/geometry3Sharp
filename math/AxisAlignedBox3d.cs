@@ -100,7 +100,6 @@ namespace g3
             get { return new Vector3d(0.5 * (Min.x + Max.x), 0.5 * (Min.y + Max.y), 0.5 * (Min.z + Max.z)); }
         }
 
-
         public static bool operator ==(AxisAlignedBox3d a, AxisAlignedBox3d b) {
             return a.Min == b.Min && a.Max == b.Max;
         }
@@ -135,6 +134,17 @@ namespace g3
             double x = (  ((i&1) != 0) ^ ((i&2) != 0) ) ? (Max.x) : (Min.x);
             double y = ( (i / 2) % 2 == 0 ) ? (Min.y) : (Max.y);
             double z = (i < 4) ? (Min.z) : (Max.z);
+            return new Vector3d(x, y, z);
+        }
+
+        /// <summary>
+        /// Returns point on face/edge/corner. For each coord value neg==min, 0==center, pos==max
+        /// </summary>
+        public Vector3d Point(int xi, int yi, int zi)
+        {
+            double x = (xi < 0) ? Min.x : ((xi == 0) ? (0.5*(Min.x + Max.x)) : Max.x);
+            double y = (yi < 0) ? Min.y : ((yi == 0) ? (0.5*(Min.y + Max.y)) : Max.y);
+            double z = (zi < 0) ? Min.z : ((zi == 0) ? (0.5*(Min.z + Max.z)) : Max.z);
             return new Vector3d(x, y, z);
         }
 
