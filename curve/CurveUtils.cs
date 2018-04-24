@@ -146,6 +146,56 @@ namespace g3
 
 
 
+        /// <summary>
+        /// smooth set of vertices using extra buffer
+        /// </summary>
+        public static void IterativeSmooth(IList<Vector3d> vertices, double alpha, int nIterations, bool bClosed)
+        {
+            IterativeSmooth(vertices, 0, vertices.Count, alpha, nIterations, bClosed);
+        }
+        /// <summary>
+        /// smooth set of vertices using extra buffer
+        /// </summary>
+        public static void IterativeSmooth(IList<Vector3d> vertices, int iStart, int iEnd, double alpha, int nIterations, bool bClosed, Vector3d[] buffer = null)
+        {
+            int N = vertices.Count;
+            if (buffer == null || buffer.Length < N)
+                buffer = new Vector3d[N];
+            if (bClosed) {
+                for (int iter = 0; iter < nIterations; ++iter) {
+                    for (int ii = iStart; ii < iEnd; ++ii) {
+                        int i = (ii % N);
+                        int iPrev = (ii == 0) ? N - 1 : ii - 1;
+                        int iNext = (ii + 1) % N;
+                        Vector3d prev = vertices[iPrev], next = vertices[iNext];
+                        Vector3d c = (prev + next) * 0.5f;
+                        buffer[i] = (1 - alpha) * vertices[i] + (alpha) * c;
+                    }
+                    for (int ii = iStart; ii < iEnd; ++ii) {
+                        int i = (ii % N);
+                        vertices[i] = buffer[i];
+                    }
+                }
+            } else {
+                for (int iter = 0; iter < nIterations; ++iter) {
+                    for (int i = iStart; i <= iEnd; ++i) {
+                        if (i == 0 || i >= N - 1)
+                            continue;
+                        Vector3d prev = vertices[i - 1], next = vertices[i + 1];
+                        Vector3d c = (prev + next) * 0.5f;
+                        buffer[i] = (1 - alpha) * vertices[i] + (alpha) * c;
+                    }
+                    for (int ii = iStart; ii < iEnd; ++ii) {
+                        int i = (ii % N);
+                        vertices[i] = buffer[i];
+                    }
+                }
+            }
+        }
+
+
+
+
     }
 
 
