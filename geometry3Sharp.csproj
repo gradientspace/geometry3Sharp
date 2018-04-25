@@ -104,6 +104,7 @@
     <Compile Include="implicit\GridImplicits3d.cs" />
     <Compile Include="implicit\Implicit2d.cs" />
     <Compile Include="implicit\Implicit3d.cs" />
+    <Compile Include="implicit\ImplicitFieldSampler3d.cs" />
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="intersection\IntrLine3AxisAlignedBox3.cs" />
@@ -294,6 +295,7 @@
     <Compile Include="spatial\Bitmap3.cs" />
     <Compile Include="spatial\DCurveBoxTree.cs" />
     <Compile Include="spatial\DCurveProjection.cs" />
+    <Compile Include="spatial\DenseGrid2.cs" />
     <Compile Include="spatial\DenseGrid3.cs" />
     <Compile Include="spatial\PointAABBTree3.cs" />
     <Compile Include="spatial\DMeshAABBTree.cs" />

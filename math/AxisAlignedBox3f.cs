@@ -150,6 +150,18 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Returns point on face/edge/corner. For each coord value neg==min, 0==center, pos==max
+        /// </summary>
+        public Vector3f Point(int xi, int yi, int zi)
+        {
+            float x = (xi < 0) ? Min.x : ((xi == 0) ? (0.5f * (Min.x + Max.x)) : Max.x);
+            float y = (yi < 0) ? Min.y : ((yi == 0) ? (0.5f * (Min.y + Max.y)) : Max.y);
+            float z = (zi < 0) ? Min.z : ((zi == 0) ? (0.5f * (Min.z + Max.z)) : Max.z);
+            return new Vector3f(x, y, z);
+        }
+
+
         //! value is subtracted from min and added to max
         public void Expand(float fRadius)
         {

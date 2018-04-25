@@ -340,6 +340,43 @@ namespace g3
         }
 
 
+
+        static public PolyLine2d MakeBoxSpiral(Vector2d center, double len, double spacing)
+        {
+            double d = spacing / 2;
+            PolyLine2d pline = new PolyLine2d();
+            pline.AppendVertex(center);
+
+            Vector2d c = center;
+            c.x += spacing / 2;
+            pline.AppendVertex(c);
+            c.y += spacing;
+            pline.AppendVertex(c);
+            double accum = spacing / 2 + spacing;
+
+            double w = spacing / 2;
+            double h = spacing;
+
+            double sign = -1.0;
+            while (accum < len) {
+                w += spacing;
+                c.x += sign * w;
+                pline.AppendVertex(c);
+                accum += w;
+
+                h += spacing;
+                c.y += sign * h;
+                pline.AppendVertex(c);
+                accum += h;
+
+                sign *= -1.0;
+            }
+
+            return pline;
+        }
+
+
+
     }
 
 

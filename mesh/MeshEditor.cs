@@ -246,10 +246,10 @@ namespace g3
         /// vertex ordering must reslut in appropriate orientation (which is...??)
         /// [TODO] check and fail on bad orientation
         /// </summary>
-        public virtual int[] StitchSpan(int[] vspan1, int[] vspan2, int group_id = -1)
+        public virtual int[] StitchSpan(IList<int> vspan1, IList<int> vspan2, int group_id = -1)
         {
-            int N = vspan1.Length;
-            if (N != vspan2.Length)
+            int N = vspan1.Count;
+            if (N != vspan2.Count)
                 throw new Exception("MeshEditor.StitchSpan: spans are not the same length!!");
             N--;
 

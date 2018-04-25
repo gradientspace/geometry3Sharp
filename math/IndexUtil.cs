@@ -268,6 +268,25 @@ namespace g3
 
 
 
+        public static Vector3i ToGrid3Index(int idx, int nx, int ny)
+        {
+            int x = idx % nx;
+            int y = (idx / nx) % ny;
+            int z = idx / (nx * ny);
+            return new Vector3i(x, y, z);
+        }
+
+        public static int ToGrid3Linear(int i, int j, int k, int nx, int ny) {
+            return i + nx * (j + ny * k);
+        }
+        public static int ToGrid3Linear(Vector3i ijk, int nx, int ny) {
+            return ijk.x + nx * (ijk.y + ny * ijk.z);
+        }
+        public static int ToGrid3Linear(ref Vector3i ijk, int nx, int ny) {
+            return ijk.x + nx * (ijk.y + ny * ijk.z);
+        }
+
+
 
         /// <summary>
         /// Filter out invalid entries in indices[] list. Will return indices itself if 
