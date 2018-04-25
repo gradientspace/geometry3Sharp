@@ -709,6 +709,17 @@ namespace g3
 
 
 
+		/// <summary>
+		/// Return minimal bounding box of vertices, computed to epsilon tolerance
+		/// </summary>
+		public Box2d MinimalBoundingBox(double epsilon)
+		{
+			ContMinBox2 box2 = new ContMinBox2(vertices, epsilon, QueryNumberType.QT_DOUBLE, false);
+			return box2.MinBox;
+		}
+
+
+
         static public Polygon2d MakeRectangle(Vector2d center, double width, double height)
         {
             VectorArray2d vertices = new VectorArray2d(4);

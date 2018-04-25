@@ -215,6 +215,36 @@ namespace g3
 
 
 
+		/// <summary>
+		/// return list of objects for which keepF(obj) returns true
+		/// </summary>
+		public static List<T> Filter<T>(List<T> objects, Func<T, bool> keepF)
+		{
+			List<T> result = new List<T>(objects.Count);
+			foreach (var obj in objects) {
+				if (keepF(obj))
+					result.Add(obj);
+			}
+			return result;
+		}
+
+
+		/// <summary>
+		/// Split the input list into two new lists, based on predicate (set1 == true)
+		/// </summary>
+		public static void Split<T>(List<T> objects, out List<T> set1, out List<T> set2, Func<T, bool> splitF)
+		{
+			set1 = new List<T>();
+			set2 = new List<T>();
+			foreach (var obj in objects) {
+				if (splitF(obj))
+					set1.Add(obj);
+				else
+					set2.Add(obj);
+			}
+		}
+
+
 
         /// <summary>
         /// Remove polygons and polygon-holes smaller than minArea
