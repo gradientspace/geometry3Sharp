@@ -136,6 +136,26 @@ namespace g3
 
 
 
+		/// <summary>
+		/// shortcut to construct graph for mesh triangles
+		/// </summary>
+		public static DijkstraGraphDistance MeshTriangles(DMesh3 mesh, bool bSparse = false)
+		{
+			Func<int, int, float> tri_dist_f = (a, b) => {
+				return (float)mesh.GetTriCentroid(a).Distance(mesh.GetTriCentroid(b));
+			};
+
+			return (bSparse) ?
+				new DijkstraGraphDistance(mesh.MaxTriangleID, true,
+				(id) => { return mesh.IsTriangle(id); }, tri_dist_f,
+				mesh.TriTrianglesItr, null)
+			: new DijkstraGraphDistance(mesh.MaxTriangleID, false,
+				(id) => { return true; }, tri_dist_f,
+				mesh.TriTrianglesItr, null);
+		}
+
+
+
         /// <summary>
         /// reset internal data structures/etc
         /// </summary>
