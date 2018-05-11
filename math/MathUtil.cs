@@ -10,6 +10,7 @@ namespace g3
         public const double Deg2Rad = (Math.PI / 180.0);
         public const double Rad2Deg = (180.0 / Math.PI);
         public const double TwoPI = 2.0 * Math.PI;
+        public const double FourPI = 4.0 * Math.PI;
         public const double HalfPI = 0.5 * Math.PI;
         public const double ZeroTolerance = 1e-08;
         public const double Epsilon = 2.2204460492503131e-016;

@@ -30,8 +30,8 @@ namespace g3
     /// </summary>
     public class DMeshAABBTree3 : ISpatial
     {
-        DMesh3 mesh;
-        int mesh_timestamp;
+        protected DMesh3 mesh;
+        protected int mesh_timestamp;
 
         public DMeshAABBTree3(DMesh3 m, bool autoBuild = false)
         {
@@ -1311,9 +1311,9 @@ namespace g3
         // storage for box nodes. 
         //   - box_to_index is a pointer into index_list
         //   - box_centers and box_extents are the centers/extents of the bounding boxes
-        DVector<int> box_to_index;
-        DVector<Vector3f> box_centers;
-        DVector<Vector3f> box_extents;
+        protected DVector<int> box_to_index;
+        protected DVector<Vector3f> box_centers;
+        protected DVector<Vector3f> box_extents;
 
         // list of indices for a given box. There is *no* marker/sentinel between
         // boxes, you have to get the starting index from box_to_index[]
@@ -1325,13 +1325,13 @@ namespace g3
         //       internal box, with index (-index_list[i])-1     (shift-by-one in case actual value is 0!)
         //   - if i > triangles_end and index_list[i] > 0, this is a two-child
         //       internal box, with indices index_list[i]-1 and index_list[i+1]-1
-        DVector<int> index_list;
+        protected DVector<int> index_list;
 
         // index_list[i] for i < triangles_end is a triangle-index list, otherwise box-index pair/single
-        int triangles_end = -1;
+        protected int triangles_end = -1;
 
         // box_to_index[root_index] is the root node of the tree
-        int root_index = -1;
+        protected int root_index = -1;
 
 
 
@@ -2040,7 +2040,7 @@ namespace g3
         }
 
 
-        bool box_contains(int iBox, Vector3d p)
+        protected bool box_contains(int iBox, Vector3d p)
         {
             // [TODO] this could be way faster...
             Vector3d c = (Vector3d)box_centers[iBox];
