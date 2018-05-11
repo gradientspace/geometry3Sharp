@@ -103,6 +103,8 @@ namespace g3
         }
 
 
+        public bool IsValid { get { return mesh_timestamp == mesh.ShapeTimestamp; } }
+
 
         /// <summary>
         /// Does this ISpatial implementation support nearest-point query? (yes)
