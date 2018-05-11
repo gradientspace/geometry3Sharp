@@ -464,6 +464,47 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// convert int array to bytes
+        /// </summary>
+        static public byte[] ToBytes(int[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(int)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// convert short array to bytes
+        /// </summary>
+        static public byte[] ToBytes(short[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(short)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// convert float array to bytes
+        /// </summary>
+        static public byte[] ToBytes(float[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(float)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// convert double array to bytes
+        /// </summary>
+        static public byte[] ToBytes(double[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(double)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+
 
 
         /// <summary>
