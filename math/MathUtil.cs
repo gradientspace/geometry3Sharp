@@ -371,12 +371,12 @@ namespace g3
         }
 
         public static float WyvillRise01(float fX) {
-            float d = 1 - fX * fX;
-            return (d >= 0) ? 1 - (d * d * d) : 0;
+            float d = MathUtil.Clamp(1.0f - fX*fX, 0.0f, 1.0f);
+            return 1 - (d * d * d);
         }
         public static double WyvillRise01(double fX) {
-            double d = 1 - fX * fX;
-            return (d >= 0) ? 1 - (d * d * d) : 0;
+            double d = MathUtil.Clamp(1.0 - fX*fX, 0.0, 1.0);
+            return 1 - (d * d * d);
         }
 
         public static float WyvillFalloff01(float fX) {
