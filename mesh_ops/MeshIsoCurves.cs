@@ -163,9 +163,11 @@ namespace g3
                         int cross_vid = add_or_append_vertex(cross);
                         add_edge_pos(triVerts[i], triVerts[j], cross);
 
-                        int graph_eid = Graph.AppendEdge(vert_vid, cross_vid, (int)TriangleCase.EdgeVertex);
-						if (graph_eid >= 0 && WantGraphEdgeInfo)
-                            add_edge_vert(graph_eid, tid, triEdges[(z0+1)%3], triVerts[z0], new Index2i(vert_vid, cross_vid));
+                        if (vert_vid != cross_vid) {
+                            int graph_eid = Graph.AppendEdge(vert_vid, cross_vid, (int)TriangleCase.EdgeVertex);
+                            if (graph_eid >= 0 && WantGraphEdgeInfo)
+                                add_edge_vert(graph_eid, tid, triEdges[(z0 + 1) % 3], triVerts[z0], new Index2i(vert_vid, cross_vid));
+                        } // else degenerate edge
                     }
 
                 } else {
