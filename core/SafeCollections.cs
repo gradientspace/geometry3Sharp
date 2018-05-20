@@ -33,6 +33,19 @@ namespace g3
             spinlock.Exit();
         }
 
+
+        public void SafeOperation(Action<List<T>> opF)
+        {
+            bool lockTaken = false;
+            while (lockTaken == false)
+                spinlock.Enter(ref lockTaken);
+
+            opF(List);
+
+            spinlock.Exit();
+        }
+
+
         public List<T> Result {
             get { return List; }
         }
