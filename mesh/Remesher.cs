@@ -171,9 +171,14 @@ namespace g3 {
                     if (result == ProcessResult.Ok_Collapsed || result == ProcessResult.Ok_Flipped || result == ProcessResult.Ok_Split)
                         ModifiedEdgesLastPass++;
                 }
+                if (Cancelled())        // expensive to check every iter?
+                    return;
                 cur_eid = next_edge(cur_eid, out done);
             } while (done == false);
             end_ops();
+
+            if (Cancelled())
+                return;
 
             begin_smooth();
             if (EnableSmoothing && SmoothSpeedT > 0) {
@@ -185,12 +190,18 @@ namespace g3 {
             }
             end_smooth();
 
+            if (Cancelled())
+                return;
+
             begin_project();
             if (target != null && ProjectionMode == TargetProjectionMode.AfterRefinement) {
                 FullProjectionPass();
                 DoDebugChecks();
             }
             end_project();
+
+            if (Cancelled())
+                return;
 
             end_pass();
 		}
