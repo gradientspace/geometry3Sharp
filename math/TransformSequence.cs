@@ -59,6 +59,17 @@ namespace g3
             Operations = new List<XForm>();
         }
 
+        public TransformSequence(TransformSequence copy)
+        {
+            Operations = new List<XForm>(copy.Operations);
+        }
+
+
+
+        public void Append(TransformSequence sequence)
+        {
+            Operations.AddRange(sequence.Operations);
+        }
 
 
         public void AppendTranslation(Vector3d dv)
