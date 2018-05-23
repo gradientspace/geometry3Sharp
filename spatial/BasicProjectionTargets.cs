@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class MeshProjectionTarget : IProjectionTarget
+    public class MeshProjectionTarget : IOrientedProjectionTarget
     {
         public DMesh3 Mesh { get; set; }
         public ISpatial Spatial { get; set; }
@@ -28,8 +28,22 @@ namespace g3
         public Vector3d Project(Vector3d vPoint, int identifier = -1)
         {
             int tNearestID = Spatial.FindNearestTriangle(vPoint);
-            DistPoint3Triangle3 q = MeshQueries.TriangleDistance(Mesh, tNearestID, vPoint);
-            return q.TriangleClosest;
+            Triangle3d triangle = new Triangle3d();
+            Mesh.GetTriVertices(tNearestID, ref triangle.V0, ref triangle.V1, ref triangle.V2);
+            Vector3d nearPt, bary;
+            DistPoint3Triangle3.DistanceSqr(ref vPoint, ref triangle, out nearPt, out bary);
+            return nearPt;
+        }
+
+        public Vector3d Project(Vector3d vPoint, out Vector3d vProjectNormal, int identifier = -1)
+        {
+            int tNearestID = Spatial.FindNearestTriangle(vPoint);
+            Triangle3d triangle = new Triangle3d();
+            Mesh.GetTriVertices(tNearestID, ref triangle.V0, ref triangle.V1, ref triangle.V2);
+            Vector3d nearPt, bary;
+            DistPoint3Triangle3.DistanceSqr(ref vPoint, ref triangle, out nearPt, out bary);
+            vProjectNormal = triangle.Normal;
+            return nearPt;
         }
 
         /// <summary>

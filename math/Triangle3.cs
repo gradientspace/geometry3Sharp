@@ -20,6 +20,16 @@ namespace g3
             set { if (key == 0) V0 = value; else if (key == 1) V1 = value; else V2 = value; }
         }
 
+        public Vector3d Normal {
+            get { return MathUtil.Normal(ref V0, ref V1, ref V2); }
+        }
+        public double Area {
+            get { return MathUtil.Area(ref V0, ref V1, ref V2); }
+        }
+        public double AspectRatio {
+            get { return MathUtil.AspectRatio(ref V0, ref V1, ref V2); }
+        }
+
         public Vector3d PointAt(double bary0, double bary1, double bary2)
         {
             return bary0 * V0 + bary1 * V1 + bary2 * V2;
