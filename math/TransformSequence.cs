@@ -190,7 +190,7 @@ namespace g3
 
 
         /// <summary>
-        /// Apply transforms to point
+        /// Apply transforms to vector. Includes scaling.
         /// </summary>
         public Vector3d TransformV(Vector3d v)
         {
