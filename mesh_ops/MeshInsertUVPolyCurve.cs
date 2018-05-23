@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace g3
 {
@@ -127,7 +128,7 @@ namespace g3
                     int query_result = query.ToTriangleUnsigned(vInsert, tv.a, tv.b, tv.c);
                     if (query_result == -1 || query_result == 0) {
                         Vector3d bary = MathUtil.BarycentricCoords(vInsert, PointF(tv.a), PointF(tv.b), PointF(tv.c));
-                        int vid = insert_corner_from_bary(i, tid, bary);
+                        int vid = insert_corner_from_bary(i, tid, bary, 0.001); // ZG: increased tolerance
                         if ( vid > 0 ) {    // this should be always happening..
                             CurveVertices[i] = vid;
                             inserted = true;
@@ -170,6 +171,9 @@ namespace g3
                 split_edge = 2;
             else if (bary_coords.z < tol)
                 split_edge = 0;
+            
+            var point3d = Mesh.GetTriBaryPoint(tid, bary_coords.x, bary_coords.y, bary_coords.z);
+            
             if (split_edge >= 0) {
                 int eid = Mesh.GetTriEdge(tid, split_edge);
 
@@ -177,7 +181,8 @@ namespace g3
                 MeshResult splitResult = Mesh.SplitEdge(eid, out split_info);
                 if (splitResult != MeshResult.Ok)
                     throw new Exception("MeshInsertUVPolyCurve.insert_corner_special: edge split failed in case sum==2");
-                SetPointF(split_info.vNew, vInsert, null);
+                
+                SetPointF(split_info.vNew, vInsert, (Vector3f?) point3d);
                 return split_info.vNew;
             }
 
@@ -187,15 +192,9 @@ namespace g3
             if (result != MeshResult.Ok)
                 throw new Exception("MeshInsertUVPolyCurve.insert_corner_special: face poke failed!");
 
-            var point3d = Mesh.GetTriBaryPoint(tid, bary_coords.x, bary_coords.y, bary_coords.z);
             SetPointF(pokeinfo.new_vid, vInsert, (Vector3f?) point3d);
             return pokeinfo.new_vid;
         }
-
-
-
-        
-
 
         public virtual bool Apply()
 		{
@@ -267,7 +266,7 @@ namespace g3
                     if (FilterTriF != null)
                     {
                         var edgeT = Mesh.GetEdgeT(eid);
-                        if (!FilterTriF(edgeT.a) || !FilterTriF(edgeT.b))
+                        if (!FilterTriF(edgeT.a) && !FilterTriF(edgeT.b))
                         {
                             continue;
                         }
@@ -337,11 +336,15 @@ namespace g3
                     
                     // identify the parameter t of the intersection
                     var t = intr.Parameter0;
-                    
-                    var newPos = (1 - t) * Mesh.GetVertex(ev.a) + t * Mesh.GetVertex(ev.b);
+
+                    var eva = Mesh.GetVertex(ev.a);
+                    var evb = Mesh.GetVertex(ev.b);
+                    var center = (eva + evb) / 2.0;
+                    var dir = (evb - eva).Normalized;
+                    var evn = center + t * dir;
 
                     // move split point to intersection position
-                    SetPointF(splitInfo.vNew, x, (Vector3f?) newPos);
+                    SetPointF(splitInfo.vNew, x, (Vector3f?) evn);
                     NewCutVertices.Add(splitInfo.vNew);
 
                     NewEdges.Add(splitInfo.eNewBN);
@@ -465,7 +468,7 @@ namespace g3
 
 
 
-        void find_cut_paths(HashSet<int> CutEdges)
+        public void find_cut_paths(HashSet<int> CutEdges)
         {
             Spans = new List<EdgeSpan>();
             Loops = new List<EdgeLoop>();
@@ -476,6 +479,7 @@ namespace g3
             while ( Remaining.Count > 0 ) {
                 int start_edge = Remaining.First();
                 Remaining.Remove(start_edge);
+                if (!Mesh.IsEdge(start_edge)) continue;
                 Index2i start_edge_v = Mesh.GetEdgeV(start_edge);
 
                 bool isLoop;
