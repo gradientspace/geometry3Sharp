@@ -49,6 +49,10 @@ namespace g3
         }
 
 
+        public AxisAlignedBox2d Bounds {
+            get { return bounds; }
+        }
+
         /// <summary>
         /// Insert triangle. This function is thread-safe, uses a SpinLock internally
         /// </summary>
