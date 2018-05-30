@@ -72,7 +72,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -109,7 +109,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -156,7 +156,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -218,7 +218,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -268,7 +268,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -539,9 +539,10 @@ namespace g3
 
         /// <summary>
         /// Disconnect all bowtie vertices in mesh. Iterates because sometimes
-        /// disconnecting a bowtie creates new bowties (how??)
+		/// disconnecting a bowtie creates new bowties (how??).
+		/// Returns number of remaining bowties after iterations.
         /// </summary>
-        public void DisconnectAllBowties(int nMaxIters = 10)
+        public int DisconnectAllBowties(int nMaxIters = 10)
         {
             List<int> bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
             int iter = 0;
@@ -550,6 +551,7 @@ namespace g3
                     DisconnectBowtie(vid);
                 bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
             }
+			return bowties.Count;
         }
 
 
