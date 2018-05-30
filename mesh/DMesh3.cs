@@ -1934,6 +1934,10 @@ namespace g3
         public bool IsBowtieVertex(int vID)
         {
             if (vertices_refcount.isValid(vID)) {
+				int nEdges = vertex_edges.Count(vID);
+				if (nEdges == 0)
+					return false;
+
                 // find a boundary edge to start at
                 int start_eid = -1;
                 bool start_at_boundary = false;
@@ -1976,7 +1980,6 @@ namespace g3
                 }
 
                 // if we did not see all edges at vertex, we have a bowtie
-                int nEdges = vertex_edges.Count(vID);
                 int target_count = (start_at_boundary) ? nEdges - 1 : nEdges;
                 bool is_bowtie = (target_count != count);
                 return is_bowtie;
