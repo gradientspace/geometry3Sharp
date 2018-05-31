@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 namespace g3
@@ -640,6 +641,21 @@ namespace g3
         static readonly int[] powers_of_10 = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
         public static int PowerOf10(int n) {
             return powers_of_10[n];
+        }
+
+
+        /// <summary>
+        /// Iterate from 0 to (nMax-1) using prime-modulo, so we see every index once, but not in-order
+        /// </summary>
+        public static IEnumerable<int> ModuloIteration(int nMaxExclusive, int nPrime = 31337)
+        {
+            int i = 0;
+            bool done = false;
+            while (done == false) {
+                yield return i;
+                i = (i + nPrime) % nMaxExclusive;
+                done = (i == 0);
+            }
         }
 
 
