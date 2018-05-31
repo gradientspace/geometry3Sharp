@@ -44,7 +44,9 @@ namespace g3
         public DMesh3 Mesh { get { return mesh; } }
 
 
-        // if non-null, return false to ignore certain triangles
+        /// <summary>
+        /// If non-null, only triangle IDs that pass this filter (ie filter is true) are considered
+        /// </summary>
         public Func<int, bool> TriangleFilterF = null;
 
 
