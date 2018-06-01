@@ -751,6 +751,10 @@ namespace g3
         }
         public void AppendBox(Frame3f frame, Vector3f size)
         {
+            AppendBox(frame, size, Colorf.White);
+        }
+        public void AppendBox(Frame3f frame, Vector3f size, Colorf color)
+        {
             TrivialBox3Generator boxgen = new TrivialBox3Generator() {
                 Box = new Box3d(frame, size),
                 NoSharedVertices = false
@@ -758,6 +762,8 @@ namespace g3
             boxgen.Generate();
             DMesh3 mesh = new DMesh3();
             boxgen.MakeMesh(mesh);
+            if (Mesh.HasVertexColors)
+                mesh.EnableVertexColors(color);
             AppendMesh(mesh, Mesh.AllocateTriangleGroup());
         }
         public void AppendLine(Segment3d seg, float size)
@@ -771,11 +777,22 @@ namespace g3
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(new Frame3f(pos), size);
         }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos), size*Vector3f.One, color);
+        }
         public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size)
         {
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(new Frame3f(pos, normal), size);
         }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos, normal), size*Vector3f.One, color);
+        }
+
         public static void AppendLine(DMesh3 mesh, Segment3d seg, float size)
         {
             Frame3f f = new Frame3f(seg.Center);
