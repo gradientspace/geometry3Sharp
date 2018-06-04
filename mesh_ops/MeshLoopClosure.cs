@@ -179,7 +179,7 @@ namespace g3
         // smoothing vertex neighbourhood
         // [TODO] geodesic nbrhoold instead of # of rings
         // [TODO] reprojection?
-        public static void smooth_loop(DMesh3 mesh, EdgeLoop loop, int nRings)
+        public static void smooth_loop(DMesh3 mesh, EdgeLoop loop, int nRings, int rounds = 1, int repeats = 10)
         {
             MeshFaceSelection roi_t = new MeshFaceSelection(mesh);
             roi_t.SelectVertexOneRings(loop.Vertices);
@@ -192,12 +192,12 @@ namespace g3
             roi_v.Deselect(loop.Vertices);
 
             MeshLoopSmooth loop_smooth = new MeshLoopSmooth(mesh, loop);
-            loop_smooth.Rounds = 1;
+            loop_smooth.Rounds = rounds;
 
             MeshIterativeSmooth mesh_smooth = new MeshIterativeSmooth(mesh, roi_v.ToArray(), true);
-            mesh_smooth.Rounds = 1;
+            mesh_smooth.Rounds = rounds;
 
-            for ( int i = 0; i < 10; ++i ) {
+            for ( int i = 0; i < repeats; ++i ) {
                 loop_smooth.Smooth();
                 mesh_smooth.Smooth();
             }
