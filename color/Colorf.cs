@@ -73,7 +73,10 @@ namespace g3
         {
             r -= o.r; g -= o.g; b -= o.b; a -= o.a;
         }
-
+        public Colorf WithAlpha(float newAlpha)
+        {
+            return new Colorf(r, g, b, newAlpha);
+        }
 
 
         public static Colorf operator -(Colorf v)
