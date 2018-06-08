@@ -6,10 +6,11 @@ using g3;
 
 namespace g3
 {
+    [Serializable]
     public struct Frame3f
     {
-        Quaternionf rotation;
-        Vector3f origin;
+        public Quaternionf rotation;
+        public Vector3f origin;
 
         static readonly public Frame3f Identity = new Frame3f(Vector3f.Zero, Quaternionf.Identity);
 

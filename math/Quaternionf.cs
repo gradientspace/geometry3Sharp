@@ -8,6 +8,7 @@ using UnityEngine;
 namespace g3
 {
     // mostly ported from WildMagic5 Wm5Quaternion, from geometrictools.com
+    [Serializable]
     public struct Quaternionf : IComparable<Quaternionf>, IEquatable<Quaternionf>
     {
         // note: in Wm5 version, this is a 4-element array stored in order (w,x,y,z).
