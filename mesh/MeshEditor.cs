@@ -355,6 +355,17 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Remove 'loner' triangles that have no connected neighbours. 
+        /// </summary>
+        public static bool RemoveIsolatedTriangles(DMesh3 mesh)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            return editor.RemoveTriangles((tid) => {
+                Index3i tnbrs = mesh.GetTriNeighbourTris(tid);
+                return (tnbrs.a == DMesh3.InvalidID && tnbrs.b == DMesh3.InvalidID && tnbrs.c == DMesh3.InvalidID);
+            }, true);
+        }
 
 
 
