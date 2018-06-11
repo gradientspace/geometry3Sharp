@@ -171,12 +171,45 @@ namespace g3
 
 
 
-	/// <summary>
-	/// Boolean Union of two implicit functions, A OR B.
-	/// Assumption is that both have surface at zero isocontour and 
-	/// negative is inside.
-	/// </summary>
-	public class ImplicitUnion3d : BoundedImplicitFunction3d
+    /// <summary>
+    /// remaps values so that values within given interval are negative,
+    /// and values outside this interval are positive. So, for a distance
+    /// field, this converts single isocontour into two nested isocontours
+    /// with zeros at interval a and b, with 'inside' in interval
+    /// </summary>
+    public class ImplicitShell3d : BoundedImplicitFunction3d
+    {
+        public BoundedImplicitFunction3d A;
+        public Interval1d Inside;
+
+        public double Value(ref Vector3d pt)
+        {
+            double f = A.Value(ref pt);
+            if (f < Inside.a)
+                f = Inside.a - f;
+            else if (f > Inside.b)
+                f = f - Inside.b;
+            else f = -Math.Min(Math.Abs(f - Inside.a), Math.Abs(f - Inside.b));
+            return f;
+        }
+
+        public AxisAlignedBox3d Bounds()
+        {
+            AxisAlignedBox3d box = A.Bounds();
+            box.Expand(Math.Max(0, Inside.b));
+            return box;
+        }
+    }
+
+
+
+
+    /// <summary>
+    /// Boolean Union of two implicit functions, A OR B.
+    /// Assumption is that both have surface at zero isocontour and 
+    /// negative is inside.
+    /// </summary>
+    public class ImplicitUnion3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public BoundedImplicitFunction3d B;
