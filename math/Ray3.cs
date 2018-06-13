@@ -14,10 +14,12 @@ namespace g3
         public Vector3d Origin;
         public Vector3d Direction;
 
-        public Ray3d(Vector3d origin, Vector3d direction)
+        public Ray3d(Vector3d origin, Vector3d direction, bool bIsNormalized = false)
         {
             this.Origin = origin;
             this.Direction = direction;
+            if (bIsNormalized == false && Direction.IsNormalized == false)
+                Direction.Normalize();
         }
 
         public Ray3d(Vector3f origin, Vector3f direction)
@@ -91,10 +93,12 @@ namespace g3
         public Vector3f Origin;
         public Vector3f Direction;
 
-        public Ray3f(Vector3f origin, Vector3f direction)
+        public Ray3f(Vector3f origin, Vector3f direction, bool bIsNormalized = false)
         {
             this.Origin = origin;
             this.Direction = direction;
+            if (bIsNormalized == false && Direction.IsNormalized == false)
+                Direction.Normalize();
         }
 
         // parameter is distance along ray
