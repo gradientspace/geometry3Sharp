@@ -61,6 +61,10 @@ namespace g3
         /// </summary>
         public int RootModeSteps = 5;
 
+
+        /// <summary> if this function returns true, we should abort calculation </summary>
+        public Func<bool> CancelF = () => { return false; };
+
         /*
          * Outputs
          */
@@ -207,6 +211,8 @@ namespace g3
                 GridCell cell = new GridCell();
                 Vector3d[] vertlist = new Vector3d[12];
                 for (int yi = 0; yi < CellDimensions.y; ++yi) {
+                    if (CancelF())
+                        return;
                     // compute full cell at x=0, then slide along x row, which saves half of value computes
                     Vector3i idx = new Vector3i(0, yi, zi);
                     initialize_cell(cell, ref idx);
@@ -235,6 +241,8 @@ namespace g3
 
             for (int zi = 0; zi < CellDimensions.z; ++zi) {
                 for (int yi = 0; yi < CellDimensions.y; ++yi) {
+                    if (CancelF())
+                        return;
                     // compute full cell at x=0, then slide along x row, which saves half of value computes
                     Vector3i idx = new Vector3i(0, yi, zi);
                     initialize_cell(cell, ref idx);

@@ -119,6 +119,48 @@ namespace g3
         }
 
 
+
+        /// <summary> Inverse() * v </summary>
+        public Vector3f InverseMultiply(ref Vector3f v)
+        {
+            float norm = LengthSquared;
+            if (norm > 0) {
+                float invNorm = 1.0f / norm;
+                float qx = -x*invNorm, qy = -y*invNorm, qz = -z*invNorm, qw = w*invNorm;
+                float twoX = 2 * qx; float twoY = 2 * qy; float twoZ = 2 * qz;
+                float twoWX = twoX * qw; float twoWY = twoY * qw; float twoWZ = twoZ * qw;
+                float twoXX = twoX * qx; float twoXY = twoY * qx; float twoXZ = twoZ * qx;
+                float twoYY = twoY * qy; float twoYZ = twoZ * qy; float twoZZ = twoZ * qz;
+                return new Vector3f(
+                    v.x * (1 - (twoYY + twoZZ)) + v.y * (twoXY - twoWZ) + v.z * (twoXZ + twoWY),
+                    v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
+                    v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); 
+            } else
+                return Vector3f.Zero;
+        }
+
+
+        /// <summary> Inverse() * v </summary>
+        public Vector3d InverseMultiply(ref Vector3d v)
+        {
+            float norm = LengthSquared;
+            if (norm > 0) {
+                float invNorm = 1.0f / norm;
+                float qx = -x * invNorm, qy = -y * invNorm, qz = -z * invNorm, qw = w * invNorm;
+                double twoX = 2 * qx; double twoY = 2 * qy; double twoZ = 2 * qz;
+                double twoWX = twoX * qw; double twoWY = twoY * qw; double twoWZ = twoZ * qw;
+                double twoXX = twoX * qx; double twoXY = twoY * qx; double twoXZ = twoZ * qx;
+                double twoYY = twoY * qy; double twoYZ = twoZ * qy; double twoZZ = twoZ * qz;
+                return new Vector3d(
+                    v.x * (1 - (twoYY + twoZZ)) + v.y * (twoXY - twoWZ) + v.z * (twoXZ + twoWY),
+                    v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
+                    v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
+            } else
+                return Vector3f.Zero;
+        }
+
+
+
         // these multiply quaternion by (1,0,0), (0,1,0), (0,0,1), respectively.
         // faster than full multiply, because of all the zeros
         public Vector3f AxisX {

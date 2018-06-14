@@ -15,6 +15,7 @@ namespace g3
         Failed_NotAnEdge = 3,
 
         Failed_BrokenTopology = 10,
+        Failed_HitValenceLimit = 11,
 
         Failed_IsBoundaryEdge = 20,
         Failed_FlippedEdgeExists = 21,
@@ -27,6 +28,12 @@ namespace g3
 		Failed_SameOrientation = 28,
 
         Failed_WouldCreateBowtie = 30,
+        Failed_VertexAlreadyExists = 31,
+        Failed_CannotAllocateVertex = 32,
+
+        Failed_WouldCreateNonmanifoldEdge = 50,
+        Failed_TriangleAlreadyExists = 51,
+        Failed_CannotAllocateTriangle = 52
 
     };
 
@@ -487,7 +494,7 @@ namespace g3
                 return false;
             vinfo.v.Set(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]);
             vinfo.bHaveN = vinfo.bHaveUV = vinfo.bHaveC = false;
-            if (HasVertexColors && bWantNormals) {
+            if (HasVertexNormals && bWantNormals) {
                 vinfo.bHaveN = true;
                 vinfo.n.Set(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]);
             }
@@ -834,6 +841,27 @@ namespace g3
 
 
 
+        /// <summary>
+        /// compute internal angle at vertex i of triangle (where i is 0,1,2);
+        /// TODO can be more efficient here, probably...
+        /// </summary>
+        public double GetTriInternalAngleR(int tID, int i)
+        {
+            int ti = 3 * tID;
+            int ta = 3 * triangles[ti];
+            Vector3d a = new Vector3d(vertices[ta], vertices[ta + 1], vertices[ta + 2]);
+            int tb = 3 * triangles[ti + 1];
+            Vector3d b = new Vector3d(vertices[tb], vertices[tb + 1], vertices[tb + 2]);
+            int tc = 3 * triangles[ti + 2];
+            Vector3d c = new Vector3d(vertices[tc], vertices[tc + 1], vertices[tc + 2]);
+            if ( i == 0 )
+                return (b-a).Normalized.AngleR((c-a).Normalized);
+            else if ( i == 1 )
+                return (a-b).Normalized.AngleR((c-b).Normalized);
+            else
+                return (a-c).Normalized.AngleR((b-c).Normalized);
+        }
+
 
 
         public Index2i GetEdgeV(int eID) {
@@ -926,12 +954,19 @@ namespace g3
         // mesh-building
 
 
+        /// <summary>
+        /// Append new vertex at position, returns new vid
+        /// </summary>
         public int AppendVertex(Vector3d v) {
             return AppendVertex(new NewVertexInfo() {
                 v = v, bHaveC = false, bHaveUV = false, bHaveN = false
             });
         }
-        public int AppendVertex(NewVertexInfo info)
+
+        /// <summary>
+        /// Append new vertex at position and other fields, returns new vid
+        /// </summary>
+        public int AppendVertex(ref NewVertexInfo info)
         {
             int vid = vertices_refcount.allocate();
 			int i = 3*vid;
@@ -965,8 +1000,13 @@ namespace g3
             updateTimeStamp(true);
             return vid;
         }
+        public int AppendVertex(NewVertexInfo info) {
+            return AppendVertex(ref info);
+        }
 
-        // direct copy from source mesh
+        /// <summary>
+        /// copy vertex fromVID from existing source mesh, returns new vid
+        /// </summary>
         public int AppendVertex(DMesh3 from, int fromVID)
         {
             int bi = 3 * fromVID;
@@ -1017,6 +1057,67 @@ namespace g3
             updateTimeStamp(true);
             return vid;
         }
+
+
+
+        /// <summary>
+        /// insert vertex at given index, assuming it is unused
+        /// If bUnsafe, we use fast id allocation that does not update free list.
+        /// You should only be using this between BeginUnsafeVerticesInsert() / EndUnsafeVerticesInsert() calls
+        /// </summary>
+        public MeshResult InsertVertex(int vid, ref NewVertexInfo info, bool bUnsafe = false)
+        {
+            if (vertices_refcount.isValid(vid))
+                return MeshResult.Failed_VertexAlreadyExists;
+
+            bool bOK = (bUnsafe) ? vertices_refcount.allocate_at_unsafe(vid) :
+                                   vertices_refcount.allocate_at(vid);
+            if (bOK == false)
+                return MeshResult.Failed_CannotAllocateVertex;
+
+            int i = 3 * vid;
+            vertices.insert(info.v[2], i + 2);
+            vertices.insert(info.v[1], i + 1);
+            vertices.insert(info.v[0], i);
+
+            if (normals != null) {
+                Vector3f n = (info.bHaveN) ? info.n : Vector3f.AxisY;
+                normals.insert(n[2], i + 2);
+                normals.insert(n[1], i + 1);
+                normals.insert(n[0], i);
+            }
+
+            if (colors != null) {
+                Vector3f c = (info.bHaveC) ? info.c : Vector3f.One;
+                colors.insert(c[2], i + 2);
+                colors.insert(c[1], i + 1);
+                colors.insert(c[0], i);
+            }
+
+            if (uv != null) {
+                Vector2f u = (info.bHaveUV) ? info.uv : Vector2f.Zero;
+                int j = 2 * vid;
+                uv.insert(u[1], j + 1);
+                uv.insert(u[0], j);
+            }
+
+            allocate_edges_list(vid);
+
+            updateTimeStamp(true);
+            return MeshResult.Ok;
+        }
+        public MeshResult InsertVertex(int vid, NewVertexInfo info) {
+            return InsertVertex(vid, ref info);
+        }
+
+
+        public virtual void BeginUnsafeVerticesInsert() {
+            // do nothing...
+        }
+        public virtual void EndUnsafeVerticesInsert() {
+            vertices_refcount.rebuild_free_list();
+        }
+
 
 
         public int AppendTriangle(int v0, int v1, int v2, int gid = -1) {
@@ -1074,6 +1175,76 @@ namespace g3
                 triangle_edges.insert(eid, 3 * tid + j);
             } else
                 triangle_edges.insert(add_edge(v0, v1, tid), 3 * tid + j);
+        }
+
+
+
+
+
+        /// <summary>
+        /// Insert triangle at given index, assuming it is unused.
+        /// If bUnsafe, we use fast id allocation that does not update free list.
+        /// You should only be using this between BeginUnsafeTrianglesInsert() / EndUnsafeTrianglesInsert() calls
+        /// </summary>
+        public MeshResult InsertTriangle(int tid, Index3i tv, int gid = -1, bool bUnsafe = false)
+        {
+            if (triangles_refcount.isValid(tid))
+                return MeshResult.Failed_TriangleAlreadyExists;
+
+            if (IsVertex(tv[0]) == false || IsVertex(tv[1]) == false || IsVertex(tv[2]) == false) {
+                Util.gDevAssert(false);
+                return MeshResult.Failed_NotAVertex;
+            }
+            if (tv[0] == tv[1] || tv[0] == tv[2] || tv[1] == tv[2]) {
+                Util.gDevAssert(false);
+                return MeshResult.Failed_InvalidNeighbourhood;
+            }
+
+            // look up edges. if any already have two triangles, this would 
+            // create non-manifold geometry and so we do not allow it
+            int e0 = find_edge(tv[0], tv[1]);
+            int e1 = find_edge(tv[1], tv[2]);
+            int e2 = find_edge(tv[2], tv[0]);
+            if ((e0 != InvalidID && IsBoundaryEdge(e0) == false)
+                 || (e1 != InvalidID && IsBoundaryEdge(e1) == false)
+                 || (e2 != InvalidID && IsBoundaryEdge(e2) == false)) {
+                return MeshResult.Failed_WouldCreateNonmanifoldEdge;
+            }
+
+            bool bOK = (bUnsafe) ? triangles_refcount.allocate_at_unsafe(tid) :
+                                   triangles_refcount.allocate_at(tid);
+            if (bOK == false)
+                return MeshResult.Failed_CannotAllocateTriangle;
+
+            // now safe to insert triangle
+            int i = 3 * tid;
+            triangles.insert(tv[2], i + 2);
+            triangles.insert(tv[1], i + 1);
+            triangles.insert(tv[0], i);
+            if (triangle_groups != null) {
+                triangle_groups.insert(gid, tid);
+                max_group_id = Math.Max(max_group_id, gid + 1);
+            }
+
+            // increment ref counts and update/create edges
+            vertices_refcount.increment(tv[0]);
+            vertices_refcount.increment(tv[1]);
+            vertices_refcount.increment(tv[2]);
+
+            add_tri_edge(tid, tv[0], tv[1], 0, e0);
+            add_tri_edge(tid, tv[1], tv[2], 1, e1);
+            add_tri_edge(tid, tv[2], tv[0], 2, e2);
+
+            updateTimeStamp(true);
+            return MeshResult.Ok;
+        }
+
+
+        public virtual void BeginUnsafeTrianglesInsert() {
+            // do nothing...
+        }
+        public virtual void EndUnsafeTrianglesInsert() {
+            triangles_refcount.rebuild_free_list();
         }
 
 
@@ -1772,11 +1943,56 @@ namespace g3
         public bool IsBowtieVertex(int vID)
         {
             if (vertices_refcount.isValid(vID)) {
-                int nTris = GetVtxTriangleCount(vID);
-                int vtx_edge_count = GetVtxEdgeCount(vID);
-                if (!(nTris == vtx_edge_count || nTris == vtx_edge_count - 1))
-                    return true;
-                return false;
+				int nEdges = vertex_edges.Count(vID);
+				if (nEdges == 0)
+					return false;
+
+                // find a boundary edge to start at
+                int start_eid = -1;
+                bool start_at_boundary = false;
+                foreach (int eid in vertex_edges.ValueItr(vID)) {
+                    if (edges[4 * eid + 3] == DMesh3.InvalidID) {
+                        start_at_boundary = true;
+                        start_eid = eid;
+                        break;
+                    }
+                }
+                // if no boundary edge, start at arbitrary edge
+                if (start_eid == -1)
+                    start_eid = vertex_edges.First(vID);
+                // initial triangle
+                int start_tid = edges[4 * start_eid + 2];
+
+                int prev_tid = start_tid;
+                int prev_eid = start_eid;
+
+                // walk forward to next edge. if we hit start edge or boundary edge,
+                // we are done the walk. count number of edges as we go.
+                int count = 1;
+                while (true) {
+                    int i = 3 * prev_tid;
+                    Index3i tv = new Index3i(triangles[i], triangles[i+1], triangles[i+2]);
+                    Index3i te = new Index3i(triangle_edges[i], triangle_edges[i+1], triangle_edges[i+2]);
+                    int vert_idx = IndexUtil.find_tri_index(vID, ref tv);
+                    int e1 = te[vert_idx], e2 = te[(vert_idx+2) % 3];
+                    int next_eid = (e1 == prev_eid) ? e2 : e1;
+                    if (next_eid == start_eid)
+                        break;
+                    Index2i next_eid_tris = GetEdgeT(next_eid);
+                    int next_tid = (next_eid_tris.a == prev_tid) ? next_eid_tris.b : next_eid_tris.a;
+                    if (next_tid == DMesh3.InvalidID) {
+                        break;
+                    }
+                    prev_eid = next_eid;
+                    prev_tid = next_tid;
+                    count++;
+                }
+
+                // if we did not see all edges at vertex, we have a bowtie
+                int target_count = (start_at_boundary) ? nEdges - 1 : nEdges;
+                bool is_bowtie = (target_count != count);
+                return is_bowtie;
+
             } else
                 throw new Exception("DMesh3.IsBowtieVertex: " + vID + " is not a valid vertex");
         }
@@ -1855,14 +2071,24 @@ namespace g3
 
 
 
+        /// <summary> returns true if vertices, edges, and triangles are all "dense" (Count == MaxID) </summary>
         public bool IsCompact {
             get { return vertices_refcount.is_dense && edges_refcount.is_dense && triangles_refcount.is_dense; }
         }
+
+        /// <summary> Returns true if vertex count == max vertex id </summary>
         public bool IsCompactV {
             get { return vertices_refcount.is_dense; }
         }
+
+        /// <summary> returns true if triangle count == max triangle id </summary>
         public bool IsCompactT {
             get { return triangles_refcount.is_dense; }
+        }
+
+        /// <summary> returns measure of compactness in range [0,1], where 1 is fully compacted </summary>
+        public double CompactMetric {
+            get { return ((double)VertexCount / (double)MaxVertexID + (double)TriangleCount / (double)MaxTriangleID) * 0.5; }
         }
 
 

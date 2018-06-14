@@ -5,7 +5,7 @@ namespace g3
 {
     // ported from WildMagic5 IntrTriangle3Triangle3
     // use Test() for fast boolean query, does not compute intersection info
-    // use Find() to for full information
+    // use Find() to compute full information
     // By default fully-contained co-planar triangles are not reported as intersecting.
     // set ReportCoplanarIntersection=true to handle this case (more expensive)
     public class IntrTriangle3Triangle3
@@ -242,12 +242,100 @@ namespace g3
 
 
 
+        public static bool Intersects(ref Triangle3d triangle0, ref Triangle3d triangle1)
+        {
+            // Get edge vectors for triangle0.
+            Vector3dTuple3 E0;
+            E0.V0 = triangle0.V1 - triangle0.V0;
+            E0.V1 = triangle0.V2 - triangle0.V1;
+            E0.V2 = triangle0.V0 - triangle0.V2;
+
+            // Get normal vector of triangle0.
+            Vector3d N0 = E0.V0.UnitCross(ref E0.V1);
+
+            // Project triangle1 onto normal line of triangle0, test for separation.
+            double N0dT0V0 = N0.Dot(ref triangle0.V0);
+            double min1, max1;
+            ProjectOntoAxis(ref triangle1, ref N0, out min1, out max1);
+            if (N0dT0V0 < min1 || N0dT0V0 > max1) {
+                return false;
+            }
+
+            // Get edge vectors for triangle1.
+            Vector3dTuple3 E1;
+            E1.V0 = triangle1.V1 - triangle1.V0;
+            E1.V1 = triangle1.V2 - triangle1.V1;
+            E1.V2 = triangle1.V0 - triangle1.V2;
+
+            // Get normal vector of triangle1.
+            Vector3d N1 = E1.V0.UnitCross(ref E1.V1);
+
+            Vector3d dir;
+            double min0, max0;
+            int i0, i1;
+
+            Vector3d N0xN1 = N0.UnitCross(ref N1);
+            if (N0xN1.Dot(ref N0xN1) >= MathUtil.ZeroTolerance) {
+                // Triangles are not parallel.
+
+                // Project triangle0 onto normal line of triangle1, test for
+                // separation.
+                double N1dT1V0 = N1.Dot(ref triangle1.V0);
+                ProjectOntoAxis(ref triangle0, ref N1, out min0, out max0);
+                if (N1dT1V0 < min0 || N1dT1V0 > max0) {
+                    return false;
+                }
+
+                // Directions E0[i0]xE1[i1].
+                for (i1 = 0; i1 < 3; ++i1) {
+                    for (i0 = 0; i0 < 3; ++i0) {
+                        dir = E0[i0].UnitCross(E1[i1]);  // could pass ref if we reversed these...need to negate?
+                        ProjectOntoAxis(ref triangle0, ref dir, out min0, out max0);
+                        ProjectOntoAxis(ref triangle1, ref dir, out min1, out max1);
+                        if (max0 < min1 || max1 < min0) {
+                            return false;
+                        }
+                    }
+                }
+
+            } else { // Triangles are parallel (and, in fact, coplanar).
+                // Directions N0xE0[i0].
+                for (i0 = 0; i0 < 3; ++i0) {
+                    dir = N0.UnitCross(E0[i0]);
+                    ProjectOntoAxis(ref triangle0, ref dir, out min0, out max0);
+                    ProjectOntoAxis(ref triangle1, ref dir, out min1, out max1);
+                    if (max0 < min1 || max1 < min0) {
+                        return false;
+                    }
+                }
+
+                // Directions N1xE1[i1].
+                for (i1 = 0; i1 < 3; ++i1) {
+                    dir = N1.UnitCross(E1[i1]);
+                    ProjectOntoAxis(ref triangle0, ref dir, out min0, out max0);
+                    ProjectOntoAxis(ref triangle1, ref dir, out min1, out max1);
+                    if (max0 < min1 || max1 < min0) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
 
 
 
 
 
-        void ProjectOntoAxis ( ref Triangle3d triangle, ref Vector3d axis, out double fmin, out double fmax)
+
+
+
+
+
+
+
+
+        static public void ProjectOntoAxis ( ref Triangle3d triangle, ref Vector3d axis, out double fmin, out double fmax)
         {
             double dot0 = axis.Dot(triangle.V0);
             double dot1 = axis.Dot(triangle.V1);
@@ -277,7 +365,7 @@ namespace g3
 
 
 
-        void TrianglePlaneRelations ( ref Triangle3d triangle, ref Plane3d plane,
+        static public void TrianglePlaneRelations ( ref Triangle3d triangle, ref Plane3d plane,
             out Vector3d distance, out Index3i sign, out int positive, out int negative, out int zero)
         {
             // Compute the signed distances of triangle vertices to the plane.  Use

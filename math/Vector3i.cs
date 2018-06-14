@@ -57,6 +57,8 @@ namespace g3
         public void Add(int s) { x += s;  y += s;  z += s; }
 
 
+        public int LengthSquared { get { return x * x + y * y + z * z; } }
+
 
         public static Vector3i operator -(Vector3i v)
         {

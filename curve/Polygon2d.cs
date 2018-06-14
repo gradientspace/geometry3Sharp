@@ -29,6 +29,12 @@ namespace g3
 			Timestamp = 0;
         }
 
+        public Polygon2d(IEnumerable<Vector2d> copy)
+        {
+            vertices = new List<Vector2d>(copy);
+            Timestamp = 0;
+        }
+
         public Polygon2d(Vector2d[] v)
         {
             vertices = new List<Vector2d>(v);
@@ -95,6 +101,20 @@ namespace g3
             vertices.RemoveAt(idx);
             Timestamp++;
         }
+
+
+        public void SetVertices(List<Vector2d> newVertices, bool bTakeOwnership)
+        {
+            if ( bTakeOwnership) {
+                vertices = newVertices;
+            } else {
+                vertices.Clear();
+                int N = newVertices.Count;
+                for (int i = 0; i < N; ++i)
+                    vertices.Add(newVertices[i]);
+            }
+        }
+
 
         public void Reverse()
 		{
@@ -187,6 +207,8 @@ namespace g3
 			get {
 				double fArea = 0;
 				int N = vertices.Count;
+				if (N == 0)
+					return 0;
 				Vector2d v1 = vertices[0], v2 = Vector2d.Zero;
 				for (int i = 0; i < N; ++i) {
 					v2 = vertices[(i + 1) % N];
@@ -196,6 +218,9 @@ namespace g3
 				return fArea * 0.5;	
 			}
 		}
+        public double Area {
+            get { return Math.Abs(SignedArea); }
+        }
 
 
 
@@ -681,6 +706,17 @@ namespace g3
             Timestamp++;
         }
 
+
+
+
+		/// <summary>
+		/// Return minimal bounding box of vertices, computed to epsilon tolerance
+		/// </summary>
+		public Box2d MinimalBoundingBox(double epsilon)
+		{
+			ContMinBox2 box2 = new ContMinBox2(vertices, epsilon, QueryNumberType.QT_DOUBLE, false);
+			return box2.MinBox;
+		}
 
 
 

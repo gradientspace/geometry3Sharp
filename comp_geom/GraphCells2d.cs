@@ -62,7 +62,7 @@ namespace g3
 
                 int start_vid = idx.a;
                 int wid = idx.b;
-                int e0 = wedges[start_vid][wid].a;
+                int e0 = wedges[start_vid][wid].a; e0 = e0+1-1;   // get rid of unused variable warning, want to keep this for debugging
                 int e1 = wedges[start_vid][wid].b;
 
                 loopv.Clear();

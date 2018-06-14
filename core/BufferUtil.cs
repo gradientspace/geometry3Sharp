@@ -464,6 +464,47 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// convert int array to bytes
+        /// </summary>
+        static public byte[] ToBytes(int[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(int)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// convert short array to bytes
+        /// </summary>
+        static public byte[] ToBytes(short[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(short)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// convert float array to bytes
+        /// </summary>
+        static public byte[] ToBytes(float[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(float)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// convert double array to bytes
+        /// </summary>
+        static public byte[] ToBytes(double[] array)
+        {
+            byte[] result = new byte[array.Length * sizeof(double)];
+            Buffer.BlockCopy(array, 0, result, 0, result.Length);
+            return result;
+        }
+
+
 
 
         /// <summary>
@@ -472,7 +513,11 @@ namespace g3
         static public byte[] CompressZLib(byte[] buffer, bool bFast)
         {
             MemoryStream ms = new MemoryStream();
+#if G3_USING_UNITY && (NET_2_0 || NET_2_0_SUBSET)
+            DeflateStream zip = new DeflateStream(ms, CompressionMode.Compress);
+#else
             DeflateStream zip = new DeflateStream(ms, (bFast) ? CompressionLevel.Fastest : CompressionLevel.Optimal, true);
+#endif
             zip.Write(buffer, 0, buffer.Length);
             zip.Close();
             ms.Position = 0;

@@ -171,9 +171,14 @@ namespace g3 {
                     if (result == ProcessResult.Ok_Collapsed || result == ProcessResult.Ok_Flipped || result == ProcessResult.Ok_Split)
                         ModifiedEdgesLastPass++;
                 }
+                if (Cancelled())        // expensive to check every iter?
+                    return;
                 cur_eid = next_edge(cur_eid, out done);
             } while (done == false);
             end_ops();
+
+            if (Cancelled())
+                return;
 
             begin_smooth();
             if (EnableSmoothing && SmoothSpeedT > 0) {
@@ -185,12 +190,18 @@ namespace g3 {
             }
             end_smooth();
 
+            if (Cancelled())
+                return;
+
             begin_project();
             if (target != null && ProjectionMode == TargetProjectionMode.AfterRefinement) {
                 FullProjectionPass();
                 DoDebugChecks();
             }
             end_project();
+
+            if (Cancelled())
+                return;
 
             end_pass();
 		}
@@ -451,13 +462,24 @@ namespace g3 {
                     bPositionFixed = true;
                 }
 
-                // vert inherits Target if both source verts and edge have same Target
-                if ( ca.Target != null && ca.Target == cb.Target 
-                     && constraints.GetEdgeConstraint(edgeID).Target == ca.Target ) {
-                    constraints.SetOrUpdateVertexConstraint(splitInfo.vNew,
-                        new VertexConstraint(ca.Target));
-                    project_vertex(splitInfo.vNew, ca.Target);
-                    bPositionFixed = true;
+                // vert inherits Target if:
+                //  1) both source verts and edge have same Target, and is same as edge target
+                //  2) either vert has same target as edge, and other vert is fixed
+                if ( ca.Target != null || cb.Target != null ) {
+                    IProjectionTarget edge_target = constraints.GetEdgeConstraint(edgeID).Target;
+                    IProjectionTarget set_target = null;
+                    if (ca.Target == cb.Target && ca.Target == edge_target)
+                        set_target = edge_target;
+                    else if (ca.Target == edge_target && cb.Fixed)
+                        set_target = edge_target;
+                    else if (cb.Target == edge_target && ca.Fixed)
+                        set_target = edge_target;
+                    if ( set_target != null ) {
+                        constraints.SetOrUpdateVertexConstraint(splitInfo.vNew,
+                            new VertexConstraint(set_target));
+                        project_vertex(splitInfo.vNew, set_target);
+                        bPositionFixed = true;
+                    }
                 }
             }
 

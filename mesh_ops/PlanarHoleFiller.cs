@@ -18,6 +18,12 @@ namespace g3
         /// </summary>
         public double FillTargetEdgeLen = double.MaxValue;
 
+        /// <summary>
+        /// in some cases fill can succeed but we can't merge w/o creating holes. In
+        /// such cases it might be better to not merge at all...
+        /// </summary>
+        public bool MergeFillBoundary = true;
+
         // these will be computed if you don't set them
         Vector3d PlaneX, PlaneY;
 
@@ -185,28 +191,29 @@ namespace g3
                 // [TODO] should check that edges (ie sequential verts) are boundary edges on fill mesh
                 //    if not, can try to delete nbr tris to repair
                 IndexMap mergeMapV = new IndexMap(true);
-                for ( int pi = 0; pi < polys.Count; ++pi ) {
-                    if (polyVertices[pi] == null)
-                        continue;
-                    int[] fillLoopVerts = polyVertices[pi];
-                    int NV = fillLoopVerts.Length;
+                if (MergeFillBoundary) {
+                    for (int pi = 0; pi < polys.Count; ++pi) {
+                        if (polyVertices[pi] == null)
+                            continue;
+                        int[] fillLoopVerts = polyVertices[pi];
+                        int NV = fillLoopVerts.Length;
 
-                    PlanarComplex.Element sourceElem = (pi == 0) ? gsolid.Outer : gsolid.Holes[pi - 1];
-                    int loopi = ElemToLoopMap[sourceElem];
-                    EdgeLoop sourceLoop = Loops[loopi].edgeLoop;
+                        PlanarComplex.Element sourceElem = (pi == 0) ? gsolid.Outer : gsolid.Holes[pi - 1];
+                        int loopi = ElemToLoopMap[sourceElem];
+                        EdgeLoop sourceLoop = Loops[loopi].edgeLoop;
 
-                    if (sourceLoop.VertexCount != NV) {
-                        failed_merges.Add(new Index2i(fi, pi));
-                        continue;
+                        if (sourceLoop.VertexCount != NV) {
+                            failed_merges.Add(new Index2i(fi, pi));
+                            continue;
+                        }
+
+                        for (int k = 0; k < NV; ++k) {
+                            Vector3d fillV = FillMesh.GetVertex(fillLoopVerts[k]);
+                            Vector3d sourceV = Mesh.GetVertex(sourceLoop.Vertices[k]);
+                            if (fillV.Distance(sourceV) < MathUtil.ZeroTolerancef)
+                                mergeMapV[fillLoopVerts[k]] = sourceLoop.Vertices[k];
+                        }
                     }
-
-                    for ( int k = 0; k < NV; ++k ) {
-                        Vector3d fillV = FillMesh.GetVertex(fillLoopVerts[k]);
-                        Vector3d sourceV = Mesh.GetVertex(sourceLoop.Vertices[k]);
-                        if (fillV.Distance(sourceV) < MathUtil.ZeroTolerancef)
-                            mergeMapV[fillLoopVerts[k]] = sourceLoop.Vertices[k];
-                    }
-
                 }
 
                 // append this fill to input mesh

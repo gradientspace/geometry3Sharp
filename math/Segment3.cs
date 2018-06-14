@@ -61,6 +61,20 @@ namespace g3
 			Vector3d proj = Center + t * Direction;
 			return (proj - p).LengthSquared;
 		}
+        public double DistanceSquared(Vector3d p, out double t)
+        {
+            t = (p - Center).Dot(Direction);
+            if (t >= Extent) {
+                t = Extent;
+                return P1.DistanceSquared(p);
+            } else if (t <= -Extent) {
+                t = -Extent;
+                return P0.DistanceSquared(p);
+            }
+            Vector3d proj = Center + t * Direction;
+            return (proj - p).LengthSquared;
+        }
+
 
         public Vector3d NearestPoint(Vector3d p)
         {

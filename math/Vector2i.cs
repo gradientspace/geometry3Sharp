@@ -30,6 +30,7 @@ namespace g3
         public void Add(int s) { x += s; y += s; }
 
 
+        public int LengthSquared { get { return x * x + y * y; } }
 
 
         public static Vector2i operator -(Vector2i v)

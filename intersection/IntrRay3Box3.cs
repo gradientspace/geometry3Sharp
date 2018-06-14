@@ -74,69 +74,77 @@ namespace g3
 
 		public bool Test ()
 		{
-			Vector3d WdU = Vector3d.Zero;
-			Vector3d AWdU = Vector3d.Zero;
-			Vector3d DdU = Vector3d.Zero;
-			Vector3d ADdU = Vector3d.Zero;
-			Vector3d AWxDdU = Vector3d.Zero;
-			double RHS;
-
-			Vector3d diff = ray.Origin - box.Center;
-
-			WdU[0] = ray.Direction.Dot(box.AxisX);
-			AWdU[0] = Math.Abs(WdU[0]);
-			DdU[0] = diff.Dot(box.AxisX);
-			ADdU[0] = Math.Abs(DdU[0]);
-			if (ADdU[0] > box.Extent.x && DdU[0]*WdU[0] >= (double)0)
-			{
-				return false;
-			}
-
-			WdU[1] = ray.Direction.Dot(box.AxisY);
-			AWdU[1] = Math.Abs(WdU[1]);
-			DdU[1] = diff.Dot(box.AxisY);
-			ADdU[1] = Math.Abs(DdU[1]);
-			if (ADdU[1] > box.Extent.y && DdU[1]*WdU[1] >= (double)0)
-			{
-				return false;
-			}
-
-			WdU[2] = ray.Direction.Dot(box.AxisZ);
-			AWdU[2] = Math.Abs(WdU[2]);
-			DdU[2] = diff.Dot(box.AxisZ);
-			ADdU[2] = Math.Abs(DdU[2]);
-			if (ADdU[2] > box.Extent.z && DdU[2]*WdU[2] >= (double)0)
-			{
-				return false;
-			}
-
-			Vector3d WxD = ray.Direction.Cross(diff);
-
-			AWxDdU[0] = Math.Abs(WxD.Dot(box.AxisX));
-			RHS = box.Extent.y*AWdU[2] + box.Extent.z*AWdU[1];
-			if (AWxDdU[0] > RHS)
-			{
-				return false;
-			}
-
-			AWxDdU[1] = Math.Abs(WxD.Dot(box.AxisY));
-			RHS = box.Extent.x*AWdU[2] + box.Extent.z*AWdU[0];
-			if (AWxDdU[1] > RHS)
-			{
-				return false;
-			}
-
-			AWxDdU[2] = Math.Abs(WxD.Dot(box.AxisZ));
-			RHS = box.Extent.x*AWdU[1] + box.Extent.y*AWdU[0];
-			if (AWxDdU[2] > RHS)
-			{
-				return false;
-			}
-
-			return true;
+            return Intersects(ref ray, ref box);
 		}
 
 
 
-	}
+        /// <summary>
+        /// test if ray intersects box.
+        /// expandExtents allows you to scale box for hit-testing purposes.
+        /// </summary>
+        public static bool Intersects(ref Ray3d ray, ref Box3d box, double expandExtents = 0)
+        {
+            Vector3d WdU = Vector3d.Zero;
+            Vector3d AWdU = Vector3d.Zero;
+            Vector3d DdU = Vector3d.Zero;
+            Vector3d ADdU = Vector3d.Zero;
+            Vector3d AWxDdU = Vector3d.Zero;
+            double RHS;
+
+            Vector3d diff = ray.Origin - box.Center;
+            Vector3d extent = box.Extent + expandExtents;
+
+            WdU[0] = ray.Direction.Dot(ref box.AxisX);
+            AWdU[0] = Math.Abs(WdU[0]);
+            DdU[0] = diff.Dot(ref box.AxisX);
+            ADdU[0] = Math.Abs(DdU[0]);
+            if (ADdU[0] > extent.x && DdU[0] * WdU[0] >= (double)0) {
+                return false;
+            }
+
+            WdU[1] = ray.Direction.Dot(ref box.AxisY);
+            AWdU[1] = Math.Abs(WdU[1]);
+            DdU[1] = diff.Dot(ref box.AxisY);
+            ADdU[1] = Math.Abs(DdU[1]);
+            if (ADdU[1] > extent.y && DdU[1] * WdU[1] >= (double)0) {
+                return false;
+            }
+
+            WdU[2] = ray.Direction.Dot(ref box.AxisZ);
+            AWdU[2] = Math.Abs(WdU[2]);
+            DdU[2] = diff.Dot(ref box.AxisZ);
+            ADdU[2] = Math.Abs(DdU[2]);
+            if (ADdU[2] > extent.z && DdU[2] * WdU[2] >= (double)0) {
+                return false;
+            }
+
+            Vector3d WxD = ray.Direction.Cross(diff);
+
+            AWxDdU[0] = Math.Abs(WxD.Dot(ref box.AxisX));
+            RHS = extent.y * AWdU[2] + extent.z * AWdU[1];
+            if (AWxDdU[0] > RHS) {
+                return false;
+            }
+
+            AWxDdU[1] = Math.Abs(WxD.Dot(ref box.AxisY));
+            RHS = extent.x * AWdU[2] + extent.z * AWdU[0];
+            if (AWxDdU[1] > RHS) {
+                return false;
+            }
+
+            AWxDdU[2] = Math.Abs(WxD.Dot(ref box.AxisZ));
+            RHS = extent.x * AWdU[1] + extent.y * AWdU[0];
+            if (AWxDdU[2] > RHS) {
+                return false;
+            }
+
+            return true;
+        }
+
+
+
+
+
+    }
 }

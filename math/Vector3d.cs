@@ -127,25 +127,27 @@ namespace g3
             return x * v2.x + y * v2.y + z * v2.z;
         }
 
-        public static double Dot(Vector3d v1, Vector3d v2)
-        {
-            return v1.Dot(v2);
+        public static double Dot(Vector3d v1, Vector3d v2) {
+            return v1.Dot(ref v2);
         }
 
-        public Vector3d Cross(Vector3d v2)
-        {
+        public Vector3d Cross(Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
                 x * v2.y - y * v2.x);
         }
-        public static Vector3d Cross(Vector3d v1, Vector3d v2)
-        {
-            return v1.Cross(v2);
+        public Vector3d Cross(ref Vector3d v2) {
+            return new Vector3d(
+                y * v2.z - z * v2.y,
+                z * v2.x - x * v2.z,
+                x * v2.y - y * v2.x);
+        }
+        public static Vector3d Cross(Vector3d v1, Vector3d v2) {
+            return v1.Cross(ref v2);
         }
 
-        public Vector3d UnitCross(Vector3d v2)
-        {
+        public Vector3d UnitCross(ref Vector3d v2) {
             Vector3d n = new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
@@ -153,6 +155,10 @@ namespace g3
             n.Normalize();
             return n;
         }
+        public Vector3d UnitCross(Vector3d v2) {
+            return UnitCross(ref v2);
+        }
+
 
         public double AngleD(Vector3d v2)
         {
@@ -356,9 +362,12 @@ namespace g3
         // complicated functions go down here...
 
 
-        // [RMS] this is from WildMagic5, but I added returning the minLength value
-        //   from GTEngine, because I use this in place of GTEngine's Orthonormalize in
-        //   ComputeOrthogonalComplement below
+        /// <summary>
+        /// Gram-Schmidt orthonormalization of the input vectors.
+        /// [RMS] this is from WildMagic5, but I added returning the minLength value
+        /// from GTEngine, because I use this in place of GTEngine's Orthonormalize in
+        /// ComputeOrthogonalComplement below
+        /// </summary>
         public static double Orthonormalize(ref Vector3d u, ref Vector3d v, ref Vector3d w)
         {
             // If the input vectors are v0, v1, and v2, then the Gram-Schmidt
@@ -393,9 +402,11 @@ namespace g3
         }
 
 
-        // Input W must be a unit-length vector.  The output vectors {U,V} are
-        // unit length and mutually perpendicular, and {U,V,W} is an orthonormal basis.
-        // ported from WildMagic5
+        /// <summary>
+        /// Input W must be a unit-length vector.  The output vectors {U,V} are
+        /// unit length and mutually perpendicular, and {U,V,W} is an orthonormal basis.
+        /// ported from WildMagic5
+        /// </summary>
         public static void GenerateComplementBasis(ref Vector3d u, ref Vector3d v, Vector3d w)
         {
             double invLength;
@@ -421,14 +432,16 @@ namespace g3
             }
         }
 
-        // this function is from GTEngine
-        // Compute a right-handed orthonormal basis for the orthogonal complement
-        // of the input vectors.  The function returns the smallest length of the
-        // unnormalized vectors computed during the process.  If this value is nearly
-        // zero, it is possible that the inputs are linearly dependent (within
-        // numerical round-off errors).  On input, numInputs must be 1 or 2 and
-        // v0 through v(numInputs-1) must be initialized.  On output, the
-        // vectors v0 through v2 form an orthonormal set.
+        /// <summary>
+        /// this function is ported from GTEngine.
+        /// Compute a right-handed orthonormal basis for the orthogonal complement
+        /// of the input vectors.  The function returns the smallest length of the
+        /// unnormalized vectors computed during the process.  If this value is nearly
+        /// zero, it is possible that the inputs are linearly dependent (within
+        /// numerical round-off errors).  On input, numInputs must be 1 or 2 and
+        /// v0 through v(numInputs-1) must be initialized.  On output, the
+        /// vectors v0 through v2 form an orthonormal set.
+        /// </summary>
         public static double ComputeOrthogonalComplement(int numInputs, Vector3d v0, ref Vector3d v1, ref Vector3d v2 /*, bool robust = false*/)
         {
             if (numInputs == 1) {
@@ -449,6 +462,39 @@ namespace g3
             }
 
             return 0;
+        }
+
+
+
+        /// <summary>
+        /// Returns two vectors perpendicular to n, as efficiently as possible.
+        /// Duff et all method, from https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+        /// </summary>
+        public static void MakePerpVectors(ref Vector3d n, out Vector3d b1, out Vector3d b2)
+        {
+            if (n.z < 0.0) {
+                double a = 1.0 / (1.0 - n.z);
+                double b = n.x * n.y * a;
+                //b1 = Vec3f(1.0f - n.x * n.x * a, -b, n.x);
+                //b2 = Vec3f(b, n.y * n.y * a - 1.0f, -n.y);
+                b1.x = 1.0f - n.x * n.x * a;
+                b1.y = -b;
+                b1.z = n.x;
+                b2.x = b;
+                b2.y = n.y * n.y * a - 1.0f;
+                b2.z = -n.y;
+            } else {
+                double a = 1.0 / (1.0 + n.z);
+                double b = -n.x * n.y * a;
+                //b1 = Vec3f(1.0 - n.x * n.x * a, b, -n.x);
+                //b2 = Vec3f(b, 1.0 - n.y * n.y * a, -n.y);
+                b1.x = 1.0 - n.x * n.x * a;
+                b1.y = b;
+                b1.z = -n.x;
+                b2.x = b;
+                b2.y = 1.0 - n.y * n.y * a;
+                b2.z = -n.y;
+            }
         }
 
     }

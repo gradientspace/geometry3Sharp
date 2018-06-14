@@ -1,7 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace g3
 {
@@ -12,7 +11,7 @@ namespace g3
     //   - this[] operator does not check bounds, so it can write to any valid Block
     //   - some fns discard Blocks beyond iCurBlock
     //   - wtf...
-    public class DVector<T>
+    public class DVector<T> : IEnumerable<T>
     {
         List<T[]> Blocks;
         int iCurBlock;
@@ -53,7 +52,6 @@ namespace g3
             iCurBlockUsed = 0;
             Blocks = new List<T[]>();
             Blocks.Add(new T[nBlockSize]);
-            // AAAHHH this could be so more efficient...
             foreach (T v in init)
                 Add(v);
         }
@@ -149,6 +147,9 @@ namespace g3
 
 
         public void resize(int count) {
+            if (Length == count)
+                return;
+
             // figure out how many segments we need
             int nNumSegs = 1 + (int)count / nBlockSize;
 
@@ -176,6 +177,24 @@ namespace g3
             iCurBlock = nNumSegs-1;            
         }
 
+
+        public void copy(DVector<T> copyIn)
+        {
+            if (this.Blocks != null && copyIn.Blocks.Count == this.Blocks.Count) {
+                int N = copyIn.Blocks.Count;
+                for (int k = 0; k < N; ++k)
+                    Array.Copy(copyIn.Blocks[k], this.Blocks[k], copyIn.Blocks[k].Length);
+                iCurBlock = copyIn.iCurBlock;
+                iCurBlockUsed = copyIn.iCurBlockUsed;
+            } else {
+                resize(copyIn.size);
+                int N = copyIn.Blocks.Count;
+                for (int k = 0; k < N; ++k)
+                    Array.Copy(copyIn.Blocks[k], this.Blocks[k], copyIn.Blocks[k].Length);
+                iCurBlock = copyIn.iCurBlock;
+                iCurBlockUsed = copyIn.iCurBlockUsed;
+            }
+        }
 
 
 
@@ -368,6 +387,22 @@ namespace g3
                     pCur.ToInt64() + v.nBlockSize * sizeof(int));
             }
             System.Runtime.InteropServices.Marshal.Copy(v.Blocks[N - 1], 0, pCur, v.iCurBlockUsed);
+        }
+
+
+
+        public IEnumerator<T> GetEnumerator() {
+            for (int bi = 0; bi < iCurBlock; ++bi) {
+                T[] block = Blocks[bi];
+                for (int k = 0; k < nBlockSize; ++k)
+                    yield return block[k];
+            }
+            T[] lastblock = Blocks[iCurBlock];
+            for (int k = 0; k < iCurBlockUsed; ++k)
+                yield return lastblock[k];
+        }
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
         }
 
 

@@ -30,8 +30,8 @@ namespace g3
     /// </summary>
     public partial class DMeshAABBTree3 : ISpatial
     {
-        DMesh3 mesh;
-        int mesh_timestamp;
+        protected DMesh3 mesh;
+        protected int mesh_timestamp;
 
         public DMeshAABBTree3(DMesh3 m, bool autoBuild = false)
         {
@@ -102,6 +102,8 @@ namespace g3
             mesh_timestamp = mesh.ShapeTimestamp;
         }
 
+
+        public bool IsValid { get { return mesh_timestamp == mesh.ShapeTimestamp; } }
 
 
         /// <summary>
@@ -175,6 +177,74 @@ namespace g3
 
 
         /// <summary>
+        /// Find the vertex closest to p, within distance fMaxDist, or return InvalidID
+        /// </summary>
+        public virtual int FindNearestVertex(Vector3d p, double fMaxDist = double.MaxValue)
+        {
+            if (mesh_timestamp != mesh.ShapeTimestamp)
+                throw new Exception("DMeshAABBTree3.FindNearestVertex: mesh has been modified since tree construction");
+
+            double fNearestSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
+            int vNearID = DMesh3.InvalidID;
+            find_nearest_vtx(root_index, p, ref fNearestSqr, ref vNearID);
+            return vNearID;
+        }
+        protected void find_nearest_vtx(int iBox, Vector3d p, ref double fNearestSqr, ref int vid)
+        {
+            int idx = box_to_index[iBox];
+            if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i) {
+                    int ti = index_list[idx + i];
+                    if (TriangleFilterF != null && TriangleFilterF(ti) == false)
+                        continue;
+                    Vector3i tv = mesh.GetTriangle(ti);
+                    for ( int j = 0; j < 3; ++j ) {
+                        double dsqr = mesh.GetVertex(tv[j]).DistanceSquared(ref p);
+                        if (  dsqr < fNearestSqr ) {
+                            fNearestSqr = dsqr;
+                            vid = tv[j];
+                        }
+                    }
+                }
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    double fChild1DistSqr = box_distance_sqr(iChild1, p);
+                    if (fChild1DistSqr <= fNearestSqr)
+                        find_nearest_vtx(iChild1, p, ref fNearestSqr, ref vid);
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    double fChild1DistSqr = box_distance_sqr(iChild1, p);
+                    double fChild2DistSqr = box_distance_sqr(iChild2, p);
+                    if (fChild1DistSqr < fChild2DistSqr) {
+                        if (fChild1DistSqr < fNearestSqr) {
+                            find_nearest_vtx(iChild1, p, ref fNearestSqr, ref vid);
+                            if (fChild2DistSqr < fNearestSqr)
+                                find_nearest_vtx(iChild2, p, ref fNearestSqr, ref vid);
+                        }
+                    } else {
+                        if (fChild2DistSqr < fNearestSqr) {
+                            find_nearest_vtx(iChild2, p, ref fNearestSqr, ref vid);
+                            if (fChild1DistSqr < fNearestSqr)
+                                find_nearest_vtx(iChild1, p, ref fNearestSqr, ref vid);
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+
+
+        /// <summary>
         /// Does this ISpatial implementation support ray-triangle intersection? (yes)
         /// </summary>
         public bool SupportsTriangleRayIntersection { get { return true; } }
@@ -210,15 +280,21 @@ namespace g3
                     if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                         continue;
 
-                    // [TODO] optimize this
                     mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
-                    IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
-                    if ( ray_tri_hit.Find() ) {
-                        if ( ray_tri_hit.RayParameter < fNearestT ) {
-                            fNearestT = ray_tri_hit.RayParameter;
+                    double rayt;
+                    if (IntrRay3Triangle3.Intersects(ref ray, ref tri.V0, ref tri.V1, ref tri.V2, out rayt)) {
+                        if (rayt < fNearestT) {
+                            fNearestT = rayt;
                             tID = ti;
                         }
                     }
+                    //IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
+                    //if ( ray_tri_hit.Find() ) {
+                    //    if ( ray_tri_hit.RayParameter < fNearestT ) {
+                    //        fNearestT = ray_tri_hit.RayParameter;
+                    //        tID = ti;
+                    //    }
+                    //}
                 }
 
             } else {                                // internal node, either 1 or 2 child boxes
@@ -297,16 +373,23 @@ namespace g3
                     if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                         continue;
 
-                    // [TODO] optimize this
                     mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
-                    IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
-                    if (ray_tri_hit.Find()) {
-                        if (ray_tri_hit.RayParameter < fMaxDist) {
+                    double rayt;
+                    if (IntrRay3Triangle3.Intersects(ref ray, ref tri.V0, ref tri.V1, ref tri.V2, out rayt)) {
+                        if (rayt < fMaxDist) {
                             if (hitTriangles != null)
                                 hitTriangles.Add(ti);
                             hit_count++;
                         }
                     }
+                    //IntrRay3Triangle3 ray_tri_hit = new IntrRay3Triangle3(ray, tri);
+                    //if (ray_tri_hit.Find()) {
+                    //    if (ray_tri_hit.RayParameter < fMaxDist) {
+                    //        if (hitTriangles != null)
+                    //            hitTriangles.Add(ti);
+                    //        hit_count++;
+                    //    }
+                    //}
                 }
 
             } else {                                // internal node, either 1 or 2 child boxes
@@ -395,9 +478,7 @@ namespace g3
                     if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                         continue;
                     mesh.GetTriVertices(ti, ref box_tri.V0, ref box_tri.V1, ref box_tri.V2);
-
-                    IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(triangle, box_tri);
-                    if (intr.Test())
+                    if ( IntrTriangle3Triangle3.Intersects(ref triangle, ref box_tri))
                         return ti;
                 }
             } else {                                // internal node, either 1 or 2 child boxes
@@ -454,7 +535,7 @@ namespace g3
                 int num_tris = index_list[idx], onum_tris = otherTree.index_list[odx];
 
                 // can re-use because Test() doesn't cache anything
-                IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
+                //IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
 
                 // outer iteration is "other" tris that need to be transformed (more expensive)
                 for (int j = 1; j <= onum_tris; ++j) {
@@ -467,7 +548,6 @@ namespace g3
                         otri.V1 = TransformF(otri.V1);
                         otri.V2 = TransformF(otri.V2);
                     }
-                    intr.Triangle0 = otri;
 
                     // inner iteration over "our" triangles
                     for (int i = 1; i <= num_tris; ++i) {
@@ -475,8 +555,7 @@ namespace g3
                         if (TriangleFilterF != null && TriangleFilterF(ti) == false)
                             continue;
                         mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
-                        intr.Triangle1 = tri;
-                        if (intr.Test())
+                        if (IntrTriangle3Triangle3.Intersects(ref otri, ref tri))
                             return true;
                     }
                 }
@@ -587,13 +666,15 @@ namespace g3
             result.Points = new List<PointIntersection>();
             result.Segments = new List<SegmentIntersection>();
 
-            find_intersections(root_index, otherTree, TransformF, otherTree.root_index, 0, result);
+            IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
+            find_intersections(root_index, otherTree, TransformF, otherTree.root_index, 0, intr, result);
 
             return result;
         }
 
         protected void find_intersections(int iBox, DMeshAABBTree3 otherTree, Func<Vector3d, Vector3d> TransformF, 
-                                int oBox, int depth, IntersectionsQueryResult result)
+                                          int oBox, int depth,
+                                          IntrTriangle3Triangle3 intr, IntersectionsQueryResult result)
         {
             int idx = box_to_index[iBox];
             int odx = otherTree.box_to_index[oBox];
@@ -602,9 +683,6 @@ namespace g3
                 // ok we are at triangles for both trees, do triangle-level testing
                 Triangle3d tri = new Triangle3d(), otri = new Triangle3d();
                 int num_tris = index_list[idx], onum_tris = otherTree.index_list[odx];
-
-                // can re-use
-                IntrTriangle3Triangle3 intr = new IntrTriangle3Triangle3(new Triangle3d(), new Triangle3d());
 
                 // outer iteration is "other" tris that need to be transformed (more expensive)
                 for (int j = 1; j <= onum_tris; ++j) {
@@ -627,16 +705,20 @@ namespace g3
                         mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
                         intr.Triangle1 = tri;
 
-                        if (intr.Find()) {
-                            if (intr.Quantity == 1) {
-                                result.Points.Add(new PointIntersection() 
-                                        { t0 = ti, t1 = tj, point = intr.Points[0] });
-                            } else if (intr.Quantity == 2) {
-                                result.Segments.Add( new SegmentIntersection() 
-                                        { t0 = ti, t1 = tj, point0 = intr.Points[0], point1 = intr.Points[1] });
-                            } else {
-                                throw new Exception("DMeshAABBTree.find_intersections: found quantity " + intr.Quantity );
-                            }
+                        // [RMS] Test() is much faster than Find() so it makes sense to call it first, as most
+                        // triangles will not intersect (right?)
+                        if (intr.Test()) {
+                            if ( intr.Find() ) { 
+                                if (intr.Quantity == 1) {
+                                    result.Points.Add(new PointIntersection() 
+                                            { t0 = ti, t1 = tj, point = intr.Points[0] });
+                                } else if (intr.Quantity == 2) {
+                                    result.Segments.Add( new SegmentIntersection() 
+                                            { t0 = ti, t1 = tj, point0 = intr.Points[0], point1 = intr.Points[1] });
+                                } else {
+                                    throw new Exception("DMeshAABBTree.find_intersections: found quantity " + intr.Quantity );
+                                }
+                                }
                         }
                     }
                 }
@@ -667,19 +749,19 @@ namespace g3
                     oChild1 = (-oChild1) - 1;
                     AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1, TransformF);
                     if (oChild1Box.Intersects(bounds) )
-                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, result);
+                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, intr, result);
 
                 } else {                            // 2 children
                     oChild1 = oChild1 - 1;
 
                     AxisAlignedBox3d oChild1Box = otherTree.get_boxd(oChild1, TransformF);
                     if ( oChild1Box.Intersects(bounds) ) 
-                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, result);
+                        find_intersections(iBox, otherTree, TransformF, oChild1, depth + 1, intr, result);
 
                     int oChild2 = otherTree.index_list[odx + 1] - 1;
                     AxisAlignedBox3d oChild2Box = otherTree.get_boxd(oChild2, TransformF);
                     if ( oChild2Box.Intersects(bounds) )
-                        find_intersections(iBox, otherTree, TransformF, oChild2, depth + 1, result);
+                        find_intersections(iBox, otherTree, TransformF, oChild2, depth + 1, intr, result);
                 }
 
             } else {
@@ -690,16 +772,16 @@ namespace g3
                 if ( iChild1 < 0 ) {                 // 1 child, descend if nearer than cur min-dist
                     iChild1 = (-iChild1) - 1;
                     if ( box_box_intersect(iChild1, ref oBounds) )
-                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, result);
+                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, intr, result);
 
                 } else {                            // 2 children
                     iChild1 = iChild1 - 1;          
                     if ( box_box_intersect(iChild1, ref oBounds) ) 
-                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, result);
+                        find_intersections(iChild1, otherTree, TransformF, oBox, depth + 1, intr, result);
 
                     int iChild2 = index_list[idx + 1] - 1;
                     if ( box_box_intersect(iChild2, ref oBounds) )
-                        find_intersections(iChild2, otherTree, TransformF, oBox, depth + 1, result);
+                        find_intersections(iChild2, otherTree, TransformF, oBox, depth + 1, intr, result);
                 }
 
             }
@@ -1231,9 +1313,9 @@ namespace g3
         // storage for box nodes. 
         //   - box_to_index is a pointer into index_list
         //   - box_centers and box_extents are the centers/extents of the bounding boxes
-        DVector<int> box_to_index;
-        DVector<Vector3f> box_centers;
-        DVector<Vector3f> box_extents;
+        protected DVector<int> box_to_index;
+        protected DVector<Vector3f> box_centers;
+        protected DVector<Vector3f> box_extents;
 
         // list of indices for a given box. There is *no* marker/sentinel between
         // boxes, you have to get the starting index from box_to_index[]
@@ -1245,13 +1327,13 @@ namespace g3
         //       internal box, with index (-index_list[i])-1     (shift-by-one in case actual value is 0!)
         //   - if i > triangles_end and index_list[i] > 0, this is a two-child
         //       internal box, with indices index_list[i]-1 and index_list[i+1]-1
-        DVector<int> index_list;
+        protected DVector<int> index_list;
 
         // index_list[i] for i < triangles_end is a triangle-index list, otherwise box-index pair/single
-        int triangles_end = -1;
+        protected int triangles_end = -1;
 
         // box_to_index[root_index] is the root node of the tree
-        int root_index = -1;
+        protected int root_index = -1;
 
 
 
@@ -1960,7 +2042,7 @@ namespace g3
         }
 
 
-        bool box_contains(int iBox, Vector3d p)
+        protected bool box_contains(int iBox, Vector3d p)
         {
             // [TODO] this could be way faster...
             Vector3d c = (Vector3d)box_centers[iBox];

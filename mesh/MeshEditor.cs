@@ -24,6 +24,42 @@ namespace g3
 
 
 
+        public virtual int[] AddTriangleStrip(IList<Frame3f> frames, IList<Interval1d> spans, int group_id = -1)
+        {
+            int N = frames.Count;
+            if (N != spans.Count)
+                throw new Exception("MeshEditor.AddTriangleStrip: spans list is not the same size!");
+            int[] new_tris = new int[2*(N-1)];
+
+            int prev_a = -1, prev_b = -1;
+            int i = 0, ti = 0;
+            for (i = 0; i < N; ++i) {
+                Frame3f f = frames[i];
+                Interval1d span = spans[i];
+
+                Vector3d va = f.Origin + (float)span.a * f.Y;
+                Vector3d vb = f.Origin + (float)span.b * f.Y;
+
+                // [TODO] could compute normals here...
+
+                int a = Mesh.AppendVertex(va);
+                int b = Mesh.AppendVertex(vb);
+
+                if ( prev_a != -1 ) {
+                    new_tris[ti++] = Mesh.AppendTriangle(prev_a, b, prev_b);
+                    new_tris[ti++] = Mesh.AppendTriangle(prev_a, a, b);
+
+                }
+                prev_a = a; prev_b = b;
+            }
+
+            return new_tris;
+        }
+
+
+
+
+
         public virtual int[] AddTriangleFan_OrderedVertexLoop(int center, int[] vertex_loop, int group_id = -1)
         {
             int N = vertex_loop.Length;
@@ -36,7 +72,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -49,7 +85,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, i) == false)
-                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedVertexLoop: failed to add fan, and also falied to back out changes.");
+                        throw new Exception("MeshEditor.AddTriangleFan_OrderedVertexLoop: failed to add fan, and also falied to back out changes.");
                 }
                 return null;
         }
@@ -73,7 +109,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -86,7 +122,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, i-1) == false)
-                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -120,7 +156,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -134,7 +170,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, 2*(i-1)) == false)
-                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -182,7 +218,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -195,7 +231,7 @@ namespace g3
             // remove what we added so far
             if (i > 0) {
                 if (remove_triangles(new_tris, 2 * (i - 1)) == false)
-                    throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                    throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
             }
             return null;
         }
@@ -210,10 +246,10 @@ namespace g3
         /// vertex ordering must reslut in appropriate orientation (which is...??)
         /// [TODO] check and fail on bad orientation
         /// </summary>
-        public virtual int[] StitchSpan(int[] vspan1, int[] vspan2, int group_id = -1)
+        public virtual int[] StitchSpan(IList<int> vspan1, IList<int> vspan2, int group_id = -1)
         {
-            int N = vspan1.Length;
-            if (N != vspan2.Length)
+            int N = vspan1.Count;
+            if (N != vspan2.Count)
                 throw new Exception("MeshEditor.StitchSpan: spans are not the same length!!");
             N--;
 
@@ -232,7 +268,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -246,7 +282,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, 2*(i-1)) == false)
-                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -457,6 +493,68 @@ namespace g3
 
 
 
+        /// <summary>
+        /// separate triangle one-ring at vertex into connected components, and
+        /// then duplicate vertex once for each component
+        /// </summary>
+        public void DisconnectBowtie(int vid)
+        {
+            List<List<int>> sets = new List<List<int>>();
+            foreach ( int tid in Mesh.VtxTrianglesItr(vid)) {
+                Index3i nbrs = Mesh.GetTriNeighbourTris(tid);
+                bool found = false;
+                foreach ( List<int> set in sets ) {
+                    if ( set.Contains(nbrs.a) || set.Contains(nbrs.b) || set.Contains(nbrs.c) ) {
+                        set.Add(tid);
+                        found = true;
+                        break;
+                    }
+                }
+                if ( found == false ) {
+                    List<int> set = new List<int>() { tid };
+                    sets.Add(set);
+                }
+            }
+            if (sets.Count == 1)
+                return;  // not a bowtie!
+            sets.Sort(bowtie_sorter);
+            for ( int k = 1; k < sets.Count; ++k ) {
+                int copy_vid = Mesh.AppendVertex(Mesh, vid);
+                List<int> tris = sets[k];
+                foreach ( int tid in tris ) {
+                    Index3i t = Mesh.GetTriangle(tid);
+                    if (t.a == vid) t.a = copy_vid;
+                    else if (t.b == vid) t.b = copy_vid;
+                    else t.c = copy_vid;
+                    Mesh.SetTriangle(tid, t, false);
+                }
+            }
+        }
+        static int bowtie_sorter(List<int> l1, List<int> l2) {
+            if (l1.Count == l2.Count) return 0;
+            return (l1.Count > l2.Count) ? -1 : 1;
+        }
+
+
+
+        /// <summary>
+        /// Disconnect all bowtie vertices in mesh. Iterates because sometimes
+		/// disconnecting a bowtie creates new bowties (how??).
+		/// Returns number of remaining bowties after iterations.
+        /// </summary>
+        public int DisconnectAllBowties(int nMaxIters = 10)
+        {
+            List<int> bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
+            int iter = 0;
+            while (bowties.Count > 0 && iter++ < nMaxIters) {
+                foreach (int vid in bowties) 
+                    DisconnectBowtie(vid);
+                bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
+            }
+			return bowties.Count;
+        }
+
+
 
 
         // in ReinsertSubmesh, a problem can arise where the mesh we are inserting has duplicate triangles of
@@ -661,6 +759,29 @@ namespace g3
             DMesh3 mesh = new DMesh3();
             boxgen.MakeMesh(mesh);
             AppendMesh(mesh, Mesh.AllocateTriangleGroup());
+        }
+        public void AppendLine(Segment3d seg, float size)
+        {
+            Frame3f f = new Frame3f(seg.Center);
+            f.AlignAxis(2, (Vector3f)seg.Direction);
+            AppendBox(f, new Vector3f(size, size, seg.Extent));
+        }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos), size);
+        }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos, normal), size);
+        }
+        public static void AppendLine(DMesh3 mesh, Segment3d seg, float size)
+        {
+            Frame3f f = new Frame3f(seg.Center);
+            f.AlignAxis(2, (Vector3f)seg.Direction);
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(f, new Vector3f(size, size, seg.Extent));
         }
 
 

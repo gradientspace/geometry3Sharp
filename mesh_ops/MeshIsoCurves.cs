@@ -146,7 +146,7 @@ namespace g3
                         int e0 = add_or_append_vertex(Mesh.GetVertex(triVerts[z0]));
                         int e1 = add_or_append_vertex(Mesh.GetVertex(triVerts[z1]));
                         int graph_eid = Graph.AppendEdge(e0, e1, (int)TriangleCase.OnEdge);
-                        if (WantGraphEdgeInfo)
+						if (graph_eid >= 0 && WantGraphEdgeInfo)
                             add_on_edge(graph_eid, tid, triEdges[z0], new Index2i(e0, e1));
 
                     } else {
@@ -163,9 +163,11 @@ namespace g3
                         int cross_vid = add_or_append_vertex(cross);
                         add_edge_pos(triVerts[i], triVerts[j], cross);
 
-                        int graph_eid = Graph.AppendEdge(vert_vid, cross_vid, (int)TriangleCase.EdgeVertex);
-                        if (WantGraphEdgeInfo)
-                            add_edge_vert(graph_eid, tid, triEdges[(z0+1)%3], triVerts[z0], new Index2i(vert_vid, cross_vid));
+                        if (vert_vid != cross_vid) {
+                            int graph_eid = Graph.AppendEdge(vert_vid, cross_vid, (int)TriangleCase.EdgeVertex);
+                            if (graph_eid >= 0 && WantGraphEdgeInfo)
+                                add_edge_vert(graph_eid, tid, triEdges[(z0 + 1) % 3], triVerts[z0], new Index2i(vert_vid, cross_vid));
+                        } // else degenerate edge
                     }
 
                 } else {
@@ -206,7 +208,7 @@ namespace g3
                     if (ev0 != ev1) {
                         Util.gDevAssert(ev0 != int.MinValue && ev1 != int.MinValue);
                         int graph_eid = Graph.AppendEdge(ev0, ev1, (int)TriangleCase.EdgeEdge);
-                        if (WantGraphEdgeInfo)
+						if (graph_eid >= 0 && WantGraphEdgeInfo)
                             add_edge_edge(graph_eid, tid, new Index2i(triEdges[e0], triEdges[e1]), new Index2i(ev0,ev1));
                     }
                 }

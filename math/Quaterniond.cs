@@ -74,7 +74,9 @@ namespace g3
         }
 
 
-
+        public static Quaterniond operator -(Quaterniond q2) {
+            return new Quaterniond(-q2.x, -q2.y, -q2.z, -q2.w);
+        }
 
         public static Quaterniond operator*(Quaterniond a, Quaterniond b) {
             double w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
@@ -83,11 +85,18 @@ namespace g3
             double z = a.w * b.z + a.z * b.w + a.x * b.y - a.y * b.x;
             return new Quaterniond(x, y, z, w);
         }
-
-
+        public static Quaterniond operator *(Quaterniond q1, double d) {
+            return new Quaterniond(d * q1.x, d * q1.y, d * q1.z, d * q1.w);
+        }
+        public static Quaterniond operator *(double d, Quaterniond q1) {
+            return new Quaterniond(d * q1.x, d * q1.y, d * q1.z, d * q1.w);
+        }
 
         public static Quaterniond operator -(Quaterniond q1, Quaterniond q2) {
             return new Quaterniond(q1.x - q2.x, q1.y - q2.y, q1.z - q2.z, q1.w - q2.w);
+        }
+        public static Quaterniond operator +(Quaterniond q1, Quaterniond q2) {
+            return new Quaterniond(q1.x + q2.x, q1.y + q2.y, q1.z + q2.z, q1.w + q2.w);
         }
 
         public static Vector3d operator *(Quaterniond q, Vector3d v) {
@@ -256,8 +265,10 @@ namespace g3
         }
 
 
-
-        public void SetFromRotationMatrix(Matrix3d rot)
+        public void SetFromRotationMatrix(Matrix3d rot) {
+            SetFromRotationMatrix(ref rot);
+        }
+        public void SetFromRotationMatrix(ref Matrix3d rot)
         {
             // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
             // article "Quaternion Calculus and Fast Animation".
@@ -309,6 +320,15 @@ namespace g3
                    Math.Abs(y - q2.y) <= epsilon &&
                    Math.Abs(z - q2.z) <= epsilon &&
                    Math.Abs(w - q2.w) <= epsilon;
+        }
+
+
+        // [TODO] should we be normalizing in these casts??
+        public static implicit operator Quaterniond(Quaternionf q) {
+            return new Quaterniond(q.x, q.y, q.z, q.w);
+        }
+        public static explicit operator Quaternionf(Quaterniond q) {
+            return new Quaternionf((float)q.x, (float)q.y, (float)q.z, (float)q.w);
         }
 
 

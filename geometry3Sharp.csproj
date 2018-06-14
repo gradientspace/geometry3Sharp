@@ -53,6 +53,7 @@
     <Compile Include="color\ColorMixer.cs" />
     <Compile Include="comp_geom\GraphCells2d.cs" />
     <Compile Include="comp_geom\GraphSplitter2d.cs" />
+    <Compile Include="comp_geom\SphericalFibonacciPointSet.cs" />
     <Compile Include="containment\ContMinBox2.cs" />
     <Compile Include="containment\ContMinCircle2.cs" />
     <Compile Include="comp_geom\ConvexHull2.cs" />
@@ -77,6 +78,7 @@
     <Compile Include="core\Units.cs" />
     <Compile Include="core\DVectorArray.cs" />
     <Compile Include="core\VectorArray.cs" />
+    <Compile Include="core\ProgressCancel.cs" />
     <Compile Include="curve\BaseCurve2.cs" />
     <Compile Include="curve\BSplineBasis.cs" />
     <Compile Include="curve\Circle2.cs" />
@@ -103,6 +105,7 @@
     <Compile Include="implicit\GridImplicits3d.cs" />
     <Compile Include="implicit\Implicit2d.cs" />
     <Compile Include="implicit\Implicit3d.cs" />
+    <Compile Include="implicit\ImplicitFieldSampler3d.cs" />
     <Compile Include="implicit\ImplicitOperators.cs" />
     <Compile Include="implicit\MarchingQuads.cs" />
     <Compile Include="intersection\IntrLine3AxisAlignedBox3.cs" />
@@ -144,7 +147,9 @@
     <Compile Include="math\Vector2f.cs" />
     <Compile Include="math\Vector2i.cs" />
     <Compile Include="math\Vector4d.cs" />
+    <Compile Include="math\Vector4f.cs" />
     <Compile Include="math\VectorTuple.cs" />
+    <Compile Include="mesh\DMesh3Changes.cs" />
     <Compile Include="mesh\DSubmesh3Set.cs" />
     <Compile Include="mesh\MeshPointSets.cs" />
     <Compile Include="mesh\MeshRefinerBase.cs" />
@@ -180,9 +185,11 @@
     <Compile Include="io\StandardMeshReader.cs" />
     <Compile Include="io\StandardMeshWriter.cs" />
     <Compile Include="mesh_generators\MarchingCubes.cs" />
+    <Compile Include="mesh_generators\TriangulatedPolygonGenerator.cs" />
     <Compile Include="mesh_generators\VoxelSurfaceGenerator.cs" />
     <Compile Include="mesh_ops\MeshExtrudeMesh.cs" />
     <Compile Include="mesh_ops\MeshExtrudeFaces.cs" />
+    <Compile Include="mesh_ops\MeshInsertPolygon.cs" />
     <Compile Include="mesh_ops\MeshInsertUVPolyCurve.cs" />
     <Compile Include="mesh_ops\MeshIsoCurves.cs" />
     <Compile Include="mesh_ops\MeshLocalParam.cs" />
@@ -287,7 +294,9 @@
     <Compile Include="shapes3\Circle3.cs" />
     <Compile Include="spatial\BiGrid3.cs" />
     <Compile Include="spatial\Bitmap3.cs" />
+    <Compile Include="spatial\DCurveBoxTree.cs" />
     <Compile Include="spatial\DCurveProjection.cs" />
+    <Compile Include="spatial\DenseGrid2.cs" />
     <Compile Include="spatial\DenseGrid3.cs" />
     <Compile Include="spatial\PointAABBTree3.cs" />
     <Compile Include="spatial\DMeshAABBTree.cs" />
@@ -296,6 +305,7 @@
     <Compile Include="spatial\GridIndexing.cs" />
     <Compile Include="spatial\MeshSignedDistanceGrid.cs" />
     <Compile Include="spatial\NormalHistogram.cs" />
+    <Compile Include="spatial\TriangleBinsGrid2d.cs" />
     <Compile Include="spatial\PointHashGrid2d.cs" />
     <Compile Include="spatial\PointHashGrid3d.cs" />
     <Compile Include="spatial\Polygon2dBoxTree.cs" />

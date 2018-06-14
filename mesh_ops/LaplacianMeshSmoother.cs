@@ -350,28 +350,52 @@ namespace g3
         /// Apply LaplacianMeshSmoother to subset of mesh triangles. 
         /// border of subset always has soft constraint with borderWeight, 
         /// but is then snapped back to original vtx pos after solve.
-        /// nConstrainLoops inner loops are also soft-constrained, with weight falloff via square roots.
+        /// nConstrainLoops inner loops are also soft-constrained, with weight falloff via square roots (defines continuity)
         /// interiorWeight is soft constraint added to all vertices
         /// </summary>
-        public static void RegionSmooth(DMesh3 mesh, IEnumerable<int> triangles, int nConstrainLoops, 
+        public static void RegionSmooth(DMesh3 mesh, IEnumerable<int> triangles, 
+            int nConstrainLoops, 
+            int nIncludeExteriorRings,
+            bool bPreserveExteriorRings,
             double borderWeight = 10.0, double interiorWeight = 0.0)
         {
+            HashSet<int> fixedVerts = new HashSet<int>();
+            if ( nIncludeExteriorRings > 0 ) {
+                MeshFaceSelection expandTris = new MeshFaceSelection(mesh);
+                expandTris.Select(triangles);
+                if (bPreserveExteriorRings) {
+                    MeshEdgeSelection bdryEdges = new MeshEdgeSelection(mesh);
+                    bdryEdges.SelectBoundaryTriEdges(expandTris);
+                    expandTris.ExpandToOneRingNeighbours(nIncludeExteriorRings);
+                    MeshVertexSelection startVerts = new MeshVertexSelection(mesh);
+                    startVerts.SelectTriangleVertices(triangles);
+                    startVerts.DeselectEdges(bdryEdges);
+                    MeshVertexSelection expandVerts = new MeshVertexSelection(mesh, expandTris);
+                    foreach (int vid in expandVerts) {
+                        if (startVerts.IsSelected(vid) == false)
+                            fixedVerts.Add(vid);
+                    }
+                } else {
+                    expandTris.ExpandToOneRingNeighbours(nIncludeExteriorRings);
+                }
+                triangles = expandTris;
+            }
+
             RegionOperator region = new RegionOperator(mesh, triangles);
             DSubmesh3 submesh = region.Region;
             DMesh3 smoothMesh = submesh.SubMesh;
             LaplacianMeshSmoother smoother = new LaplacianMeshSmoother(smoothMesh);
 
-            // soft constraint on all interior vertices, if requested
-            if (interiorWeight > 0) {
-                foreach (int vid in smoothMesh.VertexIndices())
-                    smoother.SetConstraint(vid, smoothMesh.GetVertex(vid), interiorWeight, false);
-            }
+            // map fixed verts to submesh
+            HashSet<int> subFixedVerts = new HashSet<int>();
+            foreach (int base_vid in fixedVerts)
+                subFixedVerts.Add(submesh.MapVertexToSubmesh(base_vid));
 
-            // now constrain borders
+            // constrain borders
             double w = borderWeight;
 
-            HashSet<int> constrained = (region.Region.BaseBorderV.Count > 0) ? new HashSet<int>() : null;
-            foreach (int base_vid in region.Region.BaseBorderV) {
+            HashSet<int> constrained = (submesh.BaseBorderV.Count > 0) ? new HashSet<int>() : null;
+            foreach (int base_vid in submesh.BaseBorderV) {
                 int sub_vid = submesh.BaseToSubV[base_vid];
                 smoother.SetConstraint(sub_vid, smoothMesh.GetVertex(sub_vid), w, true);
                 if (constrained != null)
@@ -386,7 +410,8 @@ namespace g3
                     foreach (int sub_vid in constrained) {
                         foreach (int nbr_vid in smoothMesh.VtxVerticesItr(sub_vid)) {
                             if (constrained.Contains(nbr_vid) == false) {
-                                smoother.SetConstraint(nbr_vid, smoothMesh.GetVertex(nbr_vid), w, false);
+                                if ( smoother.IsConstrained(nbr_vid) == false )
+                                    smoother.SetConstraint(nbr_vid, smoothMesh.GetVertex(nbr_vid), w, subFixedVerts.Contains(nbr_vid));
                                 next_layer.Add(nbr_vid);
                             }
                         }
@@ -397,6 +422,18 @@ namespace g3
                 }
             }
 
+            // soft constraint on all interior vertices, if requested
+            if (interiorWeight > 0) {
+                foreach (int vid in smoothMesh.VertexIndices()) {
+                    if ( smoother.IsConstrained(vid) == false )
+                        smoother.SetConstraint(vid, smoothMesh.GetVertex(vid), interiorWeight, subFixedVerts.Contains(vid));
+                }
+            } else if ( subFixedVerts.Count > 0 ) { 
+                foreach (int vid in subFixedVerts) {
+                    if (smoother.IsConstrained(vid) == false)
+                        smoother.SetConstraint(vid, smoothMesh.GetVertex(vid), 0, true);
+                }
+            }
 
             smoother.SolveAndUpdateMesh();
             region.BackPropropagateVertices(true);

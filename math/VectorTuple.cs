@@ -6,6 +6,22 @@ namespace g3
     // (which C# does not support, but is common in C++ code)
 
 
+    public struct Vector3dTuple2
+    {
+        public Vector3d V0, V1;
+
+        public Vector3dTuple2(Vector3d v0, Vector3d v1)
+        {
+            V0 = v0; V1 = v1;
+        }
+
+        public Vector3d this[int key] {
+            get { return (key == 0) ? V0 : V1; }
+            set { if (key == 0) V0 = value; else V1 = value; }
+        }
+    }
+
+
     public struct Vector3dTuple3
     {
         public Vector3d V0, V1, V2;

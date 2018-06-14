@@ -18,7 +18,7 @@ namespace g3
     public abstract class DGraph
     {
         public const int InvalidID = -1;
-        public const int DuplicateEdgeID = -1;
+        public const int DuplicateEdgeID = -2;
 
         public static readonly Index2i InvalidEdgeV = new Index2i(InvalidID, InvalidID);
         public static readonly Index3i InvalidEdge3 = new Index3i(InvalidID, InvalidID, InvalidID);

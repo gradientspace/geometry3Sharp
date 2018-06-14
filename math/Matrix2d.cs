@@ -112,6 +112,14 @@ namespace g3
         }
 
 
+        public Vector2d Row(int i) {
+            return (i == 0) ? new Vector2d(m00, m01) : new Vector2d(m10, m11);
+        }
+        public Vector2d Column(int i) {
+            return (i == 0) ? new Vector2d(m00, m10) : new Vector2d(m01, m11);
+        }
+
+
         public void Orthonormalize ()
         {
             // Algorithm uses Gram-Schmidt orthogonalization.  If 'this' matrix is

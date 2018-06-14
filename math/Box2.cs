@@ -197,7 +197,7 @@ namespace g3 {
                 }
             }
 
-            return closest.x * AxisX + closest.y * AxisY;
+            return Center + closest.x*AxisX + closest.y*AxisY;
         }
 
 

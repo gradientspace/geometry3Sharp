@@ -53,6 +53,13 @@ namespace g3 {
             AxisZ = frame.Z;
             Extent = extent;
         }
+        public Box3d(Segment3d seg)
+        {
+            Center = seg.Center;
+            AxisZ = seg.Direction;
+            Vector3d.MakePerpVectors(ref AxisZ, out AxisX, out AxisY);
+            Extent = new Vector3d(0, 0, seg.Extent);
+        }
 
         public static readonly Box3d Empty = new Box3d(Vector3d.Zero);
         public static readonly Box3d UnitZeroCentered = new Box3d(Vector3d.Zero, 0.5 * Vector3d.One);
@@ -251,6 +258,168 @@ namespace g3 {
         {
             Extent *= s;
         }
+
+
+
+
+        /// <summary>
+        /// Returns distance to box, or 0 if point is inside box.
+        /// Ported from WildMagic5 Wm5DistPoint3Box3.cpp
+        /// </summary>
+        public double DistanceSquared(Vector3d v)
+        {
+            // Work in the box's coordinate system.
+            v -= this.Center;
+
+            // Compute squared distance and closest point on box.
+            double sqrDistance = 0;
+            double delta;
+            Vector3d closest = new Vector3d();
+            int i;
+            for (i = 0; i < 3; ++i) {
+                closest[i] = Axis(i).Dot(ref v);
+                if (closest[i] < -Extent[i]) {
+                    delta = closest[i] + Extent[i];
+                    sqrDistance += delta * delta;
+                    closest[i] = -Extent[i];
+                } else if (closest[i] > Extent[i]) {
+                    delta = closest[i] - Extent[i];
+                    sqrDistance += delta * delta;
+                    closest[i] = Extent[i];
+                }
+            }
+
+            return sqrDistance;
+        }
+
+
+
+        /// <summary>
+        /// Returns distance to box, or 0 if point is inside box.
+        /// Ported from WildMagic5 Wm5DistPoint3Box3.cpp
+        /// </summary>
+        public Vector3d ClosestPoint(Vector3d v)
+        {
+            // Work in the box's coordinate system.
+            v -= this.Center;
+
+            // Compute squared distance and closest point on box.
+            double sqrDistance = 0;
+            double delta;
+            Vector3d closest = new Vector3d();
+            for (int i = 0; i < 3; ++i) {
+                closest[i] = Axis(i).Dot(ref v);
+                double extent = Extent[i];
+                if (closest[i] < -extent) {
+                    delta = closest[i] + extent;
+                    sqrDistance += delta * delta;
+                    closest[i] = -extent;
+                } else if (closest[i] > extent) {
+                    delta = closest[i] - extent;
+                    sqrDistance += delta * delta;
+                    closest[i] = extent;
+                }
+            }
+
+            return Center + closest.x*AxisX + closest.y*AxisY + closest.z*AxisZ;
+        }
+
+
+
+
+
+        // ported from WildMagic5 Wm5ContBox3.cpp::MergeBoxes
+        public static Box3d Merge(ref Box3d box0, ref Box3d box1)
+        {
+            // Construct a box that contains the input boxes.
+            Box3d box = new Box3d();
+
+            // The first guess at the box center.  This value will be updated later
+            // after the input box vertices are projected onto axes determined by an
+            // average of box axes.
+            box.Center = 0.5 * (box0.Center + box1.Center);
+
+            // A box's axes, when viewed as the columns of a matrix, form a rotation
+            // matrix.  The input box axes are converted to quaternions.  The average
+            // quaternion is computed, then normalized to unit length.  The result is
+            // the slerp of the two input quaternions with t-value of 1/2.  The result
+            // is converted back to a rotation matrix and its columns are selected as
+            // the merged box axes.
+            Quaterniond q0 = new Quaterniond(), q1 = new Quaterniond();
+            Matrix3d rot0 = new Matrix3d(ref box0.AxisX, ref box0.AxisY, ref box0.AxisZ, false);
+            q0.SetFromRotationMatrix(ref rot0);
+            Matrix3d rot1 = new Matrix3d(ref box1.AxisX, ref box1.AxisY, ref box1.AxisZ, false);
+            q1.SetFromRotationMatrix(ref rot1);
+            if (q0.Dot(q1) < 0) {
+                q1 = -q1;
+            }
+
+            Quaterniond q = q0 + q1;
+            double invLength = 1.0 / Math.Sqrt(q.Dot(q));
+            q = q * invLength;
+            Matrix3d q_mat = q.ToRotationMatrix();
+            box.AxisX = q_mat.Column(0); box.AxisY = q_mat.Column(1); box.AxisZ = q_mat.Column(2);  //q.ToRotationMatrix(box.Axis); 
+
+            // Project the input box vertices onto the merged-box axes.  Each axis
+            // D[i] containing the current center C has a minimum projected value
+            // min[i] and a maximum projected value max[i].  The corresponding end
+            // points on the axes are C+min[i]*D[i] and C+max[i]*D[i].  The point C
+            // is not necessarily the midpoint for any of the intervals.  The actual
+            // box center will be adjusted from C to a point C' that is the midpoint
+            // of each interval,
+            //   C' = C + sum_{i=0}^2 0.5*(min[i]+max[i])*D[i]
+            // The box extents are
+            //   e[i] = 0.5*(max[i]-min[i])
+
+            int i, j;
+            double dot;
+            Vector3d[] vertex = new Vector3d[8];
+            Vector3d pmin = Vector3d.Zero;
+            Vector3d pmax = Vector3d.Zero;
+
+            box0.ComputeVertices(vertex);
+            for (i = 0; i < 8; ++i) {
+                Vector3d diff = vertex[i] - box.Center;
+                for (j = 0; j < 3; ++j) {
+                    dot = box.Axis(j).Dot(ref diff);
+                    if (dot > pmax[j]) {
+                        pmax[j] = dot;
+                    } else if (dot < pmin[j]) {
+                        pmin[j] = dot;
+                    }
+                }
+            }
+
+            box1.ComputeVertices(vertex);
+            for (i = 0; i < 8; ++i) {
+                Vector3d diff = vertex[i] - box.Center;
+                for (j = 0; j < 3; ++j) {
+                    dot = box.Axis(j).Dot(ref diff);
+                    if (dot > pmax[j]) {
+                        pmax[j] = dot;
+                    } else if (dot < pmin[j]) {
+                        pmin[j] = dot;
+                    }
+                }
+            }
+
+            // [min,max] is the axis-aligned box in the coordinate system of the
+            // merged box axes.  Update the current box center to be the center of
+            // the new box.  Compute the extents based on the new center.
+            for (j = 0; j < 3; ++j) {
+                box.Center += (0.5*(pmax[j] + pmin[j])) * box.Axis(j);
+                box.Extent[j] = 0.5*(pmax[j] - pmin[j]);
+            }
+
+            return box;
+        }
+
+
+
+
+
+
+
 
         public static implicit operator Box3d(Box3f v)
         {
