@@ -154,7 +154,8 @@ namespace g3
                         if (insert.Apply()) {
                             insert.Simplify();
                             polyVertices[pi] = insert.CurveVertices;
-                            failed = false;
+                            failed = (insert.Loops.Count != 1) ||
+                                     (insert.Loops[0].VertexCount != polys[pi].VertexCount);
                         }
                     }
                     if (failed)

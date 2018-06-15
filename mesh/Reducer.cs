@@ -81,8 +81,14 @@ namespace g3
 
             begin_setup();
             Precompute();
+            if (Cancelled())
+                return;
             InitializeVertexQuadrics();
+            if (Cancelled())
+                return;
             InitializeQueue();
+            if (Cancelled())
+                return;
             end_setup();
 
             begin_ops();
@@ -103,6 +109,8 @@ namespace g3
                 int eid = EdgeQueue.Dequeue();
                 if (!mesh.IsEdge(eid))
                     continue;
+                if (Cancelled())
+                    return;
 
                 int vKept;
                 ProcessResult result = CollapseEdge(eid, EdgeQuadrics[eid].collapse_pt, out vKept);
@@ -113,6 +121,9 @@ namespace g3
             }
             end_collapse();
             end_ops();
+
+            if (Cancelled())
+                return;
 
             Reproject();
 
@@ -170,6 +181,8 @@ namespace g3
 
             begin_setup();
             Precompute();
+            if (Cancelled())
+                return;
             end_setup();
 
             begin_ops();
@@ -183,6 +196,8 @@ namespace g3
                     continue;
                 if (mesh.IsBoundaryEdge(eid))
                     continue;
+                if (Cancelled())
+                    return;
 
                 mesh.GetEdgeV(eid, ref va, ref vb);
                 if (va.DistanceSquared(ref vb) > min_sqr)
@@ -199,6 +214,9 @@ namespace g3
             }
             end_collapse();
             end_ops();
+
+            if (Cancelled())
+                return;
 
             Reproject();
 

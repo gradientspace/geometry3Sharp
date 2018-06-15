@@ -143,7 +143,7 @@ namespace g3 {
             Index2i ov = mesh.GetEdgeOpposingV(eID);
 
             int a = einfo.a, b = einfo.b, c = ov.a, d = ov.b;
-            int t0 = einfo.c, t1 = einfo.d;
+            int t0 = einfo.c;
 
             Vector3d vC = mesh.GetVertex(c), vD = mesh.GetVertex(d);
             Index3i tri_v = mesh.GetTriangle(t0);

@@ -203,15 +203,18 @@ namespace g3
 
 
         /// <summary>
-        /// Check if all edges of this loop are boundary edges
+        /// Check if all edges of this loop are boundary edges.
+        /// If testMesh != null, will check that mesh instead of internal Mesh
         /// </summary>
-        public bool IsBoundaryLoop()
+        public bool IsBoundaryLoop(DMesh3 testMesh = null)
         {
+            DMesh3 useMesh = (testMesh != null) ? testMesh : Mesh;
+
             int NV = Vertices.Length;
             for (int i = 0; i < NV; ++i ) {
-                int eid = Mesh.FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
+                int eid = useMesh.FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
                 Debug.Assert(eid != DMesh3.InvalidID);
-                if (Mesh.IsBoundaryEdge(eid) == false)
+                if (useMesh.IsBoundaryEdge(eid) == false)
                     return false;
             }
             return true;

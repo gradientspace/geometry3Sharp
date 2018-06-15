@@ -52,7 +52,6 @@ namespace g3
             iCurBlockUsed = 0;
             Blocks = new List<T[]>();
             Blocks.Add(new T[nBlockSize]);
-            // AAAHHH this could be so more efficient...
             foreach (T v in init)
                 Add(v);
         }
@@ -178,6 +177,24 @@ namespace g3
             iCurBlock = nNumSegs-1;            
         }
 
+
+        public void copy(DVector<T> copyIn)
+        {
+            if (this.Blocks != null && copyIn.Blocks.Count == this.Blocks.Count) {
+                int N = copyIn.Blocks.Count;
+                for (int k = 0; k < N; ++k)
+                    Array.Copy(copyIn.Blocks[k], this.Blocks[k], copyIn.Blocks[k].Length);
+                iCurBlock = copyIn.iCurBlock;
+                iCurBlockUsed = copyIn.iCurBlockUsed;
+            } else {
+                resize(copyIn.size);
+                int N = copyIn.Blocks.Count;
+                for (int k = 0; k < N; ++k)
+                    Array.Copy(copyIn.Blocks[k], this.Blocks[k], copyIn.Blocks[k].Length);
+                iCurBlock = copyIn.iCurBlock;
+                iCurBlockUsed = copyIn.iCurBlockUsed;
+            }
+        }
 
 
 

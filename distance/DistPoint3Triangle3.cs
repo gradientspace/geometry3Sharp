@@ -52,6 +52,13 @@ namespace g3
             if (DistanceSquared >= 0)
                 return DistanceSquared;
 
+            DistanceSquared = DistanceSqr(ref point, ref triangle, out TriangleClosest, out TriangleBaryCoords);
+            return DistanceSquared;
+        }
+
+
+        public static double DistanceSqr(ref Vector3d point, ref Triangle3d triangle, out Vector3d closestPoint, out Vector3d baryCoords )
+        {
             Vector3d diff = triangle.V0 - point;
             Vector3d edge0 = triangle.V1 - triangle.V0;
             Vector3d edge1 = triangle.V2 - triangle.V0;
@@ -213,16 +220,17 @@ namespace g3
                     }
                 }
             }
+            closestPoint = triangle.V0 + s * edge0 + t * edge1;
+            baryCoords = new Vector3d(1 - s - t, s, t);
 
             // Account for numerical round-off error.
-            if (sqrDistance < 0) {
-                sqrDistance = 0;
-            }
-            DistanceSquared = sqrDistance;
-
-            TriangleClosest = triangle.V0 + s * edge0 + t * edge1;
-            TriangleBaryCoords = new Vector3d(1 - s - t, s, t);
-            return sqrDistance;
+            return Math.Max(sqrDistance, 0);
         }
+
+
+
+
+
+
     }
 }

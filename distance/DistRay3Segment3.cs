@@ -46,7 +46,7 @@ namespace g3
         }
         static public double MinDistanceSegmentParam(Ray3d r, Segment3d s) {
             double rayt, segt;
-            double dsqr = SquaredDistance(ref r, ref s, out rayt, out segt);
+            /*double dsqr = */SquaredDistance(ref r, ref s, out rayt, out segt);
             return segt;
         }
 

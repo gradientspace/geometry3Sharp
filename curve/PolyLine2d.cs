@@ -343,7 +343,6 @@ namespace g3
 
         static public PolyLine2d MakeBoxSpiral(Vector2d center, double len, double spacing)
         {
-            double d = spacing / 2;
             PolyLine2d pline = new PolyLine2d();
             pline.AppendVertex(center);
 

@@ -50,6 +50,19 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Set this to be able to cancel running remesher
+        /// </summary>
+        public ProgressCancel Progress = null;
+
+        /// <summary>
+        /// if this returns true, abort computation. 
+        /// </summary>
+        protected virtual bool Cancelled() {
+            return (Progress == null) ? false : Progress.Cancelled();
+        }
+
+
         protected double edge_flip_metric(ref Vector3d n0, ref Vector3d n1)
         {
             if (edge_flip_tol == 0) {

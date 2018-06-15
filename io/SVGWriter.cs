@@ -280,6 +280,14 @@ namespace g3
 
 
 
+        public static void QuickWrite(DGraph2 graph, string sPath, float line_width = 1)
+        {
+            SVGWriter writer = new SVGWriter();
+            Style style = SVGWriter.Style.Outline("black", line_width);
+            writer.AddGraph(graph, style);
+            writer.Write(sPath);
+        }
+
 
 
 

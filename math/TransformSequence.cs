@@ -59,6 +59,17 @@ namespace g3
             Operations = new List<XForm>();
         }
 
+        public TransformSequence(TransformSequence copy)
+        {
+            Operations = new List<XForm>(copy.Operations);
+        }
+
+
+
+        public void Append(TransformSequence sequence)
+        {
+            Operations.AddRange(sequence.Operations);
+        }
 
 
         public void AppendTranslation(Vector3d dv)
@@ -179,7 +190,7 @@ namespace g3
 
 
         /// <summary>
-        /// Apply transforms to point
+        /// Apply transforms to vector. Includes scaling.
         /// </summary>
         public Vector3d TransformV(Vector3d v)
         {

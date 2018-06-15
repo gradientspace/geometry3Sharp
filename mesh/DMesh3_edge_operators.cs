@@ -850,6 +850,33 @@ namespace g3
             if (b != d && find_edge(b, d) != DMesh3.InvalidID)
                 return MeshResult.Failed_InvalidNeighbourhood;
 
+            // if vertices at either end already share a common neighbour vertex, and we 
+            // do the merge, that would create duplicate edges. This is something like the
+            // 'link condition' in edge collapses. 
+            // Note that we have to catch cases where both edges to the shared vertex are
+            // boundary edges, in that case we will also merge this edge later on
+            if ( a != c ) {
+                int ea = 0, ec = 0, other_v = (b == d) ? b : -1;
+                foreach ( int cnbr in VtxVerticesItr(c) ) {
+                    if (cnbr != other_v && (ea = find_edge(a, cnbr)) != DMesh3.InvalidID) {
+                        ec = find_edge(c, cnbr);
+                        if (IsBoundaryEdge(ea) == false || IsBoundaryEdge(ec) == false)
+                            return MeshResult.Failed_InvalidNeighbourhood;
+                    }
+                }
+            }
+            if ( b != d ) {
+                int eb = 0, ed = 0, other_v = (a == c) ? a : -1;
+                foreach ( int dnbr in VtxVerticesItr(d)) {
+                    if (dnbr != other_v && (eb = find_edge(b, dnbr)) != DMesh3.InvalidID) {
+                        ed = find_edge(d, dnbr);
+                        if (IsBoundaryEdge(eb) == false || IsBoundaryEdge(ed) == false)
+                            return MeshResult.Failed_InvalidNeighbourhood;
+                    }
+                }
+            }
+            
+
             // [TODO] this acts on each interior tri twice. could avoid using vtx-tri iterator?
             if (a != c) {
 				// replace c w/ a in edges and tris connected to c, and move edges to a
@@ -1113,7 +1140,13 @@ namespace g3
         {
             return new List<int>( vertex_edges.ValueItr(vid) );
         }
-
+        List<int> vertex_vertices_list(int vid)
+        {
+            List<int> vnbrs = new List<int>();
+            foreach (int eid in vertex_edges.ValueItr(vid))
+                vnbrs.Add(edge_other_v(eid, vid));
+            return vnbrs;
+        }
 
 
         void set_edge_vertices(int eID, int a, int b) {

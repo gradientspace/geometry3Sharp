@@ -41,7 +41,7 @@ namespace g3
             if ( Loop.Vertices.Length == 3 ) {
                 Index3i tri = new Index3i(Loop.Vertices[0], Loop.Vertices[2], Loop.Vertices[1]);
                 int new_tid = Mesh.AppendTriangle(tri, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     return false;
                 NewTriangles = new int[1] { new_tid };
                 NewVertex = DMesh3.InvalidID;
@@ -72,9 +72,9 @@ namespace g3
             if ( NewTriangles == null ) {
                 Mesh.RemoveVertex(NewVertex, true, false);
                 NewVertex = DMesh3.InvalidID;
-            }
-
-            return true;
+				return false;
+            } else 
+            	return true;
 
         }
 

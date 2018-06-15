@@ -72,7 +72,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -109,7 +109,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -156,7 +156,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -218,7 +218,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -268,7 +268,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -355,6 +355,17 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Remove 'loner' triangles that have no connected neighbours. 
+        /// </summary>
+        public static bool RemoveIsolatedTriangles(DMesh3 mesh)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            return editor.RemoveTriangles((tid) => {
+                Index3i tnbrs = mesh.GetTriNeighbourTris(tid);
+                return (tnbrs.a == DMesh3.InvalidID && tnbrs.b == DMesh3.InvalidID && tnbrs.c == DMesh3.InvalidID);
+            }, true);
+        }
 
 
 
@@ -539,9 +550,10 @@ namespace g3
 
         /// <summary>
         /// Disconnect all bowtie vertices in mesh. Iterates because sometimes
-        /// disconnecting a bowtie creates new bowties (how??)
+		/// disconnecting a bowtie creates new bowties (how??).
+		/// Returns number of remaining bowties after iterations.
         /// </summary>
-        public void DisconnectAllBowties(int nMaxIters = 10)
+        public int DisconnectAllBowties(int nMaxIters = 10)
         {
             List<int> bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
             int iter = 0;
@@ -550,6 +562,7 @@ namespace g3
                     DisconnectBowtie(vid);
                 bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
             }
+			return bowties.Count;
         }
 
 
@@ -749,6 +762,10 @@ namespace g3
         }
         public void AppendBox(Frame3f frame, Vector3f size)
         {
+            AppendBox(frame, size, Colorf.White);
+        }
+        public void AppendBox(Frame3f frame, Vector3f size, Colorf color)
+        {
             TrivialBox3Generator boxgen = new TrivialBox3Generator() {
                 Box = new Box3d(frame, size),
                 NoSharedVertices = false
@@ -756,6 +773,8 @@ namespace g3
             boxgen.Generate();
             DMesh3 mesh = new DMesh3();
             boxgen.MakeMesh(mesh);
+            if (Mesh.HasVertexColors)
+                mesh.EnableVertexColors(color);
             AppendMesh(mesh, Mesh.AllocateTriangleGroup());
         }
         public void AppendLine(Segment3d seg, float size)
@@ -769,11 +788,22 @@ namespace g3
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(new Frame3f(pos), size);
         }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos), size*Vector3f.One, color);
+        }
         public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size)
         {
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(new Frame3f(pos, normal), size);
         }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos, normal), size*Vector3f.One, color);
+        }
+
         public static void AppendLine(DMesh3 mesh, Segment3d seg, float size)
         {
             Frame3f f = new Frame3f(seg.Center);

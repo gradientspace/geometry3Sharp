@@ -29,7 +29,7 @@ namespace g3
         int bins_x, bins_y;
         AxisAlignedBox2i grid_bounds;
 
-        SpinLock spinlock;
+        SpinLock spinlock = new SpinLock();
 
         /// <summary>
         /// "invalid" value will be returned by queries if no valid result is found (eg bounded-distance query)
@@ -48,6 +48,10 @@ namespace g3
             bins_list.Resize(bins_x * bins_y);
         }
 
+
+        public AxisAlignedBox2d Bounds {
+            get { return bounds; }
+        }
 
         /// <summary>
         /// Insert triangle. This function is thread-safe, uses a SpinLock internally

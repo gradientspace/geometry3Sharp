@@ -149,6 +149,38 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Select set of boundary vertices connected to vSeed.
+        /// </summary>
+        public void SelectConnectedBoundaryV(int vSeed)
+        {
+            if ( ! Mesh.IsBoundaryVertex(vSeed))
+                throw new Exception("MeshConnectedComponents.FindConnectedBoundaryV: vSeed is not a boundary vertex");
+
+            HashSet<int> found = (Selected.Count == 0) ? Selected : new HashSet<int>();
+            found.Add(vSeed);
+            List<int> queue = temp; queue.Clear();
+            queue.Add(vSeed);
+            while (queue.Count > 0) {
+                int vid = queue[queue.Count - 1];
+                queue.RemoveAt(queue.Count - 1);
+                foreach (int nbrid in Mesh.VtxVerticesItr(vid)) {
+                    if (Mesh.IsBoundaryVertex(nbrid) && found.Contains(nbrid) == false) {
+                        found.Add(nbrid);
+                        queue.Add(nbrid);
+                    }
+                }
+            }
+            if ( found != Selected ) {
+                foreach (int vid in found)
+                    add(vid);
+            }
+            temp.Clear();
+        }
+
+
+
+
         public void SelectEdgeVertices(int[] edges)
         {
             for (int i = 0; i < edges.Length; ++i) {

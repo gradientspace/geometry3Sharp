@@ -128,13 +128,15 @@ namespace g3
         }
 
 
-        public bool IsBoundarySpan()
+        public bool IsBoundarySpan(DMesh3 testMesh = null)
         {
+            DMesh3 useMesh = (testMesh != null) ? testMesh : Mesh;
+
             int NV = Vertices.Length;
             for (int i = 0; i < NV-1; ++i ) {
-                int eid = Mesh.FindEdge(Vertices[i], Vertices[i + 1]);
+                int eid = useMesh.FindEdge(Vertices[i], Vertices[i + 1]);
                 Debug.Assert(eid != DMesh3.InvalidID);
-                if (Mesh.IsBoundaryEdge(eid) == false)
+                if (useMesh.IsBoundaryEdge(eid) == false)
                     return false;
             }
             return true;

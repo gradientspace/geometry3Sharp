@@ -1934,11 +1934,56 @@ namespace g3
         public bool IsBowtieVertex(int vID)
         {
             if (vertices_refcount.isValid(vID)) {
-                int nTris = GetVtxTriangleCount(vID);
-                int vtx_edge_count = GetVtxEdgeCount(vID);
-                if (!(nTris == vtx_edge_count || nTris == vtx_edge_count - 1))
-                    return true;
-                return false;
+				int nEdges = vertex_edges.Count(vID);
+				if (nEdges == 0)
+					return false;
+
+                // find a boundary edge to start at
+                int start_eid = -1;
+                bool start_at_boundary = false;
+                foreach (int eid in vertex_edges.ValueItr(vID)) {
+                    if (edges[4 * eid + 3] == DMesh3.InvalidID) {
+                        start_at_boundary = true;
+                        start_eid = eid;
+                        break;
+                    }
+                }
+                // if no boundary edge, start at arbitrary edge
+                if (start_eid == -1)
+                    start_eid = vertex_edges.First(vID);
+                // initial triangle
+                int start_tid = edges[4 * start_eid + 2];
+
+                int prev_tid = start_tid;
+                int prev_eid = start_eid;
+
+                // walk forward to next edge. if we hit start edge or boundary edge,
+                // we are done the walk. count number of edges as we go.
+                int count = 1;
+                while (true) {
+                    int i = 3 * prev_tid;
+                    Index3i tv = new Index3i(triangles[i], triangles[i+1], triangles[i+2]);
+                    Index3i te = new Index3i(triangle_edges[i], triangle_edges[i+1], triangle_edges[i+2]);
+                    int vert_idx = IndexUtil.find_tri_index(vID, ref tv);
+                    int e1 = te[vert_idx], e2 = te[(vert_idx+2) % 3];
+                    int next_eid = (e1 == prev_eid) ? e2 : e1;
+                    if (next_eid == start_eid)
+                        break;
+                    Index2i next_eid_tris = GetEdgeT(next_eid);
+                    int next_tid = (next_eid_tris.a == prev_tid) ? next_eid_tris.b : next_eid_tris.a;
+                    if (next_tid == DMesh3.InvalidID) {
+                        break;
+                    }
+                    prev_eid = next_eid;
+                    prev_tid = next_tid;
+                    count++;
+                }
+
+                // if we did not see all edges at vertex, we have a bowtie
+                int target_count = (start_at_boundary) ? nEdges - 1 : nEdges;
+                bool is_bowtie = (target_count != count);
+                return is_bowtie;
+
             } else
                 throw new Exception("DMesh3.IsBowtieVertex: " + vID + " is not a valid vertex");
         }
