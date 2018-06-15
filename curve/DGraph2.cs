@@ -154,7 +154,8 @@ namespace g3
             int N = poly.VertexCount;
             for (int i = 0; i < N; ++i) {
                 int cur = AppendVertex(poly[i]);
-                AppendEdge(prev, cur, gid);
+                if ( i > 0 )
+                    AppendEdge(prev, cur, gid);
                 prev = cur;
             }
         }
@@ -164,7 +165,7 @@ namespace g3
         {
             int[] mapV = new int[graph.MaxVertexID];
             foreach ( int vid in graph.VertexIndices()) {
-                    mapV[vid] = this.AppendVertex(graph.GetVertex(vid));
+                mapV[vid] = this.AppendVertex(graph.GetVertex(vid));
             }
             foreach ( int eid in graph.EdgeIndices()) {
                 Index2i ev = graph.GetEdgeV(eid);
