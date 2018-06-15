@@ -95,6 +95,11 @@ namespace g3
             vertices.Add(v);
 			Timestamp++; 
         }
+        public void AppendVertices(IEnumerable<Vector2d> v)
+        {
+            vertices.AddRange(v);
+            Timestamp++;
+        }
 
         public void RemoveVertex(int idx)
         {
