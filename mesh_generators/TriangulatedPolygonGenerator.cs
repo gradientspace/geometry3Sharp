@@ -14,11 +14,11 @@ namespace g3
         public TrivialRectGenerator.UVModes UVMode = TrivialRectGenerator.UVModes.FullUVSquare;
 
 		public int Subdivisions = 1;
+        public MeshInsertPolygon Insert;
 
         override public MeshGenerator Generate()
         {
-            MeshInsertPolygon insert;
-            DMesh3 base_mesh = ComputeResult(out insert);
+            DMesh3 base_mesh = ComputeResult(out Insert);
 
             DMesh3 compact = new DMesh3(base_mesh, true);
 
@@ -73,6 +73,9 @@ namespace g3
             MeshInsertPolygon insert = new MeshInsertPolygon() {
                 Mesh = base_mesh, Polygon = shiftPolygon
             };
+            
+            insertion = insert;
+            
             bool bOK = insert.Insert();
             if (!bOK)
                 throw new Exception("TriangulatedPolygonGenerator: failed to Insert()");
@@ -84,7 +87,6 @@ namespace g3
             Vector3d shift3 = new Vector3d(shift.x, shift.y, 0);
             MeshTransforms.Translate(base_mesh, shift3);
 
-            insertion = insert;
             return base_mesh;
         }
 
