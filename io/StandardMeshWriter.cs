@@ -42,6 +42,7 @@ namespace g3
         /// called on Streams returned by OpenStreamF when we are done with them.
         /// </summary>
         public Action<Stream> CloseStreamF = (stream) => {
+            stream.Close();
             stream.Dispose();
         };
 

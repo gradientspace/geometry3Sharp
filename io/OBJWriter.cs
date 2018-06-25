@@ -65,7 +65,7 @@ namespace g3
                 IMesh mesh = vMeshes[mi].Mesh;
 
                 if (options.ProgressFunc != null)
-                    options.ProgressFunc(mi, vMeshes.Count - 1);
+                    options.ProgressFunc(mi, vMeshes.Count);
 
                 bool bVtxColors = options.bPerVertexColors && mesh.HasVertexColors;
                 bool bNormals = options.bPerVertexNormals && mesh.HasVertexNormals;
@@ -125,6 +125,8 @@ namespace g3
                 else
 					write_triangles_flat(writer, vMeshes[mi], mapV, uvSet, mapUV, bNormals, bWriteMaterials);
 
+                if (options.ProgressFunc != null)
+                    options.ProgressFunc(mi+1, vMeshes.Count);
             }
 
 
