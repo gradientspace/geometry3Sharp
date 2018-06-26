@@ -298,15 +298,36 @@ namespace g3
             Interval1d extent = Interval1d.Empty;
             if (TransformF == null) {
                 foreach (Vector3d v in mesh.Vertices()) 
-                    extent.Contain(v.Dot(axis));
+                    extent.Contain(v.Dot(ref axis));
             } else {
                 foreach (Vector3d v in mesh.Vertices()) {
                     Vector3d vT = TransformF(v);
-                    extent.Contain(vT.Dot(axis));
+                    extent.Contain(vT.Dot(ref axis));
                 }
             }
             return extent;
         }
+
+
+        /// <summary>
+        /// Calculate extents of mesh along an axis, with optional transform
+        /// </summary>
+        public static Interval1d ExtentsOnAxis(IMesh mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            Interval1d extent = Interval1d.Empty;
+            if (TransformF == null) {
+                foreach (int vid in mesh.VertexIndices())
+                    extent.Contain(mesh.GetVertex(vid).Dot(ref axis));
+            } else {
+                foreach (int vid in mesh.VertexIndices()) {
+                    Vector3d vT = TransformF(mesh.GetVertex(vid));
+                    extent.Contain(vT.Dot(ref axis));
+                }
+            }
+            return extent;
+        }
+
+
 
 
 
