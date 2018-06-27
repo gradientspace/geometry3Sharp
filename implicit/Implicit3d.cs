@@ -311,13 +311,45 @@ namespace g3
 
 
 
+    /// <summary>
+    /// Boolean Intersection of N implicit functions, A AND B.
+    /// Assumption is that both have surface at zero isocontour and 
+    /// negative is inside.
+    /// </summary>
+    public class ImplicitNaryIntersection3d : BoundedImplicitFunction3d
+    {
+        public List<BoundedImplicitFunction3d> Children;
 
-	/// <summary>
-	/// Boolean Difference of N implicit functions, A - Union(B1..BN)
-	/// Assumption is that both have surface at zero isocontour and 
-	/// negative is inside.
-	/// </summary>
-	public class ImplicitNaryDifference3d : BoundedImplicitFunction3d
+        public double Value(ref Vector3d pt)
+        {
+            double f = Children[0].Value(ref pt);
+            int N = Children.Count;
+            for (int k = 1; k < N; ++k)
+                f = Math.Max(f, Children[k].Value(ref pt));
+            return f;
+        }
+
+        public AxisAlignedBox3d Bounds()
+        {
+            var box = Children[0].Bounds();
+            int N = Children.Count;
+            for (int k = 1; k < N; ++k) {
+                box = box.Intersect(Children[k].Bounds());
+            }
+            return box;
+        }
+    }
+
+
+
+
+
+    /// <summary>
+    /// Boolean Difference of N implicit functions, A - Union(B1..BN)
+    /// Assumption is that both have surface at zero isocontour and 
+    /// negative is inside.
+    /// </summary>
+    public class ImplicitNaryDifference3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public List<BoundedImplicitFunction3d> BSet;
