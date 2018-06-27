@@ -414,12 +414,19 @@ namespace g3
                         DenseGrid3f distances, DenseGrid3i closest_tri)
         {
             sweep(distances, closest_tri, origin, dx, +1, +1, +1);
+            if (CancelF()) return;
             sweep(distances, closest_tri, origin, dx, -1, -1, -1);
+            if (CancelF()) return;
             sweep(distances, closest_tri, origin, dx, +1, +1, -1);
+            if (CancelF()) return;
             sweep(distances, closest_tri, origin, dx, -1, -1, +1);
+            if (CancelF()) return;
             sweep(distances, closest_tri, origin, dx, +1, -1, +1);
+            if (CancelF()) return;
             sweep(distances, closest_tri, origin, dx, -1, +1, -1);
+            if (CancelF()) return;
             sweep(distances, closest_tri, origin, dx, +1, -1, -1);
+            if (CancelF()) return;
             sweep(distances, closest_tri, origin, dx, -1, +1, +1);
         }
 
@@ -436,6 +443,7 @@ namespace g3
             int k0, k1;
             if (dk > 0) { k0 = 1; k1 = phi.nk; } else { k0 = phi.nk - 2; k1 = -1; }
             for (int k = k0; k != k1; k += dk) {
+                if (CancelF()) return;
                 for (int j = j0; j != j1; j += dj) {
                     for (int i = i0; i != i1; i += di) {
                         Vector3d gx = new Vector3d(i * dx + origin[0], j * dx + origin[1], k * dx + origin[2]);
@@ -476,11 +484,18 @@ namespace g3
             double ox = (double)origin[0], oy = (double)origin[1], oz = (double)origin[2];
             double invdx = 1.0 / dx;
 
+            bool cancelled = false;
+
             // this is what we will do for each triangle. There are no grid-reads, only grid-writes, 
             // since we use atomic_increment, it is always thread-safe
             Action<int> ProcessTriangleF = (tid) => {
+                if (tid % 100 == 0 && CancelF() == true)
+                    cancelled = true;
+                if (cancelled) return;
+
                 Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
                 Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
+
 
                 bool neg_x = false;
                 if (InsideMode == InsideModes.ParityCount) {
@@ -544,6 +559,9 @@ namespace g3
                 // can process each x-row in parallel
                 AxisAlignedBox2i box = new AxisAlignedBox2i(0, 0, nj, nk);
                 gParallel.ForEach(box.IndicesExclusive(), (vi) => {
+                    if (CancelF())
+                        return;
+
                     int j = vi.x, k = vi.y;
                     int total_count = 0;
                     for (int i = 0; i < ni; ++i) {
@@ -557,6 +575,9 @@ namespace g3
             } else {
 
                 for (int k = 0; k < nk; ++k) {
+                    if (CancelF())
+                        return;
+
                     for (int j = 0; j < nj; ++j) {
                         int total_count = 0;
                         for (int i = 0; i < ni; ++i) {
