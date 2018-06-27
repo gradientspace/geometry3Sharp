@@ -519,4 +519,105 @@ namespace g3
 
 
 
+
+
+
+
+
+    /*
+     *  Skeletal implicit ops
+     */
+
+
+
+    /// <summary>
+    /// This class converts the interval [-falloff,falloff] to [0,1],
+    /// Then applies Wyvill falloff function (1-t^2)^3.
+    /// The result is a skeletal-primitive-like shape with 
+    /// the distance=0 isocontour lying just before midway in
+    /// the range (at the .ZeroIsocontour constant)
+    /// </summary>
+    public class DistanceFieldToSkeletalField : BoundedImplicitFunction3d
+    {
+        public BoundedImplicitFunction3d DistanceField;
+        public double FalloffDistance;
+        public const double ZeroIsocontour = 0.421875;
+
+        public AxisAlignedBox3d Bounds()
+        {
+            AxisAlignedBox3d bounds = DistanceField.Bounds();
+            bounds.Expand(FalloffDistance);
+            return bounds;
+        }
+
+        public double Value(ref Vector3d pt)
+        {
+            double d = DistanceField.Value(ref pt);
+            if (d > FalloffDistance)
+                return 0;
+            else if (d < -FalloffDistance)
+                return 1.0;
+            double a = (d + FalloffDistance) / (2 * FalloffDistance);
+            double t = 1 - (a * a);
+            return t * t * t;
+        }
+    }
+
+
+
+
+
+
+
+    /// <summary>
+    /// sum-blend
+    /// </summary>
+    public class SkeletalBlend3d : BoundedImplicitFunction3d
+    {
+        public BoundedImplicitFunction3d A;
+        public BoundedImplicitFunction3d B;
+
+        public double Value(ref Vector3d pt)
+        {
+            return A.Value(ref pt) + B.Value(ref pt);
+        }
+
+        public AxisAlignedBox3d Bounds()
+        {
+            return A.Bounds();
+        }
+    }
+
+
+
+    /// <summary>
+    /// Ricci blend
+    /// </summary>
+    public class SkeletalRicciBlend3d : BoundedImplicitFunction3d
+    {
+        public BoundedImplicitFunction3d A;
+        public BoundedImplicitFunction3d B;
+        public double BlendPower = 2.0;
+
+        public double Value(ref Vector3d pt)
+        {
+            double a = A.Value(ref pt);
+            double b = B.Value(ref pt);
+            if (BlendPower == 2.0) {
+                return Math.Sqrt(a*a + b*b);
+            } else {
+                return Math.Pow( Math.Pow(a,BlendPower) + Math.Pow(b,BlendPower), 1.0/BlendPower);
+            }
+        }
+
+        public AxisAlignedBox3d Bounds()
+        {
+            return A.Bounds();
+        }
+    }
+
+
+
+
+
 }
