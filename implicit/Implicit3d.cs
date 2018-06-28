@@ -606,7 +606,9 @@ namespace g3
         {
             double a = A.Value(ref pt);
             double b = B.Value(ref pt);
-            if (BlendPower == 2.0) {
+            if ( BlendPower == 1.0 ) {
+                return a + b;
+            } else if (BlendPower == 2.0) {
                 return Math.Sqrt(a*a + b*b);
             } else {
                 return Math.Pow( Math.Pow(a,BlendPower) + Math.Pow(b,BlendPower), 1.0/BlendPower);
@@ -617,6 +619,53 @@ namespace g3
         {
             AxisAlignedBox3d box = A.Bounds();
             box.Contain(B.Bounds());
+            box.Expand(0.25 * box.MaxDim);
+            return box;
+        }
+    }
+
+
+
+
+    /// <summary>
+    /// Boolean Union of N implicit functions, A OR B.
+    /// Assumption is that both have surface at zero isocontour and 
+    /// negative is inside.
+    /// </summary>
+    public class SkeletalRicciNaryBlend3d : BoundedImplicitFunction3d
+    {
+        public List<BoundedImplicitFunction3d> Children;
+        public double BlendPower = 2.0;
+
+        public double Value(ref Vector3d pt)
+        {
+            int N = Children.Count;
+            double f = 0;
+            if (BlendPower == 1.0) {
+                for (int k = 0; k < N; ++k)
+                    f += Children[k].Value(ref pt);
+            } else if (BlendPower == 2.0) {
+                for (int k = 0; k < N; ++k) {
+                    double v = Children[k].Value(ref pt);
+                    f += v * v;
+                }
+                f = Math.Sqrt(f);
+            } else {
+                for (int k = 0; k < N; ++k) {
+                    double v = Children[k].Value(ref pt);
+                    f += Math.Pow(v, BlendPower);
+                }
+                f = Math.Pow(f, 1.0 / BlendPower);
+            }
+            return f;
+        }
+
+        public AxisAlignedBox3d Bounds()
+        {
+            var box = Children[0].Bounds();
+            int N = Children.Count;
+            for (int k = 1; k < N; ++k)
+                box.Contain(Children[k].Bounds());
             box.Expand(0.25 * box.MaxDim);
             return box;
         }
