@@ -584,7 +584,10 @@ namespace g3
 
         public AxisAlignedBox3d Bounds()
         {
-            return A.Bounds();
+            AxisAlignedBox3d box = A.Bounds();
+            box.Contain(B.Bounds());
+            box.Expand(0.25 * box.MaxDim);
+            return box;
         }
     }
 
@@ -612,7 +615,10 @@ namespace g3
 
         public AxisAlignedBox3d Bounds()
         {
-            return A.Bounds();
+            AxisAlignedBox3d box = A.Bounds();
+            box.Contain(B.Bounds());
+            box.Expand(0.25 * box.MaxDim);
+            return box;
         }
     }
 
