@@ -1123,7 +1123,7 @@ namespace g3
         public int AppendTriangle(int v0, int v1, int v2, int gid = -1) {
             return AppendTriangle(new Index3i(v0, v1, v2), gid);
         }
-        public int AppendTriangle(Index3i tv, int gid = -1) {
+        public int AppendTriangle(Index3i tv, int gid = -1, bool boundaryCheck = true) {
             if (IsVertex(tv[0]) == false || IsVertex(tv[1]) == false || IsVertex(tv[2]) == false) {
                 Util.gDevAssert(false);
                 return InvalidID;
@@ -1138,9 +1138,10 @@ namespace g3
             int e0 = find_edge(tv[0], tv[1]);
             int e1 = find_edge(tv[1], tv[2]);
             int e2 = find_edge(tv[2], tv[0]);
-            if ((e0 != InvalidID && IsBoundaryEdge(e0) == false)
-                 || (e1 != InvalidID && IsBoundaryEdge(e1) == false)
-                 || (e2 != InvalidID && IsBoundaryEdge(e2) == false)) {
+            if ( boundaryCheck && (
+                    e0 != InvalidID && IsBoundaryEdge(e0) == false
+                 || e1 != InvalidID && IsBoundaryEdge(e1) == false
+                 || e2 != InvalidID && IsBoundaryEdge(e2) == false)) {
                 return NonManifoldID;
             }
 
