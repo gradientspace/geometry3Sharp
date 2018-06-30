@@ -295,6 +295,8 @@ namespace g3
                 m.uv = ToUnityVector2(uv);
             if (normals != null && WantNormals)
                 m.normals = ToUnityVector3(normals, bFlipLR);
+            if ( m.vertexCount > 64000 ||  triangles.Count > 64000 )
+                m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             m.triangles = triangles.array;
             if (bRecalcNormals)
                 m.RecalculateNormals();
