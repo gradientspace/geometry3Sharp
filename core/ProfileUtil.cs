@@ -104,9 +104,9 @@ namespace g3
         }
 
 
-        public void StopAndAccumulate(string label)
+        public void StopAndAccumulate(string label, bool bReset = false)
         {
-            Timers[label].Accumulate();
+            Timers[label].Accumulate(bReset);
         }
 
         public void Reset(string label)
