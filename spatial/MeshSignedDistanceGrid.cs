@@ -40,6 +40,7 @@ namespace g3
     public class MeshSignedDistanceGrid
     {
         public DMesh3 Mesh;
+        public DMeshAABBTree3 Spatial;
         public float CellSize;
 
         // Width of the band around triangles for which exact distances are computed
@@ -100,10 +101,11 @@ namespace g3
         DenseGrid3i closest_tri_grid;
         DenseGrid3i intersections_grid;
 
-        public MeshSignedDistanceGrid(DMesh3 mesh, double cellSize)
+        public MeshSignedDistanceGrid(DMesh3 mesh, double cellSize, DMeshAABBTree3 spatial = null)
         {
             Mesh = mesh;
             CellSize = (float)cellSize;
+            Spatial = spatial;
         }
 
 
@@ -120,10 +122,14 @@ namespace g3
             int nk = (int)((max.z - grid_origin.z) / CellSize) + 1;
 
             grid = new DenseGrid3f();
-            if ( UseParallel )
-                make_level_set3_parallel(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
-            else
+            if (UseParallel) {
+                if ( Spatial != null )
+                    make_level_set3_parallel_spatial(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+                else
+                    make_level_set3_parallel(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);  
+            } else {
                 make_level_set3(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+            }
         }
 
 
@@ -405,6 +411,155 @@ namespace g3
                 closest_tri_grid = closest_tri;
 
         }   // end make_level_set_3
+
+
+
+
+
+
+
+
+
+
+        void make_level_set3_parallel_spatial(Vector3f origin, float dx,
+                             int ni, int nj, int nk,
+                             DenseGrid3f distances, int exact_band)
+        {
+            distances.resize(ni, nj, nk);
+            float upper_bound = (float)((ni + nj + nk) * dx);
+            distances.assign(upper_bound); // upper bound on distance
+
+            // closest triangle id for each grid cell
+            DenseGrid3i closest_tri = new DenseGrid3i(ni, nj, nk, -1);
+
+            // intersection_count(i,j,k) is # of tri intersections in (i-1,i]x{j}x{k}
+            DenseGrid3i intersection_count = new DenseGrid3i(ni, nj, nk, 0);
+
+            if (DebugPrint) System.Console.WriteLine("start");
+
+            double ox = (double)origin[0], oy = (double)origin[1], oz = (double)origin[2];
+            double invdx = 1.0 / dx;
+
+            // Compute narrow-band distances. For each triangle, we find its grid-coord-bbox,
+            // and compute exact distances within that box.
+
+            // To compute in parallel, we need to safely update grid cells. Current strategy is
+            // to use a spinlock to control access to grid. Partitioning the grid into a few regions,
+            // each w/ a separate spinlock, improves performance somewhat. Have also tried having a
+            // separate spinlock per-row, this resulted in a few-percent performance improvement.
+            // Also tried pre-sorting triangles into disjoint regions, this did not help much except
+            // on "perfect" cases like a sphere. 
+            int wi = ni / 2, wj = nj / 2, wk = nk / 2;
+
+            bool abort = false;
+            gParallel.ForEach(Mesh.TriangleIndices(), (tid) => {
+                if (tid % 100 == 0)
+                    abort = CancelF();
+                if (abort)
+                    return;
+
+                Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
+                Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
+
+                // real ijk coordinates of xp/xq/xr
+                double fip = (xp[0] - ox) * invdx, fjp = (xp[1] - oy) * invdx, fkp = (xp[2] - oz) * invdx;
+                double fiq = (xq[0] - ox) * invdx, fjq = (xq[1] - oy) * invdx, fkq = (xq[2] - oz) * invdx;
+                double fir = (xr[0] - ox) * invdx, fjr = (xr[1] - oy) * invdx, fkr = (xr[2] - oz) * invdx;
+
+                // clamped integer bounding box of triangle plus exact-band
+                int i0 = MathUtil.Clamp(((int)MathUtil.Min(fip, fiq, fir)) - exact_band, 0, ni - 1);
+                int i1 = MathUtil.Clamp(((int)MathUtil.Max(fip, fiq, fir)) + exact_band + 1, 0, ni - 1);
+                int j0 = MathUtil.Clamp(((int)MathUtil.Min(fjp, fjq, fjr)) - exact_band, 0, nj - 1);
+                int j1 = MathUtil.Clamp(((int)MathUtil.Max(fjp, fjq, fjr)) + exact_band + 1, 0, nj - 1);
+                int k0 = MathUtil.Clamp(((int)MathUtil.Min(fkp, fkq, fkr)) - exact_band, 0, nk - 1);
+                int k1 = MathUtil.Clamp(((int)MathUtil.Max(fkp, fkq, fkr)) + exact_band + 1, 0, nk - 1);
+
+                // compute distance for each tri inside this bounding box
+                // note: this can be very conservative if the triangle is large and on diagonal to grid axes
+                for (int k = k0; k <= k1; ++k) {
+                    for (int j = j0; j <= j1; ++j) {
+                        for (int i = i0; i <= i1; ++i) {
+                            distances[i, j, k] = 1;
+                        }
+                    }
+                }
+            });
+
+
+            if (DebugPrint) System.Console.WriteLine("done narrow-band tagging");
+
+            double max_dist = (exact_band+1) * dx;
+            gParallel.ForEach(grid.Indices(), (idx) => {
+                if ( distances[idx] == 1 ) {
+                    int i = idx.x, j = idx.y, k = idx.z;
+                    Vector3d p = new Vector3d((float)i * dx + origin[0], (float)j * dx + origin[1], (float)k * dx + origin[2]);
+                    int near_tid = Spatial.FindNearestTriangle(p, max_dist);
+                    if ( near_tid == DMesh3.InvalidID ) {
+                        distances[idx] = upper_bound;
+                        return;
+                    }
+                    Triangle3d tri = new Triangle3d();
+                    Mesh.GetTriVertices(near_tid, ref tri.V0, ref tri.V1, ref tri.V2);
+                    Vector3d closest = new Vector3d(), bary = new Vector3d();
+                    double dsqr = DistPoint3Triangle3.DistanceSqr(ref p, ref tri, out closest, out bary);
+                    distances[idx] = (float)Math.Sqrt(dsqr);
+                    closest_tri[idx] = near_tid;
+                }
+            });
+
+
+            if (DebugPrint) System.Console.WriteLine("done distances");
+
+
+            if (CancelF())
+                return;
+
+            if (ComputeSigns == true) {
+
+                if (DebugPrint) System.Console.WriteLine("done narrow-band");
+
+                compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+                if (CancelF())
+                    return;
+
+                if (DebugPrint) System.Console.WriteLine("done intersections");
+
+                if (ComputeMode == ComputeModes.FullGrid) {
+                    // and now we fill in the rest of the distances with fast sweeping
+                    for (int pass = 0; pass < 2; ++pass) {
+                        sweep_pass(origin, dx, distances, closest_tri);
+                        if (CancelF())
+                            return;
+                    }
+                    if (DebugPrint) System.Console.WriteLine("done sweeping");
+                } else {
+                    // nothing!
+                    if (DebugPrint) System.Console.WriteLine("skipped sweeping");
+                }
+
+                if (DebugPrint) System.Console.WriteLine("done sweeping");
+
+                // then figure out signs (inside/outside) from intersection counts
+                compute_signs(ni, nj, nk, distances, intersection_count);
+                if (CancelF())
+                    return;
+
+                if (WantIntersectionsGrid)
+                    intersections_grid = intersection_count;
+
+                if (DebugPrint) System.Console.WriteLine("done signs");
+            }
+
+            if (WantClosestTriGrid)
+                closest_tri_grid = closest_tri;
+
+        }   // end make_level_set_3
+
+
+
+
+
+
 
 
 
