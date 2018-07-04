@@ -147,7 +147,9 @@ namespace g3
         public AxisAlignedBox3i Bounds {
             get { return new AxisAlignedBox3i(0, 0, 0, ni, nj, nk); }
         }
-
+        public AxisAlignedBox3i BoundsInclusive {
+            get { return new AxisAlignedBox3i(0, 0, 0, ni-1, nj-1, nk-1); }
+        }
 
         public IEnumerable<Vector3i> Indices()
         {
