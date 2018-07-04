@@ -61,9 +61,15 @@ namespace g3
         public enum ComputeModes
         {
             FullGrid = 0,
-            NarrowBandOnly = 1
+            NarrowBandOnly = 1,
+            NarrowBand_SpatialFloodFill = 2
         }
         public ComputeModes ComputeMode = ComputeModes.NarrowBandOnly;
+
+        // how wide of narrow band should we compute. This value is 
+        // currently only used if there is a spatial data structure, as
+        // we can efficiently explore the space (in that case ExactBandWidth is not used)
+        public double NarrowBandMaxDistance = 0;
 
         // should we try to compute signs? if not, grid remains unsigned
         public bool ComputeSigns = true;
@@ -115,6 +121,8 @@ namespace g3
             AxisAlignedBox3d bounds = Mesh.CachedBounds;
 
             float fBufferWidth = 2 * ExactBandWidth * CellSize;
+            if (ComputeMode == ComputeModes.NarrowBand_SpatialFloodFill)
+                fBufferWidth = (float)Math.Max(fBufferWidth, 2 * NarrowBandMaxDistance);
             grid_origin = (Vector3f)bounds.Min - fBufferWidth * Vector3f.One - (Vector3f)ExpandBounds;
             Vector3f max = (Vector3f)bounds.Max + fBufferWidth * Vector3f.One + (Vector3f)ExpandBounds;
             int ni = (int)((max.x - grid_origin.x) / CellSize) + 1;
@@ -122,13 +130,21 @@ namespace g3
             int nk = (int)((max.z - grid_origin.z) / CellSize) + 1;
 
             grid = new DenseGrid3f();
-            if (UseParallel) {
-                if ( Spatial != null )
-                    make_level_set3_parallel_spatial(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
-                else
-                    make_level_set3_parallel(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);  
+            if (ComputeMode == ComputeModes.NarrowBand_SpatialFloodFill) {
+                if (Spatial == null || NarrowBandMaxDistance == 0 || UseParallel == false)
+                    throw new Exception("MeshSignedDistanceGrid.Compute: must set Spatial data structure and band max distance, and UseParallel=true");
+                make_level_set3_parallel_floodfill(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+
             } else {
-                make_level_set3(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+                if (UseParallel) {
+                    if (Spatial != null) {
+                        make_level_set3_parallel_spatial(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+                    } else {
+                        make_level_set3_parallel(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+                    }
+                } else {
+                    make_level_set3(grid_origin, CellSize, ni, nj, nk, grid, ExactBandWidth);
+                }
             }
         }
 
@@ -561,6 +577,177 @@ namespace g3
 
         }   // end make_level_set_3
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+        void make_level_set3_parallel_floodfill(Vector3f origin, float dx,
+                             int ni, int nj, int nk,
+                             DenseGrid3f distances, int exact_band)
+        {
+            distances.resize(ni, nj, nk);
+            float upper_bound = this.upper_bound(distances);
+            distances.assign(upper_bound); // upper bound on distance
+
+            // closest triangle id for each grid cell
+            DenseGrid3i closest_tri = new DenseGrid3i(ni, nj, nk, -1);
+
+            // intersection_count(i,j,k) is # of tri intersections in (i-1,i]x{j}x{k}
+            DenseGrid3i intersection_count = new DenseGrid3i(ni, nj, nk, 0);
+
+            if (DebugPrint) System.Console.WriteLine("start");
+
+            double ox = (double)origin[0], oy = (double)origin[1], oz = (double)origin[2];
+            double invdx = 1.0 / dx;
+
+            // compute values at vertices
+
+            SpinLock grid_lock = new SpinLock();
+            List<int> Q = new List<int>();
+            bool[] done = new bool[distances.size];
+
+            bool abort = false;
+            gParallel.ForEach(Mesh.VertexIndices(), (vid) => {
+                if (vid % 100 == 0) abort = CancelF();
+                if (abort) return;
+
+                Vector3d v = Mesh.GetVertex(vid);
+                // real ijk coordinates of v
+                double fi = (v.x-ox)*invdx, fj = (v.y-oy)*invdx, fk = (v.z-oz)*invdx;
+                Vector3i idx = new Vector3i(
+                    MathUtil.Clamp((int)fi, 0, ni - 1),
+                    MathUtil.Clamp((int)fj, 0, nj - 1),
+                    MathUtil.Clamp((int)fk, 0, nk - 1));
+
+                if (distances[idx] < upper_bound)
+                    return;
+
+                bool taken = false;
+                grid_lock.Enter(ref taken);
+
+                Vector3d p = cell_center(idx);
+                int near_tid = Spatial.FindNearestTriangle(p);
+                Triangle3d tri = new Triangle3d();
+                Mesh.GetTriVertices(near_tid, ref tri.V0, ref tri.V1, ref tri.V2);
+                Vector3d closest = new Vector3d(), bary = new Vector3d();
+                double dsqr = DistPoint3Triangle3.DistanceSqr(ref p, ref tri, out closest, out bary);
+                distances[idx] = (float)Math.Sqrt(dsqr);
+                closest_tri[idx] = near_tid;
+                int idx_linear = distances.to_linear(ref idx);
+                Q.Add(idx_linear);
+                done[idx_linear] = true;
+                grid_lock.Exit();
+            });
+            if (DebugPrint) System.Console.WriteLine("done vertices");
+            if (CancelF())
+                return;
+
+            // we could do this parallel w/ some kind of producer-consumer...
+            List<int> next_Q = new List<int>();
+            AxisAlignedBox3i bounds = distances.BoundsInclusive;
+            double max_dist = NarrowBandMaxDistance; 
+            double max_query_dist = max_dist + (2*dx*MathUtil.SqrtTwo);
+            int next_pass_count = Q.Count;
+            while (next_pass_count > 0) {
+
+                next_Q.Clear();
+                gParallel.ForEach(Q, (cur_linear_index) => {
+                    Vector3i cur_idx = distances.to_index(cur_linear_index);
+                    foreach (Vector3i idx_offset in gIndices.GridOffsets26) {
+                        Vector3i nbr_idx = cur_idx + idx_offset;
+                        if (bounds.Contains(nbr_idx) == false)
+                            continue;
+                        int nbr_linear_idx = distances.to_linear(ref nbr_idx);
+                        if (done[nbr_linear_idx])
+                            continue;
+
+                        Vector3d p = cell_center(nbr_idx);
+                        int near_tid = Spatial.FindNearestTriangle(p, max_query_dist);
+                        if (near_tid == -1) {
+                            done[nbr_linear_idx] = true;
+                            continue;
+                        }
+
+                        Triangle3d tri = new Triangle3d();
+                        Mesh.GetTriVertices(near_tid, ref tri.V0, ref tri.V1, ref tri.V2);
+                        Vector3d closest = new Vector3d(), bary = new Vector3d();
+                        double dsqr = DistPoint3Triangle3.DistanceSqr(ref p, ref tri, out closest, out bary);
+                        double dist = Math.Sqrt(dsqr);
+
+                        bool taken = false;
+                        grid_lock.Enter(ref taken);
+                        if (done[nbr_linear_idx] == false) {
+                            distances[nbr_linear_idx] = (float)dist;
+                            closest_tri[nbr_linear_idx] = near_tid;
+                            done[nbr_linear_idx] = true;
+                            if (dist < max_dist) 
+                                next_Q.Add(nbr_linear_idx);
+                        }
+                        grid_lock.Exit();
+                    }
+                });
+                // swap lists
+                var tmp = Q; Q = next_Q; next_Q = tmp;
+                next_pass_count = Q.Count;
+            }
+            if (DebugPrint) System.Console.WriteLine("done floodfill");
+            if (CancelF())
+                return;
+
+
+            if (ComputeSigns == true) {
+
+                if (DebugPrint) System.Console.WriteLine("done narrow-band");
+
+                compute_intersections(origin, dx, ni, nj, nk, intersection_count);
+                if (CancelF())
+                    return;
+
+                if (DebugPrint) System.Console.WriteLine("done intersections");
+
+                if (ComputeMode == ComputeModes.FullGrid) {
+                    // and now we fill in the rest of the distances with fast sweeping
+                    for (int pass = 0; pass < 2; ++pass) {
+                        sweep_pass(origin, dx, distances, closest_tri);
+                        if (CancelF())
+                            return;
+                    }
+                    if (DebugPrint) System.Console.WriteLine("done sweeping");
+                } else {
+                    // nothing!
+                    if (DebugPrint) System.Console.WriteLine("skipped sweeping");
+                }
+
+                if (DebugPrint) System.Console.WriteLine("done sweeping");
+
+                // then figure out signs (inside/outside) from intersection counts
+                compute_signs(ni, nj, nk, distances, intersection_count);
+                if (CancelF())
+                    return;
+
+                if (WantIntersectionsGrid)
+                    intersections_grid = intersection_count;
+
+                if (DebugPrint) System.Console.WriteLine("done signs");
+            }
+
+            if (WantClosestTriGrid)
+                closest_tri_grid = closest_tri;
+
+        }   // end make_level_set_3
+
+
+
+      
 
 
 
