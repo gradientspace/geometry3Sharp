@@ -176,11 +176,27 @@ namespace g3
             get { return grid[idx.x, idx.y, idx.z]; }
         }
 
-        public Vector3f CellCenter(int i, int j, int k)
+        public Vector3f CellCenter(int i, int j, int k) {
+            return cell_center(new Vector3i(i, j, k));
+        }
+        Vector3f cell_center(Vector3i ijk)
         {
-            return new Vector3f((float)i * CellSize + grid_origin.x, 
-                                (float)j * CellSize + grid_origin.y, 
-                                (float)k * CellSize + grid_origin.z);
+            return new Vector3f((float)ijk.x * CellSize + grid_origin[0],
+                                (float)ijk.y * CellSize + grid_origin[1],
+                                (float)ijk.z * CellSize + grid_origin[2]);
+        }
+
+        float upper_bound(DenseGrid3f grid)
+        {
+            return (float)((grid.ni + grid.nj + grid.nk) * CellSize);
+        }
+
+        float cell_tri_dist(Vector3i idx, int tid)
+        {
+            Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
+            Vector3d c = cell_center(idx);
+            Mesh.GetTriVertices(tid, ref xp, ref xq, ref xr);
+            return (float)point_triangle_distance(ref c, ref xp, ref xq, ref xr);
         }
 
 
@@ -191,7 +207,7 @@ namespace g3
                              DenseGrid3f distances, int exact_band)
         {
             distances.resize(ni, nj, nk);
-            distances.assign((ni + nj + nk) * dx); // upper bound on distance
+            distances.assign(upper_bound(distances)); // upper bound on distance
 
             // closest triangle id for each grid cell
             DenseGrid3i closest_tri = new DenseGrid3i(ni, nj, nk, -1);
@@ -288,14 +304,12 @@ namespace g3
 
 
 
-
-
         void make_level_set3_parallel(Vector3f origin, float dx,
                              int ni, int nj, int nk,
                              DenseGrid3f distances, int exact_band)
         {
             distances.resize(ni, nj, nk);
-            distances.assign((float)((ni + nj + nk) * dx)); // upper bound on distance
+            distances.assign(upper_bound(grid)); // upper bound on distance
 
             // closest triangle id for each grid cell
             DenseGrid3i closest_tri = new DenseGrid3i(ni, nj, nk, -1);
@@ -367,13 +381,12 @@ namespace g3
                     }
                 }
             });
-
+            if (DebugPrint) System.Console.WriteLine("done narrow-band");
             if (CancelF())
                 return;
 
-            if (ComputeSigns == true) {
 
-                if (DebugPrint) System.Console.WriteLine("done narrow-band");
+            if (ComputeSigns == true) {
 
                 compute_intersections(origin, dx, ni, nj, nk, intersection_count);
                 if (CancelF())
@@ -416,17 +429,12 @@ namespace g3
 
 
 
-
-
-
-
-
         void make_level_set3_parallel_spatial(Vector3f origin, float dx,
                              int ni, int nj, int nk,
                              DenseGrid3f distances, int exact_band)
         {
             distances.resize(ni, nj, nk);
-            float upper_bound = (float)((ni + nj + nk) * dx);
+            float upper_bound = this.upper_bound(distances);
             distances.assign(upper_bound); // upper bound on distance
 
             // closest triangle id for each grid cell
@@ -449,8 +457,6 @@ namespace g3
             // separate spinlock per-row, this resulted in a few-percent performance improvement.
             // Also tried pre-sorting triangles into disjoint regions, this did not help much except
             // on "perfect" cases like a sphere. 
-            int wi = ni / 2, wj = nj / 2, wk = nk / 2;
-
             bool abort = false;
             gParallel.ForEach(Mesh.TriangleIndices(), (tid) => {
                 if (tid % 100 == 0)
@@ -823,9 +829,9 @@ namespace g3
             Vector3d x13 = (x1 - x3);
             Vector3d x23 = (x2 - x3);
             Vector3d x03 = (x0 - x3);
-            double m13 = x13.LengthSquared, m23 = x23.LengthSquared, d = x13.Dot(x23);
+            double m13 = x13.LengthSquared, m23 = x23.LengthSquared, d = x13.Dot(ref x23);
             double invdet = 1.0 / Math.Max(m13 * m23 - d * d, 1e-30);
-            double a = x13.Dot(x03), b = x23.Dot(x03);
+            double a = x13.Dot(ref x03), b = x23.Dot(ref x03);
             // the barycentric coordinates themselves
             double w23 = invdet * (m23 * a - d * b);
             double w31 = invdet * (m13 * b - d * a);
