@@ -510,7 +510,7 @@ namespace g3
 
             if (DebugPrint) System.Console.WriteLine("done narrow-band tagging");
 
-            double max_dist = (exact_band+1) * dx;
+            double max_dist = exact_band * (dx * MathUtil.SqrtTwo);
             gParallel.ForEach(grid.Indices(), (idx) => {
                 if ( distances[idx] == 1 ) {
                     int i = idx.x, j = idx.y, k = idx.z;
