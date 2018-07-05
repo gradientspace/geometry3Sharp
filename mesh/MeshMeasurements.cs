@@ -149,6 +149,42 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Compute volume and surface area of triangles of mesh.
+        /// Return value is (volume,area)
+        /// Note that if triangles don't define closed region, volume is probably nonsense...
+        /// </summary>
+        public static Vector2d VolumeArea( DMesh3 mesh, IEnumerable<int> triangles,
+            Func<int, Vector3d> getVertexF)
+        {
+            double mass_integral = 0.0;
+            double area_sum = 0;
+            foreach (int tid in triangles) {
+                Index3i tri = mesh.GetTriangle(tid);
+                // Get vertices of triangle i.
+                Vector3d v0 = getVertexF(tri.a);
+                Vector3d v1 = getVertexF(tri.b);
+                Vector3d v2 = getVertexF(tri.c);
+
+                // Get cross product of edges and (un-normalized) normal vector.
+                Vector3d V1mV0 = v1 - v0;
+                Vector3d V2mV0 = v2 - v0;
+                Vector3d N = V1mV0.Cross(V2mV0);
+
+                area_sum += 0.5 * N.Length;
+
+                double tmp0 = v0.x + v1.x;
+                double f1x = tmp0 + v2.x;
+                mass_integral += N.x * f1x;
+            }
+
+            return new Vector2d(mass_integral * (1.0/6.0), area_sum);
+        }
+
+
+
+
+
 
         public static Vector3d Centroid(IEnumerable<Vector3d> vertices)
         {

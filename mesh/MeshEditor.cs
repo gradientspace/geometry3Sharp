@@ -849,6 +849,36 @@ namespace g3
 
 
 
+
+        /// <summary>
+        /// Remove any connected components with volume &lt; min_volume area lt; min_area
+        /// </summary>
+        public int RemoveSmallComponents(double min_volume, double min_area)
+        {
+            MeshConnectedComponents C = new MeshConnectedComponents(Mesh);
+            C.FindConnectedT();
+            if (C.Count == 1)
+                return 0;
+            int nRemoved = 0;
+            foreach (var comp in C.Components) {
+                Vector2d vol_area = MeshMeasurements.VolumeArea(Mesh, comp.Indices, Mesh.GetVertex);
+                if (vol_area.x < min_volume || vol_area.y < min_area) {
+                    MeshEditor.RemoveTriangles(Mesh, comp.Indices);
+                    nRemoved++;
+                }
+            }
+            return nRemoved;
+        }
+        public static int RemoveSmallComponents(DMesh3 mesh, double min_volume, double min_area) {
+            MeshEditor e = new MeshEditor(mesh); return e.RemoveSmallComponents(min_volume, min_area);
+        }
+
+
+
+
+
+
+
         // this is for backing out changes we have made...
         bool remove_triangles(int[] tri_list, int count)
         {
