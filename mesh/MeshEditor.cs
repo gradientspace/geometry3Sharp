@@ -898,6 +898,9 @@ namespace g3
             }
             return nRemoved;
         }
+        public static int RemoveUnusedVertices(DMesh3 mesh) {
+            MeshEditor e = new MeshEditor(mesh); return e.RemoveUnusedVertices();
+        }
 
 
 
