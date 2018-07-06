@@ -376,7 +376,7 @@ namespace g3
         /// Pass bRepeatToConvergence=false to only do one pass.
         /// [TODO] if we are repeating, construct face selection from nbrs of first list and iterate over that on future passes!
         /// </summary>
-        public static int RemoveFinTriangles(DMesh3 mesh, Func<int, bool> removeF = null, bool bRepeatToConvergence = true)
+        public static int RemoveFinTriangles(DMesh3 mesh, Func<DMesh3, int, bool> removeF = null, bool bRepeatToConvergence = true)
         {
             MeshEditor editor = new MeshEditor(mesh);
 
@@ -387,7 +387,7 @@ namespace g3
                 Index3i nbrs = mesh.GetTriNeighbourTris(tid);
                 int c = ((nbrs.a != DMesh3.InvalidID)?1:0) + ((nbrs.b != DMesh3.InvalidID)?1:0) + ((nbrs.c != DMesh3.InvalidID)?1:0);
                 if (c <= 1) {
-                    if (removeF == null || removeF(tid) == true )
+                    if (removeF == null || removeF(mesh, tid) == true )
                         to_remove.Add(tid);
                 }
             }
