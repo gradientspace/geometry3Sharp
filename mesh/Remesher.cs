@@ -676,56 +676,6 @@ namespace g3 {
         }
 
 
-        // Project vertices towards projection target by input alpha, and optionally, don't project vertices too far away
-        // We can do projection in parallel if we have .net 
-        // [TODO] this code is currently not called
-        protected virtual void FullProjectionPass(double projectionAlpha, double maxProjectDistance)
-        {
-            projectionAlpha = MathUtil.Clamp(projectionAlpha, 0, 1);
-
-            Action<int> project;
-
-            if (maxProjectDistance < double.MaxValue && maxProjectDistance > 0) {
-                project = (vID) => {
-                    if (vertex_is_constrained(vID))
-                        return;
-                    if (VertexControlF != null && (VertexControlF(vID) & VertexControl.NoProject) != 0)
-                        return;
-                    Vector3d curpos = mesh.GetVertex(vID);
-                    Vector3d projected = target.Project(curpos, vID);
-
-                    var distance = curpos.Distance(projected);
-                    if (distance < maxProjectDistance) {
-                        projected = Vector3d.Lerp(curpos, projected, projectionAlpha);
-                        double distanceAlpha = distance / maxProjectDistance;
-                        projected = Vector3d.Lerp(projected, curpos, distanceAlpha);
-                        mesh.SetVertex(vID, projected);
-                    }
-                };
-            } else {
-                project = (vID) => {
-                    if (vertex_is_constrained(vID))
-                        return;
-                    if (VertexControlF != null && (VertexControlF(vID) & VertexControl.NoProject) != 0)
-                        return;
-                    Vector3d curpos = mesh.GetVertex(vID);
-                    Vector3d projected = target.Project(curpos, vID);
-                    projected = Vector3d.Lerp(curpos, projected, projectionAlpha);
-                    mesh.SetVertex(vID, projected);
-                };
-            }
-
-            if (EnableParallelProjection) {
-                gParallel.ForEach<int>(project_vertices(), project);
-            } else {
-                foreach (int vid in project_vertices())
-                    project(vid);
-            }
-        }
-
-
-
-
         [Conditional("DEBUG")] 
         void RuntimeDebugCheck(int eid)
         {
