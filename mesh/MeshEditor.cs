@@ -883,6 +883,28 @@ namespace g3
 
 
         /// <summary>
+        /// Remove any unused vertices in mesh, ie vertices with no edges.
+        /// Returns number of removed vertices.
+        /// </summary>
+        public int RemoveUnusedVertices()
+        {
+            int nRemoved = 0;
+            int NV = Mesh.MaxVertexID;
+            for ( int vid = 0; vid < NV; ++vid) {
+                if (Mesh.IsVertex(vid) && Mesh.GetVtxEdgeCount(vid) == 0) {
+                    Mesh.RemoveVertex(vid);
+                    ++nRemoved;
+                }
+            }
+            return nRemoved;
+        }
+
+
+
+
+
+
+        /// <summary>
         /// Remove any connected components with volume &lt; min_volume area lt; min_area
         /// </summary>
         public int RemoveSmallComponents(double min_volume, double min_area)
