@@ -370,6 +370,38 @@ namespace g3
 
 
         /// <summary>
+        /// Remove 'fin' triangles that have only one connected triangle.
+        /// Removing one fin can create another, by default will keep iterating
+        /// until all fins removed (in a not very efficient way!).
+        /// Pass bRepeatToConvergence=false to only do one pass.
+        /// [TODO] if we are repeating, construct face selection from nbrs of first list and iterate over that on future passes!
+        /// </summary>
+        public static int RemoveFinTriangles(DMesh3 mesh, bool bRepeatToConvergence = true)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+
+            int nRemoved = 0;
+            List<int> to_remove = new List<int>();
+            repeat:
+            foreach ( int tid in mesh.TriangleIndices()) {
+                Index3i nbrs = mesh.GetTriNeighbourTris(tid);
+                int c = ((nbrs.a != DMesh3.InvalidID)?1:0) + ((nbrs.b != DMesh3.InvalidID)?1:0) + ((nbrs.c != DMesh3.InvalidID)?1:0);
+                if (c <= 1)
+                    to_remove.Add(tid);
+            }
+            if (to_remove.Count == 0)
+                return nRemoved;
+            nRemoved += to_remove.Count;
+            RemoveTriangles(mesh, to_remove, true);
+            to_remove.Clear();
+            if (bRepeatToConvergence)
+                goto repeat;
+            return nRemoved;
+        }
+
+
+
+        /// <summary>
         /// Disconnect the given triangles from their neighbours, by duplicating "boundary" vertices, ie
         /// vertices on edges for which one triangle is in-set and the other is not. 
         /// If bComputeEdgePairs is true, we return list of old/new edge pairs (useful for stitching)
