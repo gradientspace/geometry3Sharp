@@ -7,6 +7,14 @@ namespace g3
     public static class BoundsUtil
     {
 
+        public static AxisAlignedBox3d Bounds(IEnumerable<DMesh3> meshes) {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            foreach (DMesh3 mesh in meshes)
+                bounds.Contain(mesh.CachedBounds);
+            return bounds;
+        }
+
+
         public static AxisAlignedBox3d Bounds(IPointSet source) {
             AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
             foreach (int vid in source.VertexIndices())
