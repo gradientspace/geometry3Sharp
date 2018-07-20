@@ -46,7 +46,11 @@ namespace g3
             int tid = spatial.FindNearestTriangle(queryPoint, maxDist);
             if (tid == DMesh3.InvalidID)
                 return double.MaxValue;
-            return Math.Sqrt(TriangleDistance(mesh, tid, queryPoint).DistanceSquared);
+            Triangle3d tri = new Triangle3d();
+            mesh.GetTriVertices(tid, ref tri.V0, ref tri.V1, ref tri.V2);
+            Vector3d closest, bary;
+            double dist_sqr = DistPoint3Triangle3.DistanceSqr(ref queryPoint, ref tri, out closest, out bary);
+            return Math.Sqrt(dist_sqr);
         }
 
 

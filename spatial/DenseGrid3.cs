@@ -82,6 +82,12 @@ namespace g3
             set { Buffer[ijk.x + ni * (ijk.y + nj * ijk.z)] = value; }
         }
 
+        public void get_x_pair(int i0, int j, int k, out float a, out float b)
+        {
+            int offset = ni * (j + nj * k);
+            a = Buffer[offset + i0];
+            b = Buffer[offset + i0 + 1];
+        }
         public void get_x_pair(int i0, int j, int k, out double a, out double b)
         {
             int offset = ni * (j + nj * k);

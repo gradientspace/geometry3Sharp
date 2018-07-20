@@ -636,6 +636,7 @@ namespace g3
     {
         public List<BoundedImplicitFunction3d> Children;
         public double BlendPower = 2.0;
+        public double FieldShift = 0;
 
         public double Value(ref Vector3d pt)
         {
@@ -657,7 +658,7 @@ namespace g3
                 }
                 f = Math.Pow(f, 1.0 / BlendPower);
             }
-            return f;
+            return f + FieldShift;
         }
 
         public AxisAlignedBox3d Bounds()

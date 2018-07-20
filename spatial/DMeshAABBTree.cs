@@ -128,6 +128,20 @@ namespace g3
             find_nearest_tri(root_index, p, ref fNearestSqr, ref tNearID);
             return tNearID;
         }
+        /// <summary>
+        /// Find the triangle closest to p, and distance to it, within distance fMaxDist, or return InvalidID
+        /// Use MeshQueries.TriangleDistance() to get more information
+        /// </summary>
+        public virtual int FindNearestTriangle(Vector3d p, out double fNearestDistSqr, double fMaxDist = double.MaxValue)
+        {
+            if (mesh_timestamp != mesh.ShapeTimestamp)
+                throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+
+            fNearestDistSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
+            int tNearID = DMesh3.InvalidID;
+            find_nearest_tri(root_index, p, ref fNearestDistSqr, ref tNearID);
+            return tNearID;
+        }
         protected void find_nearest_tri(int iBox, Vector3d p, ref double fNearestSqr, ref int tID)
         {
             int idx = box_to_index[iBox];

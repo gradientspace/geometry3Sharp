@@ -1628,8 +1628,10 @@ namespace g3
                     centroid.z += vertices[other_idx + 2];
                     n++;
                 }
-                double d = 1.0 / n;
-                centroid.x *= d; centroid.y *= d; centroid.z *= d;
+                if (n > 0) {
+                    double d = 1.0 / n;
+                    centroid.x *= d; centroid.y *= d; centroid.z *= d;
+                }
             }
         }
 
