@@ -803,6 +803,11 @@ namespace g3
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(new Frame3f(pos, normal), size*Vector3f.One, color);
         }
+        public static void AppendBox(DMesh3 mesh, Frame3f frame, Vector3f size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(frame, size, color);
+        }
 
         public static void AppendLine(DMesh3 mesh, Segment3d seg, float size)
         {
