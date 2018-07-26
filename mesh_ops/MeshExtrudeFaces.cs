@@ -21,8 +21,6 @@ namespace g3
         public DMesh3 Mesh;
         public int[] Triangles;
 
-        // arguments
-
         public SetGroupBehavior Group = SetGroupBehavior.AutoGenerate;
 
         // set new position based on original loop vertex position, normal, and index
@@ -32,7 +30,9 @@ namespace g3
         public List<Index2i> EdgePairs;                 // pairs of edges (original, extruded) that were stitched together
         public MeshVertexSelection ExtrudeVertices;     // vertices of extruded region
         public int[] JoinTriangles;                     // triangles generated to connect original end extruded edges together
+                                                        // may contain invalid triangle IDs if JoinIncomplete=true
         public int JoinGroupID;                         // group ID of connection triangles
+        public bool JoinIncomplete = false;             // if true, errors were encountered during the join operation
 
 
         public MeshExtrudeFaces(DMesh3 mesh, int[] triangles, bool bForceCopyArray = false)
@@ -69,11 +69,17 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Apply the extrustion operation to input Mesh.
+        /// Will return false if operation is not completed.
+        /// However changes are not backed out, so if false is returned, input Mesh is in 
+        /// undefined state (generally means there are some holes)
+        /// </summary>
         public virtual bool Extrude()
         {
             MeshEditor editor = new MeshEditor(Mesh);
 
-            editor.SeparateTriangles(Triangles, true, out EdgePairs);
+            bool bOK = editor.SeparateTriangles(Triangles, true, out EdgePairs);
 
             MeshNormals normals = null;
             bool bHaveNormals = Mesh.HasVertexNormals;
@@ -97,9 +103,9 @@ namespace g3
                 Mesh.SetVertex(vid, NewVertices[k++]);
 
             JoinGroupID = Group.GetGroupID(Mesh);
-            JoinTriangles = editor.StitchUnorderedEdges(EdgePairs, JoinGroupID);
+            JoinTriangles = editor.StitchUnorderedEdges(EdgePairs, JoinGroupID, false, out JoinIncomplete);
 
-            return true;
+            return JoinTriangles != null && JoinIncomplete == false;
         }
 
 
