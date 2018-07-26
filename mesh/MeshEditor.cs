@@ -182,12 +182,18 @@ namespace g3
         /// <summary>
         /// Stitch two sets of boundary edges that are provided as unordered pairs of edges, by
         /// adding triangulated quads between each edge pair. 
-        /// If a failure is encountered during stitching, the triangles added up to that point are removed.
+        /// If bAbortOnFailure==true and a failure is encountered during stitching, the triangles added up to that point are removed.
+        /// If bAbortOnFailure==false, failures are ignored and the returned triangle list may contain invalid values!
         /// </summary>
-        public virtual int[] StitchUnorderedEdges(List<Index2i> EdgePairs, int group_id = -1)
+        public virtual int[] StitchUnorderedEdges(List<Index2i> EdgePairs, int group_id, bool bAbortOnFailure, out bool stitch_incomplete)
         {
             int N = EdgePairs.Count;
             int[] new_tris = new int[N * 2];
+            if (bAbortOnFailure == false) {
+                for (int k = 0; k < new_tris.Length; ++k)
+                    new_tris[k] = DMesh3.InvalidID;
+            }
+            stitch_incomplete = false;
 
             int i = 0;
             for (; i < N; ++i) {
@@ -195,16 +201,20 @@ namespace g3
 
                 // look up and orient the first edge
                 Index4i edge_a = Mesh.GetEdge(edges.a);
-                if ( edge_a.d != DMesh3.InvalidID )
-                    goto operation_failed;
+                if (edge_a.d != DMesh3.InvalidID) {
+                    if (bAbortOnFailure) goto operation_failed;
+                    else { stitch_incomplete = true; continue; }
+                }
                 Index3i edge_a_tri = Mesh.GetTriangle(edge_a.c);
                 int a = edge_a.a, b = edge_a.b;
                 IndexUtil.orient_tri_edge(ref a, ref b, edge_a_tri);
 
                 // look up and orient the second edge
                 Index4i edge_b = Mesh.GetEdge(edges.b);
-                if (edge_b.d != DMesh3.InvalidID)
-                    goto operation_failed;
+                if (edge_b.d != DMesh3.InvalidID) {
+                    if (bAbortOnFailure) goto operation_failed;
+                    else { stitch_incomplete = true; continue; }
+                }
                 Index3i edge_b_tri = Mesh.GetTriangle(edge_b.c);
                 int c = edge_b.a, d = edge_b.b;
                 IndexUtil.orient_tri_edge(ref c, ref d, edge_b_tri);
@@ -218,8 +228,10 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 < 0 || tid2 < 0)
-                    goto operation_failed;
+                if (tid1 < 0 || tid2 < 0) {
+                    if (bAbortOnFailure) goto operation_failed;
+                    else { stitch_incomplete = true; continue; }
+                }
 
                 new_tris[2 * i] = tid1;
                 new_tris[2 * i + 1] = tid2;
@@ -234,6 +246,11 @@ namespace g3
                     throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
             }
             return null;
+        }
+        public virtual int[] StitchUnorderedEdges(List<Index2i> EdgePairs, int group_id = -1, bool bAbortOnFailure = true)
+        {
+            bool incomplete = false;
+            return StitchUnorderedEdges(EdgePairs, group_id, bAbortOnFailure, out incomplete);
         }
 
 
