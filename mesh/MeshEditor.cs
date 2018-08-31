@@ -135,7 +135,7 @@ namespace g3
         /// Loops must have appropriate orientation (which is...??)
         /// [TODO] check and fail on bad orientation
         /// </summary>
-        public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1)
+        public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1, bool borderCheck)
         {
             int N = vloop1.Length;
             if (N != vloop2.Length)
@@ -153,8 +153,8 @@ namespace g3
                 Index3i t1 = new Index3i(b, a, d);
                 Index3i t2 = new Index3i(a, c, d);
 
-                int tid1 = Mesh.AppendTriangle(t1, group_id);
-                int tid2 = Mesh.AppendTriangle(t2, group_id);
+                int tid1 = Mesh.AppendTriangle(t1, group_id, borderCheck);
+                int tid2 = Mesh.AppendTriangle(t2, group_id, borderCheck);
 
                 if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
