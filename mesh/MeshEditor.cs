@@ -135,7 +135,7 @@ namespace g3
         /// Loops must have appropriate orientation (which is...??)
         /// [TODO] check and fail on bad orientation
         /// </summary>
-        public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1, bool borderCheck)
+        public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1, bool borderCheck = true)
         {
             int N = vloop1.Length;
             if (N != vloop2.Length)
