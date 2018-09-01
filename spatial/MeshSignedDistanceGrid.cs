@@ -99,19 +99,26 @@ namespace g3
         DenseGrid3f grid;
         DenseGrid3i closest_tri_grid;
         DenseGrid3i intersections_grid;
+        
+        // ZG: Configurable bounds
+        private AxisAlignedBox3d bounds;
+
+        public MeshSignedDistanceGrid(DMesh3 mesh, AxisAlignedBox3d bounds, double cellSize) : this(mesh, cellSize)
+        {
+            this.bounds = bounds;
+        }
 
         public MeshSignedDistanceGrid(DMesh3 mesh, double cellSize)
         {
             Mesh = mesh;
             CellSize = (float)cellSize;
+            bounds = Mesh.CachedBounds;
         }
 
 
         public void Compute()
         {
             // figure out origin & dimensions
-            AxisAlignedBox3d bounds = Mesh.CachedBounds;
-
             float fBufferWidth = 2 * ExactBandWidth * CellSize;
             grid_origin = (Vector3f)bounds.Min - fBufferWidth * Vector3f.One - (Vector3f)ExpandBounds;
             Vector3f max = (Vector3f)bounds.Max + fBufferWidth * Vector3f.One + (Vector3f)ExpandBounds;
@@ -457,7 +464,7 @@ namespace g3
                              ref Vector3d gx, int i0, int j0, int k0, int i1, int j1, int k1)
         {
             if (closest_tri[i1, j1, k1] >= 0) {
-                Vector3d xp = Vector3f.Zero, xq = Vector3f.Zero, xr = Vector3f.Zero;
+                Vector3d xp = Vector3d.Zero, xq = Vector3d.Zero, xr = Vector3d.Zero;
                 Mesh.GetTriVertices(closest_tri[i1, j1, k1], ref xp, ref xq, ref xr);
                 float d = (float)point_triangle_distance(ref gx, ref xp, ref xq, ref xr);
                 if (d < phi[i0, j0, k0]) {
