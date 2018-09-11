@@ -32,7 +32,7 @@ namespace g3
         public Func<int, bool> FilterTriF;
 
         // this function sets UV-space coordinates. Default is to set x=x, y=y, z=0
-        public Action<int, Vector2d, Vector3f?> SetPointF;
+        public Action<int, Vector2d, Vector3d> SetPointF;
 
         // the spans & loops take some compute time and can be disabled if you don't need it...
         public bool EnableCutSpansAndLoops = true;
@@ -269,7 +269,7 @@ namespace g3
                 MeshResult splitResult = Mesh.SplitEdge(eid, out split_info);
                 if (splitResult != MeshResult.Ok)
                     throw new Exception("MeshInsertUVPolyCurve.insert_corner_from_bary: edge split failed in case sum==2-"+ splitResult.ToString());
-                SetPointF(split_info.vNew, vInsert, (Vector3f?) point3d);
+                SetPointF(split_info.vNew, vInsert, point3d);
 spatial_add_triangles(et.a, et.b);
                     spatial_add_triangles(split_info.eNewT2, split_info.eNewT3);                return split_info.vNew;}
             }
@@ -282,7 +282,7 @@ spatial_add_triangles(et.a, et.b);
             if (result != MeshResult.Ok)
                 throw new Exception("MeshInsertUVPolyCurve.insert_corner_from_bary: face poke failed - " + result.ToString());
 
-            SetPointF(pokeinfo.new_vid, vInsert, (Vector3f?) point3d);
+            SetPointF(pokeinfo.new_vid, vInsert, point3d);
 
             spatial_add_triangle(tid);
             spatial_add_triangle(pokeinfo.new_t1);
@@ -475,7 +475,7 @@ spatial_add_triangles(et.a, et.b);
                     var evn = center + t * dir;
 
                     // move split point to intersection position
-                    SetPointF(splitInfo.vNew, x, (Vector3f?) evn);
+                    SetPointF(splitInfo.vNew, x, evn);
                     NewCutVertices.Add(splitInfo.vNew);
 
                     NewEdges.Add(splitInfo.eNewBN);
