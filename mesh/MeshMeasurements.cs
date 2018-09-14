@@ -183,6 +183,18 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Compute area of one-ring of mesh vertex by summing triangle areas.
+        /// If bDisjoint = true, we multiple each triangle area by 1/3
+        /// </summary>
+        public static double VertexOneRingArea( DMesh3 mesh, int vid, bool bDisjoint = true )
+        {
+            double sum = 0;
+            double mul = (bDisjoint) ? (1.0/3.0) : 1.0;
+            foreach (int tid in mesh.VtxTrianglesItr(vid))
+                sum += mesh.GetTriArea(tid) * mul;
+            return sum;
+        }
 
 
 
