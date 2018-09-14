@@ -16,6 +16,8 @@ namespace g3
         public DVector<int> Triangles;
         public DVector<int> FaceGroups;
 
+        int timestamp = 0;
+
         public SimpleMesh()
         {
             Initialize();
@@ -100,6 +102,17 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Timestamp is incremented any time any change is made to the mesh
+        /// </summary>
+        public int Timestamp {
+            get { return timestamp; }
+        }
+
+        void updateTimeStamp() {
+            timestamp++;
+        }
+
 
         /*
          * Construction
@@ -117,6 +130,7 @@ namespace g3
                 UVs.Add(0); UVs.Add(0);
             }
             Vertices.Add(x); Vertices.Add(y); Vertices.Add(z);
+            updateTimeStamp();
             return i;
         }
         public int AppendVertex(NewVertexInfo info)
@@ -140,6 +154,7 @@ namespace g3
             }
 
             Vertices.Add(info.v[0]); Vertices.Add(info.v[1]); Vertices.Add(info.v[2]);
+            updateTimeStamp();
             return i;
         }
 
@@ -157,6 +172,7 @@ namespace g3
                 UVs.Add(uv.array);
             else if (HasVertexUVs)
                 UVs.Add(new float[] { 0, 0 }, v.Count);
+            updateTimeStamp();
         }
 
 
@@ -167,6 +183,7 @@ namespace g3
             if (HasTriangleGroups)
                 FaceGroups.Add((g == -1) ? 0 : g);
             Triangles.Add(i); Triangles.Add(j); Triangles.Add(k);
+            updateTimeStamp();
             return ti;
         }
 
@@ -180,6 +197,7 @@ namespace g3
                 for (int ti = 0; ti < vTriangles.Length / 3; ++ti)
                     FaceGroups.Add((g == -1) ? 0 : g);
             }
+            updateTimeStamp();
         }
 
         public void AppendTriangles(IndexArray3i t, int[] groups = null)
@@ -191,6 +209,7 @@ namespace g3
                 else
                     FaceGroups.Add(0, t.Count);
             }
+            updateTimeStamp();
         }
 
 
@@ -198,7 +217,7 @@ namespace g3
          * Utility / Convenience
          */
 
-            // [RMS] this is convenience stuff...
+        // [RMS] this is convenience stuff...
         public void Translate(double tx, double ty, double tz)
         {
             int c = VertexCount;
@@ -207,6 +226,7 @@ namespace g3
                 this.Vertices[3 * i + 1] += ty;
                 this.Vertices[3 * i + 2] += tz;
             }
+            updateTimeStamp();
         }
         public void Scale(double sx, double sy, double sz)
         {
@@ -216,10 +236,12 @@ namespace g3
                 this.Vertices[3 * i + 1] *= sy;
                 this.Vertices[3 * i + 2] *= sz;
             }
+            updateTimeStamp();
         }
         public void Scale(double s)
         {
             Scale(s, s, s);
+            updateTimeStamp();
         }
 
 
@@ -382,23 +404,27 @@ namespace g3
             Vertices[3 * i] = v.x;
             Vertices[3 * i + 1] = v.y;
             Vertices[3 * i + 2] = v.z;
+            updateTimeStamp();
         }
 
         public void SetVertexNormal(int i, Vector3f n) {
             Normals[3 * i] = n.x;
             Normals[3 * i + 1] = n.y;
             Normals[3 * i + 2] = n.z;
+            updateTimeStamp();
         }
 
         public void SetVertexColor(int i, Vector3f c) {
             Colors[3 * i] = c.x;
             Colors[3 * i + 1] = c.y;
             Colors[3 * i + 2] = c.z;
+            updateTimeStamp();
         }
 
         public void SetVertexUV(int i, Vector2f uv) {
             UVs[2 * i] = uv.x;
             UVs[2 * i + 1] = uv.y;
+            updateTimeStamp();
         }
 
 
