@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 
 namespace g3
@@ -834,6 +835,12 @@ namespace g3
             f.AlignAxis(2, (Vector3f)seg.Direction);
             AppendBox(f, new Vector3f(size, size, seg.Extent));
         }
+        public void AppendLine(Segment3d seg, float size, Colorf color)
+        {
+            Frame3f f = new Frame3f(seg.Center);
+            f.AlignAxis(2, (Vector3f)seg.Direction);
+            AppendBox(f, new Vector3f(size, size, seg.Extent), color);
+        }
         public static void AppendBox(DMesh3 mesh, Vector3d pos, float size)
         {
             MeshEditor editor = new MeshEditor(mesh);
@@ -866,6 +873,22 @@ namespace g3
             f.AlignAxis(2, (Vector3f)seg.Direction);
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(f, new Vector3f(size, size, seg.Extent));
+        }
+
+
+
+
+        public void AppendPathSolid(IEnumerable<Vector3d> vertices, double radius, Colorf color)
+        {
+            TubeGenerator tubegen = new TubeGenerator() {
+                Vertices = new List<Vector3d>(vertices),
+                Polygon = Polygon2d.MakeCircle(radius, 6),
+                NoSharedVertices = false
+            };
+            DMesh3 mesh = tubegen.Generate().MakeDMesh();
+            if (Mesh.HasVertexColors)
+                mesh.EnableVertexColors(color);
+            AppendMesh(mesh, Mesh.AllocateTriangleGroup());
         }
 
 
