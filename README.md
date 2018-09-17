@@ -38,6 +38,7 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 - [3D Bitmaps, Minecraft Cubes, and Mesh Winding Numbers](http://www.gradientspace.com/tutorials/2017/12/14/3d-bitmaps-and-minecraft-meshes) - Bitmap3, VoxelSurfaceGenerator, DMeshAABBTree3 Mesh Winding Number, 
 - [Implicit Surface Modeling](http://www.gradientspace.com/tutorials/2018/2/20/implicit-surface-modeling) - Implicit primitives, voxel/levelset/functional booleans, offsets, and blending, lattice/lightweighting demo
 - [DMesh3: A Dynamic Indexed Triangle Mesh](http://www.gradientspace.com/tutorials/dmesh3) - deep dive into the DMesh3 class's internal data structures and operations
+- [Surfacing Point Sets with Fast Winding Numbers](http://www.gradientspace.com/tutorials/2018/9/14/point-set-fast-winding) - tutorial on the Fast Mesh/PointSet Winding Number, and how to use the g3Sharp implementation
 
 
 # Main Classes
@@ -260,12 +261,14 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 
 ## Spatial Data Structures
 
-- **DMeshAABBTree**: triangle mesh axis-aligned bounding box tree
+- **DMeshAABBTree3**: triangle mesh axis-aligned bounding box tree
 	- bottom-up construction using mesh topology to accelerate leaf node layer
 	- generic traversal interface DoTraversal(TreeTraversal)
-	- Queries for NearestTriangle(point), FindNearestHitTriangle(ray) and FindAllHitTriangles(ray)
-	- TestIntersection(triangle), TestIntersection(other_tree), FindIntersections(other_tree)
-	- IsInside(point)
+	- FindNearestTriangle(point), FindNearestHitTriangle(ray) and FindAllHitTriangles(ray), FindNearestVertex(point)
+	- FindNearestTriangles(other_tree)
+	- TestIntersection(triangle), TestIntersection(other_tree), FindAllIntersections(other_tree)
+	- IsInside(point), WindingNumber(point), FastWindingNumber(point)
+- **PointAABBTree3**: point variant of DMeshAABBTree3, with PointSet Fast Winding Number
 - **Polygon2dBoxTree**: 2D segment bbox-tree, distance query
 - **PointHashGrid2d**, **SegmentHashGrid2d**: hash tables for 2D geometry elements
 - **PointHashGrid3d**: hash tables for 3D geometry elements
