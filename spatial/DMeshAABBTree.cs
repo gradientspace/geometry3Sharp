@@ -25,6 +25,7 @@ namespace g3
     ///   - FindNearestTriangles(otherAABBTree, maxdist)
     ///   - IsInside(point)
     ///   - WindingNumber(point)
+    ///   - FastWindingNumber(point)
     ///   - DoTraversal(generic_traversal_object)
     /// 
     /// </summary>
@@ -2238,11 +2239,10 @@ namespace g3
             Vector3f e = box_extents[iBox];
             AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
 
-            IntrRay3AxisAlignedBox3 intr = new IntrRay3AxisAlignedBox3(ray, box);
-            if (intr.Find()) {
-                return intr.RayParam0;
+            double ray_t = double.MaxValue;
+            if (IntrRay3AxisAlignedBox3.FindRayIntersectT(ref ray, ref box, out ray_t)) {
+                return ray_t;
             } else {
-                Debug.Assert(intr.Result != IntersectionResult.InvalidQuery);
                 return double.MaxValue;
             }
         }
