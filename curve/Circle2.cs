@@ -152,5 +152,12 @@ namespace g3
             return MathUtil.TwoPI * r;
         }
 
+        /// <summary>
+        /// Radius of n-sided regular polygon that contains circle of radius r
+        /// </summary>
+        public static double BoundingPolygonRadius(double r, int n) {
+            double theta = (MathUtil.TwoPI / (double)n) / 2.0;
+            return r / Math.Cos(theta);
+        }
     }
 }
