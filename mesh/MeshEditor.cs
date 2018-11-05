@@ -180,6 +180,48 @@ namespace g3
 
 
 
+
+
+        /// <summary>
+        /// Trivial back-and-forth stitch between two vertex loops with same length. 
+        /// If nearest vertices of input loops would not be matched, cycles loops so
+        /// that this is the case. 
+        /// Loops must have appropriate orientation.
+        /// </summary>
+        public virtual int[] StitchVertexLoops_NearestV(int[] loop0, int[] loop1, int group_id = -1)
+        {
+            int N = loop0.Length;
+            Index2i iBestPair = Index2i.Zero;
+            double best_dist = double.MaxValue;
+            for (int i = 0; i < N; ++i) {
+                Vector3d v0 = Mesh.GetVertex(loop0[i]);
+                for (int j = 0; j < N; ++j) {
+                    double dist_sqr = v0.DistanceSquared(Mesh.GetVertex(loop1[j]));
+                    if (dist_sqr < best_dist) {
+                        best_dist = dist_sqr;
+                        iBestPair = new Index2i(i, j);
+                    }
+                }
+            }
+            if (iBestPair.a != iBestPair.b) {
+                int[] newLoop0 = new int[N];
+                int[] newLoop1 = new int[N];
+                for (int i = 0; i < N; ++i) {
+                    newLoop0[i] = loop0[(iBestPair.a + i) % N];
+                    newLoop1[i] = loop1[(iBestPair.b + i) % N];
+                }
+                return StitchLoop(newLoop0, newLoop1, group_id);
+            } else {
+                return StitchLoop(loop0, loop1, group_id);
+            }
+
+        }
+
+
+
+
+
+
         /// <summary>
         /// Stitch two sets of boundary edges that are provided as unordered pairs of edges, by
         /// adding triangulated quads between each edge pair. 
