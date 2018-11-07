@@ -54,6 +54,30 @@ namespace g3
         }
 
 
+
+        /// <summary>
+        /// find distance between two triangles, with optional
+        /// transform on second triangle
+        /// </summary>
+        public static DistTriangle3Triangle3 TriangleTriangleDistance(DMesh3 mesh1, int ti, DMesh3 mesh2, int tj, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            if (mesh1.IsTriangle(ti) == false || mesh2.IsTriangle(tj) == false)
+                return null;
+            Triangle3d tri1 = new Triangle3d(), tri2 = new Triangle3d();
+            mesh1.GetTriVertices(ti, ref tri1.V0, ref tri1.V1, ref tri1.V2);
+            mesh2.GetTriVertices(tj, ref tri2.V0, ref tri2.V1, ref tri2.V2);
+            if (TransformF != null) {
+                tri2.V0 = TransformF(tri2.V0);
+                tri2.V1 = TransformF(tri2.V1);
+                tri2.V2 = TransformF(tri2.V2);
+            }
+            DistTriangle3Triangle3 dist = new DistTriangle3Triangle3(tri1, tri2);
+            dist.Compute();
+            return dist;
+        }
+
+
+
         /// <summary>
         /// convenience function to construct a IntrRay3Triangle3 object for a mesh triangle
         /// </summary>
