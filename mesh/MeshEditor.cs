@@ -156,12 +156,11 @@ namespace g3
 
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
+                new_tris[2 * i] = tid1;
+                new_tris[2 * i + 1] = tid2;
 
                 if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
-
-                new_tris[2 * i] = tid1;
-                new_tris[2 * i + 1] = tid2;
             }
 
             return new_tris;
@@ -170,7 +169,7 @@ namespace g3
             operation_failed:
                 // remove what we added so far
                 if (i > 0) {
-                    if (remove_triangles(new_tris, 2*(i-1)) == false)
+                    if (remove_triangles(new_tris, 2*i+1) == false)
                         throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
                 }
                 return null;
@@ -1029,6 +1028,8 @@ namespace g3
         bool remove_triangles(int[] tri_list, int count)
         {
             for (int i = 0; i < count; ++i) {
+                if (Mesh.IsTriangle(tri_list[i]) == false)
+                    continue;
                 MeshResult result = Mesh.RemoveTriangle(tri_list[i], false, false);
                 if (result != MeshResult.Ok)
                     return false;
