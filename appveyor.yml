@@ -15,9 +15,11 @@ build_script:
 - cmd: >-
     dotnet restore tests/geometry3Sharp.Tests.csproj
 
-    dotnet restore geometry3Sharp_netstandard.csproj
-
     dotnet build tests/geometry3Sharp.Tests.csproj -c Release
+
+    dotnet test tests/geometry3Sharp.Tests.csproj -c Release
+
+    dotnet restore geometry3Sharp_netstandard.csproj 
 
     dotnet build geometry3Sharp_netstandard.csproj -c Release
 
