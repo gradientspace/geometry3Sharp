@@ -16,9 +16,10 @@ build_script:
     dotnet restore geometry3Sharp_netstandard.csproj
 
     dotnet build geometry3Sharp_netstandard.csproj -c Release
+    dotnet build tests/geometry3Sharp.Tests.csproj -c Release
 
     dotnet pack geometry3Sharp_netstandard.csproj -c Release
-test: off
+test: on
 artifacts:
 - path: bin\Release\*.nupkg
 deploy:
