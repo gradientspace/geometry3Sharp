@@ -147,4 +147,95 @@ namespace geometry3Sharp.Tests
             Assert.IsFalse(result);
         }
     }
+
+    [TestClass]
+    public class Polygon2d_ContainsSegment
+    {
+
+        private readonly Polygon2d PolyBase;
+
+        // Constructor
+        public Polygon2d_ContainsSegment()
+        {
+            /* Sets up a polygon with the following shape:
+
+               3 ------------ 2
+                \             |
+                 \            |
+                  4           |
+                 /            |
+                /             |
+               0 ------------ 1
+
+            */
+
+            PolyBase = new Polygon2d(new double[10] {
+                0, 0,
+                6, 0,
+                6, 8,
+                0, 8,
+                2, 4,
+            });
+        }
+
+        [TestMethod]
+        public void Polygon2d_ContainsSegment_Inside()
+        {
+            // Arrange
+            Segment2d Seg = new Segment2d(
+                new Vector2d(3, 3),
+                new Vector2d(5, 3));
+
+            // Act
+            bool result = PolyBase.Contains(Seg);
+
+            // Assert
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void Polygon2d_ContainsSegment_Intersecting()
+        {
+            // Arrange
+            Segment2d Seg = new Segment2d(
+                new Vector2d(3, 3),
+                new Vector2d(9, 3));
+
+            // Act
+            bool result = PolyBase.Contains(Seg);
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void Polygon2d_ContainsSegment_Outside()
+        {
+            // Arrange
+            Segment2d Seg = new Segment2d(
+                new Vector2d(13, 3),
+                new Vector2d(15, 3));
+
+            // Act
+            bool result = PolyBase.Contains(Seg);
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void Polygon2d_ContainsSegment_Crossing()
+        {
+            // Arrange
+            Segment2d Seg = new Segment2d(
+                new Vector2d(1, 1),
+                new Vector2d(1, 7));
+
+            // Act
+            bool result = PolyBase.Contains(Seg);
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+    }
 }

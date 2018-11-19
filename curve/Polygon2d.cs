@@ -333,8 +333,20 @@ namespace g3
 			return true;
 		}
 
+        public bool Contains(Segment2d o)
+        {
+            if (Contains(o.P0 ) == false || Contains(o.P1) == false)
+                return false;
 
-		public bool Intersects(Polygon2d o) {
+            foreach (Segment2d seg in SegmentItr())
+            {
+                if (seg.Intersects(o))
+                    return false;
+            }
+            return true;
+        }
+
+        public bool Intersects(Polygon2d o) {
 			if ( ! this.GetBounds().Intersects( o.GetBounds() ) )
 				return false;
 
