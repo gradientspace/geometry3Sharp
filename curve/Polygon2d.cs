@@ -335,6 +335,7 @@ namespace g3
 
         public bool Contains(Segment2d o)
         {
+            // [TODO] Add bbox check
             if (Contains(o.P0) == false || Contains(o.P1) == false)
                 return false;
 
@@ -359,8 +360,24 @@ namespace g3
 			return false;
 		}
 
+        public bool Intersects(Segment2d o)
+        {
+            // [TODO] Add bbox check
+            if (Contains(o.P0) == true || Contains(o.P1) == true)
+                return true;
 
-		public List<Vector2d> FindIntersections(Polygon2d o) {
+            // [TODO] Add bbox check
+            foreach (Segment2d seg in SegmentItr())
+            {
+                if (seg.Intersects(o))
+                    return true;
+            }
+            return false;
+        }
+
+
+
+        public List<Vector2d> FindIntersections(Polygon2d o) {
 			List<Vector2d> v = new List<Vector2d>();
 			if ( ! this.GetBounds().Intersects( o.GetBounds() ) )
 				return v;
