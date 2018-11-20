@@ -189,6 +189,19 @@ namespace g3
         }
 
 
+        public bool Contains(Segment2d seg)
+        {
+            if (outer.Contains(seg) == false)
+                return false;
+            foreach (var h in holes)
+            {
+                if (h.Intersects(seg))
+                    return false;
+            }
+            return true;
+        }
+
+
         public bool Intersects(Polygon2d poly)
         {
             if (outer.Intersects(poly))
