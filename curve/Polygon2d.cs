@@ -333,6 +333,9 @@ namespace g3
 			return true;
 		}
 
+        /// <summary>
+        /// Checks that all points on a segment are within the area defined by the Polygon2d.
+        /// </summary>
         public bool Contains(Segment2d o)
         {
             // [TODO] Add bbox check
@@ -360,6 +363,9 @@ namespace g3
 			return false;
 		}
 
+        /// <summary>
+        /// Checks if any point on a segment is within the area defined by the Polygon2d.
+        /// </summary>
         public bool Intersects(Segment2d o)
         {
             // [TODO] Add bbox check

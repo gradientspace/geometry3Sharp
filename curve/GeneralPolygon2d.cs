@@ -188,7 +188,10 @@ namespace g3
             return true;
         }
 
-
+        /// <summary>
+        /// Checks that all points on a segment are within the area defined by the GeneralPolygon2d;
+        /// holes are included in the calculation.
+        /// </summary>
         public bool Contains(Segment2d seg)
         {
             if (outer.Contains(seg) == false)
