@@ -30,7 +30,7 @@ namespace g3
         public int[] InitialTriangles;              // initial set of triangles
         public int[] InitialVertices;               // initial set of vertices
         public IndexMap InitialToOffsetMapV;        // map from initial vertices to copy vertices
-        List<int> OffsetTriangles;                  // triangles of offset surface  (note: can get vertices via MapV(InitialVertices)
+        public List<int> OffsetTriangles;                  // triangles of offset surface  (note: can get vertices via MapV(InitialVertices)
         public int OffsetGroupID;                   // group ID of offset-surface triangles
         public EdgeLoop[] NewLoops;                 // New loops on offset surface (1-1 correspondence w/ InitialLoops)
         public int[][] StitchTriangles;             // triangle strip 'tubes' that connect each loop-pair
