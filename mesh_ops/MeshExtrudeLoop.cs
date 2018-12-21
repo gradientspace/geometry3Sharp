@@ -58,7 +58,7 @@ namespace g3
             for ( int i = 0; i < NV; ++i ) {
                 Vector3d v = Mesh.GetVertex(Loop.Vertices[i]);
                 Vector3f n = Mesh.GetVertexNormal(Loop.Vertices[i]);
-                Vector3d new_v = PositionF(v, n, i);
+                Vector3d new_v = PositionF(v, n, Loop.Vertices[i]);
                 Mesh.SetVertex(NewLoop.Vertices[i], new_v);
             }
 
