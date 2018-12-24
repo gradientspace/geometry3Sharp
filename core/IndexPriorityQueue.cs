@@ -163,6 +163,18 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Query the priority at node id, assuming it exists in queue
+        /// </summary>
+        public float GetPriority(int id)
+        {
+            if (EnableDebugChecks && Contains(id) == false)
+                throw new Exception("IndexPriorityQueue.Update: tried to get priorty of node that does not exist in queue!");
+            int iNode = id_to_index[id];
+            return nodes[iNode].priority;
+        }
+
+
 
         public IEnumerator<int> GetEnumerator()
         {

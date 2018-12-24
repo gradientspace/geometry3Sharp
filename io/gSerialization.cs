@@ -561,6 +561,109 @@ namespace g3
             for (int i = 0; i < N; ++i)
                 Restore(ref s[i], reader);
         }
+    }
+
+
+
+    /// <summary>
+    /// Utility class that is intended to support things like writing and reading
+    /// test cases, etc. You can write out a test case in a single line, eg
+    ///    SimpleStore.Store(path, new object[] { TestMesh, VertexList, PlaneNormal, ... })
+    /// The object list will be binned into the relevant sublists automatically.
+    /// Then you can load this data via:
+    ///    SimpleStore s = SimpleStore.Restore(path)
+    /// </summary>
+    public class SimpleStore
+    {
+        // only ever append to this list!
+        public List<DMesh3> Meshes = new List<DMesh3>();
+        public List<Vector3d> Points = new List<Vector3d>();
+        public List<string> Strings = new List<string>();
+        public List<List<int>> IntLists = new List<List<int>>();
+
+        public SimpleStore()
+        {
+        }
+
+        public SimpleStore(object[] objs)
+        {
+            Add(objs);
+        }
+
+        public void Add(object[] objs)
+        {
+            foreach (object o in objs) {
+                if (o is DMesh3)
+                    Meshes.Add(o as DMesh3);
+                else if (o is string)
+                    Strings.Add(o as String);
+                else if (o is List<int>)
+                    IntLists.Add(o as List<int>);
+                else if (o is IEnumerable<int>)
+                    IntLists.Add(new List<int>(o as IEnumerable<int>));
+                else if (o is Vector3d)
+                    Points.Add((Vector3d)o);
+                else
+                    throw new Exception("SimpleStore: unknown type " + o.GetType().ToString());
+            }
+        }
+
+
+        public static void Store(string sPath, object[] objs)
+        {
+            SimpleStore s = new SimpleStore(objs);
+            Store(sPath, s);
+        }
+
+        public static void Store(string sPath, SimpleStore s)
+        {
+            using (FileStream stream = new FileStream(sPath, FileMode.Create)) {
+                using (BinaryWriter w = new BinaryWriter(stream)) {
+                    w.Write(s.Meshes.Count);
+                    for (int k = 0; k < s.Meshes.Count; ++k)
+                        gSerialization.Store(s.Meshes[k], w);
+                    w.Write(s.Points.Count);
+                    for (int k = 0; k < s.Points.Count; ++k)
+                        gSerialization.Store(s.Points[k], w);
+                    w.Write(s.Strings.Count);
+                    for (int k = 0; k < s.Strings.Count; ++k)
+                        gSerialization.Store(s.Strings[k], w);
+
+                    w.Write(s.IntLists.Count);
+                    for (int k = 0; k < s.IntLists.Count; ++k)
+                        gSerialization.Store(s.IntLists[k], w);
+                }
+            }
+        }
+
+
+        public static SimpleStore Restore(string sPath)
+        {
+            SimpleStore s = new SimpleStore();
+            using (FileStream stream = new FileStream(sPath, FileMode.Open)) {
+                using (BinaryReader r = new BinaryReader(stream)) {
+                    int nMeshes = r.ReadInt32();
+                    for ( int k = 0; k < nMeshes; ++k ) {
+                        DMesh3 m = new DMesh3(); gSerialization.Restore(m, r); s.Meshes.Add(m);
+                    }
+                    int nPoints = r.ReadInt32();
+                    for (int k = 0; k < nPoints; ++k) {
+                        Vector3d v = Vector3d.Zero; gSerialization.Restore(ref v, r); s.Points.Add(v);
+                    }
+                    int nStrings = r.ReadInt32();
+                    for (int k = 0; k < nStrings; ++k) {
+                        string str = null; gSerialization.Restore(ref str, r); s.Strings.Add(str);
+                    }
+                    int nIntLists = r.ReadInt32();
+                    for (int k = 0; k < nIntLists; ++k) {
+                        List<int> l = new List<int>(); gSerialization.Restore(l, r); s.IntLists.Add(l);
+                    }
+                }
+            }
+            return s;
+        }
 
     }
+
+
 }

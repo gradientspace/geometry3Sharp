@@ -32,7 +32,8 @@ namespace g3
         {
             iHoleIndex = -1;
             double min_dist = OuterTree.SquaredDistance(pt, out iNearSeg, out fNearSegT);
-            for (int k = 0; k < HoleTrees.Length; ++k) {
+            int NH = (HoleTrees == null) ? 0 : HoleTrees.Length;
+            for (int k = 0; k < NH; ++k) {
                 int hole_near_seg; double hole_seg_t;
                 double hole_dist = HoleTrees[k].SquaredDistance(pt, out hole_near_seg, out hole_seg_t, min_dist);
                 if (hole_dist < min_dist) {

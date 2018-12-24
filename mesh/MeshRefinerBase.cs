@@ -203,10 +203,15 @@ namespace g3
 
             // handle a or b fixed
             if (ca.Fixed == true && cb.Fixed == false) {
+                // if b is fixed to a target, and it is different than a's target, we can't collapse
+                if (cb.Target != null && cb.Target != ca.Target)
+                    return false;
                 collapse_to = a;
                 return true;
             }
             if (cb.Fixed == true && ca.Fixed == false) {
+                if (ca.Target != null && ca.Target != cb.Target)
+                    return false;
                 collapse_to = b;
                 return true;
             }

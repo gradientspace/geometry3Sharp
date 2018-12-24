@@ -25,6 +25,7 @@ namespace g3
     ///   - FindNearestTriangles(otherAABBTree, maxdist)
     ///   - IsInside(point)
     ///   - WindingNumber(point)
+    ///   - FastWindingNumber(point)
     ///   - DoTraversal(generic_traversal_object)
     /// 
     /// </summary>
@@ -44,7 +45,9 @@ namespace g3
         public DMesh3 Mesh { get { return mesh; } }
 
 
-        // if non-null, return false to ignore certain triangles
+        /// <summary>
+        /// If non-null, only triangle IDs that pass this filter (ie filter is true) are considered
+        /// </summary>
         public Func<int, bool> TriangleFilterF = null;
 
 
@@ -124,6 +127,20 @@ namespace g3
             double fNearestSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
             int tNearID = DMesh3.InvalidID;
             find_nearest_tri(root_index, p, ref fNearestSqr, ref tNearID);
+            return tNearID;
+        }
+        /// <summary>
+        /// Find the triangle closest to p, and distance to it, within distance fMaxDist, or return InvalidID
+        /// Use MeshQueries.TriangleDistance() to get more information
+        /// </summary>
+        public virtual int FindNearestTriangle(Vector3d p, out double fNearestDistSqr, double fMaxDist = double.MaxValue)
+        {
+            if (mesh_timestamp != mesh.ShapeTimestamp)
+                throw new Exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+
+            fNearestDistSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
+            int tNearID = DMesh3.InvalidID;
+            find_nearest_tri(root_index, p, ref fNearestDistSqr, ref tNearID);
             return tNearID;
         }
         protected void find_nearest_tri(int iBox, Vector3d p, ref double fNearestSqr, ref int tID)
@@ -1269,6 +1286,219 @@ namespace g3
 
 
 
+
+
+
+        /*
+          *  Fast Mesh Winding Number computation
+          */
+
+        /// <summary>
+        /// FWN beta parameter - is 2.0 in paper
+        /// </summary>
+        public double FWNBeta = 2.0;
+
+        /// <summary>
+        /// FWN approximation order. can be 1 or 2. 2 is more accurate, obviously.
+        /// </summary>
+        public int FWNApproxOrder = 2;
+
+
+        /// <summary>
+        /// Fast approximation of winding number using far-field approximations
+        /// </summary>
+        public virtual double FastWindingNumber(Vector3d p)
+        {
+            if (mesh_timestamp != mesh.ShapeTimestamp)
+                throw new Exception("DMeshAABBTree3.FastWindingNumber: mesh has been modified since tree construction");
+
+            if (FastWindingCache == null || fast_winding_cache_timestamp != mesh.ShapeTimestamp) {
+                build_fast_winding_cache();
+                fast_winding_cache_timestamp = mesh.ShapeTimestamp;
+            }
+
+            double sum = branch_fast_winding_num(root_index, p);
+            return sum;
+        }
+
+        // evaluate winding number contribution for all triangles below iBox
+        protected double branch_fast_winding_num(int iBox, Vector3d p)
+        {
+            Vector3d a = Vector3d.Zero, b = Vector3d.Zero, c = Vector3d.Zero;
+            double branch_sum = 0;
+
+            int idx = box_to_index[iBox];
+            if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i) {
+                    int ti = index_list[idx + i];
+                    mesh.GetTriVertices(ti, ref a, ref b, ref c);
+                    branch_sum += MathUtil.TriSolidAngle(a, b, c, ref p) / MathUtil.FourPI;
+                }
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+
+                    // if we have winding cache, we can more efficiently compute contribution of all triangles
+                    // below this box. Otherwise, recursively descend tree.
+                    bool contained = box_contains(iChild1, p);
+                    if (contained == false && can_use_fast_winding_cache(iChild1, ref p))
+                        branch_sum += evaluate_box_fast_winding_cache(iChild1, ref p);
+                    else
+                        branch_sum += branch_fast_winding_num(iChild1, p);
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    bool contained1 = box_contains(iChild1, p);
+                    if (contained1 == false && can_use_fast_winding_cache(iChild1, ref p))
+                        branch_sum += evaluate_box_fast_winding_cache(iChild1, ref p);
+                    else
+                        branch_sum += branch_fast_winding_num(iChild1, p);
+
+                    bool contained2 = box_contains(iChild2, p);
+                    if (contained2 == false && can_use_fast_winding_cache(iChild2, ref p))
+                        branch_sum += evaluate_box_fast_winding_cache(iChild2, ref p);
+                    else
+                        branch_sum += branch_fast_winding_num(iChild2, p);
+                }
+            }
+
+            return branch_sum;
+        }
+
+
+        struct FWNInfo
+        {
+            public Vector3d Center;
+            public double R;
+            public Vector3d Order1Vec;
+            public Matrix3d Order2Mat;
+        }
+
+        Dictionary<int, FWNInfo> FastWindingCache;
+        int fast_winding_cache_timestamp = -1;
+
+        protected void build_fast_winding_cache()
+        {
+            // set this to a larger number to ignore caches if number of triangles is too small.
+            // (seems to be no benefit to doing this...is holdover from tree-decomposition FWN code)
+            int WINDING_CACHE_THRESH = 1;
+
+            //MeshTriInfoCache triCache = null;
+            MeshTriInfoCache triCache = new MeshTriInfoCache(mesh);
+
+            FastWindingCache = new Dictionary<int, FWNInfo>();
+            HashSet<int> root_hash;
+            build_fast_winding_cache(root_index, 0, WINDING_CACHE_THRESH, out root_hash, triCache);
+        }
+        protected int build_fast_winding_cache(int iBox, int depth, int tri_count_thresh, out HashSet<int> tri_hash, MeshTriInfoCache triCache)
+        {
+            tri_hash = null;
+
+            int idx = box_to_index[iBox];
+            if (idx < triangles_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                return num_tris;
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    int num_child_tris = build_fast_winding_cache(iChild1, depth + 1, tri_count_thresh, out tri_hash, triCache);
+
+                    // if count in child is large enough, we already built a cache at lower node
+                    return num_child_tris;
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    // let each child build its own cache if it wants. If so, it will return the
+                    // list of its child tris
+                    HashSet<int> child2_hash;
+                    int num_tris_1 = build_fast_winding_cache(iChild1, depth + 1, tri_count_thresh, out tri_hash, triCache);
+                    int num_tris_2 = build_fast_winding_cache(iChild2, depth + 1, tri_count_thresh, out child2_hash, triCache);
+                    bool build_cache = (num_tris_1 + num_tris_2 > tri_count_thresh);
+
+                    if (depth == 0)
+                        return num_tris_1 + num_tris_2;  // cannot build cache at level 0...
+
+                    // collect up the triangles we need. there are various cases depending on what children already did
+                    if (tri_hash != null || child2_hash != null || build_cache) {
+                        if (tri_hash == null && child2_hash != null) {
+                            collect_triangles(iChild1, child2_hash);
+                            tri_hash = child2_hash;
+                        } else {
+                            if (tri_hash == null) {
+                                tri_hash = new HashSet<int>();
+                                collect_triangles(iChild1, tri_hash);
+                            }
+                            if (child2_hash == null)
+                                collect_triangles(iChild2, tri_hash);
+                            else
+                                tri_hash.UnionWith(child2_hash);
+                        }
+                    }
+                    if (build_cache)
+                        make_box_fast_winding_cache(iBox, tri_hash, triCache);
+
+                    return (num_tris_1 + num_tris_2);
+                }
+            }
+        }
+
+
+        // check if we can use fwn 
+        protected bool can_use_fast_winding_cache(int iBox, ref Vector3d q)
+        {
+            FWNInfo cacheInfo;
+            if (FastWindingCache.TryGetValue(iBox, out cacheInfo) == false)
+                return false;
+
+            double dist_qp = cacheInfo.Center.Distance(ref q);
+            if (dist_qp > FWNBeta * cacheInfo.R)
+                return true;
+
+            return false;
+        }
+
+
+        // compute FWN cache for all triangles underneath this box
+        protected void make_box_fast_winding_cache(int iBox, IEnumerable<int> triangles, MeshTriInfoCache triCache)
+        {
+            Util.gDevAssert(FastWindingCache.ContainsKey(iBox) == false);
+
+            // construct cache
+            FWNInfo cacheInfo = new FWNInfo();
+            FastTriWinding.ComputeCoeffs(Mesh, triangles, ref cacheInfo.Center, ref cacheInfo.R, ref cacheInfo.Order1Vec, ref cacheInfo.Order2Mat, triCache);
+
+            FastWindingCache[iBox] = cacheInfo;
+        }
+
+        // evaluate the FWN cache for iBox
+        protected double evaluate_box_fast_winding_cache(int iBox, ref Vector3d q)
+        {
+            FWNInfo cacheInfo = FastWindingCache[iBox];
+
+            if (FWNApproxOrder == 2)
+                return FastTriWinding.EvaluateOrder2Approx(ref cacheInfo.Center, ref cacheInfo.Order1Vec, ref cacheInfo.Order2Mat, ref q);
+            else
+                return FastTriWinding.EvaluateOrder1Approx(ref cacheInfo.Center, ref cacheInfo.Order1Vec, ref q);
+        }
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// Total sum of volumes of all boxes in the tree. Mainly useful to evaluate tree quality.
         /// </summary>
@@ -1301,6 +1531,13 @@ namespace g3
             return extSum;
         }
 
+
+        /// <summary>
+        /// Root bounding box of tree (note: tree must be generated by calling a query function first!)
+        /// </summary>
+        public AxisAlignedBox3d Bounds {
+            get { return get_box(root_index); }
+        }
 
 
 
@@ -2003,11 +2240,10 @@ namespace g3
             Vector3f e = box_extents[iBox];
             AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
 
-            IntrRay3AxisAlignedBox3 intr = new IntrRay3AxisAlignedBox3(ray, box);
-            if (intr.Find()) {
-                return intr.RayParam0;
+            double ray_t = double.MaxValue;
+            if (IntrRay3AxisAlignedBox3.FindRayIntersectT(ref ray, ref box, out ray_t)) {
+                return ray_t;
             } else {
-                Debug.Assert(intr.Result != IntersectionResult.InvalidQuery);
                 return double.MaxValue;
             }
         }

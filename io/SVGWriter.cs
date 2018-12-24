@@ -244,7 +244,15 @@ namespace g3
         }
 
 
-		public static void QuickWrite(List<GeneralPolygon2d> polygons1, string color1, float width1,
+        public static void QuickWrite(DGraph2 graph, string sPath, double line_width = 1)
+        {
+            SVGWriter writer = new SVGWriter();
+            Style style = SVGWriter.Style.Outline("black", (float)line_width);
+            writer.AddGraph(graph, style);
+            writer.Write(sPath);
+        }
+
+        public static void QuickWrite(List<GeneralPolygon2d> polygons1, string color1, float width1,
 		                              List<GeneralPolygon2d> polygons2, string color2, float width2,
 		                              string sPath)
 		{
@@ -268,13 +276,6 @@ namespace g3
 
 
 
-        public static void QuickWrite(DGraph2 graph, string sPath, float line_width = 1)
-        {
-            SVGWriter writer = new SVGWriter();
-            Style style = SVGWriter.Style.Outline("black", line_width);
-            writer.AddGraph(graph, style);
-            writer.Write(sPath);
-        }
 
 
 

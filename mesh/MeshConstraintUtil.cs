@@ -172,8 +172,10 @@ namespace g3
         {
             VertexConstraint vc = new VertexConstraint(target);
             int N = spanV.Count;
-            for (int i = 0; i < N; ++i)
+            for (int i = 1; i < N-1; ++i)
                 cons.SetOrUpdateVertexConstraint(spanV[i], vc);
+            cons.SetOrUpdateVertexConstraint(spanV[0], VertexConstraint.Pinned);
+            cons.SetOrUpdateVertexConstraint(spanV[N-1], VertexConstraint.Pinned);
 
             EdgeConstraint ec = new EdgeConstraint(EdgeRefineFlags.NoFlip, target);
             ec.TrackingSetID = setID;

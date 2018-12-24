@@ -166,7 +166,7 @@ namespace g3
 
 
 
-        public virtual void FastCollapsePass(double fMinEdgeLength)
+        public virtual void FastCollapsePass(double fMinEdgeLength, int nRounds = 1, bool MeshIsClosedHint = false)
         {
             if (mesh.TriangleCount == 0)    // badness if we don't catch this...
                 return;
@@ -180,7 +180,7 @@ namespace g3
             begin_pass();
 
             begin_setup();
-            Precompute();
+            Precompute(MeshIsClosedHint);
             if (Cancelled())
                 return;
             end_setup();
@@ -190,27 +190,35 @@ namespace g3
             begin_collapse();
 
             int N = mesh.MaxEdgeID;
-            Vector3d va = Vector3d.Zero, vb = Vector3d.Zero;
-            for ( int eid = 0; eid < N; ++eid) {
-                if (!mesh.IsEdge(eid))
-                    continue;
-                if (mesh.IsBoundaryEdge(eid))
-                    continue;
-                if (Cancelled())
-                    return;
+            int num_last_pass = 0;
+            for (int ri = 0; ri < nRounds; ++ri) {
+                num_last_pass = 0;
 
-                mesh.GetEdgeV(eid, ref va, ref vb);
-                if (va.DistanceSquared(ref vb) > min_sqr)
-                    continue;
+                Vector3d va = Vector3d.Zero, vb = Vector3d.Zero;
+                for (int eid = 0; eid < N; ++eid) {
+                    if (!mesh.IsEdge(eid))
+                        continue;
+                    if (mesh.IsBoundaryEdge(eid))
+                        continue;
+                    if (Cancelled())
+                        return;
 
-                COUNT_ITERATIONS++;
+                    mesh.GetEdgeV(eid, ref va, ref vb);
+                    if (va.DistanceSquared(ref vb) > min_sqr)
+                        continue;
 
-                Vector3d midpoint = (va + vb) * 0.5;
-                int vKept;
-                ProcessResult result = CollapseEdge(eid, midpoint, out vKept);
-                if (result == ProcessResult.Ok_Collapsed) {
-                    // do nothing?
+                    COUNT_ITERATIONS++;
+
+                    Vector3d midpoint = (va + vb) * 0.5;
+                    int vKept;
+                    ProcessResult result = CollapseEdge(eid, midpoint, out vKept);
+                    if (result == ProcessResult.Ok_Collapsed) {
+                        ++num_last_pass;
+                    }
                 }
+
+                if (num_last_pass == 0)     // converged
+                    break;
             }
             end_collapse();
             end_ops();
@@ -420,15 +428,17 @@ namespace g3
 
         protected bool HaveBoundary;
         protected bool[] IsBoundaryVtxCache;
-        protected virtual void Precompute()
+        protected virtual void Precompute(bool bMeshIsClosed = false)
         {
             HaveBoundary = false;
             IsBoundaryVtxCache = new bool[mesh.MaxVertexID];
-            foreach ( int eid in mesh.BoundaryEdgeIndices()) {
-                Index2i ev = mesh.GetEdgeV(eid);
-                IsBoundaryVtxCache[ev.a] = true;
-                IsBoundaryVtxCache[ev.b] = true;
-                HaveBoundary = true;
+            if (bMeshIsClosed == false) {
+                foreach (int eid in mesh.BoundaryEdgeIndices()) {
+                    Index2i ev = mesh.GetEdgeV(eid);
+                    IsBoundaryVtxCache[ev.a] = true;
+                    IsBoundaryVtxCache[ev.b] = true;
+                    HaveBoundary = true;
+                }
             }
         }
         protected bool IsBoundaryV(int vid)

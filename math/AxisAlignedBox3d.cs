@@ -160,13 +160,38 @@ namespace g3
             Min.x -= fRadius; Min.y -= fRadius; Min.z -= fRadius;
             Max.x += fRadius; Max.y += fRadius; Max.z += fRadius;
         }
-        //! value is added to min and subtracted from max
-        public void Contract(double fRadius) {
-            Min.x += fRadius; Min.y += fRadius; Min.z += fRadius;
-            Max.x -= fRadius; Max.y -= fRadius; Max.z -= fRadius;
+
+        //! return this box expanded by radius
+        public AxisAlignedBox3d Expanded(double fRadius) {
+            return new AxisAlignedBox3d(
+                Min.x - fRadius, Min.y - fRadius, Min.z - fRadius,
+                Max.x + fRadius, Max.y + fRadius, Max.z + fRadius);
         }
 
-       public void Scale(double sx, double sy, double sz)
+        //! value is added to min and subtracted from max
+        public void Contract(double fRadius) {
+            double w = 2 * fRadius;
+            if ( w > Max.x-Min.x ) { Min.x = Max.x = 0.5 * (Min.x + Max.x); }
+                else { Min.x += fRadius; Max.x -= fRadius; }
+            if ( w > Max.y-Min.y ) { Min.y = Max.y = 0.5 * (Min.y + Max.y); }
+                else { Min.y += fRadius; Max.y -= fRadius; }
+            if ( w > Max.z-Min.z ) { Min.z = Max.z = 0.5 * (Min.z + Max.z); }
+                else { Min.z += fRadius; Max.z -= fRadius; }
+        }
+
+        //! return this box expanded by radius
+        public AxisAlignedBox3d Contracted(double fRadius) {
+            AxisAlignedBox3d result = new AxisAlignedBox3d(
+                Min.x + fRadius, Min.y + fRadius, Min.z + fRadius,
+                Max.x - fRadius, Max.y - fRadius, Max.z - fRadius);
+            if (result.Min.x > result.Max.x) { result.Min.x = result.Max.x = 0.5 * (Min.x + Max.x); }
+            if (result.Min.y > result.Max.y) { result.Min.y = result.Max.y = 0.5 * (Min.y + Max.y); }
+            if (result.Min.z > result.Max.z) { result.Min.z = result.Max.z = 0.5 * (Min.z + Max.z); }
+            return result;
+        }
+
+
+        public void Scale(double sx, double sy, double sz)
         {
             Vector3d c = Center;
             Vector3d e = Extents; e.x *= sx; e.y *= sy; e.z *= sz;

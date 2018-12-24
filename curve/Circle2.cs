@@ -8,6 +8,12 @@ namespace g3
 		public double Radius;
 		public bool IsReversed;		// use ccw orientation instead of cw
 
+        public Circle2d(double radius) {
+            IsReversed = false;
+            Center = Vector2d.Zero;
+            Radius = radius;
+        }
+
 		public Circle2d(Vector2d center, double radius)
 		{
 			IsReversed = false;
@@ -137,5 +143,21 @@ namespace g3
             return Math.Abs(d - Radius);
         }
 
+
+
+        public static double RadiusArea(double r) {
+            return Math.PI * r * r;
+        }
+        public static double RadiusCircumference(double r) {
+            return MathUtil.TwoPI * r;
+        }
+
+        /// <summary>
+        /// Radius of n-sided regular polygon that contains circle of radius r
+        /// </summary>
+        public static double BoundingPolygonRadius(double r, int n) {
+            double theta = (MathUtil.TwoPI / (double)n) / 2.0;
+            return r / Math.Cos(theta);
+        }
     }
 }

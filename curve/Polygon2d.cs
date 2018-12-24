@@ -95,6 +95,11 @@ namespace g3
             vertices.Add(v);
 			Timestamp++; 
         }
+        public void AppendVertices(IEnumerable<Vector2d> v)
+        {
+            vertices.AddRange(v);
+            Timestamp++;
+        }
 
         public void RemoveVertex(int idx)
         {
@@ -328,8 +333,24 @@ namespace g3
 			return true;
 		}
 
+        /// <summary>
+        /// Checks that all points on a segment are within the area defined by the Polygon2d.
+        /// </summary>
+        public bool Contains(Segment2d o)
+        {
+            // [TODO] Add bbox check
+            if (Contains(o.P0) == false || Contains(o.P1) == false)
+                return false;
 
-		public bool Intersects(Polygon2d o) {
+            foreach (Segment2d seg in SegmentItr())
+            {
+                if (seg.Intersects(o))
+                    return false;
+            }
+            return true;
+        }
+
+        public bool Intersects(Polygon2d o) {
 			if ( ! this.GetBounds().Intersects( o.GetBounds() ) )
 				return false;
 
@@ -342,8 +363,27 @@ namespace g3
 			return false;
 		}
 
+        /// <summary>
+        /// Checks if any point on a segment is within the area defined by the Polygon2d.
+        /// </summary>
+        public bool Intersects(Segment2d o)
+        {
+            // [TODO] Add bbox check
+            if (Contains(o.P0) == true || Contains(o.P1) == true)
+                return true;
 
-		public List<Vector2d> FindIntersections(Polygon2d o) {
+            // [TODO] Add bbox check
+            foreach (Segment2d seg in SegmentItr())
+            {
+                if (seg.Intersects(o))
+                    return true;
+            }
+            return false;
+        }
+
+
+
+        public List<Vector2d> FindIntersections(Polygon2d o) {
 			List<Vector2d> v = new List<Vector2d>();
 			if ( ! this.GetBounds().Intersects( o.GetBounds() ) )
 				return v;

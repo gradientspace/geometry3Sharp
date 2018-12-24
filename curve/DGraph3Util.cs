@@ -284,5 +284,58 @@ namespace g3
 
 
 
+
+
+        /// <summary>
+        /// Erode inwards from open boundary vertices of graph (ie vtx with single edge).
+        /// Resulting graph is not compact (!)
+        /// </summary>
+        public static void ErodeOpenSpurs(DGraph3 graph)
+        {
+            HashSet<int> used = new HashSet<int>();     // do we need this?
+
+            // find boundary and junction vertices
+            HashSet<int> boundaries = new HashSet<int>();
+            HashSet<int> junctions = new HashSet<int>();
+            foreach (int vid in graph.VertexIndices()) {
+                if (graph.IsBoundaryVertex(vid))
+                    boundaries.Add(vid);
+                if (graph.IsJunctionVertex(vid))
+                    junctions.Add(vid);
+            }
+
+            // walk paths from boundary vertices
+            foreach (int start_vid in boundaries) {
+                if (graph.IsVertex(start_vid) == false)
+                    continue;
+
+                int vid = start_vid;
+                int eid = graph.GetVtxEdges(vid)[0];
+                if (used.Contains(eid))
+                    continue;
+
+                List<int> pathE = new List<int>();
+                if (pathE != null)
+                    pathE.Add(eid);
+                while (true) {
+                    used.Add(eid);
+                    Index2i next = NextEdgeAndVtx(eid, vid, graph);
+                    eid = next.a;
+                    vid = next.b;
+                    if (boundaries.Contains(vid) || junctions.Contains(vid))
+                        break;  // done!
+                    if (pathE != null)
+                        pathE.Add(eid);
+                }
+
+                // delete this path
+                foreach (int path_eid in pathE)
+                    graph.RemoveEdge(path_eid, true);
+            }
+
+        }
+
+
+
     }
 }

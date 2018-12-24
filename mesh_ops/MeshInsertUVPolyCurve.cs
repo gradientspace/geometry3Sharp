@@ -176,6 +176,7 @@ namespace g3
                 Vector2d vInsert = Curve[i];
                 bool inserted = false;
 
+                // find the triangle that contains this curve point
                 int contain_tid = DMesh3.InvalidID;
                 if (triSpatial != null) {
                     contain_tid = triSpatial.FindContainingTriangle(vInsert, inTriangleF);
@@ -200,21 +201,39 @@ namespace g3
                     }
                 }
 
-                if (contain_tid != DMesh3.InvalidID ) {
+                // if we found one, insert the point via face-poke or edge-split,
+                // unless it is exactly at existing vertex, in which case we can re-use it
+                if ( contain_tid != DMesh3.InvalidID ) {
                     Index3i tv = Mesh.GetTriangle(contain_tid);
                     Vector3d bary = MathUtil.BarycentricCoords(vInsert, PointF(tv.a), PointF(tv.b), PointF(tv.c));
                     // SpatialEpsilon is our zero-tolerance, so merge if we are closer than that
                     bool is_existing_v;
                     int vid = insert_corner_from_bary(i, contain_tid, bary, 0.01, 100*SpatialEpsilon, out is_existing_v);
-                    if (vid > 0) {    // this should be always happening..
+                    if (vid > 0) {
                         CurveVertices[i] = vid;
                         if (is_existing_v)
                             MeshVertsOnCurve.Add(vid);
                         inserted = true;
-                    } else {
-                        throw new Exception("MeshInsertUVPolyCurve.insert_corners: failed to insert vertex " + i.ToString());
+                    } 
+                }
+
+                // if we did not find containing triangle, 
+                // try matching with any existing vertices.
+                // This can happen if curve point is right on mesh border...
+                if (inserted == false) {
+                    foreach (int vid in Mesh.VertexIndices()) {
+                        Vector2d v = PointF(vid);
+                        if (vInsert.Distance(v) < SpatialEpsilon) {
+                            CurveVertices[i] = vid;
+                            MeshVertsOnCurve.Add(vid);
+                            inserted = true;
+                        }
                     }
                 }
+
+                // TODO: also case where curve point is right on mesh border edge,
+                // and so it ends up being outside all triangles?
+
 
                 if (inserted == false) {
                     throw new Exception("MeshInsertUVPolyCurve.insert_corners: curve vertex " 

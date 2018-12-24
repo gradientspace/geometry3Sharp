@@ -205,6 +205,25 @@ namespace g3
         }
 
 
+        public Index2i Neighbours(int i)
+        {
+            int NV = vertices.Count;
+            if (Closed) {
+                if (i == 0)
+                    return new Index2i(NV-1, 1);
+                else
+                    return new Index2i(i-1, (i+1) % NV);
+            } else {
+                if (i == 0)
+                    return new Index2i(-1, 1);
+                else if (i == NV-1)
+                    return new Index2i(NV-2, -1);
+                else
+                    return new Index2i(i-1, i+1);
+            }
+        } 
+
+
         /// <summary>
         /// Compute opening angle at vertex i in degrees
         /// </summary>

@@ -150,6 +150,10 @@ namespace g3
 			Loops = new List<EdgeLoop>();
             Spans = new List<EdgeSpan>();
 
+            // early-out if we don't actually have boundaries
+            if (Mesh.CachedIsClosed)
+                return true;
+
             int NE = Mesh.MaxEdgeID;
 
             // Temporary memory used to indicate when we have "used" an edge.

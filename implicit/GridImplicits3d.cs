@@ -27,9 +27,15 @@ namespace g3
             GridOrigin = gridOrigin;
             CellSize = cellSize;
         }
+        public DenseGridTrilinearImplicit(MeshSignedDistanceGrid sdf_grid)
+        {
+            Grid = sdf_grid.Grid;
+            GridOrigin = sdf_grid.GridOrigin;
+            CellSize = sdf_grid.CellSize;
+        }
 
 
-		public AxisAlignedBox3d Bounds()
+        public AxisAlignedBox3d Bounds()
 		{
 			return new AxisAlignedBox3d(
 				GridOrigin.x, GridOrigin.y, GridOrigin.z,
