@@ -24,8 +24,7 @@ namespace g3
 
         // internal
         double[] R, P, AP, Z;
-
-
+        private static readonly double ZeroTolerance = MathUtil.ZeroTolerance * 1000.0f;
 
 
         public bool Solve()
@@ -57,7 +56,7 @@ namespace g3
 
             // [RMS] If we were initialized w/ constraints already satisfied, 
             //   then we are done! (happens for example in mesh deformations)
-            if (rho0 < MathUtil.ZeroTolerance * root1)
+            if (rho0 < ZeroTolerance * root1)
                 return true;
 
             Array.Copy(R, P, R.Length);
@@ -73,7 +72,7 @@ namespace g3
             int iter;
             for (iter = 1; iter < MaxIterations; ++iter) {
                 double root0 = Math.Sqrt(rho1);
-                if (root0 <= MathUtil.ZeroTolerance * root1) {
+                if (root0 <= ZeroTolerance * root1) {
                     break;
                 }
 
@@ -164,7 +163,7 @@ namespace g3
 
                 // convergence test
                 double root0 = Math.Sqrt(RdotZ_k);
-                if (root0 <= MathUtil.ZeroTolerance * root1) {
+                if (root0 <= ZeroTolerance * root1) {
                     break;
                 }
 
