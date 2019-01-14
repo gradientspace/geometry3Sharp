@@ -5,17 +5,18 @@ namespace g3
     public class Snapping
     {
 
-        public static double SnapToIncrement(double fValue, double fIncrement)
+        public static double SnapToIncrement(double fValue, double fIncrement, double offset = 0)
         {
             if (!MathUtil.IsFinite(fValue))
                 return 0;
+            fValue -= offset;
             double sign = Math.Sign(fValue);
             fValue = Math.Abs(fValue);
             int nInc = (int)(fValue / fIncrement);
             double fRem = fValue % fIncrement;
             if (fRem > fIncrement / 2)
                 ++nInc;
-            return sign * (double)nInc * fIncrement;
+            return sign * (double)nInc * fIncrement + offset;
         }
 
 
@@ -46,14 +47,14 @@ namespace g3
 
         }
 
-        public static double SnapToIncrementLow(double fValue, double fIncrement)
+        public static double SnapToIncrementLow(double fValue, double fIncrement, double offset=0)
         {
-            return SnapToIncrementSigned(fValue, fIncrement, true);
+            return SnapToIncrementSigned(fValue - offset, fIncrement, true) + offset;
         }
 
-        public static double SnapToIncrementHigh(double fValue, double fIncrement)
+        public static double SnapToIncrementHigh(double fValue, double fIncrement, double offset = 0)
         {
-            return SnapToIncrementSigned(fValue, fIncrement, false);
+            return SnapToIncrementSigned(fValue - offset, fIncrement, false) + offset;
         }
     }
 }
