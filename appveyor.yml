@@ -25,7 +25,7 @@ deploy:
   provider: NuGet
 #  server:                  # remove to push to NuGet.org
   api_key:
-    secure: NwCvdkjy/Jpu+Cev4PeXnCdyEtf5F5O4bDtBoXisEKkez6R+U5Wk12hdHNa1NTFT
+    secure: DIcqDc7g8mWxhl3/G0MxoGVSnRJzdMvPZdJM7NbYjuy1tFhcF8hWA+nNoGntESX7
   on:
     appveyor_repo_tag: true	
   skip_symbols: false
