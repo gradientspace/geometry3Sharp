@@ -344,6 +344,9 @@
     <Compile Include="curve\Hexagon2.cs" />
     <Compile Include="solvers\CholeskyDecomposition.cs" />
     <Compile Include="spatial\Bitmap2.cs" />
+    <Compile Include="supports\BlockSupportGenerator.cs" />
+    <Compile Include="supports\GraphSupportGenerator.cs" />
+    <Compile Include="supports\GraphTubeMesher.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
