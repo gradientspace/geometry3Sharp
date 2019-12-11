@@ -77,7 +77,11 @@ namespace g3
 
 				int[] mapV = new int[mesh.MaxVertexID];
 
-				// write vertices for this mesh
+                if (vMeshes[mi].Name != null) {
+                    writer.WriteLine("o " + vMeshes[mi].Name);
+                }
+
+                // write vertices for this mesh
                 foreach ( int vi in mesh.VertexIndices() ) { 
 					mapV[vi] = nAccumCountV++;
                     Vector3d v = mesh.GetVertex(vi);
