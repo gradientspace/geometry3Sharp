@@ -35,4 +35,5 @@ geometry3Sharp/obj
 geometry3Sharp.csproj.user
 bin
 obj
+.vs
 *.meta

@@ -106,6 +106,9 @@
     <Compile Include="distance\DistPoint2Circle2.cs" />
     <Compile Include="distance\DistPoint3Cylinder3.cs" />
     <Compile Include="distance\DistPoint3Circle3.cs" />
+    <Compile Include="implicit\CachingGridImplicit3d.cs" />
+    <Compile Include="implicit\CachingMeshSDF.cs" />
+    <Compile Include="implicit\FalloffFunctions.cs" />
     <Compile Include="implicit\GridImplicits3d.cs" />
     <Compile Include="implicit\Implicit2d.cs" />
     <Compile Include="implicit\Implicit3d.cs" />
@@ -304,6 +307,9 @@
     <Compile Include="spatial\DCurveProjection.cs" />
     <Compile Include="spatial\DenseGrid2.cs" />
     <Compile Include="spatial\DenseGrid3.cs" />
+    <Compile Include="spatial\EditMeshSpatial.cs" />
+    <Compile Include="spatial\MeshScalarSamplingGrid.cs" />
+    <Compile Include="spatial\MeshWindingNumberGrid.cs" />
     <Compile Include="spatial\PointAABBTree3.cs" />
     <Compile Include="spatial\DMeshAABBTree.cs" />
     <Compile Include="spatial\DSparseGrid3.cs" />
@@ -311,6 +317,7 @@
     <Compile Include="spatial\GridIndexing.cs" />
     <Compile Include="spatial\MeshSignedDistanceGrid.cs" />
     <Compile Include="spatial\NormalHistogram.cs" />
+    <Compile Include="spatial\PointSetHashtable.cs" />
     <Compile Include="spatial\TriangleBinsGrid2d.cs" />
     <Compile Include="spatial\PointHashGrid2d.cs" />
     <Compile Include="spatial\PointHashGrid3d.cs" />
