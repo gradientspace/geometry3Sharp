@@ -99,7 +99,7 @@ namespace g3
             Frame3f fCur = new Frame3f(Frame);
             Vector3d dv = CurveUtils.GetTangent(Vertices, 0, ClosedLoop);
             fCur.Origin = (Vector3f)Vertices[0];
-            fCur.ConstrainedAlignAxis(2, (Vector3f)dv, Vector3f.AxisX);
+            fCur.AlignAxis(2, (Vector3f)dv);
             Frame3f fStart = new Frame3f(fCur);
 
             double circumference = Polygon.ArcLength;
@@ -113,7 +113,7 @@ namespace g3
                 // propagate frame
                 Vector3d tangent = CurveUtils.GetTangent(Vertices, vi, ClosedLoop);
                 fCur.Origin = (Vector3f)Vertices[vi];
-                fCur.ConstrainedAlignAxis(2, (Vector3f)tangent, Vector3f.AxisY);
+                fCur.AlignAxis(2, (Vector3f)tangent);
 
                 // generate vertices
                 int nStartR = ri * nRingSize;
