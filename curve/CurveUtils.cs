@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace g3
 {
@@ -10,20 +8,28 @@ namespace g3
 
         public static Vector3d GetTangent(List<Vector3d> vertices, int i, bool bLoop = false)
         {
-            if (bLoop) {
-                int NV = vertices.Count;
-                if (i == 0)
-                    return (vertices[1] - vertices[NV-1]).Normalized;
-                else
-                    return (vertices[(i+1)%NV] - vertices[i-1]).Normalized;
-            } else {
+            int length = vertices.Count;
+
+            if (length < 2)
+                return Vector3d.AxisZ;
+
+            if (length == 2)
+                return (vertices[1] - vertices[0]).Normalized;
+
+            if (!bLoop)
+            {
                 if (i == 0)
                     return (vertices[1] - vertices[0]).Normalized;
-                else if (i == vertices.Count - 1)
-                    return (vertices[vertices.Count - 1] - vertices[vertices.Count - 2]).Normalized;
-                else
-                    return (vertices[i + 1] - vertices[i - 1]).Normalized;
+
+                if (i == length - 1)
+                    return (vertices[length - 1] - vertices[length - 2]).Normalized;
             }
+
+            Vector3d v = vertices[i];
+            Vector3d v1 = vertices[(i - 1 + length) % length];
+            Vector3d v2 = vertices[(i + 1) % length];
+
+            return ((v2 - v).Normalized - (v1 - v).Normalized).Normalized;
         }
 
 
