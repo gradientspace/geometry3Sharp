@@ -192,7 +192,7 @@ namespace g3
 
 
         // Result must be as large as Mesh.MaxVertexID
-        public bool SolveMultipleCG(Vector3d[] Result)
+        public bool SolveMultipleCG(Vector3d[] Result, bool noMaxIterations = false)
         {
             if (WeightsM == null)
                 Initialize();       // force initialize...
@@ -224,6 +224,14 @@ namespace g3
                 UseXAsInitialGuess = true };
 
             SparseSymmetricCG[] solvers = new SparseSymmetricCG[3] { SolverX, SolverY, SolverZ };
+            if (noMaxIterations)
+            {
+                foreach (SparseSymmetricCG solver in solvers)
+                {
+                    solver.MaxIterations = int.MaxValue;
+                }
+            }
+
             bool[] ok = new bool[3];
             int[] indices = new int[3] { 0, 1, 2 };
 
@@ -257,7 +265,7 @@ namespace g3
 
 
         // Result must be as large as Mesh.MaxVertexID
-        public bool SolveMultipleRHS(Vector3d[] Result)
+        public bool SolveMultipleRHS(Vector3d[] Result, bool noMaxIterations = false)
         {
             if (WeightsM == null)
                 Initialize();       // force initialize...
@@ -280,6 +288,10 @@ namespace g3
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = null,
                 UseXAsInitialGuess = true, ConvergeTolerance = MathUtil.ZeroTolerance * 10000
             };
+            if (noMaxIterations)
+            {
+                Solver.MaxIterations = int.MaxValue;
+            }
 
             bool ok = Solver.Solve();
 
@@ -308,18 +320,18 @@ namespace g3
 
 
 
-        public bool Solve(Vector3d[] Result)
+        public bool Solve(Vector3d[] Result, bool noMaxIterations = false)
         {
             // for small problems, faster to use separate CGs?
             if ( Mesh.VertexCount < 10000 )
-                return SolveMultipleCG(Result);
+                return SolveMultipleCG(Result, noMaxIterations);
             else
-                return SolveMultipleRHS(Result);
+                return SolveMultipleRHS(Result, noMaxIterations);
         }
 
 
 
-        public bool SolveAndUpdateMesh()
+        public bool SolveAndUpdateMesh(bool noMaxIterations = false)
         {
             int N = Mesh.MaxVertexID;
             Vector3d[] Result = new Vector3d[N];
