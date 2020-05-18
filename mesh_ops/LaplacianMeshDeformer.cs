@@ -335,7 +335,7 @@ namespace g3
         {
             int N = Mesh.MaxVertexID;
             Vector3d[] Result = new Vector3d[N];
-            if ( Solve(Result) == false )
+            if ( Solve(Result, noMaxIterations) == false )
                 return false;
             for (int i = 0; i < N; ++i) {
                 if (Mesh.IsVertex(i)) {
