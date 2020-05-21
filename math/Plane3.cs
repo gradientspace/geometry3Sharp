@@ -32,6 +32,15 @@ namespace g3
             Constant = Normal.Dot(p0);
         }
 
+        // Creates plane from equation params ax + by + cz + d = 0;
+        public static Plane3d FromEquationParams(Vector4d vector)
+        {
+            (double a, double b, double c, double d) = (vector[0], vector[1], vector[2], vector[3]);
+            Vector3d normal = new Vector3d(a, b, c).Normalized;
+            double constant = normal.z * (-d / c);
+            return new Plane3d(normal, constant);
+        }
+
 
         // Compute d = Dot(N,P)-c where N is the plane normal and c is the plane
         // constant.  This is a signed distance.  The sign of the return value is
@@ -41,6 +50,12 @@ namespace g3
         public double DistanceTo(Vector3d p)
         {
             return Normal.Dot(p) - Constant;
+        }
+
+        public Vector3d Project(Vector3d p)
+        {
+            double distanceTo = DistanceTo(p);
+            return p - Normal * distanceTo;
         }
 
         // The "positive side" of the plane is the half space to which the plane
@@ -91,6 +106,15 @@ namespace g3
             Constant = Normal.Dot(p0);
         }
 
+        // Creates plane from equation params ax + by + cz + d = 0;
+        public static Plane3f FromEquationParams(Vector4f vector)
+        {
+            (float a, float b, float c, float d) = (vector[0], vector[1], vector[2], vector[3]);
+            Vector3f normal = new Vector3f(a, b, c).Normalized;
+            float constant = normal.z * (-d / c);
+            return new Plane3f(normal, constant);
+        }
+
 
         // Compute d = Dot(N,P)-c where N is the plane normal and c is the plane
         // constant.  This is a signed distance.  The sign of the return value is
@@ -100,6 +124,12 @@ namespace g3
         public float DistanceTo(Vector3f p)
         {
             return Normal.Dot(p) - Constant;
+        }
+
+        public Vector3f Project(Vector3f p)
+        {
+            float distanceTo = DistanceTo(p);
+            return p - Normal * distanceTo;
         }
 
         // The "positive side" of the plane is the half space to which the plane
