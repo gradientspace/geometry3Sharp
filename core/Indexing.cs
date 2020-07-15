@@ -208,7 +208,7 @@ namespace g3
 	public class IndexMap : IIndexMap
     {
         // this is returned if sparse map doesn't contain value
-        public readonly int InvalidIndex = int.MinValue;
+        public const int InvalidIndex = int.MinValue;
 
 
         int[] dense_map;

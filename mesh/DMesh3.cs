@@ -229,6 +229,10 @@ namespace g3
 
             NewVertexInfo vinfo = new NewVertexInfo();
             int[] mapV = new int[copy.MaxVertexID];
+            for (int i = 0; i < mapV.Length; i++)
+            {
+                mapV[i] = IndexMap.InvalidIndex;
+            }
             foreach ( int vid in copy.vertices_refcount ) {
                 copy.GetVertex(vid, ref vinfo, bNormals, bColors, bUVs);
                 mapV[vid] = AppendVertex(vinfo);
