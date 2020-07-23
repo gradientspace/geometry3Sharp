@@ -116,7 +116,54 @@ namespace g3
             }
         }
 
+        /// <summary>
+        /// Converts the given Meshes into a storage (file) format and writes into the given Stream. Does not close the stream in the end.
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="vMeshes"></param>
+        /// <param name="options"></param>
+        /// <param name="format">desired file format</param>
+        /// <returns></returns>
+        public IOWriteResult Write(Stream stream, List<WriteMesh> vMeshes, WriteOptions options, MeshFileFormats format)
+        {
+            Func<Stream, List<WriteMesh>, WriteOptions, IOWriteResult> writeFunc = null;
 
+            switch (format)
+            {
+                case MeshFileFormats.Obj: writeFunc = Write_OBJ; break;
+                case MeshFileFormats.Stl: writeFunc = Write_STL; break;
+                case MeshFileFormats.Off: writeFunc = Write_OFF; break;
+                case MeshFileFormats.G3mesh: writeFunc = Write_G3Mesh; break;
+                default: return new IOWriteResult(IOCode.UnknownFormatError, $"format {format} is not supported");
+            }
+
+            // save current culture
+            var current_culture = Thread.CurrentThread.CurrentCulture;
+
+            try
+            {
+                // push invariant culture for write
+                if (WriteInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
+                var result = writeFunc(stream, vMeshes, options);
+
+                // restore culture
+                if (WriteInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
+                return result;
+
+            }
+            catch (Exception e)
+            {
+                // restore culture
+                if (WriteInvariantCulture)
+                    Thread.CurrentThread.CurrentCulture = current_culture;
+
+                return new IOWriteResult(IOCode.WriterError, "Unknown error : exception : " + e.Message);
+            }
+        }
 
 
         IOWriteResult Write_OBJ(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
@@ -139,6 +186,18 @@ namespace g3
             }
         }
 
+        IOWriteResult Write_OBJ(Stream stream, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            StreamWriter w = new StreamWriter(stream); // dont dispose the StreamWriter explicitly: it will dispose underlying Stream
+            OBJWriter writer = new OBJWriter()
+            {
+                OpenStreamF = (fn) => { throw new NotSupportedException("File operations are not supported in stream mode"); },
+                CloseStreamF = (s) => { },  // do nothing, because the stream should be managed outside, by its creator
+            };
+            var result = writer.Write(w, vMeshes, options);
+            w.Flush();
+            return result;
+        }
 
         IOWriteResult Write_OFF(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
@@ -147,16 +206,20 @@ namespace g3
                 return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
 
             try {
-                StreamWriter w = new StreamWriter(stream);
-                OFFWriter writer = new OFFWriter();
-                var result = writer.Write(w, vMeshes, options);
-                w.Flush();
-                return result;
+                return Write_OFF(stream, vMeshes, options);
             } finally {
                 CloseStreamF(stream);
             }
         }
 
+        IOWriteResult Write_OFF(Stream stream, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            StreamWriter w = new StreamWriter(stream); // dont dispose the StreamWriter explicitly: it will dispose underlying Stream
+            OFFWriter writer = new OFFWriter();
+            var result = writer.Write(w, vMeshes, options);
+            w.Flush();
+            return result;
+        }
 
         IOWriteResult Write_STL(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
@@ -164,25 +227,32 @@ namespace g3
             if (stream == null)
                 return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
 
-            try { 
-                if (options.bWriteBinary) {
-                    BinaryWriter w = new BinaryWriter(stream);
-                    STLWriter writer = new STLWriter();
-                    var result = writer.Write(w, vMeshes, options);
-                    w.Flush();
-                    return result;
-                } else {
-                    StreamWriter w = new StreamWriter(stream);
-                    STLWriter writer = new STLWriter();
-                    var result = writer.Write(w, vMeshes, options);
-                    w.Flush();
-                    return result;
-                }
+            try {
+                return Write_STL(stream, vMeshes, options);
             } finally {
                 CloseStreamF(stream);
             }
         }
 
+        IOWriteResult Write_STL(Stream stream, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            if (options.bWriteBinary)
+            {
+                BinaryWriter w = new BinaryWriter(stream); // dont dispose the BinaryWriter explicitly: it will dispose underlying Stream
+                STLWriter writer = new STLWriter();
+                var result = writer.Write(w, vMeshes, options);
+                w.Flush();
+                return result;
+            }
+            else
+            {
+                StreamWriter w = new StreamWriter(stream); // dont dispose the StreamWriter explicitly: it will dispose underlying Stream
+                STLWriter writer = new STLWriter();
+                var result = writer.Write(w, vMeshes, options);
+                w.Flush();
+                return result;
+            }
+        }
 
         IOWriteResult Write_G3Mesh(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
@@ -191,19 +261,28 @@ namespace g3
                 return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
 
             try {
-                BinaryWriter w = new BinaryWriter(stream);
-                BinaryG3Writer writer = new BinaryG3Writer();
-                var result = writer.Write(w, vMeshes, options);
-                w.Flush();
-                return result;
+                return Write_G3Mesh(stream, vMeshes, options);
             } finally {
                 CloseStreamF(stream);
             }
         }
 
+        IOWriteResult Write_G3Mesh(Stream stream, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            BinaryWriter w = new BinaryWriter(stream); // dont dispose the BinaryWriter explicitly: it will dispose underlying Stream
+            BinaryG3Writer writer = new BinaryG3Writer();
+            var result = writer.Write(w, vMeshes, options);
+            w.Flush();
+            return result;
+        }
 
 
+        public enum MeshFileFormats
+        {
+            Obj = 1,
+            Stl = 2,
+            Off = 4,
+            G3mesh = 8
+        }
     }
-
-
 }
