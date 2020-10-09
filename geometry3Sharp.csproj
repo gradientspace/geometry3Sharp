@@ -344,6 +344,7 @@
     <Compile Include="curve\Hexagon2.cs" />
     <Compile Include="solvers\CholeskyDecomposition.cs" />
     <Compile Include="spatial\Bitmap2.cs" />
+    <Compile Include="io\DS3Reader.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
