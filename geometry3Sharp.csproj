@@ -345,6 +345,9 @@
     <Compile Include="solvers\CholeskyDecomposition.cs" />
     <Compile Include="spatial\Bitmap2.cs" />
     <Compile Include="io\DS3Reader.cs" />
+    <Compile Include="supports\BlockSupportGenerator.cs" />
+    <Compile Include="supports\GraphSupportGenerator.cs" />
+    <Compile Include="supports\GraphTubeMesher.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="interfaces\" />
