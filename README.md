@@ -16,6 +16,7 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 * [Nia Technologies NiaFit](https://niatech.org/technology/niafit/) - 3D-printed prosthetic and orthotic design
 * [OrthoVR Project](https://orthovrproject.org/) - 3D-printed lower-leg prosthetic design in VR
 * [Archform](https://www.archform.co/) - Clear Dental Aligner design/planning app
+* [ViRGIS](https://www.virgis.org/) - A Unity based GIS in VR platform
 * [Your Project Here?](rms@gradientspace.com) - *we are very excited to hear about your project!*
 
 
