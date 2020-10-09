@@ -9,7 +9,9 @@ namespace g3
     // Parse 3DS mesh format
     // https://en.wikipedia.org/wiki/.3ds
     //
-    // and https://web.archive.org/web/20090404091233/http://www.jalix.org/ressources/graphics/3DS/_unofficials/3ds-info.txt 
+    // and https://web.archive.org/web/20090404091233/http://www.jalix.org/ressources/graphics/3DS/_unofficials/3ds-info.txt
+    //
+    // and http://www.redwoodsoft.com/~dru/museum/gfx/gff/textonly/summary/3dstudio.htm
     //
     // using this method
     // https://social.msdn.microsoft.com/Forums/vstudio/en-US/db4945bb-c244-42df-832f-5d9fe37d0175/read-contents-of-a-binary-file-with-extension-3ds?forum=csharpgeneralhttps://en.wikipedia.org/wiki/OFF_(file_format)
