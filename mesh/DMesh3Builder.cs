@@ -131,6 +131,10 @@ namespace g3
             Metadata[nActiveMesh].Add(identifier, data);
         }
 
+        public void SetVertexUV(int vID, Vector2f UV) {
+            Meshes[nActiveMesh].SetVertexUV(vID, UV);
+        }
+
 
         // just store GenericMaterial object, we can't use it here
         public int BuildMaterial(GenericMaterial m)
