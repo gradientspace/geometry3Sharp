@@ -54,6 +54,7 @@ namespace g3
     {
         void SetVertex(int vID, Vector3d vNewPos);
         void SetVertexNormal(int vid, Vector3f vNewNormal);
+        void SetVertexUV(int i, Vector2f uv);
     }
 
 
@@ -100,6 +101,8 @@ namespace g3
 
         int AppendTriangle(int i, int j, int k);
         int AppendTriangle(int i, int j, int k, int g);
+
+        void SetVertexUV(int vID, Vector2f Uvs);
 
 
         // material handling

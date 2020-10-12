@@ -231,6 +231,10 @@ namespace g3
             return Vector2f.Zero;
         }
 
+        public void SetVertexUV(int vID, Vector2f UV) {
+            // do nothing
+        }
+
         public void SetVertexNormal(int vID, Vector3f vNewNormal) {
 			if ( HasVertexNormals ) {
                 debug_check_is_vertex(vID);

@@ -603,6 +603,10 @@ namespace g3
             MaterialAssignment[meshID] = materialID;
         }
 
+        public void SetVertexUV(int vID, Vector2f UV) {
+            Meshes[nActiveMesh].SetVertexUV(vID, UV);
+        }
+
     }
 
 }
