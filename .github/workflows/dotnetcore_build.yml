@@ -19,7 +19,7 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet build geometry3Sharp_netcore.csproj --configuration Release --no-restore
+      run: dotnet build ./geometry3Sharp_netcore.csproj --configuration Release --no-restore
 
     # - name: Install dotnet-format
     #  run: dotnet tool install -g dotnet-format
