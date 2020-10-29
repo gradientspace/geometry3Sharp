@@ -16,7 +16,9 @@ jobs:
         dotnet-version: 3.1.202
 
     - name: Build
-      run: dotnet build ./geometry3Sharp_netcore.csproj --configuration Release --no-restore
+      run: |
+        dotnet restore ./geometry3Sharp_netcore.csproj;
+        dotnet build ./geometry3Sharp_netcore.csproj --configuration Release --no-restore;
 
     # - name: Install dotnet-format
     #  run: dotnet tool install -g dotnet-format
