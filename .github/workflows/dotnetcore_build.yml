@@ -15,9 +15,6 @@ jobs:
       with:
         dotnet-version: 3.1.202
 
-    - name: Install Dependencies
-      run: dotnet restore
-
     - name: Build
       run: dotnet build ./geometry3Sharp_netcore.csproj --configuration Release --no-restore
 
