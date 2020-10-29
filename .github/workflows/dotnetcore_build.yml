@@ -1,0 +1,28 @@
+name: dotnet-core-build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: false
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.202
+
+    - name: Install Dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    # - name: Install dotnet-format
+    #  run: dotnet tool install -g dotnet-format
+    # - name: Code format analysis
+      # Only dry-run now. To force it, add --check at the end
+      # run: dotnet-format --dry-run --workspace archform_modules.sln --exclude 3rd_party --verbosity diag
