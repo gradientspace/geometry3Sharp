@@ -50,7 +50,7 @@ namespace g3
         {
             Row0 = new Vector3f(matF(0,0), matF(0,1), matF(0,2));
             Row1 = new Vector3f(matF(1,0), matF(1,1), matF(1,2));
-            Row2 = new Vector3f(matF(2,0), matF(1,2), matF(2,2));
+            Row2 = new Vector3f(matF(2,0), matF(2,1), matF(2,2));
         }
         public Matrix3f(float m00, float m11, float m22)
         {

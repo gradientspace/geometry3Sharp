@@ -35,7 +35,10 @@ namespace g3
         // Creates plane from equation params ax + by + cz + d = 0;
         public static Plane3d FromEquationParams(Vector4d vector)
         {
-            (double a, double b, double c, double d) = (vector[0], vector[1], vector[2], vector[3]);
+            double a = vector[0];
+            double b = vector[1];
+            double c = vector[2];
+            double d = vector[3];
             Vector3d normal = new Vector3d(a, b, c).Normalized;
             double constant = normal.z * (-d / c);
             return new Plane3d(normal, constant);
@@ -109,7 +112,10 @@ namespace g3
         // Creates plane from equation params ax + by + cz + d = 0;
         public static Plane3f FromEquationParams(Vector4f vector)
         {
-            (float a, float b, float c, float d) = (vector[0], vector[1], vector[2], vector[3]);
+            float a = vector[0];
+            float b = vector[1];
+            float c = vector[2];
+            float d = vector[3];
             Vector3f normal = new Vector3f(a, b, c).Normalized;
             float constant = normal.z * (-d / c);
             return new Plane3f(normal, constant);

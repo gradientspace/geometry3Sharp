@@ -37,6 +37,13 @@ namespace g3
             slab_size = dims.x * dims.y;
         }
 
+        public Bitmap3(Bitmap3 bitmapToCopy)
+        {
+            Bits = (BitArray)bitmapToCopy.Bits.Clone();
+            dimensions = bitmapToCopy.Dimensions;
+            row_size = bitmapToCopy.row_size;
+            slab_size = bitmapToCopy.slab_size;
+        }
 
         public AxisAlignedBox3i GridBounds {
             get { return new AxisAlignedBox3i(Vector3i.Zero, Dimensions); }
@@ -155,6 +162,5 @@ namespace g3
                 throw new NotImplementedException();
             return copy;
         }
-
     }
 }

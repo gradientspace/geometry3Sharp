@@ -508,6 +508,9 @@ namespace g3
             return R1;
         }
 
-
+        public override int GetHashCode()
+        {
+            return Origin.GetHashCode() ^ Rotation.GetHashCode();
+        }
     }
 }

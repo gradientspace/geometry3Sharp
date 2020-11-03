@@ -24,7 +24,14 @@ namespace g3
 			Resize(new Vector2i(Width, Height));
 		}
 
-		public void Resize(Vector2i dims) {
+        public Bitmap2(Bitmap2 bitmapToCopy)
+        {
+            Bits = (BitArray)bitmapToCopy.Bits.Clone();
+            dimensions = bitmapToCopy.Dimensions;
+            row_size = bitmapToCopy.row_size;
+        }
+
+        public void Resize(Vector2i dims) {
 			int size = dims.x * dims.y;
 			Bits = new BitArray(size);
 			dimensions = dims;

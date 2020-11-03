@@ -127,9 +127,6 @@ namespace g3
             double min_dist = double.MaxValue;
             T nearest = invalidValue;
 
-            if (ignoreF == null)
-                ignoreF = (pt) => { return false; };
-
             for (int zi = min_idx.z; zi <= max_idx.z; zi++) {
                 for (int yi = min_idx.y; yi <= max_idx.y; yi++) {
                     for (int xi = min_idx.x; xi <= max_idx.x; xi++) {
@@ -138,10 +135,10 @@ namespace g3
                         if (Hash.TryGetValue(idx, out values) == false)
                             continue;
                         foreach (T value in values) {
-                            if (ignoreF(value))
+                            if (ignoreF != null && ignoreF(value))
                                 continue;
                             double dist = distF(value);
-                            if (dist < radius && dist < min_dist) {
+                            if (dist <= radius && dist < min_dist) {
                                 nearest = value;
                                 min_dist = dist;
                             }
