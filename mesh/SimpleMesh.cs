@@ -159,22 +159,24 @@ namespace g3
         }
 
         public void AppendVertices(VectorArray3d v, VectorArray3f n = null, VectorArray3f c = null, VectorArray2f uv = null) {
+            bool bHasN = HasVertexNormals;
+            bool bHasC = HasVertexColors;
+            bool bHasUV = HasVertexUVs;
             Vertices.Add(v.array);
-            if (n != null && HasVertexNormals)
+            if (n != null && bHasN)
                 Normals.Add(n.array);
-            else if (HasVertexNormals)
+            else if (bHasN)
                 Normals.Add(new float[] { 0, 1, 0 }, v.Count);
-            if (c != null && HasVertexColors)
+            if (c != null && bHasC)
                 Colors.Add(c.array);
-            else if (HasVertexColors)
-                Normals.Add(new float[] { 1, 1, 1 }, v.Count);
-            if (uv != null && HasVertexUVs)
+            else if (bHasC)
+                Colors.Add(new float[] { 1, 1, 1 }, v.Count);
+            if (uv != null && bHasUV)
                 UVs.Add(uv.array);
-            else if (HasVertexUVs)
+            else if (bHasUV)
                 UVs.Add(new float[] { 0, 0 }, v.Count);
             updateTimeStamp();
         }
-
 
 
         public int AppendTriangle(int i, int j, int k, int g = -1)
