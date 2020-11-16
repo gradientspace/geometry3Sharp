@@ -1,6 +1,6 @@
 {
     "name": "com.virgis.geometry3sharp",
-    "version": "1.0.5",
+    "version": "2.0.0",
     "displayName": "Geometry 3 Sharp",
     "description": "Open-Source (Boost-license) C# library for geometric computing.",
     "unity": "2018.1",
