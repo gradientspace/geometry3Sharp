@@ -1,5 +1,5 @@
 {{!Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See LICENSE file in the project root for full license information.}}
 
-<a class="navbar-brand" href="{{_rel}}index.html">
+<a class="navbar-brand" href="https://www.virgis.org">
   <img id="logo" class="img" src="https://www.virgis.org/images/virgis_light.png" alt="{{_appName}}" >
 </a>
