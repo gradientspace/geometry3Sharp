@@ -1,0 +1,49 @@
+{
+    "metadata": [
+        {
+            "src": [
+                {
+                    "files": ["**.cs"],
+                    "src": ".."
+                    }
+                ],
+            "dest": "api"
+        }
+    ],
+    "build": {
+        "globalMetadata": {
+            "_appTitle": "ViRGIS VR GIS",
+            "_appFooter": "ViRGIS VR GIS",
+            "_enableSearch": true,
+            "_disableToc": false
+        },
+        "postProcessors": ["ExtractSearchIndex"],
+        "content": [
+            {
+                "files": [ "toc.yml", "index.md" ]
+            },
+            {
+                "src": "api",
+                "files": [ "*.yml" ],
+                "dest": "api"
+            }
+        ],
+        "template": [
+            "default",
+            "templates/material"
+        ],
+        "sitemap":
+        {
+            "baseUrl": "https://www.virgis.org",
+            "changefreq": "daily",
+            "fileOptions": {
+                "api/*": {
+                    "changefreq": "daily"
+                }
+            }
+        },
+        "xref": [ "https://nicoco007.github.io/UnityXRefMap/2019.4/xrefmap.yml" ],
+        "xrefService": [ "https://xref.docs.microsoft.com/query?uid={uid}" ],
+        "dest": "../docs"
+    }
+}

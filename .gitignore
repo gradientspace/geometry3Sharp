@@ -37,3 +37,8 @@ bin
 obj
 .vs
 
+#Documentation
+
+docs/
+Documentation/api
+Documentation/obj

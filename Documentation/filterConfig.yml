@@ -1,0 +1,10 @@
+apiRules:
+- include:
+    uidRegex: ^Virgis
+    type: Namespace
+- include:
+    uidRegex: ^Project
+    type: Namespace
+- exclude:
+    uidRegex: .*
+    type: Namespace
