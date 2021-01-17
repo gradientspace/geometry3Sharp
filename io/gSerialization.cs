@@ -390,11 +390,12 @@ namespace g3
 
         public static int DMesh3Version = 1;
 
-        public static void Store(DMesh3 mesh, BinaryWriter writer)
+        public static void Store(DMesh3 mesh, BinaryWriter writer, MeshComponents componentsToSave = MeshComponents.All)
         {
             writer.Write(DMesh3Version);
 
-            int nComponents = (int)mesh.Components;
+            componentsToSave &= mesh.Components;
+            int nComponents = (int)componentsToSave;
             writer.Write(nComponents);
 
             Store(mesh.VerticesBuffer, writer);
@@ -402,13 +403,13 @@ namespace g3
             Store(mesh.EdgesBuffer, writer);
             Store(mesh.EdgesRefCounts.RawRefCounts, writer);
 
-            if ((mesh.Components & MeshComponents.VertexNormals) != 0)
+            if ((componentsToSave & MeshComponents.VertexNormals) != 0)
                 Store(mesh.NormalsBuffer, writer);
-            if ((mesh.Components & MeshComponents.VertexColors) != 0)
+            if ((componentsToSave & MeshComponents.VertexColors) != 0)
                 Store(mesh.ColorsBuffer, writer);
-            if ((mesh.Components & MeshComponents.VertexUVs) != 0)
+            if ((componentsToSave & MeshComponents.VertexUVs) != 0)
                 Store(mesh.UVBuffer, writer);
-            if ((mesh.Components & MeshComponents.FaceGroups) != 0)
+            if ((componentsToSave & MeshComponents.FaceGroups) != 0)
                 Store(mesh.GroupsBuffer, writer);
         }
 

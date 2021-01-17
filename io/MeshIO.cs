@@ -129,6 +129,11 @@ namespace g3
             RealPrecisionDigits = 15       // double
             //RealPrecisionDigits = 7        // float
         };
+
+        public MeshComponents MeshComponents => (bPerVertexNormals ? MeshComponents.VertexNormals : 0) |
+                                                (bPerVertexColors ? MeshComponents.VertexColors : 0) |
+                                                (bPerVertexUVs ? MeshComponents.VertexUVs : 0) |
+                                                (bWriteGroups ? MeshComponents.FaceGroups : 0);
     }
 
 
