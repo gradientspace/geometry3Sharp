@@ -59,6 +59,7 @@ namespace g3
                 Readers.Add(new OFFFormatReader());
                 Readers.Add(new BinaryG3FormatReader());
                 Readers.Add(new DS3FormatReader());
+                Readers.Add(new PLYFormatReader());
             }
         }
 
@@ -372,7 +373,7 @@ namespace g3
         }
     }
 
-    // MeshFormatReader impl for OFF
+    // MeshFormatReader impl for DS3
     public class DS3FormatReader : MeshFormatReader {
         public List<string> SupportedExtensions {
             get {
@@ -399,7 +400,41 @@ namespace g3
         }
     }
 
+    // MeshFormatReader impl for DS3
+    public class PLYFormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions
+        {
+            get
+            {
+                return new List<string>() { "ply" };
+            }
+        }
 
+
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            try
+            {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    return ReadFile(stream, builder, options, messages);
+                }
+            }
+            catch (Exception e)
+            {
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
+            }
+        }
+
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            PLYReader reader = new PLYReader();
+            reader.warningEvent += messages;
+            var result = reader.Read(new StreamReader(stream), options, builder);
+            return result;
+        }
+    }
 
     // MeshFormatReader impl for g3mesh
     public class BinaryG3FormatReader : MeshFormatReader
