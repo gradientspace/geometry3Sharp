@@ -22,7 +22,7 @@ namespace g3
             IMesh mesh = vMeshes[0].Mesh;
 
             int edgeIndex = StartingIndex;
-            int[] vertices = new int[mesh.VertexCount];
+            int[] vertices = new int[mesh.MaxVertexID];
             Dictionary<UndirectedEdge, int> edges = new Dictionary<UndirectedEdge, int>();
 
             foreach (int ti in mesh.TriangleIndices())
