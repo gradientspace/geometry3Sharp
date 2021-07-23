@@ -30,6 +30,8 @@ namespace gs
         // optionally allows extended customization of internal remesher
         // bool argument is true before smooth, false after
         public Action<Remesher, bool> ConfigureRemesherF = null;
+        
+        public Func<Vector3f, int, Vector3f> GetCenterOffsetF = null;
 
         // the laplacian smooth is what gives us the smooth fill
         public bool EnableLaplacianSmooth = true;
@@ -91,20 +93,34 @@ namespace gs
             if (useLoop == null)
                 return false;
 
-            // step 1: do stupid hole fill
-            SimpleHoleFiller filler = new SimpleHoleFiller(Mesh, useLoop);
-            if (filler.Fill() == false)
-                return false;
-
-            if (useLoop.Vertices.Length <= 3 ) {
-                FillTriangles = filler.NewTriangles;
-                FillVertices = new int[0];
-                return true;
-            }
-
             MeshFaceSelection tris = new MeshFaceSelection(Mesh);
-            tris.Select(filler.NewTriangles);
+                
+            if (FillTriangles == null)
+            {
+                // step 1: do stupid hole fill
+                SimpleHoleFiller filler = new SimpleHoleFiller(Mesh, useLoop);
+                if (filler.Fill() == false)
+                    return false;
 
+                if (GetCenterOffsetF != null)
+                {
+                    Vector3f newCenterPos = GetCenterOffsetF(Mesh.GetVertexf(filler.NewVertex), filler.NewVertex);
+                    Mesh.SetVertex(filler.NewVertex, newCenterPos);
+                }
+
+                if (useLoop.Vertices.Length <= 3 ) {
+                    FillTriangles = filler.NewTriangles;
+                    FillVertices = new int[0];
+                    return true;
+                }
+
+                tris.Select(filler.NewTriangles);
+            }
+            else
+            {
+                tris.Select(FillTriangles);
+            }
+            
             // extrude initial fill surface (this is used in socketgen for example)
             if (OffsetDistance > 0) {
                 MeshExtrudeFaces extrude = new MeshExtrudeFaces(Mesh, tris);
