@@ -201,13 +201,19 @@ namespace g3
         public struct CompactInfo
         {
             public IIndexMap MapV;
+            public IIndexMap MapT;
+
+            public CompactInfo(IIndexMap mapV, IIndexMap mapT)
+            {
+                MapV = mapV;
+                MapT = mapT;
+            }
         }
         public CompactInfo CompactCopy(DMesh3 copy, bool bNormals = true, bool bColors = true, bool bUVs = true)
         {
             if ( copy.IsCompact ) {
                 Copy(copy, bNormals, bColors, bUVs);
-                CompactInfo ci = new CompactInfo() { MapV = new IdentityIndexMap() };
-                return ci;
+                return new CompactInfo(mapV: new IdentityIndexMap(), mapT: new IdentityIndexMap());
             }
 
             vertices = new DVector<double>();
@@ -240,17 +246,22 @@ namespace g3
 
             // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
 
+            int[] mapT = new int[copy.MaxTriangleID];
+            for (int i = 0; i < mapT.Length; i++)
+                mapT[i] = IndexMap.InvalidIndex;
             foreach ( int tid in copy.triangles_refcount ) {
                 Index3i t = copy.GetTriangle(tid);
                 t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
-                AppendTriangle(t, g);
+                int appendedTriangleId = AppendTriangle(t, g);
+                mapT[tid] = appendedTriangleId < 0 ? IndexMap.InvalidIndex : appendedTriangleId;
                 max_group_id = Math.Max(max_group_id, g+1);
             }
 
-            return new CompactInfo() {
-                MapV = new IndexMap(mapV, this.MaxVertexID)
-            };
+            return new CompactInfo(
+                mapV: new IndexMap(mapV, this.MaxVertexID),
+                mapT: new IndexMap(mapT, this.MaxTriangleID)
+                );
         }
 
 
@@ -311,17 +322,22 @@ namespace g3
 
             // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
 
+            int[] mapT = new int[copy.MaxTriangleID];
+            for (int i = 0; i < mapT.Length; i++)
+                mapT[i] = IndexMap.InvalidIndex;
             foreach (int tid in copy.TriangleIndices()) {
                 Index3i t = copy.GetTriangle(tid);
                 t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
-                AppendTriangle(t, g);
+                int appendedTriangleId = AppendTriangle(t, g);
+                mapT[tid] = appendedTriangleId < 0 ? IndexMap.InvalidIndex : appendedTriangleId;
                 max_group_id = Math.Max(max_group_id, g + 1);
             }
 
-            return new CompactInfo() {
-                MapV = new IndexMap(mapV, this.MaxVertexID)
-            };
+            return new CompactInfo(
+                mapV: new IndexMap(mapV, this.MaxVertexID),
+                mapT: new IndexMap(mapT, this.MaxTriangleID)
+                );
         }
 
 
@@ -2296,7 +2312,7 @@ namespace g3
         public CompactInfo CompactInPlace(bool bComputeCompactInfo = false)
         {
             IndexMap mapV = (bComputeCompactInfo) ? new IndexMap(MaxVertexID, VertexCount) : null;
-            CompactInfo ci = new CompactInfo();
+            CompactInfo ci = new CompactInfo(mapV, mapT: null);
             ci.MapV = mapV;
 
             // find first free vertex, and last used vertex
