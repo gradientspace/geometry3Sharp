@@ -76,6 +76,7 @@ namespace g3
                 return 0;
         }
 
+        public static explicit operator Plane3f(Plane3d plane3d) => new Plane3f((Vector3f)plane3d.Normal, (float)plane3d.Constant);
     }
 
 
@@ -153,6 +154,7 @@ namespace g3
                 return 0;
         }
 
+        public static implicit operator Plane3d(Plane3f plane3f) => new Plane3d(plane3f.Normal, plane3f.Constant);
     }
 
 
