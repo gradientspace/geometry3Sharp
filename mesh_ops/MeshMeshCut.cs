@@ -579,12 +579,14 @@ namespace g3
 
         bool is_inserted_free_edge(int eid)
         {
-            Index2i et = Target.GetEdgeT(eid);
-            if (get_parent(et.a) != get_parent(et.b))
-                return false;
-            // TODO need to check if we need to save edge AB to connect vertices!
-            throw new Exception("not done yet!");
-            return true;
+            throw new NotImplementedException();
+
+            // Index2i et = Target.GetEdgeT(eid);
+            // if (get_parent(et.a) != get_parent(et.b))
+            //     return false;
+            // // TODO need to check if we need to save edge AB to connect vertices!
+            // throw new Exception("not done yet!");
+            // return true;
         }
 
 
