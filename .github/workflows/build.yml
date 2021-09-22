@@ -1,0 +1,20 @@
+name: Build
+on:
+  push:
+    branches:
+      - softsmile
+  pull_request:
+    branches:
+      - softsmile
+jobs:
+  build_geometry3Sharp_netstandard:
+    name: "Build geometry3Sharp_netstandard.csproj"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1.8.2
+        with:
+          dotnet-version: 3.1.301
+      - run: dotnet build geometry3Sharp_netstandard.csproj
