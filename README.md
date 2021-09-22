@@ -1,3 +1,5 @@
+![build](https://github.com/SoftSmile-Inc/geometry3Sharp/actions/workflows/build.yml/badge.svg)
+
 # geometry3Sharp
 
 Open-Source (Boost-license) C# library for geometric computing. 
