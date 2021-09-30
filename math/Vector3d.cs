@@ -30,51 +30,51 @@ namespace g3
 
         public double this[int key]
         {
-            get { return (key == 0) ? x : (key == 1) ? y : z; }
+            readonly get { return (key == 0) ? x : (key == 1) ? y : z; }
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
         }
 
         public Vector2d xy {
-            get { return new Vector2d(x, y); }
+            readonly get { return new Vector2d(x, y); }
             set { x = value.x; y = value.y; }
         }
         public Vector2d xz {
-            get { return new Vector2d(x, z); }
+            readonly get { return new Vector2d(x, z); }
             set { x = value.x; z = value.y; }
         }
         public Vector2d yz {
-            get { return new Vector2d(y, z); }
+            readonly get { return new Vector2d(y, z); }
             set { y = value.x; z = value.y; }
         }
 
-        public double LengthSquared
+        public readonly double LengthSquared
         {
             get { return x * x + y * y + z * z; }
         }
-        public double Length
+        public readonly double Length
         {
             get { return Math.Sqrt(LengthSquared); }
         }
 
-        public double LengthL1
+        public readonly double LengthL1
         {
             get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
         }
 
-		public double Max {
+		public readonly double Max {
 			get { return Math.Max(x, Math.Max(y, z)); }
 		}
-		public double Min {
+		public readonly double Min {
 			get { return Math.Min(x, Math.Min(y, z)); }
 		}
-		public double MaxAbs {
+		public readonly double MaxAbs {
 			get { return Math.Max(Math.Abs(x), Math.Max(Math.Abs(y), Math.Abs(z))); }
 		}
-		public double MinAbs {
+		public readonly double MinAbs {
 			get { return Math.Min(Math.Abs(x), Math.Min(Math.Abs(y), Math.Abs(z))); }
 		}
 
-        public Vector3d Abs {
+        public readonly Vector3d Abs {
             get { return new Vector3d(Math.Abs(x), Math.Abs(y), Math.Abs(z)); }
         }
 
@@ -92,7 +92,7 @@ namespace g3
             }
             return length;
         }
-        public Vector3d Normalized
+        public readonly Vector3d Normalized
         {
             get {
                 double length = Length;
@@ -104,11 +104,11 @@ namespace g3
             }
         }
 
-		public bool IsNormalized {
+		public readonly bool IsNormalized {
 			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerance; }
 		}
 
-        public bool IsFinite
+        public readonly bool IsFinite
         {
             get { double f = x + y + z; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
         }
@@ -120,10 +120,10 @@ namespace g3
         }
 
 
-        public double Dot(Vector3d v2) {
+        public readonly double Dot(Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
         }
-        public double Dot(ref Vector3d v2) {
+        public readonly double Dot(ref Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
         }
 
@@ -131,13 +131,13 @@ namespace g3
             return v1.Dot(ref v2);
         }
 
-        public Vector3d Cross(Vector3d v2) {
+        public readonly Vector3d Cross(Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
                 x * v2.y - y * v2.x);
         }
-        public Vector3d Cross(ref Vector3d v2) {
+        public readonly Vector3d Cross(ref Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
@@ -147,7 +147,7 @@ namespace g3
             return v1.Cross(ref v2);
         }
 
-        public Vector3d UnitCross(ref Vector3d v2) {
+        public readonly Vector3d UnitCross(ref Vector3d v2) {
             Vector3d n = new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
@@ -155,12 +155,12 @@ namespace g3
             n.Normalize();
             return n;
         }
-        public Vector3d UnitCross(Vector3d v2) {
+        public readonly Vector3d UnitCross(Vector3d v2) {
             return UnitCross(ref v2);
         }
 
 
-        public double AngleD(Vector3d v2)
+        public readonly double AngleD(Vector3d v2)
         {
             double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return Math.Acos(fDot) * MathUtil.Rad2Deg;
@@ -169,7 +169,7 @@ namespace g3
         {
             return v1.AngleD(v2);
         }
-        public double AngleR(Vector3d v2)
+        public readonly double AngleR(Vector3d v2)
         {
             double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return Math.Acos(fDot);
@@ -179,20 +179,20 @@ namespace g3
             return v1.AngleR(v2);
         }
 
-		public double DistanceSquared(Vector3d v2) {
+		public readonly double DistanceSquared(Vector3d v2) {
 			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return dx*dx + dy*dy + dz*dz;
 		}
-		public double DistanceSquared(ref Vector3d v2) {
+		public readonly double DistanceSquared(ref Vector3d v2) {
 			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return dx*dx + dy*dy + dz*dz;
 		}
 
-        public double Distance(Vector3d v2) {
+        public readonly double Distance(Vector3d v2) {
             double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return Math.Sqrt(dx*dx + dy*dy + dz*dz);
 		}
-        public double Distance(ref Vector3d v2) {
+        public readonly double Distance(ref Vector3d v2) {
             double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return Math.Sqrt(dx*dx + dy*dy + dz*dz);
 		}
@@ -276,11 +276,11 @@ namespace g3
         {
             return (a.x != b.x || a.y != b.y || a.z != b.z);
         }
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return this == (Vector3d)obj;
         }
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked // Overflow is fine, just wrap
             {
@@ -292,7 +292,7 @@ namespace g3
                 return hash;
             }
         }
-        public int CompareTo(Vector3d other)
+        public readonly int CompareTo(Vector3d other)
         {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
@@ -302,13 +302,13 @@ namespace g3
                 return z < other.z ? -1 : 1;
             return 0;
         }
-        public bool Equals(Vector3d other)
+        public readonly bool Equals(Vector3d other)
         {
             return (x == other.x && y == other.y && z == other.z);
         }
 
 
-        public bool EpsilonEqual(Vector3d v2, double epsilon) {
+        public readonly bool EpsilonEqual(Vector3d v2, double epsilon) {
             return Math.Abs(x - v2.x) <= epsilon && 
                    Math.Abs(y - v2.y) <= epsilon &&
                    Math.Abs(z - v2.z) <= epsilon;
@@ -326,10 +326,10 @@ namespace g3
 
 
 
-        public override string ToString() {
+        public override readonly string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8}", x, y, z);
         }
-        public string ToString(string fmt) {
+        public readonly string ToString(string fmt) {
             return string.Format("{0} {1} {2}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt));
         }
 

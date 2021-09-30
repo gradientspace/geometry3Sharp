@@ -55,7 +55,7 @@ namespace g3
         /// <summary>
         /// construct EdgeLoop from a list of edges of mesh
         /// </summary>
-        public static EdgeLoop FromEdges(DMesh3 mesh, IList<int> edges)
+        public static EdgeLoop FromEdges(DMesh3 mesh, IReadOnlyList<int> edges)
         {
             int[] Edges = new int[edges.Count];
             for (int i = 0; i < Edges.Length; ++i)
@@ -77,7 +77,7 @@ namespace g3
         /// <summary>
         /// construct EdgeLoop from a list of vertices of mesh
         /// </summary>
-        public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices)
+        public static EdgeLoop FromVertices(DMesh3 mesh, IReadOnlyList<int> vertices)
         {
             int NV = vertices.Count;
             int[] Vertices = new int[NV];
@@ -99,7 +99,7 @@ namespace g3
         /// construct EdgeLoop from a list of vertices of mesh
         /// if loop is a boundary edge, we can correct orientation if requested
         /// </summary>
-        public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices, bool bAutoOrient = true)
+        public static EdgeLoop FromVertices(DMesh3 mesh, IReadOnlyList<int> vertices, bool bAutoOrient = true)
         {
             int[] Vertices = new int[vertices.Count];
             for (int i = 0; i < Vertices.Length; i++) 
