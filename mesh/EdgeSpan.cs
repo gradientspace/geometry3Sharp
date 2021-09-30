@@ -40,7 +40,7 @@ namespace g3
         /// <summary>
         /// construct EdgeSpan from a list of edges of mesh
         /// </summary>
-        public static EdgeSpan FromEdges(DMesh3 mesh, IList<int> edges)
+        public static EdgeSpan FromEdges(DMesh3 mesh, IReadOnlyList<int> edges)
         {
             int[] Edges = new int[edges.Count];
             for (int i = 0; i < Edges.Length; ++i)
@@ -66,7 +66,7 @@ namespace g3
         /// <summary>
         /// construct EdgeSpan from a list of vertices of mesh
         /// </summary>
-        public static EdgeSpan FromVertices(DMesh3 mesh, IList<int> vertices)
+        public static EdgeSpan FromVertices(DMesh3 mesh, IReadOnlyList<int> vertices)
         {
             int NV = vertices.Count;
             int[] Vertices = new int[NV];
@@ -236,9 +236,9 @@ namespace g3
         /// <summary>
         /// Convert vertex span to list of edges. This should be somewhere else.
         /// </summary>
-        public static int[] VerticesToEdges(DMesh3 mesh, int[] vertex_span)
+        public static int[] VerticesToEdges(DMesh3 mesh, IReadOnlyList<int> vertex_span)
         {
-            int NV = vertex_span.Length;
+            int NV = vertex_span.Count;
             int[] edges = new int[NV-1];
             for ( int i = 0; i < NV-1; ++i ) {
                 int v0 = vertex_span[i];
