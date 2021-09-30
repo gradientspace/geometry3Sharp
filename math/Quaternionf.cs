@@ -39,7 +39,7 @@ namespace g3
         public static readonly Quaternionf Identity = new Quaternionf(0.0f, 0.0f, 0.0f, 1.0f);
 
         public float this[int key] {
-            get { if (key == 0) return x; else if (key == 1) return y; else if (key == 2) return z; else return w; }
+            readonly get { if (key == 0) return x; else if (key == 1) return y; else if (key == 2) return z; else return w; }
             set { if (key == 0) x = value; else if (key == 1) y = value; else if (key == 2) z = value; else w = value; }
 
         }
