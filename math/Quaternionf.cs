@@ -35,8 +35,8 @@ namespace g3
             SetFromRotationMatrix(mat);
         }
 
-        static public readonly Quaternionf Zero = new Quaternionf(0.0f, 0.0f, 0.0f, 0.0f);
-        static public readonly Quaternionf Identity = new Quaternionf(0.0f, 0.0f, 0.0f, 1.0f);
+        public static readonly Quaternionf Zero = new Quaternionf(0.0f, 0.0f, 0.0f, 0.0f);
+        public static readonly Quaternionf Identity = new Quaternionf(0.0f, 0.0f, 0.0f, 1.0f);
 
         public float this[int key] {
             get { if (key == 0) return x; else if (key == 1) return y; else if (key == 2) return z; else return w; }
@@ -45,10 +45,10 @@ namespace g3
         }
 
 
-        public float LengthSquared {
+        public readonly float LengthSquared {
             get { return x * x + y * y + z * z + w*w; }
         }
-        public float Length {
+        public readonly float Length {
             get { return (float)Math.Sqrt(x * x + y * y + z * z + w * w); }
         }
 
@@ -66,11 +66,11 @@ namespace g3
             }
             return length;
         }
-        public Quaternionf Normalized {
+        public readonly Quaternionf Normalized {
             get { Quaternionf q = new Quaternionf(this); q.Normalize(); return q; }
         }
 
-        public float Dot(Quaternionf q2) {
+        public readonly float Dot(Quaternionf q2) {
             return x * q2.x + y * q2.y + z * q2.z + w * q2.w;
         }
 
@@ -121,7 +121,7 @@ namespace g3
 
 
         /// <summary> Inverse() * v </summary>
-        public Vector3f InverseMultiply(ref Vector3f v)
+        public readonly Vector3f InverseMultiply(ref Vector3f v)
         {
             float norm = LengthSquared;
             if (norm > 0) {
@@ -141,7 +141,7 @@ namespace g3
 
 
         /// <summary> Inverse() * v </summary>
-        public Vector3d InverseMultiply(ref Vector3d v)
+        public readonly Vector3d InverseMultiply(ref Vector3d v)
         {
             float norm = LengthSquared;
             if (norm > 0) {
@@ -163,7 +163,7 @@ namespace g3
 
         // these multiply quaternion by (1,0,0), (0,1,0), (0,0,1), respectively.
         // faster than full multiply, because of all the zeros
-        public Vector3f AxisX {
+        public readonly Vector3f AxisX {
             get {
                 float twoY = 2 * y; float twoZ = 2 * z;
                 float twoWY = twoY * w; float twoWZ = twoZ * w;
@@ -172,7 +172,7 @@ namespace g3
                 return new Vector3f(1 - (twoYY + twoZZ), twoXY + twoWZ, twoXZ - twoWY);
             }
         }
-        public Vector3f AxisY {
+        public readonly Vector3f AxisY {
             get {
                 float twoX = 2 * x; float twoY = 2 * y; float twoZ = 2 * z;
                 float twoWX = twoX * w; float twoWZ = twoZ * w; float twoXX = twoX * x;
@@ -180,7 +180,7 @@ namespace g3
                 return new Vector3f(twoXY - twoWZ, 1 - (twoXX + twoZZ), twoYZ + twoWX);
             }
         }
-        public Vector3f AxisZ {
+        public readonly Vector3f AxisZ {
             get {
                 float twoX = 2 * x; float twoY = 2 * y; float twoZ = 2 * z;
                 float twoWX = twoX * w; float twoWY = twoY * w; float twoXX = twoX * x;
@@ -191,7 +191,7 @@ namespace g3
 
 
 
-        public Quaternionf Inverse() {
+        public readonly Quaternionf Inverse() {
             float norm = LengthSquared;
             if (norm > 0) {
                 float invNorm = 1.0f / norm;
@@ -206,7 +206,7 @@ namespace g3
 
 
         
-        public Matrix3f ToRotationMatrix()
+        public readonly Matrix3f ToRotationMatrix()
         {
             float twoX = 2 * x; float twoY = 2 * y; float twoZ = 2 * z;
             float twoWX = twoX * w; float twoWY = twoY * w; float twoWZ = twoZ * w;
@@ -362,11 +362,11 @@ namespace g3
         {
             return (a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w);
         }
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return this == (Quaternionf)obj;
         }
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked // Overflow is fine, just wrap
             {
@@ -379,7 +379,7 @@ namespace g3
                 return hash;
             }
         }
-        public int CompareTo(Quaternionf other)
+        public readonly int CompareTo(Quaternionf other)
         {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
@@ -391,7 +391,7 @@ namespace g3
                 return w < other.w ? -1 : 1;
             return 0;
         }
-        public bool Equals(Quaternionf other)
+        public readonly bool Equals(Quaternionf other)
         {
             return (x == other.x && y == other.y && z == other.z && w == other.w);
         }
@@ -400,7 +400,7 @@ namespace g3
 
 
 
-        public bool EpsilonEqual(Quaternionf q2, float epsilon) {
+        public readonly bool EpsilonEqual(Quaternionf q2, float epsilon) {
             return (float)Math.Abs(x - q2.x) <= epsilon && 
                    (float)Math.Abs(y - q2.y) <= epsilon &&
                    (float)Math.Abs(z - q2.z) <= epsilon &&
@@ -408,10 +408,10 @@ namespace g3
         }
 
 
-        public override string ToString() {
+        public override readonly string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", x, y, z, w);
         }
-        public string ToString(string fmt) {
+        public readonly string ToString(string fmt) {
             return string.Format("{0} {1} {2} {3}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt), w.ToString(fmt));
         }
 

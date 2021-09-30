@@ -26,59 +26,59 @@ namespace g3
         public Vector3f(double[] v2) {  x = (float)v2[0]; y = (float)v2[1]; z = (float)v2[2]; }
         public Vector3f(Vector3d copy) {  x = (float)copy.x; y = (float)copy.y; z = (float)copy.z; }
 
-        static public readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
-        static public readonly Vector3f One = new Vector3f(1.0f, 1.0f, 1.0f);
-        static public readonly Vector3f OneNormalized = new Vector3f(1.0f, 1.0f, 1.0f).Normalized;
-        static public readonly Vector3f Invalid = new Vector3f(float.MaxValue, float.MaxValue, float.MaxValue);
-        static public readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
-        static public readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);
-        static public readonly Vector3f AxisZ = new Vector3f(0.0f, 0.0f, 1.0f);
-		static public readonly Vector3f MaxValue = new Vector3f(float.MaxValue,float.MaxValue,float.MaxValue);
-		static public readonly Vector3f MinValue = new Vector3f(float.MinValue,float.MinValue,float.MinValue);
+        public static readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
+        public static readonly Vector3f One = new Vector3f(1.0f, 1.0f, 1.0f);
+        public static readonly Vector3f OneNormalized = new Vector3f(1.0f, 1.0f, 1.0f).Normalized;
+        public static readonly Vector3f Invalid = new Vector3f(float.MaxValue, float.MaxValue, float.MaxValue);
+        public static readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
+        public static readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);
+        public static readonly Vector3f AxisZ = new Vector3f(0.0f, 0.0f, 1.0f);
+		public static readonly Vector3f MaxValue = new Vector3f(float.MaxValue,float.MaxValue,float.MaxValue);
+		public static readonly Vector3f MinValue = new Vector3f(float.MinValue,float.MinValue,float.MinValue);
 
         public float this[int key]
         {
-            get { return (key == 0) ? x : (key == 1) ? y : z; }
+            readonly get { return (key == 0) ? x : (key == 1) ? y : z; }
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
         }
 
         public Vector2f xy {
-            get { return new Vector2f(x, y); }
+            readonly get { return new Vector2f(x, y); }
             set { x = value.x; y = value.y; }
         }
         public Vector2f xz {
-            get { return new Vector2f(x, z); }
+            readonly get { return new Vector2f(x, z); }
             set { x = value.x; z = value.y; }
         }
         public Vector2f yz {
-            get { return new Vector2f(y, z); }
+            readonly get { return new Vector2f(y, z); }
             set { y = value.x; z = value.y; }
         }
 
-        public float LengthSquared
+        public readonly float LengthSquared
         {
             get { return x * x + y * y + z * z; }
         }
-        public float Length
+        public readonly float Length
         {
             get { return (float)Math.Sqrt(LengthSquared); }
         }
 
-        public float LengthL1
+        public readonly float LengthL1
         {
             get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
         }
 
-		public float Max {
+		public readonly float Max {
 			get { return Math.Max(x, Math.Max(y, z)); }
 		}
-		public float Min {
+		public readonly float Min {
 			get { return Math.Min(x, Math.Min(y, z)); }
 		}
-		public float MaxAbs {
+		public readonly float MaxAbs {
 			get { return Math.Max(Math.Abs(x), Math.Max(Math.Abs(y), Math.Abs(z))); }
 		}
-		public float MinAbs {
+		public readonly float MinAbs {
 			get { return Math.Min(Math.Abs(x), Math.Min(Math.Abs(y), Math.Abs(z))); }
 		}
 
@@ -97,7 +97,7 @@ namespace g3
             }
             return length;
         }
-        public Vector3f Normalized {
+        public readonly Vector3f Normalized {
             get {
                 float length = Length;
                 if (length > MathUtil.Epsilonf) {
@@ -108,11 +108,11 @@ namespace g3
             }
         }
 
-		public bool IsNormalized {
+		public readonly bool IsNormalized {
 			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerancef; }
 		}
 
-        public bool IsFinite
+        public readonly bool IsFinite
         {
             get { float f = x + y + z; return float.IsNaN(f) == false && float.IsInfinity(f) == false; }
         }
@@ -125,7 +125,7 @@ namespace g3
         }
 
 
-        public float Dot(Vector3f v2)
+        public readonly float Dot(Vector3f v2)
         {
             return x * v2[0] + y * v2[1] + z * v2[2];
         }
@@ -134,7 +134,7 @@ namespace g3
         }
 
 
-        public Vector3f Cross(Vector3f v2)
+        public readonly Vector3f Cross(Vector3f v2)
         {
             return new Vector3f(
                 y * v2.z - z * v2.y,
@@ -154,14 +154,14 @@ namespace g3
             return n;
         }
 
-        public float AngleD(Vector3f v2) {
+        public readonly float AngleD(Vector3f v2) {
             float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return (float)(Math.Acos(fDot) * MathUtil.Rad2Deg);
         }
         public static float AngleD(Vector3f v1, Vector3f v2) {
             return v1.AngleD(v2);
         }
-        public float AngleR(Vector3f v2) {
+        public readonly float AngleR(Vector3f v2) {
             float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return (float)(Math.Acos(fDot));
         }
@@ -259,13 +259,13 @@ namespace g3
         {
             return (a.x != b.x || a.y != b.y || a.z != b.z);
         }
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             if (obj == null) return false;
             if (obj.GetType() != GetType()) return false;
             return this == (Vector3f)obj;
         }
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked // Overflow is fine, just wrap
             {
@@ -277,7 +277,7 @@ namespace g3
                 return hash;
             }
         }
-        public int CompareTo(Vector3f other)
+        public readonly int CompareTo(Vector3f other)
         {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
@@ -287,13 +287,13 @@ namespace g3
                 return z < other.z ? -1 : 1;
             return 0;
         }
-        public bool Equals(Vector3f other)
+        public readonly bool Equals(Vector3f other)
         {
             return (x == other.x && y == other.y && z == other.z);
         }
 
 
-        public bool EpsilonEqual(Vector3f v2, float epsilon) {
+        public readonly bool EpsilonEqual(Vector3f v2, float epsilon) {
             return (float)Math.Abs(x - v2.x) <= epsilon && 
                    (float)Math.Abs(y - v2.y) <= epsilon &&
                    (float)Math.Abs(z - v2.z) <= epsilon;
@@ -308,10 +308,10 @@ namespace g3
 
 
 
-        public override string ToString() {
+        public override readonly string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8}", x, y, z);
         }
-        public string ToString(string fmt) {
+        public readonly string ToString(string fmt) {
             return string.Format("{0} {1} {2}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt));
         }
 
