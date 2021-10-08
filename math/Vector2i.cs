@@ -27,10 +27,18 @@ namespace g3
             get { return new int[] { x, y }; }
         }
 
+        public readonly Vector3i ExpandDimension(int dimension, int value)
+        {
+            return dimension == 0 ? new Vector3i(value, x, y)
+                : dimension == 1 ? new Vector3i(x, value, y)
+                : dimension == 2 ? new Vector3i(x, y, value)
+                : throw new Exception("Dimension must be within interval [0..2]");
+        }
+
         public void Add(int s) { x += s; y += s; }
 
 
-        public int LengthSquared { get { return x * x + y * y; } }
+        public readonly int LengthSquared { get { return x * x + y * y; } }
 
 
         public static Vector2i operator -(Vector2i v)
@@ -93,11 +101,11 @@ namespace g3
         {
             return (a.x != b.x || a.y != b.y);
         }
-        public override bool Equals(object obj)
+        public readonly override bool Equals(object obj)
         {
             return this == (Vector2i)obj;
         }
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             unchecked { 
                 int hash = (int) 2166136261;
@@ -108,7 +116,7 @@ namespace g3
             }
 
         }
-        public int CompareTo(Vector2i other)
+        public readonly int CompareTo(Vector2i other)
         {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
@@ -116,14 +124,14 @@ namespace g3
                 return y < other.y ? -1 : 1;
             return 0;
         }
-        public bool Equals(Vector2i other)
+        public readonly bool Equals(Vector2i other)
         {
             return (x == other.x && y == other.y);
         }
 
 
 
-        public override string ToString()
+        public readonly override string ToString()
         {
             return string.Format("{0} {1}", x, y);
         }
@@ -155,11 +163,11 @@ namespace g3
         static public readonly Vector2l AxisY = new Vector2l(0, 1);
 
         public long this[long key] {
-            get { return (key == 0) ? x : y; }
+            readonly get { return (key == 0) ? x : y; }
             set { if (key == 0) x = value; else y = value; }
         }
 
-        public long[] array {
+        public readonly long[] array {
             get { return new long[] { x, y }; }
         }
 
@@ -228,11 +236,11 @@ namespace g3
         {
             return (a.x != b.x || a.y != b.y);
         }
-        public override bool Equals(object obj)
+        public readonly override bool Equals(object obj)
         {
             return this == (Vector2l)obj;
         }
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             unchecked {
                 int hash = (int)2166136261;
@@ -243,7 +251,7 @@ namespace g3
             }
 
         }
-        public int CompareTo(Vector2l other)
+        public readonly int CompareTo(Vector2l other)
         {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
@@ -251,14 +259,14 @@ namespace g3
                 return y < other.y ? -1 : 1;
             return 0;
         }
-        public bool Equals(Vector2l other)
+        public readonly bool Equals(Vector2l other)
         {
             return (x == other.x && y == other.y);
         }
 
 
 
-        public override string ToString()
+        public readonly override string ToString()
         {
             return string.Format("{0} {1}", x, y);
         }

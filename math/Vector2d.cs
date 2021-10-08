@@ -41,6 +41,13 @@ namespace g3
             set { if (key == 0) x = value; else y = value; }
         }
 
+        public readonly Vector3d ExpandDimension(int dimension, double value)
+        {
+            return dimension == 0 ? new Vector3d(value, x, y)
+                : dimension == 1 ? new Vector3d(x, value, y)
+                : dimension == 2 ? new Vector3d(x, y, value)
+                : throw new Exception("Dimension must be within interval [0..2]");
+        }
 
         public double LengthSquared
         {
@@ -278,6 +285,15 @@ namespace g3
         public static explicit operator Vector2f(Vector2d v)
         {
             return new Vector2f((float)v.x, (float)v.y);
+        }
+
+        public static implicit operator Vector2d(Vector2i v)
+        {
+            return new Vector2d(v.x, v.y);
+        }
+        public static explicit operator Vector2i(Vector2d v)
+        {
+            return new Vector2i((int)v.x, (int)v.y);
         }
 
 

@@ -117,15 +117,17 @@ namespace g3
                 ((pt.z - GridOrigin.z) / CellSize));
 
             // clamp to grid
-            if (gridPt.x < 0 || gridPt.x >= Grid.ni - 1 ||
-                gridPt.y < 0 || gridPt.y >= Grid.nj - 1 ||
-                gridPt.z < 0 || gridPt.z >= Grid.nk - 1)
+            if (gridPt.x < 0 || gridPt.x > Grid.ni - 1 ||  // here we allow (double)gridPt.x == Grid.ni - 1. below we handle this case
+                gridPt.y < 0 || gridPt.y > Grid.nj - 1 ||
+                gridPt.z < 0 || gridPt.z > Grid.nk - 1)
                 return Vector3d.Zero;
 
             // compute integer coordinates
-            int x0 = (int)gridPt.x;
-            int y0 = (int)gridPt.y, y1 = y0 + 1;
-            int z0 = (int)gridPt.z, z1 = z0 + 1;
+            int x0 = Math.Min((int)gridPt.x, Grid.ni - 2); // when gridPt.x == Right Box Surface, we explicitly shift x0 and x1 one step left
+            int y0 = Math.Min((int)gridPt.y, Grid.nj - 2);
+            int z0 = Math.Min((int)gridPt.z, Grid.nk - 2);
+            int y1 = y0 + 1;
+            int z1 = z0 + 1;
 
             // convert double coords to [0,1] range
             double fAx = gridPt.x - (double)x0;

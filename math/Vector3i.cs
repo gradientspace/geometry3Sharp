@@ -28,15 +28,21 @@ namespace g3
 
         public int this[int key]
         {
-            get { return (key == 0) ? x : (key == 1) ? y : z; }
+            readonly get { return (key == 0) ? x : (key == 1) ? y : z; }
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
         }
 
-        public int[] array {
+        public readonly int[] array {
             get { return new int[] { x, y, z }; }
         }
 
-
+        public readonly Vector2i ReduceDimension(int dimension)
+        {
+            return dimension == 0 ? new Vector2i(y, z)
+                : dimension == 1 ? new Vector2i(x, z)
+                : dimension == 2 ? new Vector2i(x, y)
+                : throw new Exception("Dimension must be within interval [0..2]");
+        }
 
         public void Set(Vector3i o)
         {
@@ -57,7 +63,7 @@ namespace g3
         public void Add(int s) { x += s;  y += s;  z += s; }
 
 
-        public int LengthSquared { get { return x * x + y * y + z * z; } }
+        public readonly int LengthSquared { get { return x * x + y * y + z * z; } }
 
 
         public static Vector3i operator -(Vector3i v)
@@ -121,11 +127,11 @@ namespace g3
         {
             return (a.x != b.x || a.y != b.y || a.z != b.z);
         }
-        public override bool Equals(object obj)
+        public readonly override bool Equals(object obj)
         {
             return this == (Vector3i)obj;
         }
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             unchecked // Overflow is fine, just wrap
             {
@@ -137,7 +143,7 @@ namespace g3
                 return hash;
             }
         }
-        public int CompareTo(Vector3i other)
+        public readonly int CompareTo(Vector3i other)
         {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
@@ -147,14 +153,14 @@ namespace g3
                 return z < other.z ? -1 : 1;
             return 0;
         }
-        public bool Equals(Vector3i other)
+        public readonly bool Equals(Vector3i other)
         {
             return (x == other.x && y == other.y && z == other.z);
         }
 
 
 
-        public override string ToString() {
+        public readonly override string ToString() {
             return string.Format("{0} {1} {2}", x, y, z);
         }
 
@@ -172,13 +178,13 @@ namespace g3
         public static explicit operator Vector3i(Vector3f v) {
             return new Vector3i((int)v.x, (int)v.y, (int)v.z);
         }
-        public static explicit operator Vector3f(Vector3i v) {
+        public static implicit operator Vector3f(Vector3i v) {
             return new Vector3f((float)v.x, (float)v.y, (float)v.z);
         }
         public static explicit operator Vector3i(Vector3d v) {
             return new Vector3i((int)v.x, (int)v.y, (int)v.z);
         }
-        public static explicit operator Vector3d(Vector3i v) {
+        public static implicit operator Vector3d(Vector3i v) {
             return new Vector3d((double)v.x, (double)v.y, (double)v.z);
         }
 
