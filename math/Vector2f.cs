@@ -33,16 +33,23 @@ namespace g3
 
         public float this[int key]
         {
-            get { return (key == 0) ? x : y; }
+            readonly get { return (key == 0) ? x : y; }
             set { if (key == 0) x = value; else y = value; }
         }
 
+        public readonly Vector3f ExpandDimension(int dimension, float value)
+        {
+            return dimension == 0 ? new Vector3f(value, x, y)
+                : dimension == 1 ? new Vector3f(x, value, y)
+                : dimension == 2 ? new Vector3f(x, y, value)
+                : throw new Exception("Dimension must be within interval [0..2]");
+        }
 
-        public float LengthSquared
+        public readonly float LengthSquared
         {
             get { return x * x + y * y; }
         }
-        public float Length
+        public readonly float Length
         {
             get { return (float)Math.Sqrt(LengthSquared); }
         }
@@ -60,7 +67,8 @@ namespace g3
             }
             return length;
         }
-        public Vector2f Normalized
+
+        public readonly Vector2f Normalized
         {
             get {
                 float length = Length;
@@ -72,11 +80,11 @@ namespace g3
             }
         }
 
-		public bool IsNormalized {
-			get { return Math.Abs( (x * x + y * y) - 1) < MathUtil.ZeroTolerancef; }
-		}
+        public readonly bool IsNormalized {
+            get { return Math.Abs( (x * x + y * y) - 1) < MathUtil.ZeroTolerancef; }
+        }
 
-        public bool IsFinite
+        public readonly bool IsFinite
         {
             get { float f = x + y; return float.IsNaN(f) == false && float.IsInfinity(f) == false; }
         }
@@ -86,36 +94,36 @@ namespace g3
             y = (float)Math.Round(y, nDecimals);
         }
 
-        public float Dot(Vector2f v2)
+        public readonly float Dot(Vector2f v2)
         {
             return x * v2.x + y * v2.y;
         }
 
 
-        public float Cross(Vector2f v2) {
+        public readonly float Cross(in Vector2f v2) {
             return x * v2.y - y * v2.x;
         }
 
 
-		public Vector2f Perp {
+		public readonly Vector2f Perp {
 			get { return new Vector2f(y, -x); }
 		}
-		public Vector2f UnitPerp {
+		public readonly Vector2f UnitPerp {
 			get { return new Vector2f(y, -x).Normalized; }
 		}
-		public float DotPerp(Vector2f v2) {
+		public readonly float DotPerp(Vector2f v2) {
 			return x*v2.y - y*v2.x;
 		}
 
 
-        public float AngleD(Vector2f v2) {
+        public readonly float AngleD(Vector2f v2) {
             float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return (float)(Math.Acos(fDot) * MathUtil.Rad2Deg);
         }
         public static float AngleD(Vector2f v1, Vector2f v2) {
             return v1.AngleD(v2);
         }
-        public float AngleR(Vector2f v2) {
+        public readonly float AngleR(Vector2f v2) {
             float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return (float)(Math.Acos(fDot));
         }
@@ -125,11 +133,11 @@ namespace g3
 
 
 
-		public float DistanceSquared(Vector2f v2) {
+		public readonly float DistanceSquared(Vector2f v2) {
 			float dx = v2.x-x, dy = v2.y-y;
 			return dx*dx + dy*dy;
 		}
-        public float Distance(Vector2f v2) {
+        public readonly float Distance(Vector2f v2) {
             float dx = v2.x-x, dy = v2.y-y;
 			return (float)Math.Sqrt(dx*dx + dy*dy);
 		}
@@ -200,11 +208,11 @@ namespace g3
         {
             return (a.x != b.x || a.y != b.y);
         }
-        public override bool Equals(object obj)
+        public readonly override bool Equals(object obj)
         {
             return this == (Vector2f)obj;
         }
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             unchecked // Overflow is fine, just wrap
             {
@@ -215,7 +223,7 @@ namespace g3
                 return hash;
             }
         }
-        public int CompareTo(Vector2f other)
+        public readonly int CompareTo(Vector2f other)
         {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
@@ -223,13 +231,13 @@ namespace g3
                 return y < other.y ? -1 : 1;
             return 0;
         }
-        public bool Equals(Vector2f other)
+        public readonly bool Equals(Vector2f other)
         {
             return (x == other.x && y == other.y);
         }
 
 
-        public bool EpsilonEqual(Vector2f v2, float epsilon) {
+        public readonly bool EpsilonEqual(Vector2f v2, float epsilon) {
             return (float)Math.Abs(x - v2.x) <= epsilon && 
                    (float)Math.Abs(y - v2.y) <= epsilon;
         }
@@ -245,10 +253,18 @@ namespace g3
         }
 
 
-        public override string ToString() {
+        public readonly override string ToString() {
             return string.Format("{0:F8} {1:F8}", x, y);
         }
 
+        public static implicit operator Vector2f(Vector2i v)
+        {
+            return new Vector2f(v.x, v.y);
+        }
+        public static explicit operator Vector2i(Vector2f v)
+        {
+            return new Vector2i((int)v.x, (int)v.y);
+        }
 
 
 

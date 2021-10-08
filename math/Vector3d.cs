@@ -47,6 +47,14 @@ namespace g3
             set { y = value.x; z = value.y; }
         }
 
+        public readonly Vector2d ReduceDimension(int dimension)
+        {
+            return dimension == 0 ? yz
+                : dimension == 1 ? xz
+                : dimension == 2 ? xy
+                : throw new Exception("Dimension must be within interval [0..2]");
+        }
+
         public readonly double LengthSquared
         {
             get { return x * x + y * y + z * z; }
