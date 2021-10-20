@@ -133,14 +133,27 @@ namespace g3
 
         /// <summary>
         /// Trivial back-and-forth stitch between two vertex loops with same length. 
-        /// Loops must have appropriate orientation (which is...??)
-        /// [TODO] check and fail on bad orientation
+        /// Loops must have appropriate orientation
         /// </summary>
-        public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1, bool borderCheck = true)
+        /// <param name="checkOrientation">If the loop is boundary, this parameter enables orientation validation</param>
+        public virtual int[] StitchLoop(int[] vloop1, int[] vloop2, int group_id = -1, bool borderCheck = true, bool checkOrientation = true)
         {
             int N = vloop1.Length;
             if (N != vloop2.Length)
                 throw new Exception("MeshEditor.StitchLoop: loops are not the same length!!");
+
+            bool changeTrianglesOrientation = false;
+            if (checkOrientation)
+            {
+                int firstEdgeId = Mesh.FindEdge(vloop1[0], vloop1[1]);
+                if (firstEdgeId == DMesh3.InvalidID)
+                    throw new Exception("Edge connecting the first two vertices in a loop is not found");
+                if (!Mesh.IsBoundaryEdge(firstEdgeId))
+                    throw new Exception("Cannot check orientation when the first loop edge is not boundary");
+                Index2i orientedVertices = Mesh.GetOrientedBoundaryEdgeV(firstEdgeId);
+                // If the orientation in the first loop is incorrect, revert the triangles
+                changeTrianglesOrientation = orientedVertices.a != vloop1[0];
+            }
 
             int[] new_tris = new int[N * 2];
 
@@ -151,8 +164,12 @@ namespace g3
                 int c = vloop2[i];
                 int d = vloop2[(i + 1) % N];
 
-                Index3i t1 = new Index3i(b, a, d);
-                Index3i t2 = new Index3i(a, c, d);
+                Index3i t1 = changeTrianglesOrientation
+                    ? new Index3i(b, d, a)
+                    : new Index3i(b, a, d);
+                Index3i t2 = changeTrianglesOrientation
+                    ? new Index3i(a, d, c)
+                    : new Index3i(a, c, d);
 
                 int tid1 = Mesh.AppendTriangle(t1, group_id, borderCheck);
                 int tid2 = Mesh.AppendTriangle(t2, group_id, borderCheck);
