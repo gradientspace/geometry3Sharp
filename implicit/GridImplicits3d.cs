@@ -36,14 +36,13 @@ namespace g3
 
 
         public AxisAlignedBox3d Bounds()
-		{
-			return new AxisAlignedBox3d(
-				GridOrigin.x, GridOrigin.y, GridOrigin.z,
-				GridOrigin.x + CellSize * Grid.ni, 
-				GridOrigin.y + CellSize * Grid.nj, 
-				GridOrigin.z + CellSize * Grid.nk);
-		}
-
+        {
+            return new AxisAlignedBox3d(
+                GridOrigin.x, GridOrigin.y, GridOrigin.z,
+                GridOrigin.x + CellSize * (Grid.ni - 1),
+                GridOrigin.y + CellSize * (Grid.nj - 1),
+                GridOrigin.z + CellSize * (Grid.nk - 1));
+        }
 
         public double Value(ref Vector3d pt)
         {
@@ -52,16 +51,18 @@ namespace g3
                 ((pt.y - GridOrigin.y) / CellSize),
                 ((pt.z - GridOrigin.z) / CellSize));
 
-            // compute integer coordinates
-            int x0 = (int)gridPt.x;
-            int y0 = (int)gridPt.y, y1 = y0 + 1;
-            int z0 = (int)gridPt.z, z1 = z0 + 1;
-
             // clamp to grid
-            if (x0 < 0 || (x0+1) >= Grid.ni ||
-                y0 < 0 || y1 >= Grid.nj ||
-                z0 < 0 || z1 >= Grid.nk)
+            if (gridPt.x < 0 || gridPt.x > Grid.ni - 1 ||  // here we allow (double)gridPt.x == Grid.ni - 1. below we handle this case
+                gridPt.y < 0 || gridPt.y > Grid.nj - 1 ||
+                gridPt.z < 0 || gridPt.z > Grid.nk - 1)
                 return Outside;
+
+            // compute integer coordinates
+            int x0 = Math.Min((int)gridPt.x, Grid.ni - 2); // when gridPt.x == Right Box Surface, we explicitly shift x0 and x1 one step left
+            int y0 = Math.Min((int)gridPt.y, Grid.nj - 2);
+            int z0 = Math.Min((int)gridPt.z, Grid.nk - 2);
+            int y1 = y0 + 1;
+            int z1 = z0 + 1;
 
             // convert double coords to [0,1] range
             double fAx = gridPt.x - (double)x0;
