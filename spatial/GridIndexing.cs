@@ -9,13 +9,13 @@ namespace g3
     public interface IGridWorldIndexer3
     {
         // map "world" coords to integer coords
-        Vector3i ToGrid(Vector3d pointf);
+        Vector3i ToGrid(in Vector3d pointf);
 
         // map "world" coords to real-valued grid coords
         Vector3d ToGridf(Vector3d pointf);
 
         // map integer coords back to "world"
-        Vector3d FromGrid(Vector3i gridpoint);
+        Vector3d FromGrid(in Vector3i gridpoint);
 
         // map real-valued coordinate *in integer coord space* back to "world"
         Vector3d FromGrid(Vector3d gridpointf);
@@ -66,16 +66,16 @@ namespace g3
 	/// <summary>
 	/// Map to/from grid coords
 	/// </summary>
-	public struct ScaleGridIndexer3 : IGridWorldIndexer3
+	public readonly struct ScaleGridIndexer3 : IGridWorldIndexer3
 	{
-		public double CellSize;
+		public readonly double CellSize;
 
 		public ScaleGridIndexer3(double cellSize)
 		{
 			CellSize = cellSize;
 		}
 
-		public Vector3i ToGrid(Vector3d point) {
+		public Vector3i ToGrid(in Vector3d point) {
 			return new Vector3i(
 				(int)(point.x / CellSize),
 				(int)(point.y / CellSize),
@@ -89,7 +89,7 @@ namespace g3
                 (point.z / CellSize));
         }
 
-        public Vector3d FromGrid(Vector3i gridpoint) {
+		public Vector3d FromGrid(in Vector3i gridpoint) {
 			return new Vector3d(
 				((double)gridpoint.x * CellSize),
 				((double)gridpoint.y * CellSize),
@@ -109,17 +109,17 @@ namespace g3
 	/// <summary>
 	/// Map to/from grid coords, where grid is translated from origin
 	/// </summary>
-	public struct ShiftGridIndexer3 : IGridWorldIndexer3
+	public readonly struct ShiftGridIndexer3 : IGridWorldIndexer3
 	{
-		public Vector3d Origin;
-		public double CellSize;
+		public readonly Vector3d Origin;
+		public readonly double CellSize;
 
 		public ShiftGridIndexer3(Vector3d origin, double cellSize) {
 			Origin = origin;
 			CellSize = cellSize;
 		}
 
-		public Vector3i ToGrid(Vector3d point) {
+		public Vector3i ToGrid(in Vector3d point) {
 			return new Vector3i(
 				(int)((point.x - Origin.x) / CellSize),
 				(int)((point.y - Origin.y) / CellSize),
@@ -133,7 +133,7 @@ namespace g3
                 ((point.z - Origin.z) / CellSize));
         }
 
-        public Vector3d FromGrid(Vector3i gridpoint) {
+		public Vector3d FromGrid(in  Vector3i gridpoint) {
 			return new Vector3d(
 				((double)gridpoint.x * CellSize) + Origin.x,
 				((double)gridpoint.y * CellSize) + Origin.y,
@@ -154,10 +154,10 @@ namespace g3
     /// <summary>
     /// Map to/from grid coords, where grid is relative to frame coords/axes
     /// </summary>
-    public struct FrameGridIndexer3 : IGridWorldIndexer3
+    public readonly struct FrameGridIndexer3 : IGridWorldIndexer3
     {
-        public Frame3f GridFrame;
-        public Vector3f CellSize;
+	    public readonly Frame3f GridFrame;
+	    public readonly Vector3f CellSize;
 
         public FrameGridIndexer3(Frame3f frame, Vector3f cellSize)
         {
@@ -165,19 +165,19 @@ namespace g3
             CellSize = cellSize;
         }
 
-        public Vector3i ToGrid(Vector3d point) {
+	    public Vector3i ToGrid(in Vector3d point) {
             Vector3f pointf = (Vector3f)point;
             pointf = GridFrame.ToFrameP(ref pointf);
             return (Vector3i)(pointf / CellSize);
         }
 
-        public Vector3d ToGridf(Vector3d point) {
+	    public Vector3d ToGridf(Vector3d point) {
             point = GridFrame.ToFrameP(ref point);
             point.x /= CellSize.x; point.y /= CellSize.y; point.z /= CellSize.z;
             return point;
         }
 
-        public Vector3d FromGrid(Vector3i gridpoint)
+	    public Vector3d FromGrid(in Vector3i gridpoint)
         {
             Vector3f pointf = CellSize * (Vector3f)gridpoint;
             return (Vector3d)GridFrame.FromFrameP(ref pointf);
