@@ -34,7 +34,7 @@ namespace g3
         public PointHashGrid3d(double cellSize, T invalidValue)
         {
             Hash = new Dictionary<Vector3i, List<T>>();
-            Indexer = new ScaleGridIndexer3() { CellSize = cellSize };
+            Indexer = new ScaleGridIndexer3(cellSize);
             spinlock = new SpinLock();
             this.invalidValue = invalidValue;
         }
