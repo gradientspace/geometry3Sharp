@@ -118,7 +118,33 @@ namespace g3
                 v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
         }
 
+        /// <summary>
+        /// Works only if quaternion is unit.
+        /// It uses the fact that (w^2 + xyz . xyz == 1) to simplify the product -- there xyz is a vector with (x, y, z) components and w is real part.
+        /// </summary>
+        /// <remarks>for derivation see https://fgiesen.wordpress.com/2019/02/09/rotating-a-single-vector-using-a-quaternion/</remarks>
+        public Vector3f Rotate(in Vector3f v)
+        {
+            // t = 2 * cross(q.xyz, v)
+            // v' = v + q.w * t + cross(q.xyz, t)
+            Vector3f xyz = new Vector3f(x, y, z);
+            Vector3f t = 2 * xyz.Cross(v);
+            return v + w * t + xyz.Cross(t);
+        }
 
+        /// <summary>
+        /// Works only if quaternion is unit.
+        /// It uses the fact that (w^2 + xyz . xyz == 1) to simplify the product -- there xyz is a vector with (x, y, z) components and w is real part.
+        /// </summary>
+        /// <remarks>for derivation see https://fgiesen.wordpress.com/2019/02/09/rotating-a-single-vector-using-a-quaternion/</remarks>
+        public Vector3d Rotate(in Vector3d v)
+        {
+            // t = 2 * cross(q.xyz, v)
+            // v' = v + q.w * t + cross(q.xyz, t)
+            Vector3d xyz = new Vector3d(x, y, z);
+            Vector3d t = 2 * xyz.Cross(v);
+            return v + w * t + xyz.Cross(t);
+        }
 
         /// <summary> Inverse() * v </summary>
         public readonly Vector3f InverseMultiply(ref Vector3f v)
