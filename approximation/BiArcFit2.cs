@@ -9,7 +9,7 @@ namespace g3
 	// 2D Biarc fitting ported from http://www.ryanjuckett.com/programming/biarc-interpolation/
 	//
 	//
-    public class BiArcFit2
+   [Serializable] public class BiArcFit2
     {
         public Vector2d Point1;
         public Vector2d Point2;

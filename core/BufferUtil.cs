@@ -14,7 +14,7 @@ namespace g3
     ///    - byte[] conversions
     ///    - zlib compress/decompress byte[] buffers
     /// </summary>
-    public class BufferUtil
+   [Serializable] public class BufferUtil
     {
         static public void SetVertex3(double[] v, int i, double x, double y, double z) {
             v[3 * i] = x;
@@ -561,7 +561,7 @@ namespace g3
     ///    T * ptr = &array[i];
     ///    ptr[k] = value
     /// </summary>
-    public struct ArrayAlias<T>
+    [Serializable] public struct ArrayAlias<T>
     {
         public T[] Source;
         public int Index;

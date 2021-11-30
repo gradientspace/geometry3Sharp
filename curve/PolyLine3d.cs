@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 
 namespace g3
 {
-	public class PolyLine3d : IEnumerable<Vector3d>
+	[Serializable] public class PolyLine3d : IEnumerable<Vector3d>
 	{
 		protected List<Vector3d> vertices;
 		public int Timestamp;

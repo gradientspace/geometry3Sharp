@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace g3
 {
-    public class RegionRemesher : Remesher
+   [Serializable] public class RegionRemesher : Remesher
     {
         public DMesh3 BaseMesh;
         public DSubmesh3 Region;
@@ -157,7 +157,7 @@ namespace g3
 
 
         [Flags]
-        public enum QuickRemeshFlags
+       [Serializable] public enum QuickRemeshFlags
         {
             NoFlags = 0,
             PreventNormalFlips = 1

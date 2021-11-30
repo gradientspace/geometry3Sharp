@@ -33,7 +33,7 @@ namespace g3
     //   q = int.MaxValue:  The line/segment are collinear.  Type is Segment.
 
 
-    public class IntrLine2Segment2
+   [Serializable] public class IntrLine2Segment2
     {
         Line2d line;
         public Line2d Line {

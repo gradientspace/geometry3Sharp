@@ -7,7 +7,7 @@ namespace g3
 	// Standalone UV mesh
 	//   (mainly we are using this as a UV layer for an existing 3D Mesh, so the assumption
 	//    is that TriangleUVs has the same # of triangles as that mesh...)
-    public class DenseUVMesh
+   [Serializable] public class DenseUVMesh
     {
         public DVector<Vector2f> UVs;
         public DVector<Index3i> TriangleUVs;

@@ -3,7 +3,7 @@
 namespace g3
 {
     // ported from GTEngine (WildMagic5 doesn't have cylinder primitive)
-    public class Cylinder3d
+   [Serializable] public class Cylinder3d
     {
         // The cylinder axis is a line.  The origin of the cylinder is chosen to be
         // the line origin.  The cylinder wall is at a distance R units from the axis.

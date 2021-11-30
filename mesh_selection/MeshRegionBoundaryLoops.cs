@@ -11,7 +11,7 @@ namespace g3
 	/// <summary>
 	/// Extract boundary EdgeLoops for subregions of Mesh
 	/// </summary>
-    public class MeshRegionBoundaryLoops : IEnumerable<EdgeLoop>
+   [Serializable] public class MeshRegionBoundaryLoops : IEnumerable<EdgeLoop>
     {
         public DMesh3 Mesh;
         public List<EdgeLoop> Loops;

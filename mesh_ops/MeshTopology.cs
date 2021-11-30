@@ -16,7 +16,7 @@ namespace gs
     /// WIP
     /// 
     /// </summary>
-    public class MeshTopology
+   [Serializable] public class MeshTopology
     {
         public DMesh3 Mesh;
 

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace g3
 {
 
-    public class Bitmap2
+   [Serializable] public class Bitmap2
     {
         public BitArray Bits;
 

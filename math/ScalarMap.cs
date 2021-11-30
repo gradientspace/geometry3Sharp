@@ -7,7 +7,7 @@ namespace g3
     /// Scalar version of a ColorMap (ie interpolate between sample points)
     /// [TODO] could we make this a template?
     /// </summary>
-    public class ScalarMap
+   [Serializable] public class ScalarMap
     {
         struct Sample
         {

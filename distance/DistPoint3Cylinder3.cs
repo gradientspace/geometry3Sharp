@@ -15,7 +15,7 @@ namespace g3
     //
     // DistanceSquared is always positive!!
     //
-    public class DistPoint3Cylinder3
+   [Serializable] public class DistPoint3Cylinder3
     {
         Vector3d point;
         public Vector3d Point

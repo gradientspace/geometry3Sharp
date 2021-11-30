@@ -11,7 +11,7 @@ namespace g3
     /// automatically generates necessary data structures. 
     /// Functions to act on parent/child grids are in-progress...
     /// </summary>
-    public class BiGrid3<BlockType> where BlockType : class, IGridElement3, IFixedGrid3
+   [Serializable] public class BiGrid3<BlockType> where BlockType : class, IGridElement3, IFixedGrid3
     {
         Vector3i block_size;
         MultigridIndexer3 indexer;

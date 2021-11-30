@@ -33,7 +33,7 @@ namespace g3
     /// 
     /// conceptually based on https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
     /// </summary>
-    public class DynamicPriorityQueue<T> : IEnumerable<T>
+   [Serializable] public class DynamicPriorityQueue<T> : IEnumerable<T>
         where T : DynamicPriorityQueueNode
     {
         // set this to true during development to catch issues

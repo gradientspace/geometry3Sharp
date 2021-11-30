@@ -45,7 +45,7 @@ namespace g3
     /// This can be used to implement multi-grid schemes, eg for example the GridElement
     /// type could be Bitmap3 of a fixed dimension.
     /// </summary>
-    public class DSparseGrid3<ElemType> : IGrid3 where ElemType : class, IGridElement3
+   [Serializable] public class DSparseGrid3<ElemType> : IGrid3 where ElemType : class, IGridElement3
     {
         ElemType exemplar;
 

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class DistTriangle3Triangle3
+   [Serializable] public class DistTriangle3Triangle3
     {
         Triangle3d triangle0;
         public Triangle3d Triangle0

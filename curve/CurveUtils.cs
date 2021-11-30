@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class CurveUtils
+   [Serializable] public class CurveUtils
     {
 
         public static Vector3d GetTangent(List<Vector3d> vertices, int i, bool bLoop = false)
@@ -205,7 +205,7 @@ namespace g3
     /// <summary>
     /// Simple sampled-curve wrapper type
     /// </summary>
-    public class IWrappedCurve3d : ISampledCurve3d
+   [Serializable] public class IWrappedCurve3d : ISampledCurve3d
     {
         public IList<Vector3d> VertexList;
         public bool Closed { get; set; }

@@ -29,7 +29,7 @@ namespace g3
     ///   - DoTraversal(generic_traversal_object)
     /// 
     /// </summary>
-    public class DMeshAABBTree3 : ISpatial
+   [Serializable] public class DMeshAABBTree3 : ISpatial
     {
         protected DMesh3 mesh;
         protected int mesh_timestamp;
@@ -63,7 +63,7 @@ namespace g3
 
 
         // how should we build the tree?
-        public enum BuildStrategy
+       [Serializable] public enum BuildStrategy
         {
             Default,                // currently TopDownMidpoint
 
@@ -78,7 +78,7 @@ namespace g3
                                     //   2-4x slower than TopDownMidpoint, but trees are generally more efficient and balanced.
         }
 
-        public enum ClusterPolicy
+       [Serializable] public enum ClusterPolicy
         {
             Default,               // currently FastVolumeMetric
             Fastest,               // sort list and then just cluster sequential boxes. 
@@ -651,17 +651,17 @@ namespace g3
 
 
 
-        public struct PointIntersection
+        [Serializable] public struct PointIntersection
         {
             public int t0, t1;
             public Vector3d point;
         }
-        public struct SegmentIntersection
+        [Serializable] public struct SegmentIntersection
         {
             public int t0, t1;
             public Vector3d point0, point1;
         }
-        public class IntersectionsQueryResult
+       [Serializable] public class IntersectionsQueryResult
         {
             public List<PointIntersection> Points;
             public List<SegmentIntersection> Segments;
@@ -1001,7 +1001,7 @@ namespace g3
         /// that branch of the traversal, or true to descend into that box's children (boxes or triangles).
         /// NextTriangleF() is called for each triangle.
         /// </summary>
-        public class TreeTraversal
+       [Serializable] public class TreeTraversal
         {
             // return false to terminate this branch
             // arguments are box and depth in tree

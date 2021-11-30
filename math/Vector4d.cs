@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace g3
 {
-    public struct Vector4d : IComparable<Vector4d>, IEquatable<Vector4d>
+    [Serializable] public struct Vector4d : IComparable<Vector4d>, IEquatable<Vector4d>
     {
         public double x;
         public double y;

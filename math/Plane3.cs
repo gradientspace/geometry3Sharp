@@ -4,7 +4,7 @@ namespace g3
 {
     //3D plane, based on WildMagic5 Wm5Plane3 class
 
-    public struct Plane3d
+    [Serializable] public struct Plane3d
     {
         public Vector3d Normal;
         public double Constant;
@@ -63,7 +63,7 @@ namespace g3
 
 
 
-    public struct Plane3f
+    [Serializable] public struct Plane3f
     {
         public Vector3f Normal;
         public float Constant;

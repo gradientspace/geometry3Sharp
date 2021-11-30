@@ -37,7 +37,7 @@ namespace g3
     /// Original license was public domain. 
     /// Permission granted by Christopher Batty to include C# port under Boost license.
     /// </summary>
-    public class MeshSignedDistanceGrid
+   [Serializable] public class MeshSignedDistanceGrid
     {
         public DMesh3 Mesh;
         public DMeshAABBTree3 Spatial;
@@ -58,7 +58,7 @@ namespace g3
         // Can also fill in the rest of the full grid with fast sweeping. This is 
         // quite computationally intensive, though, and not parallelizable 
         // (time only depends on grid resolution)
-        public enum ComputeModes
+       [Serializable] public enum ComputeModes
         {
             FullGrid = 0,
             NarrowBandOnly = 1,
@@ -80,7 +80,7 @@ namespace g3
         // Parity count is basically mesh winding number, handles overlap shells and
         // self-intersections, but inverted shells are 'subtracted', and inverted faces are a disaster.
         // Both modes handle internal cavities, neither handles open sheets.
-        public enum InsideModes
+       [Serializable] public enum InsideModes
         {
             CrossingCount = 0,
             ParityCount = 1

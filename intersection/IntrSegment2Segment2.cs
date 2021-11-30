@@ -34,7 +34,7 @@ namespace g3
 	//			Type is Segment. Points are Point0 and Point1
 
 
-	public class IntrSegment2Segment2
+	[Serializable] public class IntrSegment2Segment2
     {
         Segment2d segment1;
         public Segment2d Segment1

@@ -7,7 +7,7 @@ namespace g3
 {
     // this is a utility class for parsing command-line arguments, but can
     // also be used for other things (eg like constructing command-line arguments!)
-    public class CommandArgumentSet
+   [Serializable] public class CommandArgumentSet
     {
         // expectation is that these arguments will appear as like
         //  -samples 7   or -output /some/kind/of/path

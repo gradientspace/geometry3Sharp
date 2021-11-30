@@ -8,7 +8,7 @@ namespace g3
     // ported from WildMagic 5's DistPoint2Box2
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistPoint2Box2
+   [Serializable] public class DistPoint2Box2
     {
         Vector2d point;
         public Vector2d Point

@@ -14,7 +14,7 @@ namespace g3
 	/// 
 	/// 
 	/// </summary>
-    public class CholeskyDecomposition
+   [Serializable] public class CholeskyDecomposition
     {
 		public DenseMatrix A;
 

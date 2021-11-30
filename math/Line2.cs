@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public struct Line2d
+    [Serializable] public struct Line2d
     {
         public Vector2d Origin;
         public Vector2d Direction;
@@ -111,7 +111,7 @@ namespace g3
     }
 
 
-    public struct Line2f
+    [Serializable] public struct Line2f
     {
         public Vector2f Origin;
         public Vector2f Direction;

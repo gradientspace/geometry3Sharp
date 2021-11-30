@@ -12,7 +12,7 @@ namespace g3
     /// Uses Dictionary as sparsifying data structure, which is probably
     /// not a good option. But it is easy.
     /// </summary>
-    public class SymmetricSparseMatrix : IMatrix
+   [Serializable] public class SymmetricSparseMatrix : IMatrix
     {
         Dictionary<Index2i, double> d = new Dictionary<Index2i, double>();
         int N;
@@ -310,7 +310,7 @@ namespace g3
 
 
 
-    public class DiagonalMatrix
+   [Serializable] public class DiagonalMatrix
     {
         public double[] D;
 

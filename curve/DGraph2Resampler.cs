@@ -8,7 +8,7 @@ namespace g3
     /// <summary>
     /// "Remesher" for DGraph2 
     /// </summary>
-    public class DGraph2Resampler
+   [Serializable] public class DGraph2Resampler
     {
         public DGraph2 Graph;
 

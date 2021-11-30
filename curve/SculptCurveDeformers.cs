@@ -52,7 +52,7 @@ namespace g3
         }
 
 
-        public struct DeformInfo
+        [Serializable] public struct DeformInfo
         {
             public bool bNoChange;
             public double maxEdgeLenSqr;
@@ -74,7 +74,7 @@ namespace g3
 
 
 
-    public class StandardSculptCurveDeformation : SculptCurveDeformation
+   [Serializable] public class StandardSculptCurveDeformation : SculptCurveDeformation
     {
         // Deformation function. 
         // Arguments are curve index and weight "t" value in range [0,1]
@@ -186,7 +186,7 @@ namespace g3
 
 
     // just apply smoothing pass from standard op
-    public class SculptCurveSmooth : StandardSculptCurveDeformation
+   [Serializable] public class SculptCurveSmooth : StandardSculptCurveDeformation
     {
         public SculptCurveSmooth()
         {
@@ -199,7 +199,7 @@ namespace g3
 
 
 
-    public class SculptCurveMove : StandardSculptCurveDeformation
+   [Serializable] public class SculptCurveMove : StandardSculptCurveDeformation
     {
 
         public SculptCurveMove()

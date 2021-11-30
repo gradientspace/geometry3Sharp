@@ -8,7 +8,7 @@ namespace g3
     /// Operation makes a duplicate loop of vertices, at location defind by PositionF,
     /// then stitches input and new loops together with a ring of triangles.
     /// </summary>
-    public class MeshExtrudeLoop
+   [Serializable] public class MeshExtrudeLoop
     {
         public DMesh3 Mesh;
         public EdgeLoop Loop;

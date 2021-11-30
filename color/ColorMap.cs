@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public class ColorMap
+   [Serializable] public class ColorMap
     {
         struct ColorPoint
         {

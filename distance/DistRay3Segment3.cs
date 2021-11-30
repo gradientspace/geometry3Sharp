@@ -9,7 +9,7 @@ namespace g3
     /// Distance between ray and segment
     /// ported from WildMagic5
     /// </summary>
-    public class DistRay3Segment3
+   [Serializable] public class DistRay3Segment3
     {
         Ray3d ray;
         public Ray3d Ray

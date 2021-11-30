@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public class IndexUtil
+   [Serializable] public class IndexUtil
     {
         // test if [a0,a1] and [b0,b1] are the same pair, ignoring order
         public static bool same_pair_unordered(int a0, int a1, int b0, int b1)

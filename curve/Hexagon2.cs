@@ -2,7 +2,7 @@
 
 namespace g3
 {
-    public class Hexagon2d
+   [Serializable] public class Hexagon2d
     {
 		public enum TopModes
 		{

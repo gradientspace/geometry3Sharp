@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public enum ValidationStatus
+   [Serializable] public enum ValidationStatus
     {
         Ok,
 

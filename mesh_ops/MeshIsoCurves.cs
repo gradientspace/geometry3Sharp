@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class MeshIsoCurves
+   [Serializable] public class MeshIsoCurves
     {
         public DMesh3 Mesh;
         public Func<Vector3d, double> ValueF = null;
@@ -22,7 +22,7 @@ namespace g3
         public bool PrecomputeVertexValues = false;
 
 
-        public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
+       [Serializable] public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
 
         /// <summary>
         /// Which rootfinding method will be used to converge on surface along edges
@@ -37,7 +37,7 @@ namespace g3
 
         public DGraph3 Graph = null;
 
-        public enum TriangleCase
+       [Serializable] public enum TriangleCase
         {
             EdgeEdge = 1,
             EdgeVertex = 2,
@@ -51,7 +51,7 @@ namespace g3
         /// mesh_tri is triangle ID of crossed triangle
         /// mesh_edges depends on case. EdgeEdge is [edgeid,edgeid], EdgeVertex is [edgeid,vertexid], and OnEdge is [edgeid,-1]
         /// </summary>
-        public struct GraphEdgeInfo
+        [Serializable] public struct GraphEdgeInfo
         {
             public TriangleCase caseType;
             public int mesh_tri;

@@ -8,7 +8,7 @@ namespace g3
 	// ported from WildMagic 5 
 	// https://www.geometrictools.com/Downloads/Downloads.html
 
-	public class DistLine2Segment2
+	[Serializable] public class DistLine2Segment2
 	{
 		Line2d line;
 		public Line2d Line

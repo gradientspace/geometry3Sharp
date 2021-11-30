@@ -13,7 +13,7 @@ namespace g3
     /// TODO: no timestamp support right now...
     /// 
     /// </summary>
-    public class PointAABBTree3
+   [Serializable] public class PointAABBTree3
     {
         IPointSet points;
         int points_timestamp;
@@ -38,7 +38,7 @@ namespace g3
         public int LeafMaxPointCount = 32;
 
         // how should we build the tree?
-        public enum BuildStrategy
+       [Serializable] public enum BuildStrategy
         {
             Default,                // currently TopDownMidpoint
 
@@ -136,7 +136,7 @@ namespace g3
         /// that branch of the traversal, or true to descend into that box's children (boxes or points).
         /// NextPointF() is called for each point.
         /// </summary>
-        public class TreeTraversal
+       [Serializable] public class TreeTraversal
         {
             // return false to terminate this branch
             // arguments are box and depth in tree

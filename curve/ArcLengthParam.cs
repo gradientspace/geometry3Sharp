@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace g3
 {
-    public struct CurveSample
+    [Serializable] public struct CurveSample
     {
         public Vector3d position;
         public Vector3d tangent;
@@ -21,7 +21,7 @@ namespace g3
 
 
 
-    public class SampledArcLengthParam : IArcLengthParam
+   [Serializable] public class SampledArcLengthParam : IArcLengthParam
     {
         double[] arc_len;
         Vector3d[] positions;
@@ -97,7 +97,7 @@ namespace g3
 
 
 
-    public struct CurveSample2d
+    [Serializable] public struct CurveSample2d
     {
         public Vector2d position;
         public Vector2d tangent;
@@ -115,7 +115,7 @@ namespace g3
     }
 
 
-    public class SampledArcLengthParam2d : IArcLengthParam2d
+   [Serializable] public class SampledArcLengthParam2d : IArcLengthParam2d
     {
         double[] arc_len;
         Vector2d[] positions;

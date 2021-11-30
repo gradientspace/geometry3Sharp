@@ -23,7 +23,7 @@ namespace g3
     /// not be stitched.
     /// 
     /// </summary>
-    public class PlanarHoleFiller
+   [Serializable] public class PlanarHoleFiller
     {
         public DMesh3 Mesh;
 

@@ -15,7 +15,7 @@ namespace g3
     /// 
     /// math from http://lgdv.cs.fau.de/uploads/publications/spherical_fibonacci_mapping_opt.pdf
     /// </summary>
-    public class SphericalFibonacciPointSet
+   [Serializable] public class SphericalFibonacciPointSet
     {
         public int N = 64;
 

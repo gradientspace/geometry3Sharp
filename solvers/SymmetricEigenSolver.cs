@@ -38,7 +38,7 @@ namespace g3
     // vectors in the lower-triangular portion of the matrix to save memory.  The
     // implementation uses both suggestions.
 
-    public class SymmetricEigenSolver
+   [Serializable] public class SymmetricEigenSolver
     {
         // The solver processes NxN symmetric matrices, where N > 1 ('size' is N)
         // and the matrix is stored in row-major order.  The maximum number of
@@ -70,7 +70,7 @@ namespace g3
         // ordered accordingly.  The return value is the number of iterations
         // consumed when convergence occurred, 0xFFFFFFFF when convergence did
         // not occur, or 0 when N <= 1 was passed to the constructor.
-        public enum SortType
+       [Serializable] public enum SortType
         {
             Decreasing = -1,
             NoSorting = 0,

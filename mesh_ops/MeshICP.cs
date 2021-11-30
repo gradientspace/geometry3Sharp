@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class MeshICP
+   [Serializable] public class MeshICP
     {
         public IPointSet Source; 
         public DMeshAABBTree3 TargetSurface;

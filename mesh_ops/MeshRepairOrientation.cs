@@ -8,7 +8,7 @@ using g3;
 
 namespace gs
 {
-	public class MeshRepairOrientation
+	[Serializable] public class MeshRepairOrientation
 	{
 		public DMesh3 Mesh;
 

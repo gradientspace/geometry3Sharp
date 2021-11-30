@@ -23,7 +23,7 @@ namespace g3
 
 
 
-	public class ImplicitPoint2d : ImplicitField2d 
+	[Serializable] public class ImplicitPoint2d : ImplicitField2d 
 	{
         Vector2f m_vCenter;
 		private float m_radius;

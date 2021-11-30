@@ -11,7 +11,7 @@ namespace g3
     /// use static WriteOBJ() to save. No loading, for now. 
     /// 
     /// </summary>
-    public class SimpleQuadMesh
+   [Serializable] public class SimpleQuadMesh
     {
         public DVector<double> Vertices;
         public DVector<float> Normals;

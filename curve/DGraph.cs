@@ -336,7 +336,7 @@ namespace g3
 
 
 
-        public struct EdgeSplitInfo
+        [Serializable] public struct EdgeSplitInfo
         {
             public int vNew;
             public int eNewBN;      // new edge [vNew,vB] (original was AB)
@@ -391,7 +391,7 @@ namespace g3
 
 
 
-        public struct EdgeCollapseInfo
+        [Serializable] public struct EdgeCollapseInfo
         {
             public int vKept;
             public int vRemoved;
@@ -531,7 +531,7 @@ namespace g3
 
 
 
-        public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }
+       [Serializable] public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }
 
         /// <summary>
         // This function checks that the graph is well-formed, ie all internal data
@@ -634,7 +634,7 @@ namespace g3
     /// Implementation of DGraph that has no dimensionality, ie no data
     /// stored for vertieces besides indices. 
     /// </summary>
-    public class DGraphN : DGraph
+   [Serializable] public class DGraphN : DGraph
     {
         public int AppendVertex()
         {

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class ColorHSV
+   [Serializable] public class ColorHSV
     {
         public float h;
         public float s;

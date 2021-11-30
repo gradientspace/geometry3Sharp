@@ -18,7 +18,7 @@ namespace g3
     }
 
 
-    public class StandardMeshReader
+   [Serializable] public class StandardMeshReader
     {
         /// <summary>
         /// If the mesh format we are writing is text, then the OS will write in the number style
@@ -246,7 +246,7 @@ namespace g3
 
 
     // MeshFormatReader impl for OBJ
-    public class OBJFormatReader : MeshFormatReader
+   [Serializable] public class OBJFormatReader : MeshFormatReader
     {
         public List<string> SupportedExtensions { get {
                 return new List<string>() { "obj" };
@@ -283,7 +283,7 @@ namespace g3
 
 
     // MeshFormatReader impl for STL
-    public class STLFormatReader : MeshFormatReader
+   [Serializable] public class STLFormatReader : MeshFormatReader
     {
         public List<string> SupportedExtensions { get {
                 return new List<string>() { "stl" };
@@ -343,7 +343,7 @@ namespace g3
 
 
     // MeshFormatReader impl for OFF
-    public class OFFFormatReader : MeshFormatReader
+   [Serializable] public class OFFFormatReader : MeshFormatReader
     {
         public List<string> SupportedExtensions { get {
                 return new List<string>() { "off" };
@@ -374,7 +374,7 @@ namespace g3
 
 
     // MeshFormatReader impl for g3mesh
-    public class BinaryG3FormatReader : MeshFormatReader
+   [Serializable] public class BinaryG3FormatReader : MeshFormatReader
     {
         public List<string> SupportedExtensions {
             get {

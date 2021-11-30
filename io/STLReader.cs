@@ -27,10 +27,10 @@ namespace g3
     ///    DVector<short> colors = Builder.Metadata[0][STLReader.PerTriAttribMetadataName] as DVector<short>;
     /// (for DMesh3Builder, which is the only builder that supports Metadata)
     /// </summary>
-    public class STLReader : IMeshReader
+   [Serializable] public class STLReader : IMeshReader
     {
 
-        public enum Strategy
+       [Serializable] public enum Strategy
         {
             NoProcessing = 0,           // return triangle soup
             IdenticalVertexWeld = 1,    // merge identical vertices. Logically sensible but doesn't always work on ASCII STL.

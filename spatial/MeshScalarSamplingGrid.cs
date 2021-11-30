@@ -21,7 +21,7 @@ namespace gs
     ///     are keeping track of active edges instead of active cells?
     /// 
     /// </summary>
-    public class MeshScalarSamplingGrid
+   [Serializable] public class MeshScalarSamplingGrid
     {
         public DMesh3 Mesh;
         public Func<Vector3d, double> ScalarF;
@@ -34,7 +34,7 @@ namespace gs
 
         // Should we compute values at all grid cells (expensive!!) or only in narrow band.
         // In narrow-band mode, we guess rest of values by propagating along x-rows
-        public enum ComputeModes
+       [Serializable] public enum ComputeModes
         {
             FullGrid = 0,
             NarrowBand = 1

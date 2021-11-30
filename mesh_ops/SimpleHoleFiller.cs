@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class SimpleHoleFiller
+   [Serializable] public class SimpleHoleFiller
     {
         public DMesh3 Mesh;
         public EdgeLoop Loop;

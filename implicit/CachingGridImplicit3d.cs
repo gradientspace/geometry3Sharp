@@ -15,7 +15,7 @@ namespace g3
     /// via GridOrigin, but does not support scaling or rotation. If you need those,
     /// you can wrap this in something that does the xform.
     /// </summary>
-	public class CachingDenseGridTrilinearImplicit : BoundedImplicitFunction3d
+	[Serializable] public class CachingDenseGridTrilinearImplicit : BoundedImplicitFunction3d
     {
         public DenseGrid3f Grid;
         public double CellSize;

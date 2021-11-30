@@ -8,7 +8,7 @@ namespace g3
 
     // An enumerator that enumerates over integers [start, start+count)
     // (useful when you need to do things like iterate over indices of an array rather than values)
-    public class IndexRangeEnumerator : IEnumerable<int>
+   [Serializable] public class IndexRangeEnumerator : IEnumerable<int>
     {
         int Start = 0;
         int Count = 0;
@@ -27,7 +27,7 @@ namespace g3
 
 
     // Add true/false operator[] to integer HashSet
-    public class IndexHashSet : HashSet<int>
+   [Serializable] public class IndexHashSet : HashSet<int>
     {
         public bool this[int key]
         {
@@ -51,7 +51,7 @@ namespace g3
     /// use a HashSet (or perhaps some other DS) if the fraction of the index space 
     /// required is small
     /// </summary>
-    public class IndexFlagSet : IEnumerable<int>
+   [Serializable] public class IndexFlagSet : IEnumerable<int>
     {
         BitArray bits;
         HashSet<int> hash;
@@ -165,7 +165,7 @@ namespace g3
 
 
 	// i = i index map
-	public class IdentityIndexMap : IIndexMap
+	[Serializable] public class IdentityIndexMap : IIndexMap
 	{
 		public int this[int index] {
 			get { return index; }
@@ -174,7 +174,7 @@ namespace g3
 
 
 	// i = i + constant index map
-	public class ShiftIndexMap : IIndexMap
+	[Serializable] public class ShiftIndexMap : IIndexMap
 	{
 		public int Shift;
 
@@ -189,7 +189,7 @@ namespace g3
 
 
 	// i = constant index map
-	public class ConstantIndexMap : IIndexMap
+	[Serializable] public class ConstantIndexMap : IIndexMap
 	{
 		public int Constant;
 
@@ -205,7 +205,7 @@ namespace g3
 
 
     // dense or sparse index map
-	public class IndexMap : IIndexMap
+	[Serializable] public class IndexMap : IIndexMap
     {
         // this is returned if sparse map doesn't contain value
         public readonly int InvalidIndex = int.MinValue;

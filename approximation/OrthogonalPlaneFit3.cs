@@ -6,7 +6,7 @@ namespace g3
     // Ported from WildMagic5 Wm5ApprPlaneFit3
     // Least-squares fit of a plane to (x,y,z) data by using distance measurements
     // orthogonal to the proposed plane.
-    public class OrthogonalPlaneFit3
+   [Serializable] public class OrthogonalPlaneFit3
     {
         public Vector3d Origin;
         public Vector3d Normal;

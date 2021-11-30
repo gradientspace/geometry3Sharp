@@ -14,7 +14,7 @@ namespace g3
     ///   trying to guess it here, by making some assumptions about what happens. It works for now, but
     ///   it would better if MeshEditor returned this information.
     /// </summary>
-    public class RegionOperator
+   [Serializable] public class RegionOperator
     {
         public DMesh3 BaseMesh;
         public DSubmesh3 Region;

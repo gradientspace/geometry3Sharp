@@ -14,7 +14,7 @@ namespace g3
         // various offset-surface functions, in class so the compute functions 
         // can be passed to other functions
         [System.Obsolete("NormalOffset is deprecated - is anybody using it? please lmk.")]
-        public class NormalOffset
+       [Serializable] public class NormalOffset
         {
             public DMesh3 Mesh;
             public ISpatial Spatial;

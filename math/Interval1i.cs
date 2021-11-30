@@ -9,7 +9,7 @@ namespace g3
     //  enumerate over the range of values (inclusive!!)
     //
 	//   TODO: should check that a <= b !!
-    public struct Interval1i : IEnumerable<int>
+    [Serializable] public struct Interval1i : IEnumerable<int>
     {
 		public int a;
 		public int b;

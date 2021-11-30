@@ -17,7 +17,7 @@ namespace g3
     ///   - MeshVertices(mesh) - compute on vertices of mesh
     /// 
     /// </summary>
-    public class DijkstraGraphDistance
+   [Serializable] public class DijkstraGraphDistance
     {
         public const float InvalidValue = float.MaxValue;
 

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace g3
 {
-    public struct AxisAlignedBox2f
+    [Serializable] public struct AxisAlignedBox2f
     {
         public Vector2f Min;
         public Vector2f Max;
@@ -141,7 +141,7 @@ namespace g3
         }
 
 
-        public enum ScaleMode {
+       [Serializable] public enum ScaleMode {
             ScaleRight,
             ScaleLeft,
             ScaleUp,

@@ -6,7 +6,7 @@ namespace g3
     // (which C# does not support, but is common in C++ code)
 
 
-    public struct Vector3dTuple2
+    [Serializable] public struct Vector3dTuple2
     {
         public Vector3d V0, V1;
 
@@ -22,7 +22,7 @@ namespace g3
     }
 
 
-    public struct Vector3dTuple3
+    [Serializable] public struct Vector3dTuple3
     {
         public Vector3d V0, V1, V2;
 
@@ -40,7 +40,7 @@ namespace g3
 
 
 
-    public struct Vector3fTuple3
+    [Serializable] public struct Vector3fTuple3
     {
         public Vector3f V0, V1, V2;
 
@@ -59,7 +59,7 @@ namespace g3
 
 
 
-    public struct Vector2dTuple2
+    [Serializable] public struct Vector2dTuple2
     {
         public Vector2d V0, V1;
 
@@ -76,7 +76,7 @@ namespace g3
     }
 
 
-    public struct Vector2dTuple3
+    [Serializable] public struct Vector2dTuple3
     {
         public Vector2d V0, V1, V2;
 
@@ -93,7 +93,7 @@ namespace g3
     }
 
 
-    public struct Vector2dTuple4
+    [Serializable] public struct Vector2dTuple4
     {
         public Vector2d V0, V1, V2, V3;
 

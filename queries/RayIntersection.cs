@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class RayIntersection
+   [Serializable] public class RayIntersection
     {
         private RayIntersection()
         {

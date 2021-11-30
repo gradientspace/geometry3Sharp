@@ -2,7 +2,7 @@
 
 namespace g3
 {
-    public class Circle2d : IParametricCurve2d
+   [Serializable] public class Circle2d : IParametricCurve2d
     {
 		public Vector2d Center;
 		public double Radius;

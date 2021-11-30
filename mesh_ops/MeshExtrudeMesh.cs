@@ -10,7 +10,7 @@ namespace g3
     /// 2) offset copy vertices
     /// 3) connect up loops with triangle strips
     /// </summary>
-    public class MeshExtrudeMesh
+   [Serializable] public class MeshExtrudeMesh
     {
         public DMesh3 Mesh;
 

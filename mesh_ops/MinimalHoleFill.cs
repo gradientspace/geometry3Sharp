@@ -13,7 +13,7 @@ namespace gs
     /// is often quasi-developable, reconstructs sharp edges, etc. 
     /// There are various options.
     /// </summary>
-    public class MinimalHoleFill
+   [Serializable] public class MinimalHoleFill
     {
         public DMesh3 Mesh;
         public EdgeLoop FillLoop;
