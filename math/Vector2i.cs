@@ -91,7 +91,9 @@ namespace g3
             return new Vector2i(v0.x - f, v0.y - f);
         }
 
+        public readonly int Max => x >= y ? x : y;
 
+        public readonly int Min => x < y ? x : y;
 
         public static bool operator ==(Vector2i a, Vector2i b)
         {
