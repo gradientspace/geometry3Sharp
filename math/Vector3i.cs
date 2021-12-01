@@ -116,8 +116,9 @@ namespace g3
             return new Vector3i(v0.x - f, v0.y - f, v0.z - f);
         }
 
+        public readonly int Max => Math.Max(x, Math.Max(y, z));
 
-
+        public readonly int Min => Math.Min(x, Math.Min(y, z));
 
         public static bool operator ==(Vector3i a, Vector3i b)
         {
