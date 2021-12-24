@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace g3
 {
@@ -69,12 +67,9 @@ namespace g3
             return elements.ContainsKey(index);
         }
 
-
-        public ElemType Get(Vector3i index, bool allocateIfMissing = true)
+        public ElemType Get(in Vector3i index, bool allocateIfMissing = true)
         {
-            ElemType result;
-            bool found = elements.TryGetValue(index, out result);
-            if (found)
+            if (elements.TryGetValue(index, out ElemType result))
                 return result;
             if (allocateIfMissing)
                 return allocate(index);

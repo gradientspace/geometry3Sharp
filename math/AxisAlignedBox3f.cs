@@ -183,17 +183,24 @@ namespace g3
             Max = new Vector3f(c.x + e.x, c.y + e.y, c.z + e.z);
         }
 
-        public void Contain(Vector3f v)
+        public void Contain(in Vector3f v)
         {
-            Min.x = Math.Min(Min.x, v.x);
-            Min.y = Math.Min(Min.y, v.y);
-            Min.z = Math.Min(Min.z, v.z);
-            Max.x = Math.Max(Max.x, v.x);
-            Max.y = Math.Max(Max.y, v.y);
-            Max.z = Math.Max(Max.z, v.z);
+            if (Min.x > v.x)
+                Min.x = v.x;
+            if (Min.y > v.y)
+                Min.y = v.y;
+            if (Min.z > v.z)
+                Min.z = v.z;
+
+            if (Max.x < v.x)
+                Max.x = v.x;
+            if (Max.y < v.y)
+                Max.y = v.y;
+            if (Max.z < v.z)
+                Max.z = v.z;
         }
 
-        public void Contain(AxisAlignedBox3f box)
+        public void Contain(in AxisAlignedBox3f box)
         {
             Min.x = Math.Min(Min.x, box.Min.x);
             Min.y = Math.Min(Min.y, box.Min.y);
@@ -204,7 +211,7 @@ namespace g3
         }
 
 
-        public void Contain(Vector3d v)
+        public void Contain(in Vector3d v)
         {
             Min.x = Math.Min(Min.x, (float)v.x);
             Min.y = Math.Min(Min.y, (float)v.y);
@@ -214,7 +221,7 @@ namespace g3
             Max.z = Math.Max(Max.z, (float)v.z);
         }
 
-        public void Contain(AxisAlignedBox3d box)
+        public void Contain(in AxisAlignedBox3d box)
         {
             Min.x = Math.Min(Min.x, (float)box.Min.x);
             Min.y = Math.Min(Min.y, (float)box.Min.y);
