@@ -2312,8 +2312,8 @@ namespace g3
         public CompactInfo CompactInPlace(bool bComputeCompactInfo = false)
         {
             IndexMap mapV = (bComputeCompactInfo) ? new IndexMap(MaxVertexID, VertexCount) : null;
-            CompactInfo ci = new CompactInfo(mapV, mapT: null);
-            ci.MapV = mapV;
+            IndexMap mapT = (bComputeCompactInfo) ? new IndexMap(MaxTriangleID, TriangleCount) : null;
+            CompactInfo ci = new CompactInfo(mapV, mapT);
 
             // find first free vertex, and last used vertex
             int iLastV = MaxVertexID - 1, iCurV = 0;
@@ -2411,6 +2411,9 @@ namespace g3
                 // shift triangle refcount to new position
                 tref[iCurT] = tref[iLastT];
                 tref[iLastT] = RefCountVector.invalid;
+
+                if (mapT != null)
+                    mapT[iLastT] = iCurT;
 
                 // move cur forward one, last back one, and  then search for next valid
                 iLastT--; iCurT++;

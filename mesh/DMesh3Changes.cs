@@ -5,11 +5,17 @@ using System.Text;
 
 namespace g3
 {
+    public interface IMeshChange
+    {
+        void Apply(DMesh3 mesh);
+        void Revert(DMesh3 mesh);
+    }
+
     /// <summary>
     /// Mesh change for vertex deformations. Currently minimal support for initializing buffers.
     /// AppendNewVertex() can be used to accumulate modified vertices and their initial positions.
     /// </summary>
-    public class ModifyVerticesMeshChange
+    public class ModifyVerticesMeshChange : IMeshChange
     {
         public DVector<int> ModifiedV;
         public DVector<Vector3d> OldPositions, NewPositions;
@@ -115,7 +121,7 @@ namespace g3
     /// Mesh change for full-mesh vertex deformations - more efficient than ModifyVerticesMeshChange.
     /// Note that this does not enforce that vertex count does not change!
     /// </summary>
-    public class SetVerticesMeshChange
+    public class SetVerticesMeshChange : IMeshChange
     {
         public DVector<double> OldPositions, NewPositions;
         public DVector<float> OldNormals, NewNormals;
@@ -175,7 +181,7 @@ namespace g3
     /// Vertex and Triangle IDs will be restored on Revert()
     /// Currently does *not* restore the same EdgeIDs
     /// </summary>
-    public class RemoveTrianglesMeshChange
+    public class RemoveTrianglesMeshChange : IMeshChange
     {
         protected DVector<int> RemovedV;
         protected DVector<Vector3d> Positions;
@@ -264,7 +270,7 @@ namespace g3
             int N = RemovedT.size;
             for ( int i = 0; i< N; ++i) {
                 int tid = RemovedT[i];
-                MeshResult result = mesh.RemoveTriangle(RemovedT[i], true, false);
+                MeshResult result = mesh.RemoveTriangle(tid, true, false);
                 if (result != MeshResult.Ok)
                     throw new Exception("RemoveTrianglesMeshChange.Apply: error in RemoveTriangle(" + tid.ToString() + "): " + result.ToString());
             }
@@ -360,7 +366,7 @@ namespace g3
     /// Vertex and Triangle IDs will be restored on Revert()
     /// Currently does *not* restore the same EdgeIDs
     /// </summary>
-    public class AddTrianglesMeshChange
+    public class AddTrianglesMeshChange : IMeshChange
     {
         protected DVector<int> AddedV;
         protected DVector<Vector3d> Positions;
