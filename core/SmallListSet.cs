@@ -188,8 +188,8 @@ namespace g3
         {
             if (list_heads[to_index] != Null)
                 throw new Exception("SmallListSet.MoveTo: list at " + to_index + " is not empty!");
-            if (list_heads[from_index] == Null)
-                throw new Exception("SmallListSet.MoveTo: list at " + from_index + " is empty!");
+            //if (list_heads[from_index] == Null)  it should be allowed to copy empty list for a disconnected vertex
+            //    throw new Exception("SmallListSet.MoveTo: list at " + from_index + " is empty!");
             list_heads[to_index] = list_heads[from_index];
             list_heads[from_index] = Null;
         }
