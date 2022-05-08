@@ -1,8 +1,24 @@
 using System;
-using System.Collections.Generic;
 
 namespace g3
 {
+	/// <summary>
+	/// Minimalist implicit function interface
+	/// </summary>
+	public interface IImplicitFunction2d
+	{
+		double Value(in Vector2d point);
+	}
+
+	/// <summary>
+	/// Bounded implicit function has a bounding box within which
+	/// the "interesting" part of the function is confined
+	/// </summary>
+	public interface IImplicitFunction2dWithBoundedDomain : IImplicitFunction2d
+	{
+		AxisAlignedBox2d Bounds { get; }
+	}
+
 	/// <summary>
 	/// Summary description for ImplicitField2D.
 	/// </summary>
