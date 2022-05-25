@@ -12,7 +12,7 @@
     <PackageTags>geometry3;graphics;math;approximation;solvers;color;convexhull;meshes;spatial;curves;solids;3d;unity</PackageTags>
 	<RepositoryUrl>https://github.com/gradientspace/geometry3Sharp</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
-	<TargetFrameworks>net47;netcoreapp3.1</TargetFrameworks>
+	<TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -37,3 +37,4 @@ bin
 obj
 .vs
 *.meta
+.idea
