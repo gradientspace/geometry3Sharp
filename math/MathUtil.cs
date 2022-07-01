@@ -574,6 +574,16 @@ namespace g3
         public static Vector3d BarycentricCoords(Vector3d vPoint, Vector3d V0, Vector3d V1, Vector3d V2) {
             return BarycentricCoords(ref vPoint, ref V0, ref V1, ref V2);
         }
+        
+        /// <summary>
+        /// Test if a point is inside a triangle formed by three provided points
+        /// </summary>
+        private static bool IsPointInsideTriangle(in Vector3d testPoint, in Vector3d vertexA, in Vector3d vertexB, in Vector3d vertexC, double epsilon = 1e-5)
+        {
+            // for points inside triangle barycentric coordinate coefficient sum to 1 and all are positive
+            Vector3d baryCoordinates = MathUtil.BarycentricCoords(testPoint, vertexA, vertexB, vertexC);
+            return (baryCoordinates.Min >= 0 && Math.Abs(baryCoordinates.x + baryCoordinates.y + baryCoordinates.z - 1.0f) < epsilon);
+        }
 
         /// <summary>
         /// Compute barycentric coordinates/weights of vPoint inside triangle (V0,V1,V2). 
