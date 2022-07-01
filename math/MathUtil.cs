@@ -578,7 +578,7 @@ namespace g3
         /// <summary>
         /// Test if a point is inside a triangle formed by three provided points
         /// </summary>
-        private static bool IsPointInsideTriangle(in Vector3d testPoint, in Vector3d vertexA, in Vector3d vertexB, in Vector3d vertexC, double epsilon = 1e-5)
+        public static bool IsPointInsideTriangle(in Vector3d testPoint, in Vector3d vertexA, in Vector3d vertexB, in Vector3d vertexC, double epsilon = 1e-5)
         {
             // for points inside triangle barycentric coordinate coefficient sum to 1 and all are positive
             Vector3d baryCoordinates = MathUtil.BarycentricCoords(testPoint, vertexA, vertexB, vertexC);
