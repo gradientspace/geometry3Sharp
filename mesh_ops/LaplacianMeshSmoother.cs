@@ -198,7 +198,7 @@ namespace g3
 
 
         // Result must be as large as Mesh.MaxVertexID
-        public bool SolveMultipleCG(Vector3d[] Result)
+        public bool SolveMultipleCG(Vector3d[] Result, int maxIterations = int.MaxValue)
         {
             if (WeightsM == null)
                 Initialize();       // force initialize...
@@ -220,13 +220,13 @@ namespace g3
 
             SparseSymmetricCG SolverX = new SparseSymmetricCG() { B = Bx, X = Sx,
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = Preconditioner.Multiply,
-                UseXAsInitialGuess = true };
+                UseXAsInitialGuess = true, MaxIterations = maxIterations };
             SparseSymmetricCG SolverY = new SparseSymmetricCG() { B = By, X = Sy,
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = Preconditioner.Multiply,
-                UseXAsInitialGuess = true };
+                UseXAsInitialGuess = true, MaxIterations = maxIterations };
             SparseSymmetricCG SolverZ = new SparseSymmetricCG() { B = Bz, X = Sz,
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = Preconditioner.Multiply,
-                UseXAsInitialGuess = true };
+                UseXAsInitialGuess = true, MaxIterations = maxIterations };
 
             SparseSymmetricCG[] solvers = new SparseSymmetricCG[3] { SolverX, SolverY, SolverZ };
             bool[] ok = new bool[3];
@@ -261,7 +261,7 @@ namespace g3
 
 
         // Result must be as large as Mesh.MaxVertexID
-        public bool SolveMultipleRHS(Vector3d[] Result)
+        public bool SolveMultipleRHS(Vector3d[] Result, int maxIterations = int.MaxValue)
         {
             if (WeightsM == null)
                 Initialize();       // force initialize...
@@ -288,7 +288,7 @@ namespace g3
             SparseSymmetricCGMultipleRHS Solver = new SparseSymmetricCGMultipleRHS() { 
                 B = B, X = X,
                 MultiplyF = CombinedMultiply, PreconditionMultiplyF = CombinedPreconditionerMultiply,
-                UseXAsInitialGuess = true
+                UseXAsInitialGuess = true, MaxIterations = maxIterations
             };
 
             // preconditioned solve is marginally faster
@@ -317,23 +317,23 @@ namespace g3
         }
 
 
-        public bool Solve(Vector3d[] Result)
+        public bool Solve(Vector3d[] Result, int maxIterations = int.MaxValue)
         {
             // for small problems, faster to use separate CGs?
             if ( Mesh.VertexCount < 10000 )
-                return SolveMultipleCG(Result);
+                return SolveMultipleCG(Result, maxIterations);
             else
-                return SolveMultipleRHS(Result);
+                return SolveMultipleRHS(Result, maxIterations);
         }
 
 
 
 
-        public bool SolveAndUpdateMesh()
+        public bool SolveAndUpdateMesh(int maxIterations = int.MaxValue)
         {
             int N = Mesh.MaxVertexID;
             Vector3d[] Result = new Vector3d[N];
-            if ( Solve(Result) == false )
+            if ( Solve(Result, maxIterations) == false )
                 return false;
             for (int i = 0; i < N; ++i ) {
                 if ( Mesh.IsVertex(i) ) {
