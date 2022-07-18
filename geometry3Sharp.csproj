@@ -50,9 +50,11 @@
     <Compile Include="approximation\OrthogonalPlaneFit3.cs" />
     <Compile Include="color\Colorb.cs" />
     <Compile Include="color\Colorf.cs" />
+    <Compile Include="color\ColorfBuilder.cs" />
     <Compile Include="color\ColorHSV.cs" />
     <Compile Include="color\ColorMap.cs" />
     <Compile Include="color\ColorMixer.cs" />
+    <Compile Include="color\StringToColorfConverter.cs" />
     <Compile Include="comp_geom\GraphCells2d.cs" />
     <Compile Include="comp_geom\GraphSplitter2d.cs" />
     <Compile Include="comp_geom\SphericalFibonacciPointSet.cs" />

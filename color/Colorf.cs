@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel;
 
 #if G3_USING_UNITY
 using UnityEngine;
@@ -8,6 +7,7 @@ using UnityEngine;
 
 namespace g3
 {
+    [TypeConverter(typeof(StringToColorfConverter))]
     public struct Colorf : IComparable<Colorf>, IEquatable<Colorf>
     {
         public float r;
@@ -240,6 +240,11 @@ namespace g3
         public static implicit operator Colorf(Vector3f c)
         {
             return new Colorf(c.x, c.y, c.z, 1);
+        }
+
+        public static implicit operator Colorf(string hexColor)
+        {
+            return ColorBuilder.ParseHtmlColor(hexColor);
         }
 
 
