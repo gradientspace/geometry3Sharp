@@ -25,7 +25,7 @@ namespace g3
     /// - output boundary EdgeLoop that has been aligned w/ trim curve
     /// - handle cases where input mesh has open borders
     /// </summary>
-    public class MeshTrimLoop
+   [Serializable] public class MeshTrimLoop
 	{
 		public DMesh3 Mesh;
         public DMeshAABBTree3 Spatial;

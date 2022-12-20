@@ -14,7 +14,7 @@ namespace g3
     {
 
 
-        public class Curves
+       [Serializable] public class Curves
         {
             public List<Polygon2d> Loops;
             public List<PolyLine2d> Paths;

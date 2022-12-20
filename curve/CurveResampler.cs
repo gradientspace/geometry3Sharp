@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class CurveResampler
+   [Serializable] public class CurveResampler
     {
 
         double[] lengths;

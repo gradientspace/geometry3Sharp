@@ -18,7 +18,7 @@ namespace g3
     /// [TODO] maybe smarter handling
     /// 
     /// </summary>
-    public class Arrangement2d
+   [Serializable] public class Arrangement2d
     {
         // graph of arrangement
         public DGraph2 Graph;

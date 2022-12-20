@@ -9,7 +9,7 @@ namespace gs
 	/// <summary>
 	/// Remove duplicate triangles.
 	/// </summary>
-	public class RemoveDuplicateTriangles
+	[Serializable] public class RemoveDuplicateTriangles
 	{
 		public DMesh3 Mesh;
 

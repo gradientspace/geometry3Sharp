@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
 	// ported from WildMagic5 
-	public class IntrRay3Box3
+	[Serializable] public class IntrRay3Box3
 	{
 		Ray3d ray;
 		public Ray3d Ray

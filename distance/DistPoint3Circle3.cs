@@ -8,7 +8,7 @@ namespace g3
     // ported from WildMagic 5
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistPoint3Circle3
+   [Serializable] public class DistPoint3Circle3
     {
         Vector3d point;
         public Vector3d Point

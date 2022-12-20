@@ -1258,7 +1258,7 @@ namespace g3
 
 
 
-        public struct EdgeSplitInfo
+        [Serializable] public struct EdgeSplitInfo
         {
             public bool bIsBoundary;
             public int vNew;
@@ -1385,7 +1385,7 @@ namespace g3
 
 
 
-        public struct PokeTriangleInfo
+        [Serializable] public struct PokeTriangleInfo
         {
             public int new_vid;
             public int new_t1, new_t2;

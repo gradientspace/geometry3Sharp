@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace g3
 {
-    public struct Colorf : IComparable<Colorf>, IEquatable<Colorf>
+    [Serializable] public struct Colorf : IComparable<Colorf>, IEquatable<Colorf>
     {
         public float r;
         public float g;

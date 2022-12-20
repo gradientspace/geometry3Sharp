@@ -9,7 +9,7 @@ using g3;
 
 namespace gs
 {
-    public class MarchingCubesPro
+   [Serializable] public class MarchingCubesPro
     {
         /// <summary>
         /// this is the function we will evaluate
@@ -40,7 +40,7 @@ namespace gs
         /// </summary>
         public bool ParallelCompute = true;
 
-        public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
+       [Serializable] public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
 
         /// <summary>
         /// Which rootfinding method will be used to converge on surface along edges

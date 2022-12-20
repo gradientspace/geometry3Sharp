@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public class MeshIterativeSmooth
+   [Serializable] public class MeshIterativeSmooth
     {
         public DMesh3 Mesh;
         public int[] Vertices;

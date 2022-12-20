@@ -3,7 +3,7 @@
 namespace g3
 {
     // ported from WildMagic5 Ellipse2
-    public class Ellipse2d : IParametricCurve2d
+   [Serializable] public class Ellipse2d : IParametricCurve2d
     {
         // An ellipse has center K, axis directions U[0] and U[1] (both
         // unit-length vectors), and extents e[0] and e[1] (both positive

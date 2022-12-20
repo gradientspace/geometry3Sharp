@@ -10,7 +10,7 @@ namespace g3
     /// This involves flipping triangles between groups, and/or assigning to "background" group.
     /// Also has Dilate/Contract functions to grow/shrink groups in various ways.
     /// </summary>
-    public class FaceGroupOptimizer
+   [Serializable] public class FaceGroupOptimizer
     {
         // cannot change this w/o updating GetEnumeratorF
         DMesh3 mesh;

@@ -13,7 +13,7 @@ namespace g3
     //   - (?)
     //
     // 
-    public class MeshEditor
+   [Serializable] public class MeshEditor
     {
         public DMesh3 Mesh;
 
@@ -667,7 +667,7 @@ namespace g3
         // This enum/argument controls the behavior. 
         // However, fundamentally this kind of problem should be handled upstream!! For example by not trying
         // to remesh areas that contain nonmanifold geometry...
-        public enum DuplicateTriBehavior
+       [Serializable] public enum DuplicateTriBehavior
         {
             AssertContinue,         // check will not be done in Release!
             AssertAbort, UseExisting, Replace

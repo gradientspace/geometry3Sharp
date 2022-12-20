@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
 
-    public class TransformedIntersectionTarget : IIntersectionTarget
+   [Serializable] public class TransformedIntersectionTarget : IIntersectionTarget
     {
         DMeshIntersectionTarget BaseTarget = null;
 
@@ -32,7 +32,7 @@ namespace g3
 
 
 
-    public class DMeshIntersectionTarget : IIntersectionTarget
+   [Serializable] public class DMeshIntersectionTarget : IIntersectionTarget
     {
         public DMesh3 Mesh { get; set; }
         public ISpatial Spatial { get; set; }
@@ -69,7 +69,7 @@ namespace g3
     /// <summary>
     /// Compute ray-intersection with plane
     /// </summary>
-    public class PlaneIntersectionTarget : IIntersectionTarget
+   [Serializable] public class PlaneIntersectionTarget : IIntersectionTarget
     {
         public Frame3f PlaneFrame;
         public int NormalAxis = 2;

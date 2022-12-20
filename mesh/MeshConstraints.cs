@@ -6,7 +6,7 @@ namespace g3
 {
 
     [Flags]
-    public enum EdgeRefineFlags
+   [Serializable] public enum EdgeRefineFlags
     {
         NoConstraint = 0,
         NoFlip = 1,
@@ -20,7 +20,7 @@ namespace g3
     }
 
 
-    public struct EdgeConstraint
+    [Serializable] public struct EdgeConstraint
     {
         EdgeRefineFlags refineFlags;
         public IProjectionTarget Target;        // edge is associated with this projection Target.
@@ -69,7 +69,7 @@ namespace g3
 
 
 
-    public struct VertexConstraint
+    [Serializable] public struct VertexConstraint
     {
         public bool Fixed;
         public int FixedSetID;      // in Remesher, we can allow two Fixed vertices with 
@@ -104,7 +104,7 @@ namespace g3
 
 
 
-    public class MeshConstraints
+   [Serializable] public class MeshConstraints
     {
 
         Dictionary<int, EdgeConstraint> Edges = new Dictionary<int, EdgeConstraint>();

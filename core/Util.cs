@@ -9,7 +9,7 @@ using System.IO;
 namespace g3
 {
 
-    public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }
+   [Serializable] public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }
 
 
     public static class Util
@@ -272,7 +272,7 @@ namespace g3
 
 
 
-    public class gException : Exception
+   [Serializable] public class gException : Exception
     {
         public gException(string sMessage) 
             : base(sMessage)

@@ -9,7 +9,7 @@ using System.Threading;
 namespace g3
 {
 
-    public class BinaryG3Writer : IMeshWriter
+   [Serializable] public class BinaryG3Writer : IMeshWriter
     {
         public IOWriteResult Write(BinaryWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
         {
@@ -34,7 +34,7 @@ namespace g3
 
 
 
-    public class BinaryG3Reader : IMeshReader
+   [Serializable] public class BinaryG3Reader : IMeshReader
     {
         public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
         {

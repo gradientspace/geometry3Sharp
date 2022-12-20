@@ -7,16 +7,16 @@ namespace g3
 	/// <summary>
 	/// Summary description for PolyLine.
 	/// </summary>
-	public class DPolyLine2f
+	[Serializable] public class DPolyLine2f
 	{
-		public struct Edge {
+		[Serializable] public struct Edge {
 			public int v1;
 			public int v2;
 
 			public Edge( int vertex1, int vertex2 ) {v1 = vertex1; v2 = vertex2;}
 		}
 
-		public struct Vertex {
+		[Serializable] public struct Vertex {
 			public int index;
 			public float x;
 			public float y;

@@ -9,7 +9,7 @@ namespace g3
     /// DCurve3 is a 3D polyline, either open or closed (via .Closed)
     /// Despite the D prefix, it is *not* dynamic
     /// </summary>
-    public class DCurve3 : ISampledCurve3d
+   [Serializable] public class DCurve3 : ISampledCurve3d
     {
         // [TODO] use dvector? or double-indirection indexing?
         //   question is how to insert efficiently...

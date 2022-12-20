@@ -17,7 +17,7 @@ namespace g3
     /// [TODO] hash table for edge vtx-indices instead, like old polygonizer? (how did we index edges?!?)
     /// 
     /// </summary>
-    public class MarchingCubes
+   [Serializable] public class MarchingCubes
     {
         /// <summary>
         /// this is the function we will evaluate
@@ -49,7 +49,7 @@ namespace g3
         public bool ParallelCompute = true;
 
 
-        public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
+       [Serializable] public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
 
         /// <summary>
         /// Which rootfinding method will be used to converge on surface along edges

@@ -7,12 +7,12 @@ using System.Globalization;
 
 namespace g3
 {
-	public class SVGWriter
+	[Serializable] public class SVGWriter
 	{
         public bool FlipY = true;
 
 
-		public struct Style {
+		[Serializable] public struct Style {
 			public string fill;
 			public string stroke;
 			public float stroke_width;

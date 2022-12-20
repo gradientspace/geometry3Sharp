@@ -573,7 +573,7 @@ namespace g3
     /// Then you can load this data via:
     ///    SimpleStore s = SimpleStore.Restore(path)
     /// </summary>
-    public class SimpleStore
+   [Serializable] public class SimpleStore
     {
         // only ever append to this list!
         public List<DMesh3> Meshes = new List<DMesh3>();

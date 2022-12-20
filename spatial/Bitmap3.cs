@@ -14,7 +14,7 @@ namespace g3
 
 
 
-    public class Bitmap3 : IBinaryVoxelGrid, IGridElement3, IFixedGrid3
+   [Serializable] public class Bitmap3 : IBinaryVoxelGrid, IGridElement3, IFixedGrid3
     {
         public BitArray Bits;
 

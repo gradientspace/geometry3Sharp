@@ -17,7 +17,7 @@ namespace g3
     /// oriented clockwise, if converted to a Polygon2d.
     /// 
     /// </summary>
-    public class GraphCells2d
+   [Serializable] public class GraphCells2d
     {
         public DGraph2 Graph;
 

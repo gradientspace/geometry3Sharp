@@ -10,7 +10,7 @@ namespace gs
     /// <summary>
     /// This class sorts a set of mesh components.
     /// </summary>
-    public class MeshSpatialSort
+   [Serializable] public class MeshSpatialSort
     {
         // ComponentMesh is a wrapper around input meshes
         public List<ComponentMesh> Components;
@@ -43,7 +43,7 @@ namespace gs
 
 
 
-        public class ComponentMesh
+       [Serializable] public class ComponentMesh
         {
             public object Identifier;
             public DMesh3 Mesh;
@@ -94,7 +94,7 @@ namespace gs
 
 
 
-        public class MeshSolid
+       [Serializable] public class MeshSolid
         {
             public ComponentMesh Outer;
             public List<ComponentMesh> Cavities = new List<ComponentMesh>();

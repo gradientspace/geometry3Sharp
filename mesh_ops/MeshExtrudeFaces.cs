@@ -16,7 +16,7 @@ namespace g3
     ///      and then connected w/ strip
     ///      [TODO] implement this behavior
     /// </summary>
-    public class MeshExtrudeFaces
+   [Serializable] public class MeshExtrudeFaces
     {
         public DMesh3 Mesh;
         public int[] Triangles;

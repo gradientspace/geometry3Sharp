@@ -15,7 +15,7 @@ namespace g3
     ///   - computation of signs for a split-line is currently O(N). If inserting many
     ///     parallel lines, can improve this using standard sorting.
     /// </summary>
-    public class GraphSplitter2d
+   [Serializable] public class GraphSplitter2d
     {
         public DGraph2 Graph;
 

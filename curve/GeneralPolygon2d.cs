@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace g3 
 {
-	public class GeneralPolygon2d : IDuplicatable<GeneralPolygon2d>
+	[Serializable] public class GeneralPolygon2d : IDuplicatable<GeneralPolygon2d>
 	{
 		Polygon2d outer;
 		bool bOuterIsCW;

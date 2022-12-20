@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
     // generate a triangle fan, no subdvisions
-    public class TrivialDiscGenerator : MeshGenerator
+   [Serializable] public class TrivialDiscGenerator : MeshGenerator
     {
         public float Radius = 1.0f;
         public float StartAngleDeg = 0.0f;
@@ -56,7 +56,7 @@ namespace g3
 
 
     // generate a triangle fan, no subdvisions
-    public class PuncturedDiscGenerator : MeshGenerator
+   [Serializable] public class PuncturedDiscGenerator : MeshGenerator
     {
         public float OuterRadius = 1.0f;
         public float InnerRadius = 0.5f;

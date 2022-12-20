@@ -19,7 +19,7 @@ namespace g3
     ///     preprocess the input mesh to remove degenerate faces/edges
     /// 
     /// </summary>
-    public class MeshInsertUVPolyCurve
+   [Serializable] public class MeshInsertUVPolyCurve
 	{
 		public DMesh3 Mesh;
         public PolyLine2d Curve;

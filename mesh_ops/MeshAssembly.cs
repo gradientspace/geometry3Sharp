@@ -14,7 +14,7 @@ namespace gs
     /// Given an input mesh, try to decompose it's connected components into
     /// parts with some semantics - solids, open meshes, etc.
     /// </summary>
-    public class MeshAssembly
+   [Serializable] public class MeshAssembly
     {
         public DMesh3 SourceMesh;
 

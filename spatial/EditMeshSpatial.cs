@@ -13,7 +13,7 @@ namespace gs
     /// For use case where we are making local edits to a source mesh. We mask out
     /// removed triangles from base mesh SpatialDS, and raycast new triangles separately.
     /// </summary>
-    public class EditMeshSpatial : ISpatial
+   [Serializable] public class EditMeshSpatial : ISpatial
     {
         public DMesh3 SourceMesh;
         public DMeshAABBTree3 SourceSpatial;

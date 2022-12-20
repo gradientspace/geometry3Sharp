@@ -6,7 +6,7 @@ namespace g3
 	/// <summary>
 	/// Very basic object pool class. 
 	/// </summary>
-	public class MemoryPool<T> where T : class, new()
+	[Serializable] public class MemoryPool<T> where T : class, new()
 	{
         DVector<T> Allocated;
         DVector<T> Free;

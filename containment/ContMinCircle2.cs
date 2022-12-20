@@ -14,7 +14,7 @@ namespace g3
     /// <summary>
     /// Fit minimal bounding-circle to a set of 2D points 
     /// </summary>
-    public class ContMinCircle2
+   [Serializable] public class ContMinCircle2
     {
         double mEpsilon;
         Func<int, int[], Support, Circle>[] mUpdate = new Func<int, int[], Support, Circle>[4];

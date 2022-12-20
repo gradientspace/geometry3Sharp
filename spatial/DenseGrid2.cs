@@ -10,7 +10,7 @@ namespace g3
     /// <summary>
     /// 2D dense grid of floating-point scalar values. 
     /// </summary>
-    public class DenseGrid2f
+   [Serializable] public class DenseGrid2f
     {
         public float[] Buffer;
         public int ni, nj;
@@ -160,7 +160,7 @@ namespace g3
     /// <summary>
     /// 2D dense grid of integers. 
     /// </summary>
-    public class DenseGrid2i
+   [Serializable] public class DenseGrid2i
     {
         public int[] Buffer;
         public int ni, nj;

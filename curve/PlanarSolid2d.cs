@@ -11,7 +11,7 @@ namespace g3
     //
     // So, it is strongly recommended that this be constructed alongside a GeneralPolygon2d,
     // which can be used for checking everything.
-	public class PlanarSolid2d 
+	[Serializable] public class PlanarSolid2d 
 	{
 		IParametricCurve2d outer;
 		//bool bOuterIsCW;

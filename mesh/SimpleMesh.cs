@@ -6,7 +6,7 @@ using System.Text;
 
 namespace g3
 {
-    public class SimpleMesh : IDeformableMesh
+   [Serializable] public class SimpleMesh : IDeformableMesh
     {
         public DVector<double> Vertices;
         public DVector<float> Normals;
@@ -516,7 +516,7 @@ namespace g3
 
 
 
-    public class SimpleMeshBuilder : IMeshBuilder
+   [Serializable] public class SimpleMeshBuilder : IMeshBuilder
     {
         public List<SimpleMesh> Meshes;
         public List<GenericMaterial> Materials;

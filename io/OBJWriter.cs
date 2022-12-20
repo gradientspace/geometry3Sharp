@@ -13,7 +13,7 @@ namespace g3
 	/// [TODO] options to preserve vertex and triangle indices
 	/// 
 	/// </summary>
-    public class OBJWriter : IMeshWriter
+   [Serializable] public class OBJWriter : IMeshWriter
     {
         // stream-opener. Override to write to something other than a file.
         public Func<string, Stream> OpenStreamF = (sFilename) => {

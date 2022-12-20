@@ -15,7 +15,7 @@ namespace g3
     /// [TODO] local-smoothing impl is not very efficient. Should not be necessary to
     ///    rebuild nbrhood each time if we are not changing it.
     /// </summary>
-    public class EdgeLoopRemesher : Remesher
+   [Serializable] public class EdgeLoopRemesher : Remesher
     {
         public EdgeLoop InputLoop;
         public EdgeLoop OutputLoop;

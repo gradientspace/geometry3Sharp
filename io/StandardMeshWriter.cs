@@ -16,7 +16,7 @@ namespace g3
     /// Each of these is implemented in a separate Writer class, eg OBJWriter, STLWriter, etc
     /// 
     /// </summary>
-    public class StandardMeshWriter : IDisposable
+   [Serializable] public class StandardMeshWriter : IDisposable
     {
 
         /// <summary>

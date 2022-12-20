@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public struct AxisAlignedBox2d
+    [Serializable] public struct AxisAlignedBox2d
     {
         public Vector2d Min;
         public Vector2d Max;
@@ -127,7 +127,7 @@ namespace g3
             Max.x += right; Max.y += top;
         }
 
-        public enum ScaleMode {
+       [Serializable] public enum ScaleMode {
             ScaleRight,
             ScaleLeft,
             ScaleUp,

@@ -11,7 +11,7 @@ namespace g3
 	//
     // [TODO] could this be struct? is not used in contexts where we necessarily need a new object...
     //
-	public class Intersector1 
+	[Serializable] public class Intersector1 
 	{
 		// intervals to intersect
 		public Interval1d U;

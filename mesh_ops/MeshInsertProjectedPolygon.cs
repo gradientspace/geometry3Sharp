@@ -48,7 +48,7 @@ namespace gs
     /// bary-coords, so that we can compute the new 3D positions. 
     /// 
     /// </summary>
-    public class MeshInsertProjectedPolygon
+   [Serializable] public class MeshInsertProjectedPolygon
     {
         public DMesh3 Mesh;
         public int SeedTriangle = -1;   // you must provide this so that we can efficiently

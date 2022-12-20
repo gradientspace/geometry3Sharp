@@ -26,7 +26,7 @@ namespace g3
 	/// <summary>
 	/// Implicit sphere, where zero isocontour is at Radius
 	/// </summary>
-	public class ImplicitSphere3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitSphere3d : BoundedImplicitFunction3d
     {
 		public Vector3d Origin;
 		public double Radius;
@@ -46,7 +46,7 @@ namespace g3
 	/// <summary>
 	/// Implicit half-space. "Inside" is opposite of Normal direction.
 	/// </summary>
-	public class ImplicitHalfSpace3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitHalfSpace3d : BoundedImplicitFunction3d
 	{
 		public Vector3d Origin;
 		public Vector3d Normal;
@@ -67,7 +67,7 @@ namespace g3
 	/// <summary>
 	/// Implicit axis-aligned box
 	/// </summary>
-	public class ImplicitAxisAlignedBox3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitAxisAlignedBox3d : BoundedImplicitFunction3d
 	{
 		public AxisAlignedBox3d AABox;
 
@@ -87,7 +87,7 @@ namespace g3
 	/// <summary>
 	/// Implicit oriented box
 	/// </summary>
-	public class ImplicitBox3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitBox3d : BoundedImplicitFunction3d
 	{
 		Box3d box;
 		AxisAlignedBox3d local_aabb;
@@ -123,7 +123,7 @@ namespace g3
 	/// <summary>
 	/// Implicit tube around line segment
 	/// </summary>
-	public class ImplicitLine3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitLine3d : BoundedImplicitFunction3d
 	{
 		public Segment3d Segment;
 		public double Radius;
@@ -151,7 +151,7 @@ namespace g3
 	/// Offset the zero-isocontour of an implicit function.
 	/// Assumes that negative is inside, if not, reverse offset.
 	/// </summary>
-	public class ImplicitOffset3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitOffset3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public double Offset;
@@ -177,7 +177,7 @@ namespace g3
     /// field, this converts single isocontour into two nested isocontours
     /// with zeros at interval a and b, with 'inside' in interval
     /// </summary>
-    public class ImplicitShell3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitShell3d : BoundedImplicitFunction3d
     {
         public BoundedImplicitFunction3d A;
         public Interval1d Inside;
@@ -209,7 +209,7 @@ namespace g3
     /// Assumption is that both have surface at zero isocontour and 
     /// negative is inside.
     /// </summary>
-    public class ImplicitUnion3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitUnion3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public BoundedImplicitFunction3d B;
@@ -234,7 +234,7 @@ namespace g3
 	/// Assumption is that both have surface at zero isocontour and 
 	/// negative is inside.
 	/// </summary>
-	public class ImplicitIntersection3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitIntersection3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public BoundedImplicitFunction3d B;
@@ -260,7 +260,7 @@ namespace g3
 	/// Assumption is that both have surface at zero isocontour and 
 	/// negative is inside.
 	/// </summary>
-	public class ImplicitDifference3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitDifference3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public BoundedImplicitFunction3d B;
@@ -285,7 +285,7 @@ namespace g3
 	/// Assumption is that both have surface at zero isocontour and 
 	/// negative is inside.
 	/// </summary>
-	public class ImplicitNaryUnion3d : BoundedImplicitFunction3d
+	[Serializable] public class ImplicitNaryUnion3d : BoundedImplicitFunction3d
 	{
 		public List<BoundedImplicitFunction3d> Children;
 
@@ -316,7 +316,7 @@ namespace g3
     /// Assumption is that both have surface at zero isocontour and 
     /// negative is inside.
     /// </summary>
-    public class ImplicitNaryIntersection3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitNaryIntersection3d : BoundedImplicitFunction3d
     {
         public List<BoundedImplicitFunction3d> Children;
 
@@ -349,7 +349,7 @@ namespace g3
     /// Assumption is that both have surface at zero isocontour and 
     /// negative is inside.
     /// </summary>
-    public class ImplicitNaryDifference3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitNaryDifference3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public List<BoundedImplicitFunction3d> BSet;
@@ -381,7 +381,7 @@ namespace g3
     /// Assumption is that both have surface at zero isocontour and 
     /// negative is inside.
     /// </summary>
-    public class ImplicitSmoothUnion3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitSmoothUnion3d : BoundedImplicitFunction3d
     {
         public BoundedImplicitFunction3d A;
         public BoundedImplicitFunction3d B;
@@ -408,7 +408,7 @@ namespace g3
     /// Assumption is that both have surface at zero isocontour and 
     /// negative is inside.
     /// </summary>
-    public class ImplicitSmoothIntersection3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitSmoothIntersection3d : BoundedImplicitFunction3d
     {
         public BoundedImplicitFunction3d A;
         public BoundedImplicitFunction3d B;
@@ -436,7 +436,7 @@ namespace g3
     /// Assumption is that both have surface at zero isocontour and 
     /// negative is inside.
     /// </summary>
-    public class ImplicitSmoothDifference3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitSmoothDifference3d : BoundedImplicitFunction3d
     {
         public BoundedImplicitFunction3d A;
         public BoundedImplicitFunction3d B;
@@ -463,7 +463,7 @@ namespace g3
     /// Blend of two implicit surfaces. Assumes surface is at zero iscontour.
     /// Uses Pasko blend from http://www.hyperfun.org/F-rep.pdf
     /// </summary>
-    public class ImplicitBlend3d : BoundedImplicitFunction3d
+   [Serializable] public class ImplicitBlend3d : BoundedImplicitFunction3d
 	{
 		public BoundedImplicitFunction3d A;
 		public BoundedImplicitFunction3d B;
@@ -537,7 +537,7 @@ namespace g3
     /// the distance=0 isocontour lying just before midway in
     /// the range (at the .ZeroIsocontour constant)
     /// </summary>
-    public class DistanceFieldToSkeletalField : BoundedImplicitFunction3d
+   [Serializable] public class DistanceFieldToSkeletalField : BoundedImplicitFunction3d
     {
         public BoundedImplicitFunction3d DistanceField;
         public double FalloffDistance;
@@ -572,7 +572,7 @@ namespace g3
     /// <summary>
     /// sum-blend
     /// </summary>
-    public class SkeletalBlend3d : BoundedImplicitFunction3d
+   [Serializable] public class SkeletalBlend3d : BoundedImplicitFunction3d
     {
         public BoundedImplicitFunction3d A;
         public BoundedImplicitFunction3d B;
@@ -596,7 +596,7 @@ namespace g3
     /// <summary>
     /// Ricci blend
     /// </summary>
-    public class SkeletalRicciBlend3d : BoundedImplicitFunction3d
+   [Serializable] public class SkeletalRicciBlend3d : BoundedImplicitFunction3d
     {
         public BoundedImplicitFunction3d A;
         public BoundedImplicitFunction3d B;
@@ -632,7 +632,7 @@ namespace g3
     /// Assumption is that both have surface at zero isocontour and 
     /// negative is inside.
     /// </summary>
-    public class SkeletalRicciNaryBlend3d : BoundedImplicitFunction3d
+   [Serializable] public class SkeletalRicciNaryBlend3d : BoundedImplicitFunction3d
     {
         public List<BoundedImplicitFunction3d> Children;
         public double BlendPower = 2.0;

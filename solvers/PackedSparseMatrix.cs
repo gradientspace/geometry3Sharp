@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace g3
 {
-    public struct matrix_entry
+    [Serializable] public struct matrix_entry
     {
         public int r;
         public int c;
@@ -18,9 +18,9 @@ namespace g3
     /// This is a sparse matrix where each row is an array of (column,value) pairs
     /// This is more efficient for Matrix*Vector multiply.
     /// </summary>
-    public class PackedSparseMatrix
+   [Serializable] public class PackedSparseMatrix
     {
-        public struct nonzero
+        [Serializable] public struct nonzero
         {
             public int j;
             public double d;
@@ -31,7 +31,7 @@ namespace g3
         public bool Sorted = false;
         public int NumNonZeros = 0;
 
-        public enum StorageModes
+       [Serializable] public enum StorageModes
         {
             Full
         }

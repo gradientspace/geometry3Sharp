@@ -7,7 +7,7 @@ namespace g3
 {
 
 
-    public class GeneralPolygon2dBoxTree
+   [Serializable] public class GeneralPolygon2dBoxTree
     {
         public GeneralPolygon2d Polygon;
 
@@ -81,7 +81,7 @@ namespace g3
     /// [TODO] would it make more sense to have more than just 2 segments at lowest level?
     /// 
     /// </summary>
-    public class Polygon2dBoxTree
+   [Serializable] public class Polygon2dBoxTree
     {
         public Polygon2d Polygon;
 

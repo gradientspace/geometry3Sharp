@@ -7,7 +7,7 @@ using System.Text;
 namespace g3
 {
     // generate a two-triangle rect, centered at origin
-    public class TrivialRectGenerator : MeshGenerator
+   [Serializable] public class TrivialRectGenerator : MeshGenerator
     {
         public float Width = 1.0f;
         public float Height = 1.0f;
@@ -20,7 +20,7 @@ namespace g3
         /// </summary>
         public Index2i IndicesMap = new Index2i(1, 3);
 
-        public enum UVModes
+       [Serializable] public enum UVModes
         {
             FullUVSquare,
             CenteredUVRectangle,
@@ -102,7 +102,7 @@ namespace g3
     /// with EdgeVertices verts along each edge.
     /// [TODO] allow varying EdgeVertices in each dimension (tricky...)
     /// </summary>
-    public class GriddedRectGenerator : TrivialRectGenerator
+   [Serializable] public class GriddedRectGenerator : TrivialRectGenerator
     {
         public int EdgeVertices = 8;
 
@@ -197,7 +197,7 @@ namespace g3
 
     // Generate a rounded rect centered at origin.
     // Force individual corners to be sharp using the SharpCorners flags field.
-    public class RoundRectGenerator : MeshGenerator
+   [Serializable] public class RoundRectGenerator : MeshGenerator
     {
         public float Width = 1.0f;
         public float Height = 1.0f;
@@ -206,7 +206,7 @@ namespace g3
 
 
         [Flags]
-        public enum Corner
+       [Serializable] public enum Corner
         {
             BottomLeft = 1,
             BottomRight = 2,
@@ -216,7 +216,7 @@ namespace g3
         public Corner SharpCorners = 0;
 
 
-        public enum UVModes
+       [Serializable] public enum UVModes
         {
             FullUVSquare,
             CenteredUVRectangle,

@@ -15,7 +15,7 @@ namespace g3
     /// Each list stores its count, so list-size operations are constant time.
     /// All the internal "pointers" are 32-bit.
     /// </summary>
-    public class SmallListSet
+   [Serializable] public class SmallListSet
     {
         const int Null = -1;
 

@@ -20,7 +20,7 @@ namespace g3
     /// overlaps. Need conservative rasterization to improve this. Can implement by
     /// testing each bin bbox for intersection w/ triangle
     /// </summary>
-    public class TriangleBinsGrid2d
+   [Serializable] public class TriangleBinsGrid2d
     {
         ShiftGridIndexer2 indexer;
         AxisAlignedBox2d bounds;

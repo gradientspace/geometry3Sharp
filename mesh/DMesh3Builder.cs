@@ -5,9 +5,9 @@ using System.Linq;
 
 namespace g3
 {
-    public class DMesh3Builder : IMeshBuilder
+   [Serializable] public class DMesh3Builder : IMeshBuilder
     {
-        public enum AddTriangleFailBehaviors
+       [Serializable] public enum AddTriangleFailBehaviors
         {
             DiscardTriangle = 0,
             DuplicateAllVertices = 1

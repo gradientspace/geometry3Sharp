@@ -9,7 +9,7 @@ namespace gs
 	/// <summary>
 	/// Merge coincident edges.
 	/// </summary>
-	public class MergeCoincidentEdges
+	[Serializable] public class MergeCoincidentEdges
 	{
 		public DMesh3 Mesh;
 

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-	public struct Segment3d : IParametricCurve3d
+	[Serializable] public struct Segment3d : IParametricCurve3d
     {
         // Center-direction-extent representation.
         // Extent is half length of segment
@@ -145,7 +145,7 @@ namespace g3
 
 
 
-    public struct Segment3f
+    [Serializable] public struct Segment3f
     {
         // Center-direction-extent representation.
         // Extent is half length of segment

@@ -4,7 +4,7 @@ namespace g3
 {
 	// interval [a,b] on Real line. 
 	//   TODO: should check that a <= b !!
-    public struct Interval1d
+    [Serializable] public struct Interval1d
     {
 		public double a;
 		public double b;

@@ -3,9 +3,9 @@
 namespace g3
 {
 
-    public struct SetGroupBehavior
+    [Serializable] public struct SetGroupBehavior
     {
-        public enum Modes
+       [Serializable] public enum Modes
         {
             Ignore = 0,
             AutoGenerate = 1,

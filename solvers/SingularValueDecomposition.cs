@@ -20,7 +20,7 @@ namespace g3
     ///          if ( det(V) == -1 ) { V *= -1; S *= -1 }     (right? seems to work)
     ///  
     /// </summary>
-    public class SingularValueDecomposition
+   [Serializable] public class SingularValueDecomposition
     {
         // port of WildMagic5 SingularValueDecomposition class (which is a back-port
         // of GTEngine SVD class) see geometrictools.com

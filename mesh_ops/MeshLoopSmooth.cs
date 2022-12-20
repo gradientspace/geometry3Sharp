@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public class MeshLoopSmooth
+   [Serializable] public class MeshLoopSmooth
     {
         public DMesh3 Mesh;
         public EdgeLoop Loop;

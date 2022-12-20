@@ -9,7 +9,7 @@ namespace g3
 
 
 
-    public class DSubmesh3
+   [Serializable] public class DSubmesh3
     {
         public DMesh3 BaseMesh;
         public DMesh3 SubMesh;

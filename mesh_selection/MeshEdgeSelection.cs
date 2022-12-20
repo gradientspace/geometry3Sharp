@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class MeshEdgeSelection : IEnumerable<int>
+   [Serializable] public class MeshEdgeSelection : IEnumerable<int>
     {
         public DMesh3 Mesh;
 

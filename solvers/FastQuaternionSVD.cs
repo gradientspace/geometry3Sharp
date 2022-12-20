@@ -28,7 +28,7 @@ namespace g3
     ///   - SymmetricMatrix3d currently a class, could make a struct (see comments)
     /// 
     /// </summary>
-    public class FastQuaternionSVD
+   [Serializable] public class FastQuaternionSVD
     {
         int NumJacobiIterations = 4;   // increase this to get higher accuracy
                                        // TODO: characterize...

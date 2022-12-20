@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace g3
 {
-	public class MeshBoundaryLoopsException : Exception
+	[Serializable] public class MeshBoundaryLoopsException : Exception
 	{
 		public MeshBoundaryLoopsException(string message) : base(message) {}
 		public bool UnclosedLoop = false;
@@ -18,7 +18,7 @@ namespace g3
 	/// Extract boundary EdgeLoops from Mesh. Can also extract EdgeSpans for open areas,
     /// however default behavior is to ignore these. Set .SpanBehavior to configure.
 	/// </summary>
-    public class MeshBoundaryLoops : IEnumerable<EdgeLoop>
+   [Serializable] public class MeshBoundaryLoops : IEnumerable<EdgeLoop>
     {
         public DMesh3 Mesh;
         public List<EdgeLoop> Loops;
@@ -30,14 +30,14 @@ namespace g3
 
         // What should we do if we encounter open spans. Mainly a result of EdgeFilter, but can also
         // happen on meshes w/ crazy bowties
-        public enum SpanBehaviors
+       [Serializable] public enum SpanBehaviors
         {
             Ignore, ThrowException, Compute
         };
         public SpanBehaviors SpanBehavior = SpanBehaviors.Compute;
 
         // What should we do if we encounter an unrecoverable failure while walking a loop
-        public enum FailureBehaviors
+       [Serializable] public enum FailureBehaviors
         {
             ThrowException,       // die, and you clean up
             ConvertToOpenSpan     // keep un-closed loop as a span

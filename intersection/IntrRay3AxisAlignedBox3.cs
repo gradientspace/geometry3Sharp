@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
 	// adapted from IntrRay3Box3
-	public class IntrRay3AxisAlignedBox3
+	[Serializable] public class IntrRay3AxisAlignedBox3
 	{
 		Ray3d ray;
 		public Ray3d Ray

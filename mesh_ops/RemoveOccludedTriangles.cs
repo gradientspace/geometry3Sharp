@@ -14,7 +14,7 @@ namespace gs
     /// something akin to ambient occlusion, and if face is fully occluded, then
     /// we classify it as inside and remove it.
 	/// </summary>
-	public class RemoveOccludedTriangles
+	[Serializable] public class RemoveOccludedTriangles
 	{
 		public DMesh3 Mesh;
         public DMeshAABBTree3 Spatial;
@@ -35,7 +35,7 @@ namespace gs
         // use this as winding isovalue for WindingNumber mode
         public double WindingIsoValue = 0.5;
 
-        public enum CalculationMode
+       [Serializable] public enum CalculationMode
         {
             RayParity = 0,
             AnalyticWindingNumber = 1,

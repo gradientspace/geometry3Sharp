@@ -8,7 +8,7 @@ namespace g3
 	/// An EdgeSpan is a continous set of edges in a Mesh that is *not* closed
 	/// (that would be an EdgeLoop)
 	/// </summary>
-    public class EdgeSpan
+   [Serializable] public class EdgeSpan
     {
         public DMesh3 Mesh;
 

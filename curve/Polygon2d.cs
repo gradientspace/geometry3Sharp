@@ -7,7 +7,7 @@ using System.Text;
 
 namespace g3
 {
-	public class Polygon2d : IDuplicatable<Polygon2d>
+	[Serializable] public class Polygon2d : IDuplicatable<Polygon2d>
     {
         protected List<Vector2d> vertices;
 		public int Timestamp;
@@ -793,7 +793,7 @@ namespace g3
     /// <summary>
     /// Wrapper for a Polygon2d that provides minimal IParametricCurve2D interface
     /// </summary>
-    public class Polygon2DCurve : IParametricCurve2d
+   [Serializable] public class Polygon2DCurve : IParametricCurve2d
     {
         public Polygon2d Polygon;
 

@@ -14,7 +14,7 @@ namespace g3
     /// No overflow checking is done in release builds.
     /// 
     /// </summary>
-    public class RefCountVector : System.Collections.IEnumerable
+   [Serializable] public class RefCountVector : System.Collections.IEnumerable
     {
         public static readonly short invalid = -1;
 

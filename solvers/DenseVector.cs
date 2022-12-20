@@ -2,7 +2,7 @@
 
 namespace g3
 {
-    public class DenseVector
+   [Serializable] public class DenseVector
     {
         double[] d;
         int N;

@@ -8,7 +8,7 @@ namespace g3
     /// Create a mesh that contains a planar element for each point and normal
     /// (currently only triangles)
     /// </summary>
-    public class PointSplatsGenerator : MeshGenerator
+   [Serializable] public class PointSplatsGenerator : MeshGenerator
     {
         public IEnumerable<int> PointIndices;
         public int PointIndicesCount = -1;      // you can set this to avoid calling Count() on enumerable

@@ -21,7 +21,7 @@ namespace g3
 
 
 
-    public struct GridLevelIndex2
+    [Serializable] public struct GridLevelIndex2
     {
         public Vector2i block_index;
         public Vector2i local_index;
@@ -63,7 +63,7 @@ namespace g3
 	/// <summary>
 	/// Map to/from grid coords
 	/// </summary>
-	public struct ScaleGridIndexer2 : IGridWorldIndexer2
+	[Serializable] public struct ScaleGridIndexer2 : IGridWorldIndexer2
 	{
 		public double CellSize;
 
@@ -96,7 +96,7 @@ namespace g3
 	/// <summary>
 	/// Map to/from grid coords, where grid is translated from origin
 	/// </summary>
-	public struct ShiftGridIndexer2 : IGridWorldIndexer2
+	[Serializable] public struct ShiftGridIndexer2 : IGridWorldIndexer2
 	{
 		public Vector2d Origin;
 		public double CellSize;
@@ -131,7 +131,7 @@ namespace g3
     /// map between "outer" (ie higher-res) grid coordinates and 
     /// "blocks" of those coordinates.
     /// </summary>
-    public struct MultigridIndexer2 : IMultigridIndexer2
+    [Serializable] public struct MultigridIndexer2 : IMultigridIndexer2
     {
         public Vector2i OuterShift;
         public Vector2i BlockSize;

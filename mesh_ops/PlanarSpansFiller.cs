@@ -20,7 +20,7 @@ namespace g3
     ///   
     /// 
     /// </summary>
-    public class PlanarSpansFiller
+   [Serializable] public class PlanarSpansFiller
     {
         public DMesh3 Mesh;
 

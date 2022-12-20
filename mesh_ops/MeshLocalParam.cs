@@ -6,12 +6,12 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class MeshLocalParam
+   [Serializable] public class MeshLocalParam
     {
         public static readonly Vector2f InvalidUV = new Vector2f(float.MaxValue, float.MaxValue);
 
 
-        public enum UVModes
+       [Serializable] public enum UVModes
         {
             ExponentialMap,
             ExponentialMap_UpwindAvg,

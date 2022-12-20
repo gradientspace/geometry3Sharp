@@ -17,7 +17,7 @@ namespace g3
     /// 
     /// conceptually based on https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
     /// </summary>
-    public class IndexPriorityQueue : IEnumerable<int>
+   [Serializable] public class IndexPriorityQueue : IEnumerable<int>
     {
         // set this to true during development to catch issues
         public bool EnableDebugChecks = false;

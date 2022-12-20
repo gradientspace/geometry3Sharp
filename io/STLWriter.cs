@@ -9,7 +9,7 @@ using System.Threading;
 namespace g3
 {
 
-    public class STLWriter : IMeshWriter
+   [Serializable] public class STLWriter : IMeshWriter
     {
         // entire data block for stl triangle, that we can directly convert to byte[]
         [StructLayout(LayoutKind.Sequential, Pack=1)]

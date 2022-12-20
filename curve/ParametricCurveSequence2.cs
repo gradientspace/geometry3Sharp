@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace g3 
 {
-	public class ParametricCurveSequence2 : IParametricCurve2d, IMultiCurve2d
+	[Serializable] public class ParametricCurveSequence2 : IParametricCurve2d, IMultiCurve2d
 	{
 
 		List<IParametricCurve2d> curves;

@@ -12,7 +12,7 @@ namespace g3
     /// Each vertex can be connected to an arbitrary number of edges.
     /// Each vertex can have a 3-float color, and edge edge can have an integer GroupID
     /// </summary>
-    public class DGraph3 : DGraph
+   [Serializable] public class DGraph3 : DGraph
 	{
 
 		public static readonly Vector3d InvalidVertex = new Vector3d(Double.MaxValue, 0, 0);

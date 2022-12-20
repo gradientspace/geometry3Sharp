@@ -6,7 +6,7 @@ using g3;
 
 namespace g3
 {
-    public struct Frame3f
+    [Serializable] public struct Frame3f
     {
         Quaternionf rotation;
         Vector3f origin;

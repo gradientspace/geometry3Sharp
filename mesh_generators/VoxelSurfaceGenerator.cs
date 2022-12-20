@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class VoxelSurfaceGenerator
+   [Serializable] public class VoxelSurfaceGenerator
     {
         public IBinaryVoxelGrid Voxels;
 

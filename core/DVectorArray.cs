@@ -10,7 +10,7 @@ namespace g3
     // This class is just a wrapper around a dvector that provides convenient 3-element set/get access
     // Useful for things like treating a float array as a list of vectors
     //
-    public class DVectorArray3<T> : IEnumerable<T>
+   [Serializable] public class DVectorArray3<T> : IEnumerable<T>
     {
         public DVector<T> vector;
 
@@ -67,7 +67,7 @@ namespace g3
     }
 
 
-    public class DVectorArray3d : DVectorArray3<double>
+   [Serializable] public class DVectorArray3d : DVectorArray3<double>
     {
         const double invalid_value = -99999999.0;
 
@@ -87,7 +87,7 @@ namespace g3
     };
 
 
-    public class DVectorArray3f : DVectorArray3<float>
+   [Serializable] public class DVectorArray3f : DVectorArray3<float>
     {
         public DVectorArray3f(int nCount = 0) : base(nCount) { }
         public DVectorArray3f(float[] data) : base(data) { }
@@ -104,7 +104,7 @@ namespace g3
     };
 
 
-    public class DVectorArray3i : DVectorArray3<int>
+   [Serializable] public class DVectorArray3i : DVectorArray3<int>
     {
         public DVectorArray3i(int nCount = 0) : base(nCount) { }
         public DVectorArray3i(int[] data) : base(data) { }
@@ -133,7 +133,7 @@ namespace g3
 
 
 
-    public class DIndexArray3i : DVectorArray3<int>
+   [Serializable] public class DIndexArray3i : DVectorArray3<int>
     {
         public DIndexArray3i(int nCount = 0) : base(nCount) { }
         public DIndexArray3i(int[] data) : base(data) { }
@@ -167,7 +167,7 @@ namespace g3
     //
     // Same as DVectorArray3, but for 2D vectors/etc
     //
-    public class DVectorArray2<T> : IEnumerable<T>
+   [Serializable] public class DVectorArray2<T> : IEnumerable<T>
     {
         public DVector<T> vector;
 
@@ -217,7 +217,7 @@ namespace g3
             return this.GetEnumerator();
         }
     }
-    public class DVectorArray2d : DVectorArray2<double>
+   [Serializable] public class DVectorArray2d : DVectorArray2<double>
     {
         public DVectorArray2d(int nCount = 0) : base(nCount) { }
         public DVectorArray2d(double[] data) : base(data) { }
@@ -231,7 +231,7 @@ namespace g3
                 yield return this[i];
         }
     };
-    public class DVectorArray2f : DVectorArray2<float>
+   [Serializable] public class DVectorArray2f : DVectorArray2<float>
     {
         public DVectorArray2f(int nCount = 0) : base(nCount) { }
         public DVectorArray2f(float[] data) : base(data) { }
@@ -248,7 +248,7 @@ namespace g3
 
 
 
-    public class DIndexArray2i : DVectorArray2<int>
+   [Serializable] public class DIndexArray2i : DVectorArray2<int>
     {
         public DIndexArray2i(int nCount = 0) : base(nCount) { }
         public DIndexArray2i(int[] data) : base(data) { }

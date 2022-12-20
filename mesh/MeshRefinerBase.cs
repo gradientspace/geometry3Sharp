@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class MeshRefinerBase
+   [Serializable] public class MeshRefinerBase
     {
         protected DMesh3 mesh;
         protected MeshConstraints constraints = null;

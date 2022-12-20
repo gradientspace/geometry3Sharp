@@ -5,13 +5,13 @@ using System.Diagnostics;
 namespace g3 
 {
 
-	public struct ComplexSegment2d
+	[Serializable] public struct ComplexSegment2d
 	{
 		public Segment2d seg;
 		public bool isClosed;
 		public PlanarComplex.Element element;
 	}
-	public struct ComplexEndpoint2d
+	[Serializable] public struct ComplexEndpoint2d
 	{
 		public Vector2d v;
 		public bool isStart;
@@ -19,7 +19,7 @@ namespace g3
 	}
 
 
-	public class PlanarComplex 
+	[Serializable] public class PlanarComplex 
 	{
 		// these determine pointwise sampling rates
 		public double DistanceAccuracy = 0.1;
@@ -57,7 +57,7 @@ namespace g3
             public abstract Element Clone();
 		}
 
-		public class SmoothCurveElement : Element 
+		[Serializable] public class SmoothCurveElement : Element 
 		{
 			public PolyLine2d polyLine;
 
@@ -76,7 +76,7 @@ namespace g3
             }
 		}
 
-		public class SmoothLoopElement : Element 
+		[Serializable] public class SmoothLoopElement : Element 
 		{
 			public Polygon2d polygon;
 
@@ -411,13 +411,13 @@ namespace g3
 
 
 
-        public class GeneralSolid
+       [Serializable] public class GeneralSolid
         {
             public Element Outer;
             public List<Element> Holes = new List<Element>();
         }
 
-        public class SolidRegionInfo
+       [Serializable] public class SolidRegionInfo
         {
             public List<GeneralPolygon2d> Polygons;
             public List<PlanarSolid2d> Solids;
@@ -459,7 +459,7 @@ namespace g3
 
 
 
-		public struct FindSolidsOptions
+		[Serializable] public struct FindSolidsOptions
 		{
 			public double SimplifyDeviationTolerance;
 			public bool WantCurveSolids;
@@ -761,7 +761,7 @@ namespace g3
 
 
 
-		public class ClosedLoopsInfo
+		[Serializable] public class ClosedLoopsInfo
 		{
 			public List<Polygon2d> Polygons;
 			public List<IParametricCurve2d> Loops;
@@ -820,7 +820,7 @@ namespace g3
 
 
 
-		public class OpenCurvesInfo
+		[Serializable] public class OpenCurvesInfo
 		{
 			public List<PolyLine2d> Polylines;
 			public List<IParametricCurve2d> Curves;

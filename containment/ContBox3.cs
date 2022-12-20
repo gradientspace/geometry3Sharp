@@ -9,7 +9,7 @@ namespace g3
 
     // ported from GTEngine GteContOrientedBox3.h
     // (2017) url: https://www.geometrictools.com/GTEngine/Include/Mathematics/GteContOrientedBox3.h
-    public class ContOrientedBox3
+   [Serializable] public class ContOrientedBox3
     {
         public Box3d Box;
         public bool ResultValid = false;

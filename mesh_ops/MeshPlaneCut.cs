@@ -23,7 +23,7 @@ namespace g3
 	///   boundary edge tracking...
 	/// 
 	/// </summary>
-	public class MeshPlaneCut
+	[Serializable] public class MeshPlaneCut
 	{
         // Inputs
 		public DMesh3 Mesh;

@@ -20,7 +20,7 @@ namespace g3
     /// vertex normals
     /// 
     /// </summary>
-    public class TubeGenerator : MeshGenerator
+   [Serializable] public class TubeGenerator : MeshGenerator
     {
         public List<Vector3d> Vertices;
         public Polygon2d Polygon;

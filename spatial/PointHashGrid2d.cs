@@ -15,7 +15,7 @@ namespace g3
     /// you must also know it's 2D coordinate, so we can look up the cell coordinates.
     /// Hence, to 'update' a point, you need to know both it's old and new 2D coordinates.
     /// </summary>
-    public class PointHashGrid2d<T>
+   [Serializable] public class PointHashGrid2d<T>
     {
         Dictionary<Vector2i, List<T>> Hash;
         ScaleGridIndexer2 Indexer;

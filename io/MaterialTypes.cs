@@ -19,7 +19,7 @@ namespace g3
         abstract public float Alpha { get; set; }
 
 
-        public enum KnownMaterialTypes
+       [Serializable] public enum KnownMaterialTypes
         {
             OBJ_MTL_Format
         }
@@ -30,7 +30,7 @@ namespace g3
 
     // details: http://www.fileformat.info/format/material/
     // Note: if value is initialized to Invalid vector, -1, or NaN, it was not defined in material file
-    public class OBJMaterial : GenericMaterial
+   [Serializable] public class OBJMaterial : GenericMaterial
     {
         public Vector3f Ka;     // rgb ambient reflectivity
         public Vector3f Kd;     // rgb diffuse reflectivity 

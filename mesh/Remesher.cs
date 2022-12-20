@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace g3 {
 	
-	public class Remesher : MeshRefinerBase
+	[Serializable] public class Remesher : MeshRefinerBase
     {
         IProjectionTarget target = null;
 
@@ -33,7 +33,7 @@ namespace g3 {
         // Sometimes we need to have very granular control over what happens to
         // specific vertices. This function allows client to specify such behavior.
         // Somewhat redundant w/ VertexConstraints, but simpler to code.
-        [Flags] public enum VertexControl
+        [Flags][Serializable] public enum VertexControl
         {
             AllowAll = 0,
             NoSmooth = 1,
@@ -49,7 +49,7 @@ namespace g3 {
         public List<int> DebugEdges = new List<int>();
 
         // if Target is set, we can project onto it in different ways
-        public enum TargetProjectionMode
+       [Serializable] public enum TargetProjectionMode
         {
             NoProjection,           // disable projection
             AfterRefinement,        // do all projection after the refine/smooth pass

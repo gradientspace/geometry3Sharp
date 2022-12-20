@@ -6,7 +6,7 @@ namespace g3
 	/// <summary>
 	/// Row-major dense matrix
 	/// </summary>
-    public class DenseMatrix : IMatrix
+   [Serializable] public class DenseMatrix : IMatrix
     {
         double[] d;
 		int N;		// rows

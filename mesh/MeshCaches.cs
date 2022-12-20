@@ -9,7 +9,7 @@ namespace g3
     /*
      * Basic cache of per-triangle information for a DMesh3
      */
-    public class MeshTriInfoCache
+   [Serializable] public class MeshTriInfoCache
     {
         public DVector<Vector3d> Centroids;
         public DVector<Vector3d> Normals;

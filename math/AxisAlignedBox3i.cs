@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public struct AxisAlignedBox3i : IComparable<AxisAlignedBox3i>, IEquatable<AxisAlignedBox3i>
+    [Serializable] public struct AxisAlignedBox3i : IComparable<AxisAlignedBox3i>, IEquatable<AxisAlignedBox3i>
     {
         public Vector3i Min;
         public Vector3i Max;

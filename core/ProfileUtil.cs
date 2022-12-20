@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace g3
 {
 
-    public class BlockTimer
+   [Serializable] public class BlockTimer
     {
         public Stopwatch Watch;
         public string Label;
@@ -71,7 +71,7 @@ namespace g3
 
 
 
-    public class LocalProfiler : IDisposable
+   [Serializable] public class LocalProfiler : IDisposable
     {
         Dictionary<string, BlockTimer> Timers = new Dictionary<string, BlockTimer>();
         List<string> Order = new List<string>();

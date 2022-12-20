@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public enum IntersectionResult
+   [Serializable] public enum IntersectionResult
     {
         NotComputed,
         Intersects,
@@ -13,7 +13,7 @@ namespace g3
 		InvalidQuery
     }
 
-    public enum IntersectionType
+   [Serializable] public enum IntersectionType
     {
         Empty, Point, Segment, Line, Polygon, Plane, Unknown
     }
@@ -21,7 +21,7 @@ namespace g3
     /// <summary>
     /// returned by linear-primitive intersection functions
     /// </summary>
-    public struct LinearIntersection
+    [Serializable] public struct LinearIntersection
     {
         public bool intersects;
         public int numIntersections;       // 0, 1, or 2

@@ -45,7 +45,7 @@ namespace g3
     /// Original license was public domain. 
     /// Permission granted by Christopher Batty to include C# port under Boost license.
     /// </summary>
-    public class CachingMeshSDF
+   [Serializable] public class CachingMeshSDF
     {
         public DMesh3 Mesh;
         public DMeshAABBTree3 Spatial;
@@ -70,7 +70,7 @@ namespace g3
         // Parity count is basically mesh winding number, handles overlap shells and
         // self-intersections, but inverted shells are 'subtracted', and inverted faces are a disaster.
         // Both modes handle internal cavities, neither handles open sheets.
-        public enum InsideModes
+       [Serializable] public enum InsideModes
         {
             CrossingCount = 0,
             ParityCount = 1
@@ -414,7 +414,7 @@ namespace g3
     /// via GridOrigin, but does not support scaling or rotation. If you need those,
     /// you can wrap this in something that does the xform.
     /// </summary>
-	public class CachingMeshSDFImplicit : BoundedImplicitFunction3d
+	[Serializable] public class CachingMeshSDFImplicit : BoundedImplicitFunction3d
     {
         public CachingMeshSDF SDF;
         public double CellSize;

@@ -6,7 +6,7 @@ using g3;
 
 namespace gs
 {
-	public class PointSetHashtable
+	[Serializable] public class PointSetHashtable
 	{
 		IPointSet Points;
 		DSparseGrid3<PointList> Grid;
@@ -104,7 +104,7 @@ namespace gs
 
 
 
-		public class PointList : List<int>, IGridElement3 {
+		[Serializable] public class PointList : List<int>, IGridElement3 {
 			public IGridElement3 CreateNewGridElement(bool bCopy) {
 				return new PointList();
 			}

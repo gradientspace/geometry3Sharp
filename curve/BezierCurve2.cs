@@ -9,7 +9,7 @@ namespace g3
     /// 2D Bezier curve of arbitrary degree
     /// Ported from WildMagic5 Wm5BezierCurve2
     /// </summary>
-    public class BezierCurve2 : BaseCurve2, IParametricCurve2d
+   [Serializable] public class BezierCurve2 : BaseCurve2, IParametricCurve2d
     {
         int mDegree;
         int mNumCtrlPoints;

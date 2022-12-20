@@ -9,7 +9,7 @@ namespace g3
     /// 
     /// (should probably be using uint? but standard GetHashCode() returns int...)
     /// </summary>
-    public struct HashBuilder
+    [Serializable] public struct HashBuilder
     {
         public int Hash;
 

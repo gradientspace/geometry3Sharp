@@ -25,7 +25,7 @@ namespace g3
     /// [TODO] 2d variant of variational shape segmentation?
     /// 
     /// </summary>
-    public class PolySimplification2
+   [Serializable] public class PolySimplification2
     {
         List<Vector2d> Vertices;
         bool IsLoop;

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace g3
 {
-    public class gParallel
+   [Serializable] public class gParallel
     {
 
         public static void ForEach_Sequential<T>(IEnumerable<T> source, Action<T> body)
@@ -148,7 +148,7 @@ namespace g3
     //
     // Perhaps an alternative would be to use a fixed buffer of T?
     // However, if T is a class (eg by-reference), then this doesn't help as they still have to be allocated....
-    public class ParallelStream<V, T>
+   [Serializable] public class ParallelStream<V, T>
     {
         public Func<V, T> ProducerF = null;
         //public List<Action<T>> Operators = new List<Action<T>>();
@@ -232,7 +232,7 @@ namespace g3
 
 
     // locking queue - provides thread-safe sequential add/remove/count to Queue<T>
-    public class LockingQueue<T>
+   [Serializable] public class LockingQueue<T>
     {
         Queue<T> queue;
         object queue_lock;
@@ -282,7 +282,7 @@ namespace g3
      * Note that this is class and SpinLock is a struct, so this may cause
      * disasters, but at least things build...
      */
-    public class SpinLock
+   [Serializable] public class SpinLock
     {
         object o;
         public SpinLock()

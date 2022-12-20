@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
 
-    public class InPlaceIterativeCurveSmooth
+   [Serializable] public class InPlaceIterativeCurveSmooth
     {
         DCurve3 _curve;
         public DCurve3 Curve {
@@ -101,7 +101,7 @@ namespace g3
 
 
 
-    public class ArcLengthSoftTranslation
+   [Serializable] public class ArcLengthSoftTranslation
     {
         DCurve3 _curve;
         public DCurve3 Curve {

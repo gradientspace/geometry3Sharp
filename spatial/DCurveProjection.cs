@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class DCurveProjectionTarget : IProjectionTarget
+   [Serializable] public class DCurveProjectionTarget : IProjectionTarget
     {
         public DCurve3 Curve;
 

@@ -4,7 +4,7 @@ namespace g3
 {
 	// ported from WildMagic5 
     // [TODO] Vector2d 6-tuple, to avoid internal arrays
-	public class IntrTriangle2Triangle2
+	[Serializable] public class IntrTriangle2Triangle2
 	{
 		Triangle2d triangle0;
 		public Triangle2d Triangle0

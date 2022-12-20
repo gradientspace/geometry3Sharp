@@ -15,7 +15,7 @@ namespace g3
     /// <summary>
     /// Fit minimal bounding-box to a set of 2D points. Result is in MinBox.
     /// </summary>
-    public class ContMinBox2
+   [Serializable] public class ContMinBox2
     {
         Box2d mMinBox;
 

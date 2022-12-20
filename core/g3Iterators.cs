@@ -12,7 +12,7 @@ namespace g3
     /// <summary>
     /// Iterator that just returns a constant value N times
     /// </summary>
-    public class ConstantItr<T> : IEnumerable<T>
+   [Serializable] public class ConstantItr<T> : IEnumerable<T>
     {
         public T ConstantValue = default(T);
         public int N;
@@ -31,7 +31,7 @@ namespace g3
     /// <summary>
     /// Iterator that re-maps iterated values via a Func
     /// </summary>
-    public class RemapItr<T,T2> : IEnumerable<T>
+   [Serializable] public class RemapItr<T,T2> : IEnumerable<T>
     {
         public IEnumerable<T2> OtherItr;
         public Func<T2, T> ValueF;
@@ -52,7 +52,7 @@ namespace g3
     /// <summary>
     /// IList wrapper that remaps values via a Func (eg for index maps)
     /// </summary>
-    public class MappedList : IList<int>
+   [Serializable] public class MappedList : IList<int>
     {
         public IList<int> BaseList;
         public Func<int, int> MapF = (i) => { return i; };
@@ -98,7 +98,7 @@ namespace g3
     /// <summary>
     /// IList wrapper for an Interval1i, ie sequential list of integers
     /// </summary>
-    public struct IntSequence : IList<int>
+    [Serializable] public struct IntSequence : IList<int>
     {
         Interval1i range;
 

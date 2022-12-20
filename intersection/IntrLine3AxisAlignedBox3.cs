@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
 	// adapted from IntrLine3Box3
-	public class IntrLine3AxisAlignedBox3
+	[Serializable] public class IntrLine3AxisAlignedBox3
 	{
 		Line3d line;
 		public Line3d Line

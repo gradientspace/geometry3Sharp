@@ -9,7 +9,7 @@ namespace g3
     // extents are the eigenvalues of the covariance matrix and are returned in
     // increasing order.  The quantites are stored in a Box3<Real> just to have a
     // single container.
-    public class GaussPointsFit3
+   [Serializable] public class GaussPointsFit3
     {
         public Box3d Box;
         public bool ResultValid = false;

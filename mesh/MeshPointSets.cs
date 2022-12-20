@@ -9,7 +9,7 @@ namespace g3
     /// <summary>
     /// Present mesh edge midpoints as a point set
     /// </summary>
-    public class MeshEdgeMidpoints : IPointSet
+   [Serializable] public class MeshEdgeMidpoints : IPointSet
     {
         public MeshEdgeMidpoints(DMesh3 mesh)
         {
@@ -50,7 +50,7 @@ namespace g3
     /// <summary>
     /// Present mesh boundary-edge midpoints as a point set
     /// </summary>
-    public class MeshBoundaryEdgeMidpoints : IPointSet
+   [Serializable] public class MeshBoundaryEdgeMidpoints : IPointSet
     {
         public MeshBoundaryEdgeMidpoints(DMesh3 mesh)
         {

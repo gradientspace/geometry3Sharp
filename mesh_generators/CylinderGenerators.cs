@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
     // generate a cylinder 
-    public class OpenCylinderGenerator : MeshGenerator
+   [Serializable] public class OpenCylinderGenerator : MeshGenerator
     {
         public float BaseRadius = 1.0f;
         public float TopRadius = 1.0f;
@@ -69,7 +69,7 @@ namespace g3
     /// No subdivisions along top/base rings or height steps.
     /// cylinder triangles have groupid = 1, top cap = 2, bottom cap = 3, wedge faces 5 and 6
     /// </summary>
-    public class CappedCylinderGenerator : MeshGenerator
+   [Serializable] public class CappedCylinderGenerator : MeshGenerator
     {
         public float BaseRadius = 1.0f;
         public float TopRadius = 1.0f;
@@ -206,7 +206,7 @@ namespace g3
     // This causes the normals to look...weird.
     // For the conical region, we use the planar disc parameterization (ie tip at .5,.5) rather than
     // a cylinder-like projection
-    public class ConeGenerator : MeshGenerator
+   [Serializable] public class ConeGenerator : MeshGenerator
     {
         public float BaseRadius = 1.0f;
         public float Height = 1.0f;
@@ -321,7 +321,7 @@ namespace g3
 
 
 
-    public class VerticalGeneralizedCylinderGenerator : MeshGenerator
+   [Serializable] public class VerticalGeneralizedCylinderGenerator : MeshGenerator
     {
         public CircularSection[] Sections;
         public int Slices = 16;

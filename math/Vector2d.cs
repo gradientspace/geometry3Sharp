@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public struct Vector2d : IComparable<Vector2d>, IEquatable<Vector2d>
+    [Serializable] public struct Vector2d : IComparable<Vector2d>, IEquatable<Vector2d>
     {
         public double x;
         public double y;
@@ -301,7 +301,7 @@ namespace g3
 
         // from WildMagic5 Vector2, used in ConvexHull2
 
-        public struct Information
+        [Serializable] public struct Information
         {
             // The intrinsic dimension of the input set.  The parameter 'epsilon'
             // to the GetInformation function is used to provide a tolerance when

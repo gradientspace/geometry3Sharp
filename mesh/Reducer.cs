@@ -10,7 +10,7 @@ namespace g3
     /// Mesh Simplication - implementation of Garland & Heckbert Quadric Error Metric (QEM) Simplification
     /// 
     /// </summary>
-	public class Reducer : MeshRefinerBase
+	[Serializable] public class Reducer : MeshRefinerBase
 	{
         protected IProjectionTarget target = null;
 
@@ -771,7 +771,7 @@ skip_to_end:
 	/// - vector b
 	/// - constant c
 	/// </summary>
-	public struct QuadricError {
+	[Serializable] public struct QuadricError {
 		public double Axx, Axy, Axz, Ayy, Ayz, Azz;
 		public double bx, by, bz;
 		public double c;

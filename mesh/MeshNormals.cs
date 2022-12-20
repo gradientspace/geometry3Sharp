@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace g3
 {
-    public class MeshNormals
+   [Serializable] public class MeshNormals
     {
         public IMesh Mesh;
         public DVector<Vector3d> Normals;
@@ -18,7 +18,7 @@ namespace g3
 
 
 
-        public enum NormalsTypes
+       [Serializable] public enum NormalsTypes
         {
             Vertex_OneRingFaceAverage_AreaWeighted
         }

@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace g3
 {
-    public enum MeshResult
+   [Serializable] public enum MeshResult
     {
         Ok = 0,
         Failed_NotAVertex = 1,
@@ -39,7 +39,7 @@ namespace g3
 
 
     [Flags]
-    public enum MeshComponents
+   [Serializable] public enum MeshComponents
     {
         None = 0,
         VertexNormals = 1,
@@ -50,7 +50,7 @@ namespace g3
     }
 
     [Flags]
-    public enum MeshHints
+   [Serializable] public enum MeshHints
     {
         None = 0,
         IsCompact = 1
@@ -198,7 +198,7 @@ namespace g3
         }
 
 
-        public struct CompactInfo
+        [Serializable] public struct CompactInfo
         {
             public IIndexMap MapV;
         }

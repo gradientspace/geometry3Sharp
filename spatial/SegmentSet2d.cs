@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace g3
 {
 	// [TODO] some kind of spatial sorting!!
-	public class SegmentSet2d
+	[Serializable] public class SegmentSet2d
 	{
 		List<Segment2d> Segments;
 

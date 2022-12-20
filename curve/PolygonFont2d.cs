@@ -11,9 +11,9 @@ namespace g3
     /// Each font is a list of GeneralPolygon2D objects, so each outline may have 1 or more holes.
     /// (In fact, the mapping is [string,list_of_gpolygons], so you can actually keep entire strings together if desired)
     /// </summary>
-    public class PolygonFont2d
+   [Serializable] public class PolygonFont2d
     {
-        public class CharacterInfo
+       [Serializable] public class CharacterInfo
         {
             public GeneralPolygon2d[] Polygons;
             public AxisAlignedBox2d Bounds;

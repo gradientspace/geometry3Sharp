@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public struct Triangle2d
+    [Serializable] public struct Triangle2d
     {
         public Vector2d V0, V1, V2;
 
@@ -42,7 +42,7 @@ namespace g3
 
 
 
-    public struct Triangle2f
+    [Serializable] public struct Triangle2f
     {
         public Vector2f V0, V1, V2;
 

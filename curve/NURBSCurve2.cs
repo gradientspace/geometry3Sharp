@@ -6,7 +6,7 @@ using System.Linq;
 namespace g3
 {
     // ported from WildMagic5 NURBSCurve2
-    public class NURBSCurve2 : BaseCurve2, IParametricCurve2d
+   [Serializable] public class NURBSCurve2 : BaseCurve2, IParametricCurve2d
     {
         // Construction and destruction. Internal copies of the
         // input arrays are made, so to dynamically change control points,
@@ -253,7 +253,7 @@ namespace g3
         // derivatives. It will stop at the highest derivative you request.
         // More efficient than calling single-value functions above, which
         // would repeat lots of calculations
-        public struct CurveDerivatives
+        [Serializable] public struct CurveDerivatives
         {
             public Vector2d p, d1, d2, d3;
             public bool bPosition, bDer1, bDer2, bDer3;
