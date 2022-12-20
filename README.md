@@ -1,3 +1,9 @@
+# A Short Note about the future of geometry3Sharp
+
+I have not been able to work on or maintain geometry3Sharp for the past few years, due to some restrictive employment-contract terms. Various forks now exist that have active maintainers, and I would recommend you consider switching to one of those. In particular I would recommend the geometry4Sharp fork being developed by New Wheel Technology (_who also does C# development consulting, if you are looking for that_):
+
+https://github.com/NewWheelTech/geometry4Sharp
+
 # geometry3Sharp
 
 Open-Source (Boost-license) C# library for geometric computing. 
