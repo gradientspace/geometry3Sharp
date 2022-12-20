@@ -29,6 +29,12 @@ namespace g3
 			Timestamp = 0;
         }
 
+        public Polygon2d(IEnumerable<Vector2d> copy)
+        {
+            vertices = new List<Vector2d>(copy);
+            Timestamp = 0;
+        }
+
         public Polygon2d(Vector2d[] v)
         {
             vertices = new List<Vector2d>(v);
@@ -89,12 +95,31 @@ namespace g3
             vertices.Add(v);
 			Timestamp++; 
         }
+        public void AppendVertices(IEnumerable<Vector2d> v)
+        {
+            vertices.AddRange(v);
+            Timestamp++;
+        }
 
         public void RemoveVertex(int idx)
         {
             vertices.RemoveAt(idx);
             Timestamp++;
         }
+
+
+        public void SetVertices(List<Vector2d> newVertices, bool bTakeOwnership)
+        {
+            if ( bTakeOwnership) {
+                vertices = newVertices;
+            } else {
+                vertices.Clear();
+                int N = newVertices.Count;
+                for (int i = 0; i < N; ++i)
+                    vertices.Add(newVertices[i]);
+            }
+        }
+
 
         public void Reverse()
 		{
@@ -187,6 +212,8 @@ namespace g3
 			get {
 				double fArea = 0;
 				int N = vertices.Count;
+				if (N == 0)
+					return 0;
 				Vector2d v1 = vertices[0], v2 = Vector2d.Zero;
 				for (int i = 0; i < N; ++i) {
 					v2 = vertices[(i + 1) % N];
@@ -196,6 +223,9 @@ namespace g3
 				return fArea * 0.5;	
 			}
 		}
+        public double Area {
+            get { return Math.Abs(SignedArea); }
+        }
 
 
 
@@ -303,8 +333,24 @@ namespace g3
 			return true;
 		}
 
+        /// <summary>
+        /// Checks that all points on a segment are within the area defined by the Polygon2d.
+        /// </summary>
+        public bool Contains(Segment2d o)
+        {
+            // [TODO] Add bbox check
+            if (Contains(o.P0) == false || Contains(o.P1) == false)
+                return false;
 
-		public bool Intersects(Polygon2d o) {
+            foreach (Segment2d seg in SegmentItr())
+            {
+                if (seg.Intersects(o))
+                    return false;
+            }
+            return true;
+        }
+
+        public bool Intersects(Polygon2d o) {
 			if ( ! this.GetBounds().Intersects( o.GetBounds() ) )
 				return false;
 
@@ -317,8 +363,27 @@ namespace g3
 			return false;
 		}
 
+        /// <summary>
+        /// Checks if any point on a segment is within the area defined by the Polygon2d.
+        /// </summary>
+        public bool Intersects(Segment2d o)
+        {
+            // [TODO] Add bbox check
+            if (Contains(o.P0) == true || Contains(o.P1) == true)
+                return true;
 
-		public List<Vector2d> FindIntersections(Polygon2d o) {
+            // [TODO] Add bbox check
+            foreach (Segment2d seg in SegmentItr())
+            {
+                if (seg.Intersects(o))
+                    return true;
+            }
+            return false;
+        }
+
+
+
+        public List<Vector2d> FindIntersections(Polygon2d o) {
 			List<Vector2d> v = new List<Vector2d>();
 			if ( ! this.GetBounds().Intersects( o.GetBounds() ) )
 				return v;
@@ -681,6 +746,17 @@ namespace g3
             Timestamp++;
         }
 
+
+
+
+		/// <summary>
+		/// Return minimal bounding box of vertices, computed to epsilon tolerance
+		/// </summary>
+		public Box2d MinimalBoundingBox(double epsilon)
+		{
+			ContMinBox2 box2 = new ContMinBox2(vertices, epsilon, QueryNumberType.QT_DOUBLE, false);
+			return box2.MinBox;
+		}
 
 
 

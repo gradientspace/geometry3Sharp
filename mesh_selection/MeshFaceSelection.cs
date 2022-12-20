@@ -145,6 +145,11 @@ namespace g3
             Select(temp);
         }
 
+
+        public void SelectVertexOneRing(int vid) {
+            foreach (int tid in Mesh.VtxTrianglesItr(vid))
+                add(tid);
+        }
         public void SelectVertexOneRings(int[] vertices)
         {
             for ( int i = 0; i < vertices.Length; ++i ) {
@@ -159,6 +164,15 @@ namespace g3
                 foreach (int tid in Mesh.VtxTrianglesItr(vid))
                     add(tid);
             }
+        }
+
+
+        public void SelectEdgeTris(int eid)
+        {
+            Index2i et = Mesh.GetEdgeT(eid);
+            add(et.a);
+            if (et.b != DMesh3.InvalidID)
+                add(et.b);
         }
 
 
@@ -474,28 +488,85 @@ namespace g3
         }
 
         // returns true if selection was modified
-        public bool LocalOptimize(bool bClipFins, bool bFillEars, bool bFillTinyHoles = true, bool bClipLoners = true)
+        public bool LocalOptimize(bool bClipFins, bool bFillEars, bool bFillTinyHoles = true, bool bClipLoners = true, bool bRemoveBowties = false)
         {
             bool bModified = false;
             bool done = false;
+            int count = 0;
+            HashSet<int> temp_hash = new HashSet<int>();
             while ( ! done ) {
                 done = true;
+                if (count++ == 25)      // terminate in case we get stuck
+                    break;
                 if (bClipFins && ClipFins(bClipLoners))
                     done = false;
                 if (bFillEars && FillEars(bFillTinyHoles))
                     done = false;
+                if (bRemoveBowties && remove_bowties(temp_hash))
+                    done = false;
+                if (done == false)
+                    bModified = true;
+            }
+            if (bRemoveBowties)
+                remove_bowties(temp_hash);        // do a final pass of this because it is usually the most problematic...
+            return bModified;
+        }
+        public bool LocalOptimize(bool bRemoveBowties = true) {
+            return LocalOptimize(true, true, true, true, bRemoveBowties);
+        }
+
+
+
+
+        /// <summary>
+        /// Find any "bowtie" vertices - ie vertex v such taht there is multiple spans of triangles
+        /// selected in v's triangle one-ring - and deselect those one-rings.
+        /// Returns true if selection was modified.
+        /// </summary>
+        public bool RemoveBowties() {
+            return remove_bowties(null);
+        }
+        public bool remove_bowties(HashSet<int> tempHash)
+        {
+            bool bModified = false;
+            bool done = false;
+            HashSet<int> vertices = (tempHash == null) ? new HashSet<int>() : tempHash;
+            while (!done) {
+                done = true;
+                vertices.Clear();
+                foreach (int tid in Selected) {
+                    Index3i tv = Mesh.GetTriangle(tid);
+                    vertices.Add(tv.a); vertices.Add(tv.b); vertices.Add(tv.c);
+                }
+
+                foreach (int vid in vertices) {
+                    if (is_bowtie_vtx(vid)) {
+                        Deselect(Mesh.VtxTrianglesItr(vid));
+                        done = false;
+                    }
+                }
                 if (done == false)
                     bModified = true;
             }
             return bModified;
         }
-        public bool LocalOptimize() {
-            return LocalOptimize(true, true, true, true);
+        private bool is_bowtie_vtx(int vid)
+        {
+            int border_edges = 0;
+            foreach ( int eid in Mesh.VtxEdgesItr(vid) ) {
+                Index2i et = Mesh.GetEdgeT(eid);
+                if (et.b != DMesh3.InvalidID) {
+                    bool in_a = IsSelected(et.a);
+                    bool in_b = IsSelected(et.b);
+                    if (in_a != in_b)
+                        border_edges++;
+                } else {
+                    if (IsSelected(et.a))
+                        border_edges++;
+                }
+            }
+            return border_edges > 2;
         }
-
-
-
-
 
 
 

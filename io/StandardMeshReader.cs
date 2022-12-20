@@ -305,11 +305,9 @@ namespace g3
         public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             // detect binary STL
-            BinaryReader binReader = new BinaryReader(stream);
-            byte[] header = binReader.ReadBytes(80);
-            bool bIsBinary = false;
-
-            bIsBinary = Util.IsBinaryStream(stream, 500);
+            //BinaryReader binReader = new BinaryReader(stream);
+            //byte[] header = binReader.ReadBytes(80);
+            bool bIsBinary = Util.IsBinaryStream(stream, 500);
 
             // [RMS] Thingi10k includes some files w/ unicode string in ascii header...
             //   How can we detect this? can we check that each character is a character?

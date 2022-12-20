@@ -40,6 +40,11 @@ namespace g3
         }
 
 
+        public Vector3d this[int vid] {
+            get { return Normals[vid]; }
+        }
+
+
         public void CopyTo(DMesh3 SetMesh)
         {
             if (SetMesh.MaxVertexID < Mesh.MaxVertexID)

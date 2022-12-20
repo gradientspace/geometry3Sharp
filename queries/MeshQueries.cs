@@ -23,14 +23,14 @@ namespace g3
         }
 
         /// <summary>
-        /// Find point-normal frame at closest point to queryPoint on mesh.
+        /// Find point-normal(Z) frame at closest point to queryPoint on mesh.
         /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
-        public static Frame3f NearestPointFrame(DMesh3 mesh, ISpatial spatial, Vector3d queryPoint)
+        public static Frame3f NearestPointFrame(DMesh3 mesh, ISpatial spatial, Vector3d queryPoint, bool bForceFaceNormal = false)
         {
             int tid = spatial.FindNearestTriangle(queryPoint);
             Vector3d surfPt = TriangleDistance(mesh, tid, queryPoint).TriangleClosest;
-            if (mesh.HasVertexNormals)
+            if (mesh.HasVertexNormals && bForceFaceNormal == false)
                 return SurfaceFrame(mesh, tid, surfPt);
             else
                 return new Frame3f(surfPt, mesh.GetTriNormal(tid));
@@ -46,8 +46,36 @@ namespace g3
             int tid = spatial.FindNearestTriangle(queryPoint, maxDist);
             if (tid == DMesh3.InvalidID)
                 return double.MaxValue;
-            return Math.Sqrt(TriangleDistance(mesh, tid, queryPoint).DistanceSquared);
+            Triangle3d tri = new Triangle3d();
+            mesh.GetTriVertices(tid, ref tri.V0, ref tri.V1, ref tri.V2);
+            Vector3d closest, bary;
+            double dist_sqr = DistPoint3Triangle3.DistanceSqr(ref queryPoint, ref tri, out closest, out bary);
+            return Math.Sqrt(dist_sqr);
         }
+
+
+
+        /// <summary>
+        /// find distance between two triangles, with optional
+        /// transform on second triangle
+        /// </summary>
+        public static DistTriangle3Triangle3 TriangleTriangleDistance(DMesh3 mesh1, int ti, DMesh3 mesh2, int tj, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            if (mesh1.IsTriangle(ti) == false || mesh2.IsTriangle(tj) == false)
+                return null;
+            Triangle3d tri1 = new Triangle3d(), tri2 = new Triangle3d();
+            mesh1.GetTriVertices(ti, ref tri1.V0, ref tri1.V1, ref tri1.V2);
+            mesh2.GetTriVertices(tj, ref tri2.V0, ref tri2.V1, ref tri2.V2);
+            if (TransformF != null) {
+                tri2.V0 = TransformF(tri2.V0);
+                tri2.V1 = TransformF(tri2.V1);
+                tri2.V2 = TransformF(tri2.V2);
+            }
+            DistTriangle3Triangle3 dist = new DistTriangle3Triangle3(tri1, tri2);
+            dist.Compute();
+            return dist;
+        }
+
 
 
         /// <summary>
@@ -113,7 +141,7 @@ namespace g3
         /// Find point-normal frame at ray-intersection point on mesh, or return false if no hit.
         /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
-        public static bool RayHitPointFrame(DMesh3 mesh, ISpatial spatial, Ray3d ray, out Frame3f hitPosFrame)
+        public static bool RayHitPointFrame(DMesh3 mesh, ISpatial spatial, Ray3d ray, out Frame3f hitPosFrame, bool bForceFaceNormal = false)
         {
             hitPosFrame = new Frame3f();
             int tid = spatial.FindNearestHitTriangle(ray);
@@ -123,8 +151,8 @@ namespace g3
             if (isect.Result != IntersectionResult.Intersects)
                 return false;
             Vector3d surfPt = ray.PointAt(isect.RayParameter);
-            if (mesh.HasVertexNormals)
-                hitPosFrame = SurfaceFrame(mesh, tid, surfPt);
+            if (mesh.HasVertexNormals && bForceFaceNormal == false)
+                hitPosFrame = SurfaceFrame(mesh, tid, surfPt);      // TODO isect has bary-coords already!!
             else
                 hitPosFrame = new Frame3f(surfPt, mesh.GetTriNormal(tid));
             return true;
@@ -135,7 +163,7 @@ namespace g3
         /// Get point-normal frame on surface of mesh. Assumption is that point lies in tID.
         /// returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
-        public static Frame3f SurfaceFrame(DMesh3 mesh, int tID, Vector3d point)
+        public static Frame3f SurfaceFrame(DMesh3 mesh, int tID, Vector3d point, bool bForceFaceNormal = false)
         {
             if (!mesh.IsTriangle(tID))
                 throw new Exception("MeshQueries.SurfaceFrame: triangle " + tID + " does not exist!");
@@ -143,7 +171,7 @@ namespace g3
             mesh.GetTriVertices(tID, ref tri.V0, ref tri.V1, ref tri.V2);
             Vector3d bary = tri.BarycentricCoords(point);
             point = tri.PointAt(bary);
-            if (mesh.HasVertexNormals) {
+            if (mesh.HasVertexNormals && bForceFaceNormal == false) {
                 Vector3d normal = mesh.GetTriBaryNormal(tID, bary.x, bary.y, bary.z);
                 return new Frame3f(point, normal);
             } else
@@ -151,7 +179,17 @@ namespace g3
         }
 
 
-
+        /// <summary>
+        /// Get barycentric coords of point in triangle
+        /// </summary>
+        public static Vector3d BaryCoords(DMesh3 mesh, int tID, Vector3d point)
+        {
+            if (!mesh.IsTriangle(tID))
+                throw new Exception("MeshQueries.SurfaceFrame: triangle " + tID + " does not exist!");
+            Triangle3d tri = new Triangle3d();
+            mesh.GetTriVertices(tID, ref tri.V0, ref tri.V1, ref tri.V2);
+            return tri.BarycentricCoords(point);
+        }
 
 
         /// <summary>
@@ -166,10 +204,10 @@ namespace g3
             Vector3d edge0 = V1 - V0;
             Vector3d edge1 = V2 - V0;
             double a00 = edge0.LengthSquared;
-            double a01 = edge0.Dot(edge1);
+            double a01 = edge0.Dot(ref edge1);
             double a11 = edge1.LengthSquared;
-            double b0 = diff.Dot(edge0);
-            double b1 = diff.Dot(edge1);
+            double b0 = diff.Dot(ref edge0);
+            double b1 = diff.Dot(ref edge1);
             double c = diff.LengthSquared;
             double det = Math.Abs(a00 * a11 - a01 * a01);
             double s = a01 * b1 - a11 * b0;

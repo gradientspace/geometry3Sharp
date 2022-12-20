@@ -22,14 +22,16 @@ namespace g3
             QuaterionRotation = 1,
             QuaternionRotateAroundPoint = 2,
             Scale = 3,
-            ScaleAroundPoint = 4
+            ScaleAroundPoint = 4,
+            ToFrame = 5,
+            FromFrame = 6
         }
 
         struct XForm
         {
             public XFormType type;
             public Vector3dTuple3 data;
-
+            
             // may need to update these to handle other types...
             public Vector3d Translation {
                 get { return data.V0; }
@@ -43,6 +45,9 @@ namespace g3
             public Vector3d RotateOrigin {
                 get { return data.V2; }
             }
+            public Frame3f Frame {
+                get { return new Frame3f((Vector3f)RotateOrigin, Quaternion); }
+            }
         }
 
         List<XForm> Operations;
@@ -54,6 +59,17 @@ namespace g3
             Operations = new List<XForm>();
         }
 
+        public TransformSequence(TransformSequence copy)
+        {
+            Operations = new List<XForm>(copy.Operations);
+        }
+
+
+
+        public void Append(TransformSequence sequence)
+        {
+            Operations.AddRange(sequence.Operations);
+        }
 
 
         public void AppendTranslation(Vector3d dv)
@@ -103,6 +119,23 @@ namespace g3
             });
         }
 
+        public void AppendToFrame(Frame3f frame)
+        {
+            Quaternionf q = frame.Rotation; 
+            Operations.Add(new XForm() {
+                type = XFormType.ToFrame,
+                data = new Vector3dTuple3(new Vector3d(q.x, q.y, q.z), new Vector3d(q.w, 0, 0), frame.Origin)
+            });
+        }
+
+        public void AppendFromFrame(Frame3f frame)
+        {
+            Quaternionf q = frame.Rotation;
+            Operations.Add(new XForm() {
+                type = XFormType.FromFrame,
+                data = new Vector3dTuple3(new Vector3d(q.x, q.y, q.z), new Vector3d(q.w, 0, 0), frame.Origin)
+            });
+        }
 
 
         /// <summary>
@@ -137,6 +170,14 @@ namespace g3
                         p += Operations[i].RotateOrigin;
                         break;
 
+                    case XFormType.ToFrame:
+                        p = Operations[i].Frame.ToFrameP(ref p);
+                        break;
+
+                    case XFormType.FromFrame:
+                        p = Operations[i].Frame.FromFrameP(ref p);
+                        break;
+
                     default:
                         throw new NotImplementedException("TransformSequence.TransformP: unhandled type!");
                 }
@@ -147,6 +188,98 @@ namespace g3
 
 
 
+
+        /// <summary>
+        /// Apply transforms to vector. Includes scaling.
+        /// </summary>
+        public Vector3d TransformV(Vector3d v)
+        {
+            int N = Operations.Count;
+            for (int i = 0; i < N; ++i) {
+                switch (Operations[i].type) {
+                    case XFormType.Translation:
+                        break;
+
+                    case XFormType.QuaternionRotateAroundPoint:
+                    case XFormType.QuaterionRotation:
+                        v = Operations[i].Quaternion * v;
+                        break;
+
+                    case XFormType.ScaleAroundPoint:
+                    case XFormType.Scale:
+                        v *= Operations[i].Scale;
+                        break;
+
+                    case XFormType.ToFrame:
+                        v = Operations[i].Frame.ToFrameV(ref v);
+                        break;
+
+                    case XFormType.FromFrame:
+                        v = Operations[i].Frame.FromFrameV(ref v);
+                        break;
+
+                    default:
+                        throw new NotImplementedException("TransformSequence.TransformV: unhandled type!");
+                }
+            }
+
+            return v;
+        }
+
+
+
+
+        /// <summary>
+        /// Apply transforms to point
+        /// </summary>
+        public Vector3f TransformP(Vector3f p) {
+            return (Vector3f)TransformP((Vector3d)p);
+        }
+
+
+        /// <summary>
+        /// construct inverse transformation sequence
+        /// </summary>
+        public TransformSequence MakeInverse()
+        {
+            TransformSequence reverse = new TransformSequence();
+            int N = Operations.Count;
+            for (int i = N-1; i >= 0; --i) {
+                switch (Operations[i].type) {
+                    case XFormType.Translation:
+                        reverse.AppendTranslation(-Operations[i].Translation);
+                        break;
+
+                    case XFormType.QuaterionRotation:
+                        reverse.AppendRotation(Operations[i].Quaternion.Inverse());
+                        break;
+
+                    case XFormType.QuaternionRotateAroundPoint:
+                        reverse.AppendRotation(Operations[i].Quaternion.Inverse(), Operations[i].RotateOrigin);
+                        break;
+
+                    case XFormType.Scale:
+                        reverse.AppendScale(1.0 / Operations[i].Scale);
+                        break;
+
+                    case XFormType.ScaleAroundPoint:
+                        reverse.AppendScale(1.0 / Operations[i].Scale, Operations[i].RotateOrigin);
+                        break;
+
+                    case XFormType.ToFrame:
+                        reverse.AppendFromFrame(Operations[i].Frame);
+                        break;
+
+                    case XFormType.FromFrame:
+                        reverse.AppendToFrame(Operations[i].Frame);
+                        break;
+
+                    default:
+                        throw new NotImplementedException("TransformSequence.MakeInverse: unhandled type!");
+                }
+            }
+            return reverse;
+        }
 
 
 

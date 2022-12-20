@@ -96,7 +96,7 @@ namespace g3
             if ( IsMetric(from) && IsMetric(to) ) {
                 double pfrom = GetMetricPower(from);
                 double pto = GetMetricPower(to);
-                double d = pto - pfrom;
+                double d = pfrom - pto;
                 return Math.Pow(10, d);
             }
 

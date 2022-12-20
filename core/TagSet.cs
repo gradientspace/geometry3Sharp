@@ -43,6 +43,27 @@ namespace g3
     }
 
 
+    /// <summary>
+    /// integer type/value pair, packed into 32 bits - 8 for type, 24 for value
+    /// </summary>
+    public struct IntTagPair
+    {
+        public byte type;
+        public int value; 
+        public IntTagPair(byte type, int value) {
+            Util.gDevAssert(value < 1 << 24);
+            this.type = type;
+            this.value = value;
+        }
+        public IntTagPair(int combined)
+        {
+            type = (byte)(combined >> 24);
+            value = combined & 0xFFFFFF;
+        }
+        public int intValue { get { return ((int)type) << 24 | value; } }
+    }
+
+
 
 
     /// <summary>

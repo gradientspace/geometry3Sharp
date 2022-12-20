@@ -7,8 +7,7 @@ using System.Diagnostics;
 namespace g3
 {
     /// <summary>
-    /// Hierarchical Axis-Aligned-Bounding-Box tree for a DMesh3 mesh.
-    /// This class supports a variety of spatial queries, listed below.
+    /// Hierarchical Axis-Aligned-Bounding-Box tree for an IPointSet
     /// 
     /// 
     /// TODO: no timestamp support right now...
@@ -17,7 +16,7 @@ namespace g3
     public class PointAABBTree3
     {
         IPointSet points;
-        //int points_timestamp;
+        int points_timestamp;
 
         public PointAABBTree3(IPointSet pointsIn, bool autoBuild = true)
         {
@@ -60,7 +59,7 @@ namespace g3
             else if (eStrategy == BuildStrategy.Default)
                 build_top_down(false);
 
-            //points_timestamp = points.Timestamp;
+            points_timestamp = points.Timestamp;
         }
 
 
@@ -70,8 +69,8 @@ namespace g3
         /// </summary>
         public virtual int FindNearestPoint(Vector3d p, double fMaxDist = double.MaxValue)
         {
-            //if (points_timestamp != points.Timestamp)
-            //    throw new Exception("PointAABBTree3.FindNearestPoint: mesh has been modified since tree construction");
+            if (points_timestamp != points.Timestamp)
+                throw new Exception("PointAABBTree3.FindNearestPoint: mesh has been modified since tree construction");
 
             double fNearestSqr = (fMaxDist < double.MaxValue) ? fMaxDist * fMaxDist : double.MaxValue;
             int tNearID = DMesh3.InvalidID;
@@ -152,8 +151,8 @@ namespace g3
         /// </summary>
         public virtual void DoTraversal(TreeTraversal traversal)
         {
-            //if (points_timestamp != points.Timestamp)
-            //    throw new Exception("PointAABBTree3.FindNearestPoint: mesh has been modified since tree construction");
+            if (points_timestamp != points.Timestamp)
+                throw new Exception("PointAABBTree3.FindNearestPoint: mesh has been modified since tree construction");
 
             tree_traversal(root_index, 0, traversal);
         }
@@ -194,6 +193,248 @@ namespace g3
 
 
 
+
+
+
+
+
+        /*
+         *  Fast Mesh Winding Number computation
+         */
+
+        /// <summary>
+        /// FWN beta parameter - is 2.0 in paper
+        /// </summary>
+        public double FWNBeta = 2.0;
+
+        /// <summary>
+        /// FWN approximation order. can be 1 or 2. 2 is more accurate, obviously.
+        /// </summary>
+        public int FWNApproxOrder = 2;
+
+        /// <summary>
+        /// Replace this with function that returns proper area estimate
+        /// </summary>
+        public Func<int, double> FWNAreaEstimateF = (vid) => { return 1.0; };
+
+
+        /// <summary>
+        /// Fast approximation of winding number using far-field approximations
+        /// </summary>
+        public virtual double FastWindingNumber(Vector3d p)
+        {
+            if (points_timestamp != points.Timestamp)
+                throw new Exception("PointAABBTree3.FindNearestPoint: mesh has been modified since tree construction");
+
+            if (FastWindingCache == null || fast_winding_cache_timestamp != points.Timestamp) {
+                build_fast_winding_cache();
+                fast_winding_cache_timestamp = points.Timestamp;
+            }
+
+            double sum = branch_fast_winding_num(root_index, p);
+            return sum;
+        }
+
+        // evaluate winding number contribution for all points below iBox
+        protected double branch_fast_winding_num(int iBox, Vector3d p)
+        {
+            double branch_sum = 0;
+
+            int idx = box_to_index[iBox];
+            if (idx < points_end) {            // point-list case, array is [N t1 t2 ... tN]
+                int num_pts = index_list[idx];
+                for (int i = 1; i <= num_pts; ++i) {
+                    int pi = index_list[idx + i];
+                    Vector3d v = Points.GetVertex(pi);
+                    Vector3d n = Points.GetVertexNormal(pi);
+                    double a = FastWindingAreaCache[pi];
+                    branch_sum += FastPointWinding.ExactEval(ref v, ref n, a, ref p);
+                }
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+
+                    // if we have winding cache, we can more efficiently compute contribution of all points
+                    // below this box. Otherwise, recursively descend tree.
+                    bool contained = box_contains(iChild1, p);
+                    if (contained == false && can_use_fast_winding_cache(iChild1, ref p))
+                        branch_sum += evaluate_box_fast_winding_cache(iChild1, ref p);
+                    else
+                        branch_sum += branch_fast_winding_num(iChild1, p);
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    bool contained1 = box_contains(iChild1, p);
+                    if (contained1 == false && can_use_fast_winding_cache(iChild1, ref p))
+                        branch_sum += evaluate_box_fast_winding_cache(iChild1, ref p);
+                    else
+                        branch_sum += branch_fast_winding_num(iChild1, p);
+
+                    bool contained2 = box_contains(iChild2, p);
+                    if (contained2 == false && can_use_fast_winding_cache(iChild2, ref p))
+                        branch_sum += evaluate_box_fast_winding_cache(iChild2, ref p);
+                    else
+                        branch_sum += branch_fast_winding_num(iChild2, p);
+                }
+            }
+
+            return branch_sum;
+        }
+
+
+        struct FWNInfo
+        {
+            public Vector3d Center;
+            public double R;
+            public Vector3d Order1Vec;
+            public Matrix3d Order2Mat;
+        }
+
+        Dictionary<int, FWNInfo> FastWindingCache;
+        double[] FastWindingAreaCache;
+        int fast_winding_cache_timestamp = -1;
+
+        protected void build_fast_winding_cache()
+        {
+            // set this to a larger number to ignore caches if number of points is too small.
+            // (seems to be no benefit to doing this...is holdover from tree-decomposition FWN code)
+            int WINDING_CACHE_THRESH = 1;
+
+            FastWindingAreaCache = new double[Points.MaxVertexID];
+            foreach (int vid in Points.VertexIndices())
+                FastWindingAreaCache[vid] = FWNAreaEstimateF(vid);
+
+            FastWindingCache = new Dictionary<int, FWNInfo>();
+            HashSet<int> root_hash;
+            build_fast_winding_cache(root_index, 0, WINDING_CACHE_THRESH, out root_hash);
+        }
+        protected int build_fast_winding_cache(int iBox, int depth, int pt_count_thresh, out HashSet<int> pts_hash)
+        {
+            pts_hash = null;
+
+            int idx = box_to_index[iBox];
+            if (idx < points_end) {            // point-list case, array is [N t1 t2 ... tN]
+                int num_pts = index_list[idx];
+                return num_pts;
+
+            } else {                                // internal node, either 1 or 2 child boxes
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    iChild1 = (-iChild1) - 1;
+                    int num_child_pts = build_fast_winding_cache(iChild1, depth + 1, pt_count_thresh, out pts_hash);
+
+                    // if count in child is large enough, we already built a cache at lower node
+                    return num_child_pts;
+
+                } else {                            // 2 children, descend closest first
+                    iChild1 = iChild1 - 1;
+                    int iChild2 = index_list[idx + 1] - 1;
+
+                    // let each child build its own cache if it wants. If so, it will return the
+                    // list of its child points
+                    HashSet<int> child2_hash;
+                    int num_pts_1 = build_fast_winding_cache(iChild1, depth + 1, pt_count_thresh, out pts_hash);
+                    int num_pts_2 = build_fast_winding_cache(iChild2, depth + 1, pt_count_thresh, out child2_hash);
+                    bool build_cache = (num_pts_1 + num_pts_2 > pt_count_thresh);
+
+                    if (depth == 0)
+                        return num_pts_1 + num_pts_2;  // cannot build cache at level 0...
+
+                    // collect up the points we need. there are various cases depending on what children already did
+                    if (pts_hash != null || child2_hash != null || build_cache) {
+                        if (pts_hash == null && child2_hash != null) {
+                            collect_points(iChild1, child2_hash);
+                            pts_hash = child2_hash;
+                        } else {
+                            if (pts_hash == null) {
+                                pts_hash = new HashSet<int>();
+                                collect_points(iChild1, pts_hash);
+                            }
+                            if (child2_hash == null)
+                                collect_points(iChild2, pts_hash);
+                            else
+                                pts_hash.UnionWith(child2_hash);
+                        }
+                    }
+                    if (build_cache)
+                        make_box_fast_winding_cache(iBox, pts_hash);
+
+                    return (num_pts_1 + num_pts_2);
+                }
+            }
+        }
+
+
+        // check if we can use fwn 
+        protected bool can_use_fast_winding_cache(int iBox, ref Vector3d q)
+        {
+            FWNInfo cacheInfo;
+            if (FastWindingCache.TryGetValue(iBox, out cacheInfo) == false)
+                return false;
+
+            double dist_qp = cacheInfo.Center.Distance(ref q);
+            if (dist_qp > FWNBeta * cacheInfo.R)
+                return true;
+
+            return false;
+        }
+
+
+        // compute FWN cache for all points underneath this box
+        protected void make_box_fast_winding_cache(int iBox, IEnumerable<int> pointIndices)
+        {
+            Util.gDevAssert(FastWindingCache.ContainsKey(iBox) == false);
+
+            // construct cache
+            FWNInfo cacheInfo = new FWNInfo();
+            FastPointWinding.ComputeCoeffs(points, pointIndices, FastWindingAreaCache,
+                ref cacheInfo.Center, ref cacheInfo.R, ref cacheInfo.Order1Vec, ref cacheInfo.Order2Mat);
+
+            FastWindingCache[iBox] = cacheInfo;
+        }
+
+        // evaluate the FWN cache for iBox
+        protected double evaluate_box_fast_winding_cache(int iBox, ref Vector3d q)
+        {
+            FWNInfo cacheInfo = FastWindingCache[iBox];
+
+            if (FWNApproxOrder == 2)
+                return FastPointWinding.EvaluateOrder2Approx(ref cacheInfo.Center, ref cacheInfo.Order1Vec, ref cacheInfo.Order2Mat, ref q);
+            else
+                return FastPointWinding.EvaluateOrder1Approx(ref cacheInfo.Center, ref cacheInfo.Order1Vec, ref q);
+        }
+
+
+        // collect all the triangles below iBox in a hash
+        protected void collect_points(int iBox, HashSet<int> points)
+        {
+            int idx = box_to_index[iBox];
+            if (idx < points_end) {            // triange-list case, array is [N t1 t2 ... tN]
+                int num_tris = index_list[idx];
+                for (int i = 1; i <= num_tris; ++i)
+                    points.Add(index_list[idx + i]);
+            } else {
+                int iChild1 = index_list[idx];
+                if (iChild1 < 0) {                 // 1 child, descend if nearer than cur min-dist
+                    collect_points((-iChild1) - 1, points);
+                } else {                           // 2 children, descend closest first
+                    collect_points(iChild1 - 1, points);
+                    collect_points(index_list[idx + 1] - 1, points);
+                }
+            }
+        }
+
+
+
+
+
+
+
+
         /// <summary>
         /// Total sum of volumes of all boxes in the tree. Mainly useful to evaluate tree quality.
         /// </summary>
@@ -226,6 +467,13 @@ namespace g3
             return extSum;
         }
 
+
+        /// <summary>
+        /// Root bounding box of tree (note: tree must be generated by calling a query function first!)
+        /// </summary>
+        public AxisAlignedBox3d Bounds {
+            get { return get_box(root_index); }
+        }
 
 
 
@@ -482,6 +730,8 @@ namespace g3
         }
 
 
+        const double box_eps = 50.0 * MathUtil.Epsilon;
+
 
         AxisAlignedBox3d get_box(int iBox)
         {
@@ -503,6 +753,16 @@ namespace g3
             dz = (dz < e.z) ? 0 : (dz - e.z);
             double d2 = dx * dx + dy * dy + dz * dz;
             return d2;
+        }
+
+
+        protected bool box_contains(int iBox, Vector3d p)
+        {
+            // [TODO] this could be way faster...
+            Vector3d c = (Vector3d)box_centers[iBox];
+            Vector3d e = box_extents[iBox];
+            AxisAlignedBox3d box = new AxisAlignedBox3d(ref c, e.x + box_eps, e.y + box_eps, e.z + box_eps);
+            return box.Contains(p);
         }
 
 

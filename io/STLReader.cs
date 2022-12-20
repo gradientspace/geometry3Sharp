@@ -8,23 +8,63 @@ using System.Threading;
 
 namespace g3
 {
+    /// <summary>
+    /// Read ASCII/Binary STL file and produce set of meshes.
+    /// 
+    /// Since STL is just a list of disconnected triangles, by default we try to
+    /// merge vertices together. Use .RebuildStrategy to disable this and/or configure
+    /// which algorithm is used. If you are using via StandardMeshReader, you can add
+    /// .StrategyFlag to ReadOptions.CustomFlags to set this flag.
+    /// 
+    /// TODO: document welding strategies. There is no "best" one, they all fail
+    /// in some cases, because STL is a stupid and horrible format.
+    /// 
+    /// STL Binary supports a per-triangle short-int that is usually used to specify color.
+    /// However since we do not support per-triangle color in DMesh3, this color
+    /// cannot be directly used. Instead of hardcoding behavior, we return the list of shorts
+    /// if requested via IMeshBuilder Metadata. Set .WantPerTriAttribs=true or attach flag .PerTriAttribFlag.
+    /// After the read finishes you can get the face color list via:
+    ///    DVector<short> colors = Builder.Metadata[0][STLReader.PerTriAttribMetadataName] as DVector<short>;
+    /// (for DMesh3Builder, which is the only builder that supports Metadata)
+    /// </summary>
     public class STLReader : IMeshReader
     {
 
         public enum Strategy
         {
-            NoProcessing = 0,
-            IdenticalVertexWeld = 1,
-            TolerantVertexWeld = 2,
+            NoProcessing = 0,           // return triangle soup
+            IdenticalVertexWeld = 1,    // merge identical vertices. Logically sensible but doesn't always work on ASCII STL.
+            TolerantVertexWeld = 2,     // merge vertices within .WeldTolerance
 
-            AutoBestResult = 3
+            AutoBestResult = 3          // try identical weld first, if there are holes then try tolerant weld, and return "best" result
+                                        // ("best" is not well-defined...)
         }
+
+        /// <summary>
+        /// Which algorithm is used to try to reconstruct mesh topology from STL triangle soup
+        /// </summary>
         public Strategy RebuildStrategy = Strategy.AutoBestResult;
 
+        /// <summary>
+        /// Vertices within this distance are considered "the same" by welding strategies.
+        /// </summary>
         public double WeldTolerance = MathUtil.ZeroTolerancef;
 
 
-        // connect to this to get warning messages
+        /// <summary>
+        /// Binary STL supports per-triangle integer attribute, which is often used
+        /// to store face colors. If this flag is true, we will attach these face
+        /// colors to the returned mesh via IMeshBuilder.AppendMetaData
+        /// </summary>
+        public bool WantPerTriAttribs = false;
+
+        /// <summary>
+        /// name argument passed to IMeshBuilder.AppendMetaData
+        /// </summary>
+        public static string PerTriAttribMetadataName = "tri_attrib";
+
+
+        /// <summary> connect to this event to get warning messages </summary>
 		public event ParsingMessagesHandler warningEvent;
 
 
@@ -33,11 +73,20 @@ namespace g3
 
 
 
+        /// <summary> ReadOptions.CustomFlags flag for configuring .RebuildStrategy </summary>
         public const string StrategyFlag = "-stl-weld-strategy";
+
+        /// <summary> ReadOptions.CustomFlags flag for configuring .WantPerTriAttribs </summary>
+        public const string PerTriAttribFlag = "-want-tri-attrib";
+
+
         void ParseArguments(CommandArgumentSet args)
         {
             if ( args.Integers.ContainsKey(StrategyFlag) ) {
                 RebuildStrategy = (Strategy)args.Integers[StrategyFlag];
+            }
+            if (args.Flags.ContainsKey(PerTriAttribFlag)) {
+                WantPerTriAttribs = true;
             }
         }
 
@@ -48,6 +97,7 @@ namespace g3
         {
             public string Name;
             public DVectorArray3f Vertices = new DVectorArray3f();
+            public DVector<short> TriAttribs = null;
         }
 
 
@@ -88,6 +138,8 @@ namespace g3
             stl_triangle tmp = new stl_triangle();
             Type tri_type = tmp.GetType();
 
+            DVector<short> tri_attribs = new DVector<short>();
+
             try {
                 for (int i = 0; i < totalTris; ++i) {
                     byte[] tri_bytes = reader.ReadBytes(50);
@@ -100,6 +152,7 @@ namespace g3
                     append_vertex(tri.ax, tri.ay, tri.az);
                     append_vertex(tri.bx, tri.by, tri.bz);
                     append_vertex(tri.cx, tri.cy, tri.cz);
+                    tri_attribs.Add(tri.attrib);
                 }
 
             } catch (Exception e) {
@@ -107,6 +160,9 @@ namespace g3
             }
 
             Marshal.FreeHGlobal(bufptr);
+
+            if (Objects.Count == 1)
+                Objects[0].TriAttribs = tri_attribs;
 
             foreach (STLSolid solid in Objects)
                 BuildMesh(solid, builder);
@@ -219,6 +275,9 @@ namespace g3
             } else {
                 BuildMesh_NoMerge(solid, builder);
             }
+
+            if (WantPerTriAttribs && solid.TriAttribs != null && builder.SupportsMetaData)
+                builder.AppendMetaData(PerTriAttribMetadataName, solid.TriAttribs);
         }
 
 

@@ -7,6 +7,14 @@ namespace g3
     public static class BoundsUtil
     {
 
+        public static AxisAlignedBox3d Bounds(IEnumerable<DMesh3> meshes) {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            foreach (DMesh3 mesh in meshes)
+                bounds.Contain(mesh.CachedBounds);
+            return bounds;
+        }
+
+
         public static AxisAlignedBox3d Bounds(IPointSet source) {
             AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
             foreach (int vid in source.VertexIndices())
@@ -28,7 +36,13 @@ namespace g3
             return box;
         }
 
-
+        public static AxisAlignedBox2d Bounds(ref Vector2d v0, ref Vector2d v1, ref Vector2d v2)
+        {
+            AxisAlignedBox2d box;
+            MathUtil.MinMax(v0.x, v1.x, v2.x, out box.Min.x, out box.Max.x);
+            MathUtil.MinMax(v0.y, v1.y, v2.y, out box.Min.y, out box.Max.y);
+            return box;
+        }
 
         // AABB of transformed AABB (corners)
         public static AxisAlignedBox3d Bounds(ref AxisAlignedBox3d boxIn, Func<Vector3d,Vector3d> TransformF)
@@ -43,7 +57,39 @@ namespace g3
         }
 
 
-		public static AxisAlignedBox3d Bounds<T>(IEnumerable<T> values, Func<T, Vector3d> PositionF)
+        public static AxisAlignedBox3d Bounds(IEnumerable<Vector3d> positions)
+        {
+            AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+            foreach (Vector3d v in positions)
+                box.Contain(v);
+            return box;
+        }
+        public static AxisAlignedBox3f Bounds(IEnumerable<Vector3f> positions)
+        {
+            AxisAlignedBox3f box = AxisAlignedBox3f.Empty;
+            foreach (Vector3f v in positions)
+                box.Contain(v);
+            return box;
+        }
+
+
+        public static AxisAlignedBox2d Bounds(IEnumerable<Vector2d> positions)
+        {
+            AxisAlignedBox2d box = AxisAlignedBox2d.Empty;
+            foreach (Vector2d v in positions)
+                box.Contain(v);
+            return box;
+        }
+        public static AxisAlignedBox2f Bounds(IEnumerable<Vector2f> positions)
+        {
+            AxisAlignedBox2f box = AxisAlignedBox2f.Empty;
+            foreach (Vector2f v in positions)
+                box.Contain(v);
+            return box;
+        }
+
+
+        public static AxisAlignedBox3d Bounds<T>(IEnumerable<T> values, Func<T, Vector3d> PositionF)
 		{
 			AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
 			foreach ( T t in values )
@@ -57,6 +103,18 @@ namespace g3
 				box.Contain( PositionF(t) );
 			return box;
 		}
+
+
+        /// <summary>
+        /// compute axis-aligned bounds of set of points after transforming 
+        /// </summary>
+        public static AxisAlignedBox3d Bounds(IEnumerable<Vector3d> values, TransformSequence xform)
+        {
+            AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
+            foreach (Vector3d v in values)
+                box.Contain(xform.TransformP(v));
+            return box;
+        }
 
 
         /// <summary>

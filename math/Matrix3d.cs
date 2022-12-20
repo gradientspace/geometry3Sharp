@@ -68,10 +68,32 @@ namespace g3
                 Row2 = new Vector3d(v1.z, v2.z, v3.z);
             }
         }
-		public Matrix3d(double m00, double m01, double m02, double m10, double m11, double m12, double m20, double m21, double m22) {
+        public Matrix3d(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3, bool bRows)
+        {
+            if (bRows) {
+                Row0 = v1; Row1 = v2; Row2 = v3;
+            } else {
+                Row0 = new Vector3d(v1.x, v2.x, v3.x);
+                Row1 = new Vector3d(v1.y, v2.y, v3.y);
+                Row2 = new Vector3d(v1.z, v2.z, v3.z);
+            }
+        }
+        public Matrix3d(double m00, double m01, double m02, double m10, double m11, double m12, double m20, double m21, double m22) {
             Row0 = new Vector3d(m00, m01, m02);
             Row1 = new Vector3d(m10, m11, m12);
             Row2 = new Vector3d(m20, m21, m22);
+        }
+
+
+        /// <summary>
+        /// Construct outer-product of u*transpose(v) of u and v
+        /// result is that Mij = u_i * v_j
+        /// </summary>
+        public Matrix3d(ref Vector3d u, ref Vector3d v)
+        {
+            Row0 = new Vector3d(u.x*v.x, u.x*v.y, u.x*v.z);
+            Row1 = new Vector3d(u.y*v.x, u.y*v.y, u.y*v.z);
+            Row2 = new Vector3d(u.z*v.x, u.z*v.y, u.z*v.z);
         }
 
 
@@ -150,6 +172,20 @@ namespace g3
                 mat.Row1.x * v.x + mat.Row1.y * v.y + mat.Row1.z * v.z,
                 mat.Row2.x * v.x + mat.Row2.y * v.y + mat.Row2.z * v.z);
         }
+
+        public Vector3d Multiply(ref Vector3d v) {
+            return new Vector3d(
+                Row0.x * v.x + Row0.y * v.y + Row0.z * v.z,
+                Row1.x * v.x + Row1.y * v.y + Row1.z * v.z,
+                Row2.x * v.x + Row2.y * v.y + Row2.z * v.z);
+        }
+
+        public void Multiply(ref Vector3d v, ref Vector3d vOut) {
+            vOut.x = Row0.x * v.x + Row0.y * v.y + Row0.z * v.z;
+            vOut.y = Row1.x * v.x + Row1.y * v.y + Row1.z * v.z;
+            vOut.z = Row2.x * v.x + Row2.y * v.y + Row2.z * v.z;
+        }
+
 		public static Matrix3d operator *(Matrix3d mat1, Matrix3d mat2)
 		{
             double m00 = mat1.Row0.x * mat2.Row0.x + mat1.Row0.y * mat2.Row1.x + mat1.Row0.z * mat2.Row2.x;
@@ -175,6 +211,14 @@ namespace g3
         public static Matrix3d operator -(Matrix3d mat1, Matrix3d mat2) {
             return new Matrix3d(mat1.Row0 - mat2.Row0, mat1.Row1 - mat2.Row1, mat1.Row2 - mat2.Row2, true);
         }
+
+
+
+        public double InnerProduct(ref Matrix3d m2)
+        {
+            return Row0.Dot(ref m2.Row0) + Row1.Dot(ref m2.Row1) + Row2.Dot(ref m2.Row2);
+        }
+
 
 
         public double Determinant {

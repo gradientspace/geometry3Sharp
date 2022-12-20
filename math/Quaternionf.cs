@@ -8,7 +8,7 @@ using UnityEngine;
 namespace g3
 {
     // mostly ported from WildMagic5 Wm5Quaternion, from geometrictools.com
-    public struct Quaternionf
+    public struct Quaternionf : IComparable<Quaternionf>, IEquatable<Quaternionf>
     {
         // note: in Wm5 version, this is a 4-element array stored in order (w,x,y,z).
         public float x, y, z, w;
@@ -116,6 +116,48 @@ namespace g3
                 v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
                 v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
         }
+
+
+
+        /// <summary> Inverse() * v </summary>
+        public Vector3f InverseMultiply(ref Vector3f v)
+        {
+            float norm = LengthSquared;
+            if (norm > 0) {
+                float invNorm = 1.0f / norm;
+                float qx = -x*invNorm, qy = -y*invNorm, qz = -z*invNorm, qw = w*invNorm;
+                float twoX = 2 * qx; float twoY = 2 * qy; float twoZ = 2 * qz;
+                float twoWX = twoX * qw; float twoWY = twoY * qw; float twoWZ = twoZ * qw;
+                float twoXX = twoX * qx; float twoXY = twoY * qx; float twoXZ = twoZ * qx;
+                float twoYY = twoY * qy; float twoYZ = twoZ * qy; float twoZZ = twoZ * qz;
+                return new Vector3f(
+                    v.x * (1 - (twoYY + twoZZ)) + v.y * (twoXY - twoWZ) + v.z * (twoXZ + twoWY),
+                    v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
+                    v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); 
+            } else
+                return Vector3f.Zero;
+        }
+
+
+        /// <summary> Inverse() * v </summary>
+        public Vector3d InverseMultiply(ref Vector3d v)
+        {
+            float norm = LengthSquared;
+            if (norm > 0) {
+                float invNorm = 1.0f / norm;
+                float qx = -x * invNorm, qy = -y * invNorm, qz = -z * invNorm, qw = w * invNorm;
+                double twoX = 2 * qx; double twoY = 2 * qy; double twoZ = 2 * qz;
+                double twoWX = twoX * qw; double twoWY = twoY * qw; double twoWZ = twoZ * qw;
+                double twoXX = twoX * qx; double twoXY = twoY * qx; double twoXZ = twoZ * qx;
+                double twoYY = twoY * qy; double twoYZ = twoZ * qy; double twoZZ = twoZ * qz;
+                return new Vector3d(
+                    v.x * (1 - (twoYY + twoZZ)) + v.y * (twoXY - twoWZ) + v.z * (twoXZ + twoWY),
+                    v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
+                    v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
+            } else
+                return Vector3f.Zero;
+        }
+
 
 
         // these multiply quaternion by (1,0,0), (0,1,0), (0,0,1), respectively.
@@ -306,6 +348,51 @@ namespace g3
             }
 
             Normalize();   // we prefer normalized quaternions...
+        }
+
+
+
+
+        public static bool operator ==(Quaternionf a, Quaternionf b)
+        {
+            return (a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w);
+        }
+        public static bool operator !=(Quaternionf a, Quaternionf b)
+        {
+            return (a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Quaternionf)obj;
+        }
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int)2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ x.GetHashCode();
+                hash = (hash * 16777619) ^ y.GetHashCode();
+                hash = (hash * 16777619) ^ z.GetHashCode();
+                hash = (hash * 16777619) ^ w.GetHashCode();
+                return hash;
+            }
+        }
+        public int CompareTo(Quaternionf other)
+        {
+            if (x != other.x)
+                return x < other.x ? -1 : 1;
+            else if (y != other.y)
+                return y < other.y ? -1 : 1;
+            else if (z != other.z)
+                return z < other.z ? -1 : 1;
+            else if (w != other.w)
+                return w < other.w ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Quaternionf other)
+        {
+            return (x == other.x && y == other.y && z == other.z && w == other.w);
         }
 
 

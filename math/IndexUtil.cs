@@ -54,6 +54,13 @@ namespace g3
 			if (tri_verts.c == a) return 2;
 			return DMesh3.InvalidID;
 		}
+        public static int find_tri_index(int a, ref Index3i tri_verts)
+        {
+            if (tri_verts.a == a) return 0;
+            if (tri_verts.b == a) return 1;
+            if (tri_verts.c == a) return 2;
+            return DMesh3.InvalidID;
+        }
 
         // return index of a in tri_verts, or InvalidID if not found
         public static int find_edge_index_in_tri(int a, int b, int[] tri_verts )
@@ -78,6 +85,21 @@ namespace g3
             if (tri_verts[1] == a && tri_verts[2] == b) return 1;
             if (tri_verts[2] == a && tri_verts[0] == b) return 2;
             return DMesh3.InvalidID;
+        }
+
+        /// <summary>
+        ///  find sequence [a,b] in tri_verts (mod3) and return index of a, or InvalidID if not found
+        /// </summary>
+        public static int find_tri_ordered_edge(int a, int b, ref Index3i tri_verts)
+        {
+            if (tri_verts.a == a && tri_verts.b == b) return 0;
+            if (tri_verts.b == a && tri_verts.c == b) return 1;
+            if (tri_verts.c == a && tri_verts.a == b) return 2;
+            return DMesh3.InvalidID;
+        }
+        public static int find_tri_ordered_edge(int a, int b, Index3i tri_verts)
+        {
+            return find_tri_ordered_edge(a, b, ref tri_verts);
         }
 
         // find sequence [a,b] in tri_verts (mod3) then return the third **value**, or InvalidID if not found
@@ -106,6 +128,21 @@ namespace g3
 			}
 			return DMesh3.InvalidID;
 		}
+
+
+        /// <summary>
+        /// assuming a is in tri-verts, returns other two vertices, in correct order (or Index2i.Max if not found)
+        /// </summary>
+        public static Index2i find_tri_other_verts(int a, ref Index3i tri_verts)
+        {
+            if (tri_verts.a == a)
+                return new Index2i(tri_verts.b, tri_verts.c);
+            else if (tri_verts.b == a)
+                return new Index2i(tri_verts.c, tri_verts.a);
+            else if (tri_verts.c == a)
+                return new Index2i(tri_verts.a, tri_verts.b);
+            return Index2i.Max;
+        }
 
         // find sequence [a,b] in tri_verts (mod3) then return the third **index**, or InvalidID if not found
         public static int find_tri_other_index(int a, int b, int[] tri_verts)
@@ -231,6 +268,25 @@ namespace g3
 
 
 
+        public static Vector3i ToGrid3Index(int idx, int nx, int ny)
+        {
+            int x = idx % nx;
+            int y = (idx / nx) % ny;
+            int z = idx / (nx * ny);
+            return new Vector3i(x, y, z);
+        }
+
+        public static int ToGrid3Linear(int i, int j, int k, int nx, int ny) {
+            return i + nx * (j + ny * k);
+        }
+        public static int ToGrid3Linear(Vector3i ijk, int nx, int ny) {
+            return ijk.x + nx * (ijk.y + ny * ijk.z);
+        }
+        public static int ToGrid3Linear(ref Vector3i ijk, int nx, int ny) {
+            return ijk.x + nx * (ijk.y + ny * ijk.z);
+        }
+
+
 
         /// <summary>
         /// Filter out invalid entries in indices[] list. Will return indices itself if 
@@ -294,6 +350,50 @@ namespace g3
                 indices[i] = map[indices[i]];
         }
 
+
+
+        public static void TrianglesToVertices(DMesh3 mesh, IEnumerable<int> triangles, HashSet<int> vertices) {
+            foreach ( int tid in triangles ) {
+                Index3i tv = mesh.GetTriangle(tid);
+                vertices.Add(tv.a); vertices.Add(tv.b); vertices.Add(tv.c);
+            }
+        }        
+        public static void TrianglesToVertices(DMesh3 mesh, HashSet<int> triangles, HashSet<int> vertices) {
+            foreach ( int tid in triangles ) {
+                Index3i tv = mesh.GetTriangle(tid);
+                vertices.Add(tv.a); vertices.Add(tv.b); vertices.Add(tv.c);
+            }
+        }
+
+
+        public static void TrianglesToEdges(DMesh3 mesh, IEnumerable<int> triangles, HashSet<int> edges) {
+            foreach ( int tid in triangles ) {
+                Index3i te = mesh.GetTriEdges(tid);
+                edges.Add(te.a); edges.Add(te.b); edges.Add(te.c);
+            }
+        }
+        public static void TrianglesToEdges(DMesh3 mesh, HashSet<int> triangles, HashSet<int> edges) {
+            foreach ( int tid in triangles ) {
+                Index3i te = mesh.GetTriEdges(tid);
+                edges.Add(te.a); edges.Add(te.b); edges.Add(te.c);
+            }
+        }
+
+
+
+        public static void EdgesToVertices(DMesh3 mesh, IEnumerable<int> edges, HashSet<int> vertices) {
+            foreach (int eid in edges) { 
+                Index2i ev = mesh.GetEdgeV(eid);
+                vertices.Add(ev.a); vertices.Add(ev.b);
+            }
+        }
+        public static void EdgesToVertices(DMesh3 mesh, HashSet<int> edges, HashSet<int> vertices) {
+            foreach (int eid in edges) { 
+                Index2i ev = mesh.GetEdgeV(eid);
+                vertices.Add(ev.a); vertices.Add(ev.b);
+            }
+        }
+
     }
 
 
@@ -302,6 +402,22 @@ namespace g3
 
     public static class gIndices
     {
+        // integer indices offsets in x/y directions
+        public static readonly Vector2i[] GridOffsets4 = new Vector2i[] {
+            new Vector2i( -1, 0), new Vector2i( 1, 0),
+            new Vector2i( 0, -1), new Vector2i( 0, 1)
+        };
+
+        // integer indices offsets in x/y directions and diagonals
+        public static readonly Vector2i[] GridOffsets8 = new Vector2i[] {
+            new Vector2i( -1, 0), new Vector2i( 1, 0),
+            new Vector2i( 0, -1), new Vector2i( 0, 1),
+            new Vector2i( -1, 1), new Vector2i( 1, 1),
+            new Vector2i( -1, -1), new Vector2i( 1, -1)
+        };
+
+
+
         // Corner vertices of box faces  -  see Box.Corner for points associated w/ indexing
         // Note that 
         public static readonly int[,] BoxFaces = new int[6, 4] {

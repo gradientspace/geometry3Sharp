@@ -10,15 +10,16 @@ namespace g3
     /// via GridOrigin, but does not support scaling or rotation. If you need those,
     /// you can wrap this in something that does the xform.
     /// </summary>
-    public class DenseGridTrilinearImplicit : ImplicitFunction3d
+	public class DenseGridTrilinearImplicit : BoundedImplicitFunction3d
     {
         public DenseGrid3f Grid;
         public double CellSize;
         public Vector3d GridOrigin;
 
         // value to return if query point is outside grid (in an SDF
-        // outside is usually positive...)
-        public double Outside = double.MaxValue;
+        // outside is usually positive). Need to do math with this value,
+        // so don't use double.MaxValue or square will overflow
+        public double Outside = Math.Sqrt(Math.Sqrt(double.MaxValue));
 
         public DenseGridTrilinearImplicit(DenseGrid3f grid, Vector3d gridOrigin, double cellSize)
         {
@@ -26,6 +27,22 @@ namespace g3
             GridOrigin = gridOrigin;
             CellSize = cellSize;
         }
+        public DenseGridTrilinearImplicit(MeshSignedDistanceGrid sdf_grid)
+        {
+            Grid = sdf_grid.Grid;
+            GridOrigin = sdf_grid.GridOrigin;
+            CellSize = sdf_grid.CellSize;
+        }
+
+
+        public AxisAlignedBox3d Bounds()
+		{
+			return new AxisAlignedBox3d(
+				GridOrigin.x, GridOrigin.y, GridOrigin.z,
+				GridOrigin.x + CellSize * Grid.ni, 
+				GridOrigin.y + CellSize * Grid.nj, 
+				GridOrigin.z + CellSize * Grid.nk);
+		}
 
 
         public double Value(ref Vector3d pt)

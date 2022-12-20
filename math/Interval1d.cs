@@ -91,6 +91,30 @@ namespace g3
             return new Interval1d(Math.Max(a, o.a), Math.Min(b, o.b));
         }
 
+        /// <summary>
+        /// clamp value f to interval [a,b]
+        /// </summary>
+        public double Clamp(double f) {
+            return (f < a) ? a : (f > b) ? b : f;
+        }
+
+        /// <summary>
+        /// interpolate between a and b using value t in range [0,1]
+        /// </summary>
+        public double Interpolate(double t) {
+            return (1 - t) * a + (t) * b;
+        }
+
+        /// <summary>
+        /// Convert value into (clamped) t value in range [0,1]
+        /// </summary>
+        public double GetT(double value)
+        {
+            if (value <= a) return 0;
+            else if (value >= b) return 1;
+            else if (a == b) return 0.5;
+            else return (value-a) / (b-a);
+        }
 
         public void Set(Interval1d o) {
             a = o.a; b = o.b;

@@ -76,6 +76,27 @@ namespace g3
 
         /// <summary>
         /// construct EdgeLoop from a list of vertices of mesh
+        /// </summary>
+        public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices)
+        {
+            int NV = vertices.Count;
+            int[] Vertices = new int[NV];
+            for (int i = 0; i < NV; ++i)
+                Vertices[i] = vertices[i];
+            int NE = NV;
+            int[] Edges = new int[NE];
+            for (int i = 0; i < NE; ++i) {
+                Edges[i] = mesh.FindEdge(Vertices[i], Vertices[(i + 1)%NE]);
+                if (Edges[i] == DMesh3.InvalidID)
+                    throw new Exception("EdgeLoop.FromVertices: vertices are not connected by edge!");
+            }
+            return new EdgeLoop(mesh, Vertices, Edges, false);
+        }
+
+
+
+        /// <summary>
+        /// construct EdgeLoop from a list of vertices of mesh
         /// if loop is a boundary edge, we can correct orientation if requested
         /// </summary>
         public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices, bool bAutoOrient = true)
@@ -127,6 +148,15 @@ namespace g3
         }
 
 
+        public DCurve3 ToCurve(DMesh3 sourceMesh = null)
+        {
+            if (sourceMesh == null)
+                sourceMesh = Mesh;
+            DCurve3 curve = MeshUtil.ExtractLoopV(sourceMesh, Vertices);
+            curve.Closed = true;
+            return curve;
+        }
+
 
         /// <summary>
         /// if this is a border edge-loop, we can check that it is oriented correctly, and
@@ -173,15 +203,18 @@ namespace g3
 
 
         /// <summary>
-        /// Check if all edges of this loop are boundary edges
+        /// Check if all edges of this loop are boundary edges.
+        /// If testMesh != null, will check that mesh instead of internal Mesh
         /// </summary>
-        public bool IsBoundaryLoop()
+        public bool IsBoundaryLoop(DMesh3 testMesh = null)
         {
+            DMesh3 useMesh = (testMesh != null) ? testMesh : Mesh;
+
             int NV = Vertices.Length;
             for (int i = 0; i < NV; ++i ) {
-                int eid = Mesh.FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
+                int eid = useMesh.FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
                 Debug.Assert(eid != DMesh3.InvalidID);
-                if (Mesh.IsBoundaryEdge(eid) == false)
+                if (useMesh.IsBoundaryEdge(eid) == false)
                     return false;
             }
             return true;

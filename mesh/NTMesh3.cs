@@ -1617,7 +1617,7 @@ namespace g3
                     CheckOrFailF(IsEdge(edge));
                 }
 
-                List<int> vTris = new List<int>(), vTris2 = new List<int>();
+                List<int> vTris = new List<int>();
                 GetVtxTriangles(vID, vTris);
 
                 CheckOrFailF(vertices_refcount.refCount(vID) == vTris.Count + 1);

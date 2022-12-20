@@ -244,6 +244,36 @@ namespace g3
         }
 
 
+        public static void QuickWrite(DGraph2 graph, string sPath, double line_width = 1)
+        {
+            SVGWriter writer = new SVGWriter();
+            Style style = SVGWriter.Style.Outline("black", (float)line_width);
+            writer.AddGraph(graph, style);
+            writer.Write(sPath);
+        }
+
+        public static void QuickWrite(List<GeneralPolygon2d> polygons1, string color1, float width1,
+		                              List<GeneralPolygon2d> polygons2, string color2, float width2,
+		                              string sPath)
+		{
+			SVGWriter writer = new SVGWriter();
+			Style style1 = SVGWriter.Style.Outline(color1, width1);
+			Style style1_holes = SVGWriter.Style.Outline(color1, width1/2);
+			foreach (GeneralPolygon2d poly in polygons1) {
+				writer.AddPolygon(poly.Outer, style1);
+				foreach (var hole in poly.Holes)
+					writer.AddPolygon(hole, style1_holes);
+			}
+			Style style2 = SVGWriter.Style.Outline(color2, width2);
+			Style style2_holes = SVGWriter.Style.Outline(color2, width2 / 2);
+			foreach (GeneralPolygon2d poly in polygons2) {
+				writer.AddPolygon(poly.Outer, style2);
+				foreach (var hole in poly.Holes)
+					writer.AddPolygon(hole, style2_holes);
+			}
+			writer.Write(sPath);
+		}
+
 
 
 

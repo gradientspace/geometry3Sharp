@@ -141,6 +141,8 @@ namespace g3
 				vSum += w_ij * Vj;
 				wSum += w_ij;
 			}
+            if ( wSum < MathUtil.ZeroTolerance )
+                return Vi;
 			return vSum / wSum;
 		}
 		// tan(theta/2) = +/- sqrt( (1-cos(theta)) / (1+cos(theta)) )

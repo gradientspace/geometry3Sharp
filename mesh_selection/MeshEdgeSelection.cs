@@ -169,6 +169,20 @@ namespace g3
         }
 
 
+        public void SelectBoundaryTriEdges(MeshFaceSelection triangles)
+        {
+            foreach ( int tid in triangles ) {
+                Index3i te = Mesh.GetTriEdges(tid);
+                for ( int j = 0; j < 3; ++j ) {
+                    Index2i et = Mesh.GetEdgeT(te[j]);
+                    int other_tid = (et.a == tid) ? et.b : et.a;
+                    if (triangles.IsSelected(other_tid) == false)
+                        add(te[j]);
+                }
+            }
+        }
+
+
         public void Deselect(int tid) {
             remove(tid);
         }

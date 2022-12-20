@@ -24,11 +24,17 @@ namespace g3
             Max = new Vector3d(xmax, ymax, zmax);
         }
 
+		/// <summary>
+		/// init box [0,size] x [0,size] x [0,size]
+		/// </summary>
         public AxisAlignedBox3d(double fCubeSize) {
             Min = new Vector3d(0, 0, 0);
             Max = new Vector3d(fCubeSize, fCubeSize, fCubeSize);
         }
 
+		/// <summary>
+		/// Init box [0,width] x [0,height] x [0,depth]
+		/// </summary>
         public AxisAlignedBox3d(double fWidth, double fHeight, double fDepth) {
             Min = new Vector3d(0, 0, 0);
             Max = new Vector3d(fWidth, fHeight, fDepth);
@@ -94,7 +100,6 @@ namespace g3
             get { return new Vector3d(0.5 * (Min.x + Max.x), 0.5 * (Min.y + Max.y), 0.5 * (Min.z + Max.z)); }
         }
 
-
         public static bool operator ==(AxisAlignedBox3d a, AxisAlignedBox3d b) {
             return a.Min == b.Min && a.Max == b.Max;
         }
@@ -132,6 +137,17 @@ namespace g3
             return new Vector3d(x, y, z);
         }
 
+        /// <summary>
+        /// Returns point on face/edge/corner. For each coord value neg==min, 0==center, pos==max
+        /// </summary>
+        public Vector3d Point(int xi, int yi, int zi)
+        {
+            double x = (xi < 0) ? Min.x : ((xi == 0) ? (0.5*(Min.x + Max.x)) : Max.x);
+            double y = (yi < 0) ? Min.y : ((yi == 0) ? (0.5*(Min.y + Max.y)) : Max.y);
+            double z = (zi < 0) ? Min.z : ((zi == 0) ? (0.5*(Min.z + Max.z)) : Max.z);
+            return new Vector3d(x, y, z);
+        }
+
 
         // TODO
         ////! 0 == bottom-left, 1 = bottom-right, 2 == top-right, 3 == top-left
@@ -144,13 +160,38 @@ namespace g3
             Min.x -= fRadius; Min.y -= fRadius; Min.z -= fRadius;
             Max.x += fRadius; Max.y += fRadius; Max.z += fRadius;
         }
-        //! value is added to min and subtracted from max
-        public void Contract(double fRadius) {
-            Min.x += fRadius; Min.y += fRadius; Min.z += fRadius;
-            Max.x -= fRadius; Max.y -= fRadius; Max.z -= fRadius;
+
+        //! return this box expanded by radius
+        public AxisAlignedBox3d Expanded(double fRadius) {
+            return new AxisAlignedBox3d(
+                Min.x - fRadius, Min.y - fRadius, Min.z - fRadius,
+                Max.x + fRadius, Max.y + fRadius, Max.z + fRadius);
         }
 
-       public void Scale(double sx, double sy, double sz)
+        //! value is added to min and subtracted from max
+        public void Contract(double fRadius) {
+            double w = 2 * fRadius;
+            if ( w > Max.x-Min.x ) { Min.x = Max.x = 0.5 * (Min.x + Max.x); }
+                else { Min.x += fRadius; Max.x -= fRadius; }
+            if ( w > Max.y-Min.y ) { Min.y = Max.y = 0.5 * (Min.y + Max.y); }
+                else { Min.y += fRadius; Max.y -= fRadius; }
+            if ( w > Max.z-Min.z ) { Min.z = Max.z = 0.5 * (Min.z + Max.z); }
+                else { Min.z += fRadius; Max.z -= fRadius; }
+        }
+
+        //! return this box expanded by radius
+        public AxisAlignedBox3d Contracted(double fRadius) {
+            AxisAlignedBox3d result = new AxisAlignedBox3d(
+                Min.x + fRadius, Min.y + fRadius, Min.z + fRadius,
+                Max.x - fRadius, Max.y - fRadius, Max.z - fRadius);
+            if (result.Min.x > result.Max.x) { result.Min.x = result.Max.x = 0.5 * (Min.x + Max.x); }
+            if (result.Min.y > result.Max.y) { result.Min.y = result.Max.y = 0.5 * (Min.y + Max.y); }
+            if (result.Min.z > result.Max.z) { result.Min.z = result.Max.z = 0.5 * (Min.z + Max.z); }
+            return result;
+        }
+
+
+        public void Scale(double sx, double sy, double sz)
         {
             Vector3d c = Center;
             Vector3d e = Extents; e.x *= sx; e.y *= sy; e.z *= sz;
@@ -167,7 +208,25 @@ namespace g3
             Max.z = Math.Max(Max.z, v.z);
         }
 
+        public void Contain(ref Vector3d v) {
+            Min.x = Math.Min(Min.x, v.x);
+            Min.y = Math.Min(Min.y, v.y);
+            Min.z = Math.Min(Min.z, v.z);
+            Max.x = Math.Max(Max.x, v.x);
+            Max.y = Math.Max(Max.y, v.y);
+            Max.z = Math.Max(Max.z, v.z);
+        }
+
         public void Contain(AxisAlignedBox3d box) {
+            Min.x = Math.Min(Min.x, box.Min.x);
+            Min.y = Math.Min(Min.y, box.Min.y);
+            Min.z = Math.Min(Min.z, box.Min.z);
+            Max.x = Math.Max(Max.x, box.Max.x);
+            Max.y = Math.Max(Max.y, box.Max.y);
+            Max.z = Math.Max(Max.z, box.Max.z);
+        }
+
+        public void Contain(ref AxisAlignedBox3d box) {
             Min.x = Math.Min(Min.x, box.Min.x);
             Min.y = Math.Min(Min.y, box.Min.y);
             Min.z = Math.Min(Min.z, box.Min.z);
@@ -192,6 +251,19 @@ namespace g3
             return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
                 && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
         }
+        public bool Contains(ref Vector3d v) {
+            return (Min.x <= v.x) && (Min.y <= v.y) && (Min.z <= v.z)
+                && (Max.x >= v.x) && (Max.y >= v.y) && (Max.z >= v.z);
+        }
+
+        public bool Contains(AxisAlignedBox3d box2) {
+            return Contains(ref box2.Min) && Contains(ref box2.Max);
+        }
+        public bool Contains(ref AxisAlignedBox3d box2) {
+            return Contains(ref box2.Min) && Contains(ref box2.Max);
+        }
+
+
         public bool Intersects(AxisAlignedBox3d box) {
             return !((box.Max.x <= Min.x) || (box.Min.x >= Max.x) 
                 || (box.Max.y <= Min.y) || (box.Min.y >= Max.y)

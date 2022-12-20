@@ -61,7 +61,7 @@ namespace g3
 
 			RayParam0 = 0.0;
 			RayParam1 = double.MaxValue;
-			IntrLine3AxisAlignedBox3.DoClipping(ref RayParam0, ref RayParam1, ray.Origin, ray.Direction, box,
+			IntrLine3AxisAlignedBox3.DoClipping(ref RayParam0, ref RayParam1, ref ray.Origin, ref ray.Direction, ref box,
 			          true, ref Quantity, ref Point0, ref Point1, ref Type);
 
 			Result = (Type != IntersectionType.Empty) ?
@@ -71,73 +71,102 @@ namespace g3
 
 
 
-        // [RMS TODO: lots of useless dot products below!! left over from obox conversion]
 		public bool Test ()
 		{
-			Vector3d WdU = Vector3d.Zero;
-			Vector3d AWdU = Vector3d.Zero;
-			Vector3d DdU = Vector3d.Zero;
-			Vector3d ADdU = Vector3d.Zero;
-			Vector3d AWxDdU = Vector3d.Zero;
-			double RHS;
-
-			Vector3d diff = ray.Origin - box.Center;
-            Vector3d extent = box.Extents;
-
-			WdU[0] = ray.Direction.Dot(Vector3d.AxisX);
-			AWdU[0] = Math.Abs(WdU[0]);
-			DdU[0] = diff.Dot(Vector3d.AxisX);
-			ADdU[0] = Math.Abs(DdU[0]);
-			if (ADdU[0] > extent.x && DdU[0]*WdU[0] >= (double)0)
-			{
-				return false;
-			}
-
-			WdU[1] = ray.Direction.Dot(Vector3d.AxisY);
-			AWdU[1] = Math.Abs(WdU[1]);
-			DdU[1] = diff.Dot(Vector3d.AxisY);
-			ADdU[1] = Math.Abs(DdU[1]);
-			if (ADdU[1] > extent.y && DdU[1]*WdU[1] >= (double)0)
-			{
-				return false;
-			}
-
-			WdU[2] = ray.Direction.Dot(Vector3d.AxisZ);
-			AWdU[2] = Math.Abs(WdU[2]);
-			DdU[2] = diff.Dot(Vector3d.AxisZ);
-			ADdU[2] = Math.Abs(DdU[2]);
-			if (ADdU[2] > extent.z && DdU[2]*WdU[2] >= (double)0)
-			{
-				return false;
-			}
-
-			Vector3d WxD = ray.Direction.Cross(diff);
-
-			AWxDdU[0] = Math.Abs(WxD.Dot(Vector3d.AxisX));
-			RHS = extent.y*AWdU[2] + extent.z*AWdU[1];
-			if (AWxDdU[0] > RHS)
-			{
-				return false;
-			}
-
-			AWxDdU[1] = Math.Abs(WxD.Dot(Vector3d.AxisY));
-			RHS = extent.x*AWdU[2] + extent.z*AWdU[0];
-			if (AWxDdU[1] > RHS)
-			{
-				return false;
-			}
-
-			AWxDdU[2] = Math.Abs(WxD.Dot(Vector3d.AxisZ));
-			RHS = extent.x*AWdU[1] + extent.y*AWdU[0];
-			if (AWxDdU[2] > RHS)
-			{
-				return false;
-			}
-
-			return true;
-		}
+            return Intersects(ref ray, ref box);
+        }
 
 
+        /// <summary>
+        /// test if ray intersects box.
+        /// expandExtents allows you to scale box for hit-testing purposes. 
+        /// </summary>
+        public static bool Intersects(ref Ray3d ray, ref AxisAlignedBox3d box, double expandExtents = 0)
+        {
+            Vector3d WdU = Vector3d.Zero;
+            Vector3d AWdU = Vector3d.Zero;
+            Vector3d DdU = Vector3d.Zero;
+            Vector3d ADdU = Vector3d.Zero;
+            double RHS;
 
-	}
+            Vector3d diff = ray.Origin - box.Center;
+            Vector3d extent = box.Extents + expandExtents;
+
+            WdU.x = ray.Direction.x; // ray.Direction.Dot(Vector3d.AxisX);
+            AWdU.x = Math.Abs(WdU.x);
+            DdU.x = diff.x; // diff.Dot(Vector3d.AxisX);
+            ADdU.x = Math.Abs(DdU.x);
+            if (ADdU.x > extent.x && DdU.x * WdU.x >= (double)0) {
+                return false;
+            }
+
+            WdU.y = ray.Direction.y; // ray.Direction.Dot(Vector3d.AxisY);
+            AWdU.y = Math.Abs(WdU.y);
+            DdU.y = diff.y; // diff.Dot(Vector3d.AxisY);
+            ADdU.y = Math.Abs(DdU.y);
+            if (ADdU.y > extent.y && DdU.y * WdU.y >= (double)0) {
+                return false;
+            }
+
+            WdU.z = ray.Direction.z; // ray.Direction.Dot(Vector3d.AxisZ);
+            AWdU.z = Math.Abs(WdU.z);
+            DdU.z = diff.z; // diff.Dot(Vector3d.AxisZ);
+            ADdU.z = Math.Abs(DdU.z);
+            if (ADdU.z > extent.z && DdU.z * WdU.z >= (double)0) {
+                return false;
+            }
+
+            Vector3d WxD = ray.Direction.Cross(diff);
+            Vector3d AWxDdU = Vector3d.Zero;
+
+            AWxDdU.x = Math.Abs(WxD.x); // Math.Abs(WxD.Dot(Vector3d.AxisX));
+            RHS = extent.y * AWdU.z + extent.z * AWdU.y;
+            if (AWxDdU.x > RHS) {
+                return false;
+            }
+
+            AWxDdU.y = Math.Abs(WxD.y); // Math.Abs(WxD.Dot(Vector3d.AxisY));
+            RHS = extent.x * AWdU.z + extent.z * AWdU.x;
+            if (AWxDdU.y > RHS) {
+                return false;
+            }
+
+            AWxDdU.z = Math.Abs(WxD.z); // Math.Abs(WxD.Dot(Vector3d.AxisZ));
+            RHS = extent.x * AWdU.y + extent.y * AWdU.x;
+            if (AWxDdU.z > RHS) {
+                return false;
+            }
+
+            return true;
+        }
+
+
+        /// <summary>
+        /// Find intersection of ray with AABB, without having to construct any new classes.
+        /// Returns ray T-value of first intersection (or double.MaxVlaue on miss)
+        /// </summary>
+        public static bool FindRayIntersectT(ref Ray3d ray, ref AxisAlignedBox3d box, out double RayParam)
+        {
+            double RayParam0 = 0.0;
+            double RayParam1 = double.MaxValue;
+            int Quantity = 0;
+            Vector3d Point0 = Vector3d.Zero;
+            Vector3d Point1 = Vector3d.Zero;
+            IntersectionType Type = IntersectionType.Empty;
+            IntrLine3AxisAlignedBox3.DoClipping(ref RayParam0, ref RayParam1, ref ray.Origin, ref ray.Direction, ref box,
+                      true, ref Quantity, ref Point0, ref Point1, ref Type);
+
+            if (Type != IntersectionType.Empty) {
+                RayParam = RayParam0;
+                return true;
+            } else {
+                RayParam = double.MaxValue;
+                return false;
+            }
+        }
+
+
+
+
+    }
 }

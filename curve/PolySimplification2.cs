@@ -13,7 +13,7 @@ namespace g3
     /// which is not ideal in many contexts (eg manufacturing).
     /// 
     /// Strategy here is :
-    ///   1) runs of vertices that are very close to straight lines (default 0.01mm deviation tol)
+    ///   1) find runs of vertices that are very close to straight lines (default 0.01mm deviation tol)
     ///   2) find all straight segments longer than threshold distance (default 2mm)
     ///   3) discard vertices that deviate less than tolerance (default = 0.2mm)
     ///      from sequential-points-segment, unless they are required to preserve
@@ -62,6 +62,27 @@ namespace g3
             Vertices = new List<Vector2d>(polycurve.Vertices);
             IsLoop = false;
         }
+
+
+
+        /// <summary>
+        /// simplify outer and holes of a polygon solid with same thresholds
+        /// </summary>
+        public static void Simplify(GeneralPolygon2d solid, double deviationThresh)
+        {
+            PolySimplification2 simp = new PolySimplification2(solid.Outer);
+            simp.SimplifyDeviationThreshold = deviationThresh;
+            simp.Simplify();
+            solid.Outer.SetVertices(simp.Result, true);
+
+            foreach (var hole in solid.Holes) {
+                PolySimplification2 holesimp = new PolySimplification2(hole);
+                holesimp.SimplifyDeviationThreshold = deviationThresh;
+                holesimp.Simplify();
+                hole.SetVertices(holesimp.Result, true);
+            }
+        }
+
 
 
         public void Simplify()
@@ -117,13 +138,19 @@ namespace g3
 
                 if ( keep_segments[i0] ) {
                     if (last_i != i0) {
-                        Util.gDevAssert(input[i0].Distance(result[result.Count - 1]) > MathUtil.Epsilonf);
-                        result.Add(input[i0]);
+                        // skip join segment if it is degenerate
+                        double join_dist = input[i0].Distance(result[result.Count - 1]);
+                        if ( join_dist > MathUtil.Epsilon)
+                            result.Add(input[i0]);
                     }
                     result.Add(input[i1]);
                     last_i = i1;
-                    cur_i = i1;
                     skip_count = 0;
+                    if (i1 == 0) {
+                        cur_i = NStop;
+                    } else {
+                        cur_i = i1;
+                    }
                     continue;
                 }
 
@@ -152,12 +179,16 @@ namespace g3
             }
 
             
-            if ( IsLoop ) { 
+            if ( IsLoop ) {
+                // if we skipped everything, rest of code doesn't work
+                if (result.Count < 3)
+                    return handle_tiny_case(result, input, keep_segments, offset_threshold);
+
                 Line2d last_line = Line2d.FromPoints(input[last_i], input[cur_i % N]);
                 bool collinear_startv = last_line.DistanceSquared(result[0]) < thresh_sqr;
                 bool collinear_starts = last_line.DistanceSquared(result[1]) < thresh_sqr;
-                if (collinear_startv && collinear_starts) {
-                    // last seg is collinaer w/ start seg, merge them
+                if (collinear_startv && collinear_starts && result.Count > 3) {
+                    // last seg is collinear w/ start seg, merge them
                     result[0] = input[last_i];
                     result.RemoveAt(result.Count - 1);
 
@@ -173,6 +204,21 @@ namespace g3
                 result.Add(input[input.Count - 1]);
             }
 
+            return result;
+        }
+
+
+
+        List<Vector2d> handle_tiny_case(List<Vector2d> result, List<Vector2d> input, bool[] keep_segments, double offset_threshold)
+        {
+            int N = input.Count;
+            if (N == 3)
+                return input;       // not much we can really do here...
+
+            result.Clear();
+            result.Add(input[0]);
+            result.Add(input[N/3]);
+            result.Add(input[N-N/3]);
             return result;
         }
 

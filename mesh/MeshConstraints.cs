@@ -170,6 +170,11 @@ namespace g3
             return VertexConstraint.Unconstrained;
         }
 
+        public bool GetVertexConstraint(int vid, ref VertexConstraint vc)
+        {
+            return Vertices.TryGetValue(vid, out vc);
+        }
+
         public void SetOrUpdateVertexConstraint(int vid, VertexConstraint vc)
         {
             Vertices[vid] = vc;

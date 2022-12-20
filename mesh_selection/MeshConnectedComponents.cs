@@ -224,5 +224,32 @@ namespace g3
             return submesh.SubMesh;
         }
 
+
+
+
+        /// <summary>
+        /// Utility function that finds set of triangles connected to tSeed. Does not use MeshConnectedComponents class.
+        /// </summary>
+        public static HashSet<int> FindConnectedT(DMesh3 mesh, int tSeed)
+        {
+            HashSet<int> found = new HashSet<int>();
+            found.Add(tSeed);
+            List<int> queue = new List<int>(64) { tSeed };
+            while ( queue.Count > 0 ) {
+                int tid = queue[queue.Count - 1];
+                queue.RemoveAt(queue.Count - 1);
+                Index3i nbr_t = mesh.GetTriNeighbourTris(tid);
+                for ( int j = 0; j < 3; ++j ) {
+                    int nbrid = nbr_t[j];
+                    if (nbrid == DMesh3.InvalidID || found.Contains(nbrid))
+                        continue;
+                    found.Add(nbrid);
+                    queue.Add(nbrid);
+                }
+            }
+            return found;
+        }
+
+
     }
 }

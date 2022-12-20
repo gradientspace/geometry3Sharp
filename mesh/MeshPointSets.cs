@@ -35,6 +35,13 @@ namespace g3
         {
             return Mesh.EdgeIndices();
         }
+
+        /// <summary>
+        /// Timestamp is incremented any time any change is made to the mesh
+        /// </summary>
+        public int Timestamp {
+            get { return Mesh.Timestamp; }
+        }
     }
 
 
@@ -74,6 +81,13 @@ namespace g3
         public IEnumerable<int> VertexIndices()
         {
             return Mesh.BoundaryEdgeIndices();
+        }
+
+        /// <summary>
+        /// Timestamp is incremented any time any change is made to the mesh
+        /// </summary>
+        public int Timestamp {
+            get { return Mesh.Timestamp; }
         }
     }
 

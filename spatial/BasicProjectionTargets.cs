@@ -5,7 +5,11 @@ using System.Text;
 
 namespace g3
 {
-    public class MeshProjectionTarget : IProjectionTarget
+    /// <summary>
+    /// MeshProjectionTarget provides an IProjectionTarget interface to a mesh + spatial data structure.
+    /// Use to project points to mesh surface.
+    /// </summary>
+    public class MeshProjectionTarget : IOrientedProjectionTarget
     {
         public DMesh3 Mesh { get; set; }
         public ISpatial Spatial { get; set; }
@@ -15,6 +19,8 @@ namespace g3
         {
             Mesh = mesh;
             Spatial = spatial;
+            if ( Spatial == null )
+                Spatial = new DMeshAABBTree3(mesh, true);
         }
 
         public MeshProjectionTarget(DMesh3 mesh)
@@ -23,11 +29,25 @@ namespace g3
             Spatial = new DMeshAABBTree3(mesh, true);
         }
 
-        public Vector3d Project(Vector3d vPoint, int identifier = -1)
+        public virtual Vector3d Project(Vector3d vPoint, int identifier = -1)
         {
             int tNearestID = Spatial.FindNearestTriangle(vPoint);
-            DistPoint3Triangle3 q = MeshQueries.TriangleDistance(Mesh, tNearestID, vPoint);
-            return q.TriangleClosest;
+            Triangle3d triangle = new Triangle3d();
+            Mesh.GetTriVertices(tNearestID, ref triangle.V0, ref triangle.V1, ref triangle.V2);
+            Vector3d nearPt, bary;
+            DistPoint3Triangle3.DistanceSqr(ref vPoint, ref triangle, out nearPt, out bary);
+            return nearPt;
+        }
+
+        public virtual Vector3d Project(Vector3d vPoint, out Vector3d vProjectNormal, int identifier = -1)
+        {
+            int tNearestID = Spatial.FindNearestTriangle(vPoint);
+            Triangle3d triangle = new Triangle3d();
+            Mesh.GetTriVertices(tNearestID, ref triangle.V0, ref triangle.V1, ref triangle.V2);
+            Vector3d nearPt, bary;
+            DistPoint3Triangle3.DistanceSqr(ref vPoint, ref triangle, out nearPt, out bary);
+            vProjectNormal = triangle.Normal;
+            return nearPt;
         }
 
         /// <summary>
@@ -40,7 +60,70 @@ namespace g3
             else
                 return new MeshProjectionTarget(mesh);
         }
+
+
+        /// <summary>
+        /// Automatically construct fastest projection target for region of mesh
+        /// </summary>
+        public static MeshProjectionTarget Auto(DMesh3 mesh, IEnumerable<int> triangles, int nExpandRings = 5)
+        {
+            MeshFaceSelection targetRegion = new MeshFaceSelection(mesh);
+            targetRegion.Select(triangles);
+            targetRegion.ExpandToOneRingNeighbours(nExpandRings);
+            DSubmesh3 submesh = new DSubmesh3(mesh, targetRegion);
+            return new MeshProjectionTarget(submesh.SubMesh); 
+        }
     }
+
+
+
+
+    /// <summary>
+    /// Extension of MeshProjectionTarget that allows the target to have a transformation
+    /// relative to it's internal space. Call SetTransform(), or initialize the transforms yourself
+    /// </summary>
+    public class TransformedMeshProjectionTarget : MeshProjectionTarget
+    {
+        public TransformSequence SourceToTargetXForm;
+        public TransformSequence TargetToSourceXForm;
+
+        public TransformedMeshProjectionTarget() { }
+        public TransformedMeshProjectionTarget(DMesh3 mesh, ISpatial spatial) : base(mesh, spatial)
+        {
+        }
+        public TransformedMeshProjectionTarget(DMesh3 mesh) : base(mesh)
+        {
+        }
+
+        public void SetTransform(TransformSequence sourceToTargetX)
+        {
+            SourceToTargetXForm = sourceToTargetX;
+            TargetToSourceXForm = SourceToTargetXForm.MakeInverse();
+        }
+
+        public override Vector3d Project(Vector3d vPoint, int identifier = -1)
+        {
+            Vector3d vTargetPt = SourceToTargetXForm.TransformP(vPoint);
+            Vector3d vTargetProj = base.Project(vTargetPt, identifier);
+            return TargetToSourceXForm.TransformP(vTargetProj);
+        }
+
+
+        public override Vector3d Project(Vector3d vPoint, out Vector3d vProjectNormal, int identifier = -1)
+        {
+            Vector3d vTargetPt = SourceToTargetXForm.TransformP(vPoint);
+            Vector3d vTargetProjNormal;
+            Vector3d vTargetProj = base.Project(vTargetPt, out vTargetProjNormal, identifier);
+            vProjectNormal = TargetToSourceXForm.TransformV(vTargetProjNormal).Normalized;
+            return TargetToSourceXForm.TransformP(vTargetProj);
+        }
+    }
+
+
+
+
+
+
 
 
 

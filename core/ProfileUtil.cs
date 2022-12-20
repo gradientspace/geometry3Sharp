@@ -50,14 +50,23 @@ namespace g3
 
         public string AccumulatedString
         {
-            get { return string.Format("{0:ss}.{0:fffffff}", Accumulated); }
+            get { return string.Format(TimeFormatString(Accumulated), Accumulated); }
         }
         public override string ToString()
         {
             TimeSpan t = Watch.Elapsed;
-            return string.Format("{0:ss}.{0:fffffff}", Watch.Elapsed);
+            return string.Format(TimeFormatString(Accumulated), Watch.Elapsed);
         }
 
+        public static string TimeFormatString(TimeSpan span)
+        {
+            if (span.Minutes > 0)
+                return minute_format;
+            else
+                return second_format;
+        }
+        const string minute_format = "{0:mm}:{0:ss}.{0:fffffff}";
+        const string second_format = "{0:ss}.{0:fffffff}";
     }
 
 
@@ -104,9 +113,9 @@ namespace g3
         }
 
 
-        public void StopAndAccumulate(string label)
+        public void StopAndAccumulate(string label, bool bReset = false)
         {
-            Timers[label].Accumulate();
+            Timers[label].Accumulate(bReset);
         }
 
         public void Reset(string label)
@@ -139,7 +148,8 @@ namespace g3
         }
         public string Accumulated(string label)
         {
-            return string.Format("{0:ss}.{0:fffffff}", Timers[label].Accumulated);
+            TimeSpan accum = Timers[label].Accumulated;
+            return string.Format(BlockTimer.TimeFormatString(accum), accum);
         }
 
         public string AllTicks(string prefix = "Times:")
@@ -169,7 +179,8 @@ namespace g3
             StringBuilder b = new StringBuilder();
             b.Append(prefix + " ");
             foreach ( string label in Order ) {
-                b.Append(label + ": " + string.Format("{0:ss}.{0:ffffff}", Timers[label].Watch.Elapsed) + separator);
+                TimeSpan span = Timers[label].Watch.Elapsed;
+                b.Append(label + ": " + string.Format(BlockTimer.TimeFormatString(span), span) + separator);
             }
             return b.ToString();
         }
@@ -179,7 +190,8 @@ namespace g3
             StringBuilder b = new StringBuilder();
             b.Append(prefix + " ");
             foreach ( string label in Order ) {
-                b.Append(label + ": " + string.Format("{0:ss}.{0:ffffff}", Timers[label].Accumulated) + separator);
+                TimeSpan span = Timers[label].Accumulated;
+                b.Append(label + ": " + string.Format(BlockTimer.TimeFormatString(span), span) + separator);
             }
             return b.ToString();
         }

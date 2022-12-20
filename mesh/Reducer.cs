@@ -24,7 +24,7 @@ namespace g3
 		public bool MinimizeQuadricPositionError = true;
 
         // if true, we try to keep boundary vertices on boundary. You probably want this.
-        public bool PreserveBoundary = true;
+        public bool PreserveBoundaryShape = true;
 
 		// [RMS] this is a debugging aid, will break to debugger if these edges are touched, in debug builds
 		public List<int> DebugEdges = new List<int>();
@@ -81,8 +81,14 @@ namespace g3
 
             begin_setup();
             Precompute();
+            if (Cancelled())
+                return;
             InitializeVertexQuadrics();
+            if (Cancelled())
+                return;
             InitializeQueue();
+            if (Cancelled())
+                return;
             end_setup();
 
             begin_ops();
@@ -103,6 +109,8 @@ namespace g3
                 int eid = EdgeQueue.Dequeue();
                 if (!mesh.IsEdge(eid))
                     continue;
+                if (Cancelled())
+                    return;
 
                 int vKept;
                 ProcessResult result = CollapseEdge(eid, EdgeQuadrics[eid].collapse_pt, out vKept);
@@ -113,6 +121,9 @@ namespace g3
             }
             end_collapse();
             end_ops();
+
+            if (Cancelled())
+                return;
 
             Reproject();
 
@@ -155,7 +166,7 @@ namespace g3
 
 
 
-        public virtual void FastCollapsePass(double fMinEdgeLength)
+        public virtual void FastCollapsePass(double fMinEdgeLength, int nRounds = 1, bool MeshIsClosedHint = false)
         {
             if (mesh.TriangleCount == 0)    // badness if we don't catch this...
                 return;
@@ -169,7 +180,9 @@ namespace g3
             begin_pass();
 
             begin_setup();
-            Precompute();
+            Precompute(MeshIsClosedHint);
+            if (Cancelled())
+                return;
             end_setup();
 
             begin_ops();
@@ -177,28 +190,41 @@ namespace g3
             begin_collapse();
 
             int N = mesh.MaxEdgeID;
-            Vector3d va = Vector3d.Zero, vb = Vector3d.Zero;
-            for ( int eid = 0; eid < N; ++eid) {
-                if (!mesh.IsEdge(eid))
-                    continue;
-                if (mesh.IsBoundaryEdge(eid))
-                    continue;
+            int num_last_pass = 0;
+            for (int ri = 0; ri < nRounds; ++ri) {
+                num_last_pass = 0;
 
-                mesh.GetEdgeV(eid, ref va, ref vb);
-                if (va.DistanceSquared(ref vb) > min_sqr)
-                    continue;
+                Vector3d va = Vector3d.Zero, vb = Vector3d.Zero;
+                for (int eid = 0; eid < N; ++eid) {
+                    if (!mesh.IsEdge(eid))
+                        continue;
+                    if (mesh.IsBoundaryEdge(eid))
+                        continue;
+                    if (Cancelled())
+                        return;
 
-                COUNT_ITERATIONS++;
+                    mesh.GetEdgeV(eid, ref va, ref vb);
+                    if (va.DistanceSquared(ref vb) > min_sqr)
+                        continue;
 
-                Vector3d midpoint = (va + vb) * 0.5;
-                int vKept;
-                ProcessResult result = CollapseEdge(eid, midpoint, out vKept);
-                if (result == ProcessResult.Ok_Collapsed) {
-                    // do nothing?
+                    COUNT_ITERATIONS++;
+
+                    Vector3d midpoint = (va + vb) * 0.5;
+                    int vKept;
+                    ProcessResult result = CollapseEdge(eid, midpoint, out vKept);
+                    if (result == ProcessResult.Ok_Collapsed) {
+                        ++num_last_pass;
+                    }
                 }
+
+                if (num_last_pass == 0)     // converged
+                    break;
             }
             end_collapse();
             end_ops();
+
+            if (Cancelled())
+                return;
 
             Reproject();
 
@@ -326,7 +352,7 @@ namespace g3
 
             // if we would like to preserve boundary, we need to know that here
             // so that we properly score these edges
-            if (HaveBoundary && PreserveBoundary) {
+            if (HaveBoundary && PreserveBoundaryShape) {
                 if (mesh.IsBoundaryEdge(eid)) {
                     return (mesh.GetVertex(ea) + mesh.GetVertex(eb)) * 0.5;
                 } else {
@@ -402,15 +428,17 @@ namespace g3
 
         protected bool HaveBoundary;
         protected bool[] IsBoundaryVtxCache;
-        protected virtual void Precompute()
+        protected virtual void Precompute(bool bMeshIsClosed = false)
         {
             HaveBoundary = false;
             IsBoundaryVtxCache = new bool[mesh.MaxVertexID];
-            foreach ( int eid in mesh.BoundaryEdgeIndices()) {
-                Index2i ev = mesh.GetEdgeV(eid);
-                IsBoundaryVtxCache[ev.a] = true;
-                IsBoundaryVtxCache[ev.b] = true;
-                HaveBoundary = true;
+            if (bMeshIsClosed == false) {
+                foreach (int eid in mesh.BoundaryEdgeIndices()) {
+                    Index2i ev = mesh.GetEdgeV(eid);
+                    IsBoundaryVtxCache[ev.a] = true;
+                    IsBoundaryVtxCache[ev.b] = true;
+                    HaveBoundary = true;
+                }
             }
         }
         protected bool IsBoundaryV(int vid)
@@ -513,7 +541,7 @@ namespace g3
 				return ProcessResult.Ignored_Constrained;
 
             // if we have a boundary, we want to collapse to boundary
-            if (PreserveBoundary && HaveBoundary) {
+            if (PreserveBoundaryShape && HaveBoundary) {
                 if (collapse_to != -1) {
                     if (( IsBoundaryV(b) && collapse_to != b) ||
                          ( IsBoundaryV(a) && collapse_to != a))

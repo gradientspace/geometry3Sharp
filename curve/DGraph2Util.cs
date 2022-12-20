@@ -14,7 +14,7 @@ namespace g3
     {
 
 
-        public struct Curves
+        public class Curves
         {
             public List<Polygon2d> Loops;
             public List<PolyLine2d> Paths;
@@ -76,16 +76,24 @@ namespace g3
 
                     PolyLine2d path = new PolyLine2d();
                     path.AppendVertex(graph.GetVertex(vid));
+                    bool is_loop = false;
                     while (true) {
                         used.Add(eid);
                         Index2i next = NextEdgeAndVtx(eid, vid, graph);
                         eid = next.a;
                         vid = next.b;
+                        if ( vid == start_vid ) {
+                            is_loop = true;
+                            break;
+                        }
                         path.AppendVertex(graph.GetVertex(vid));
                         if (eid == int.MaxValue || junctions.Contains(vid))
-                            break;  // done!
+                            break;
                     }
-                    c.Paths.Add(path);
+                    if (is_loop)
+                        c.Loops.Add(new Polygon2d(path.Vertices));
+                    else
+                        c.Paths.Add(path);
                 }
 
             }
@@ -117,10 +125,148 @@ namespace g3
                 c.Loops.Add(poly);
             }
 
-
             return c;
         }
 
+
+
+
+
+        /// <summary>
+        /// merge members of c.Paths that have unique endpoint pairings.
+        /// Does *not* extract closed loops that contain junction vertices,
+        /// unless the 'other' end of those junctions is dangling.
+        /// Also, horribly innefficient!
+        /// </summary>
+        public static void ChainOpenPaths(Curves c, double epsilon = MathUtil.Epsilon)
+        {
+            List<PolyLine2d> to_process = new List<PolyLine2d>(c.Paths);
+            c.Paths = new List<PolyLine2d>();
+
+            // first we separate out 'dangling' curves that have no match on at least one side
+            List<PolyLine2d> dangling = new List<PolyLine2d>();
+            List<PolyLine2d> remaining = new List<PolyLine2d>();
+
+            bool bContinue = true;
+            while (bContinue && to_process.Count > 0) {
+                bContinue = false;
+                foreach (PolyLine2d p in to_process) {
+                    var matches_start = find_connected_start(p, to_process, epsilon);
+                    var matches_end = find_connected_end(p, to_process, epsilon);
+                    if (matches_start.Count == 0 || matches_end.Count == 0) {
+                        dangling.Add(p);
+                        bContinue = true;
+                    } else
+                        remaining.Add(p);
+                }
+                to_process.Clear(); to_process.AddRange(remaining); remaining.Clear();
+            }
+
+            //to_process.Clear(); to_process.AddRange(remaining); remaining.Clear();
+
+            // now incrementally merge together unique matches
+            // [TODO] this will not match across junctions!
+            bContinue = true;
+            while (bContinue && to_process.Count > 0) {
+                bContinue = false;
+                restart_itr:
+                foreach (PolyLine2d p in to_process) {
+                    var matches_start = find_connected_start(p, to_process, epsilon);
+                    var matches_end = find_connected_end(p, to_process, 2*epsilon);
+                    if (matches_start.Count == 1 && matches_end.Count == 1 &&
+                         matches_start[0] == matches_end[0]) {
+                        c.Loops.Add(to_loop(p, matches_start[0], epsilon));
+                        to_process.Remove(p);
+                        to_process.Remove(matches_start[0]);
+                        remaining.Remove(matches_start[0]);
+                        bContinue = true;
+                        goto restart_itr;
+                    } else if (matches_start.Count == 1 && matches_end.Count < 2) {
+                        remaining.Add(merge_paths(matches_start[0], p, 2*epsilon));
+                        to_process.Remove(p);
+                        to_process.Remove(matches_start[0]);
+                        remaining.Remove(matches_start[0]);
+                        bContinue = true;
+                        goto restart_itr;
+                    } else if (matches_end.Count == 1 && matches_start.Count < 2) {
+                        remaining.Add(merge_paths(p, matches_end[0], 2*epsilon));
+                        to_process.Remove(p);
+                        to_process.Remove(matches_end[0]);
+                        remaining.Remove(matches_end[0]);
+                        bContinue = true;
+                        goto restart_itr;
+                    } else {
+                        remaining.Add(p);
+                    }
+                }
+                to_process.Clear(); to_process.AddRange(remaining); remaining.Clear();
+            }
+
+            c.Paths.AddRange(to_process);
+
+            // [TODO] now that we have found all loops, we can chain in dangling curves
+
+            c.Paths.AddRange(dangling);
+
+        }
+
+
+
+
+
+        static List<PolyLine2d> find_connected_start(PolyLine2d pTest, List<PolyLine2d> potential, double eps = MathUtil.Epsilon)
+        {
+            List<PolyLine2d> result = new List<PolyLine2d>();
+            foreach ( var p in potential ) {
+                if (pTest == p)
+                    continue;
+                if (pTest.Start.Distance(p.Start) < eps ||
+                     pTest.Start.Distance(p.End) < eps)
+                    result.Add(p);
+            }
+            return result;
+        }
+        static List<PolyLine2d> find_connected_end(PolyLine2d pTest, List<PolyLine2d> potential, double eps = MathUtil.Epsilon)
+        {
+            List<PolyLine2d> result = new List<PolyLine2d>();
+            foreach (var p in potential) {
+                if (pTest == p)
+                    continue;
+                if ( pTest.End.Distance(p.Start) < eps ||
+                     pTest.End.Distance(p.End) < eps)
+                    result.Add(p);
+            }
+            return result;
+        }
+        static Polygon2d to_loop(PolyLine2d p1, PolyLine2d p2, double eps = MathUtil.Epsilon)
+        {
+            Polygon2d p = new Polygon2d(p1.Vertices);
+            if (p1.End.Distance(p2.Start) > eps)
+                p2.Reverse();
+            p.AppendVertices(p2);
+            return p;               
+        }
+        static PolyLine2d merge_paths(PolyLine2d p1, PolyLine2d p2, double eps = MathUtil.Epsilon)
+        {
+            PolyLine2d pNew;
+            if (p1.End.Distance(p2.Start) < eps) {
+                pNew = new PolyLine2d(p1);
+                pNew.AppendVertices(p2);
+            } else if (p1.End.Distance(p2.End) < eps) {
+                pNew = new PolyLine2d(p1);
+                p2.Reverse();
+                pNew.AppendVertices(p2);
+            } else if (p1.Start.Distance(p2.Start) < eps) {
+                p2.Reverse();
+                pNew = new PolyLine2d(p2);
+                pNew.AppendVertices(p1);
+            } else if (p1.Start.Distance(p2.End) < eps) {
+                pNew = new PolyLine2d(p2);
+                pNew.AppendVertices(p1);
+            } else
+                throw new Exception("shit");
+            return pNew;
+        }
 
 
 

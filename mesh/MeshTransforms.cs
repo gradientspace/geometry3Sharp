@@ -37,6 +37,12 @@ namespace g3
             f.Origin = (Vector3f)Rotate(f.Origin, origin, rotation);
             return f;
         }
+        public static Frame3f Rotate(Frame3f f, Vector3d origin, Quaterniond rotation)
+        {
+            f.Rotate((Quaternionf)rotation);
+            f.Origin = (Vector3f)Rotate(f.Origin, origin, rotation);
+            return f;
+        }
         public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaternionf rotation)
         {
             int NV = mesh.MaxVertexID;
@@ -57,33 +63,42 @@ namespace g3
         }
         public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaterniond rotation)
         {
+            bool bHasNormals = mesh.HasVertexNormals;
             int NV = mesh.MaxVertexID;
             for (int vid = 0; vid < NV; ++vid) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d v = rotation * (mesh.GetVertex(vid) - origin) + origin;
                     mesh.SetVertex(vid, v);
+                    if ( bHasNormals )
+                        mesh.SetVertexNormal(vid, (Vector3f)(rotation * mesh.GetVertexNormal(vid)) );
                 }
             }
         }
 
 
-        public static void Scale(IDeformableMesh mesh, double sx, double sy, double sz)
+        public static void Scale(IDeformableMesh mesh, Vector3d scale, Vector3d origin)
         {
             int NV = mesh.MaxVertexID;
-            for ( int vid = 0; vid < NV; ++vid ) {
+            for (int vid = 0; vid < NV; ++vid) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d v = mesh.GetVertex(vid);
-                    v.x *= sx; v.y *= sy; v.z *= sz;
+                    v.x -= origin.x; v.y -= origin.y; v.z -= origin.z;
+                    v.x *= scale.x; v.y *= scale.y; v.z *= scale.z;
+                    v.x += origin.x; v.y += origin.y; v.z += origin.z;
                     mesh.SetVertex(vid, v);
                 }
             }
+        }
+        public static void Scale(IDeformableMesh mesh, double sx, double sy, double sz)
+        {
+            Scale(mesh, new Vector3d(sx, sy, sz), Vector3d.Zero);
         }
         public static void Scale(IDeformableMesh mesh, double s)
         {
             Scale(mesh, s, s, s);
         }
 
-
+        ///<summary>Map mesh *into* local coordinates of Frame </summary>
         public static void ToFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
@@ -91,16 +106,18 @@ namespace g3
             for ( int vid = 0; vid < NV; ++vid ) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d v = mesh.GetVertex(vid);
-                    Vector3d vf = f.ToFrameP((Vector3f)v);
+                    Vector3d vf = f.ToFrameP(ref v);
                     mesh.SetVertex(vid, vf);
                     if ( bHasNormals ) {
                         Vector3f n = mesh.GetVertexNormal(vid);
-                        Vector3f nf = f.ToFrameV(n);
+                        Vector3f nf = f.ToFrameV(ref n);
                         mesh.SetVertexNormal(vid, nf);
                     }
                 }
             }
         }
+
+        /// <summary> Map mesh *from* local frame coordinates into "world" coordinates </summary>
         public static void FromFrame(IDeformableMesh mesh, Frame3f f)
         {
             int NV = mesh.MaxVertexID;
@@ -108,11 +125,11 @@ namespace g3
             for ( int vid = 0; vid < NV; ++vid ) {
                 if (mesh.IsVertex(vid)) {
                     Vector3d vf = mesh.GetVertex(vid);
-                    Vector3d v = f.FromFrameP((Vector3f)vf);
+                    Vector3d v = f.FromFrameP(ref vf);
                     mesh.SetVertex(vid, v);
                     if ( bHasNormals ) {
                         Vector3f n = mesh.GetVertexNormal(vid);
-                        Vector3f nf = f.FromFrameV(n);
+                        Vector3f nf = f.FromFrameV(ref n);
                         mesh.SetVertexNormal(vid, nf);
                     }
                 }
@@ -269,6 +286,45 @@ namespace g3
 
 
         /// <summary>
+        /// Apply TransformF to vertices and normals of mesh
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh mesh, Func<Vector3d, Vector3f, Vector3dTuple2> TransformF)
+        {
+            int NV = mesh.MaxVertexID;
+            for (int vid = 0; vid < NV; ++vid) {
+                if (mesh.IsVertex(vid)) {
+                    Vector3dTuple2 newPN = TransformF(mesh.GetVertex(vid), mesh.GetVertexNormal(vid));
+                    mesh.SetVertex(vid, newPN.V0);
+                    mesh.SetVertexNormal(vid, (Vector3f)newPN.V1);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Apply Transform to vertices and normals of mesh
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh mesh, TransformSequence xform)
+        {
+            int NV = mesh.MaxVertexID;
+            if (mesh.HasVertexNormals) {
+                for (int vid = 0; vid < NV; ++vid) {
+                    if (mesh.IsVertex(vid)) {
+                        mesh.SetVertex(vid, xform.TransformP(mesh.GetVertex(vid)));
+                        mesh.SetVertexNormal(vid, (Vector3f)xform.TransformV(mesh.GetVertexNormal(vid)));
+                    }
+                }
+            } else {
+                for (int vid = 0; vid < NV; ++vid) {
+                    if (mesh.IsVertex(vid)) 
+                        mesh.SetVertex(vid, xform.TransformP(mesh.GetVertex(vid)));
+                }
+            }
+        }
+
+
+
+        /// <summary>
         /// Apply TransformF to subset of vertices of mesh
         /// </summary>
         public static void PerVertexTransform(IDeformableMesh mesh, IEnumerable<int> vertices, Func<Vector3d, int, Vector3d> TransformF)
@@ -294,6 +350,23 @@ namespace g3
                 }
             }
         }
+
+
+        /// <summary>
+        /// Apply TransformF to subset of mesh vertices defined by MapV[vertices] 
+        /// </summary>
+        public static void PerVertexTransform(IDeformableMesh targetMesh, IDeformableMesh sourceMesh, int[] mapV, Func<Vector3d, int, int, Vector3d> TransformF)
+        {
+            foreach (int vid in sourceMesh.VertexIndices()) {
+                int map_vid = mapV[vid];
+                if (targetMesh.IsVertex(map_vid)) {
+                    Vector3d newPos = TransformF(targetMesh.GetVertex(map_vid), vid, map_vid);
+                    targetMesh.SetVertex(map_vid, newPos);
+                }
+            }
+        }
+
+
 
     }
 }

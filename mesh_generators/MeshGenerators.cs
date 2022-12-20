@@ -41,17 +41,19 @@ namespace g3
         public virtual void MakeMesh(DMesh3 m)
         {
             int nV = vertices.Count;
-            if (WantNormals)
+            bool bWantNormals = WantNormals && normals != null && normals.Count == vertices.Count;
+            if (bWantNormals)
                 m.EnableVertexNormals(Vector3f.AxisY);
-            if (WantUVs)
+            bool bWantUVs = WantUVs && uv != null && uv.Count == vertices.Count;
+            if (bWantUVs)
                 m.EnableVertexUVs(Vector2f.Zero);
             for (int i = 0; i < nV; ++i) {
 				NewVertexInfo ni = new NewVertexInfo() { v = vertices[i] };
-				if ( WantNormals ) {
+				if (bWantNormals) {
 					ni.bHaveN = true; 
 					ni.n = normals[i];
 				}
-				if ( WantUVs ) {
+				if (bWantUVs) {
 					ni.bHaveUV = true;
 					ni.uv = uv[i];
 				}
@@ -293,6 +295,8 @@ namespace g3
                 m.uv = ToUnityVector2(uv);
             if (normals != null && WantNormals)
                 m.normals = ToUnityVector3(normals, bFlipLR);
+            if ( m.vertexCount > 64000 ||  triangles.Count > 64000 )
+                m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             m.triangles = triangles.array;
             if (bRecalcNormals)
                 m.RecalculateNormals();

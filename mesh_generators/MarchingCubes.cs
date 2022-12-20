@@ -19,27 +19,51 @@ namespace g3
     /// </summary>
     public class MarchingCubes
     {
-        // this is the function we will evaluate
+        /// <summary>
+        /// this is the function we will evaluate
+        /// </summary>
         public ImplicitFunction3d Implicit;
 
-        // mesh surface will be at this isovalue. Normally 0 unless you want
-        // offset surface or field is not a distance-field.
+        /// <summary>
+        /// mesh surface will be at this isovalue. Normally 0 unless you want
+        /// offset surface or field is not a distance-field.
+        /// </summary>
         public double IsoValue = 0;
 
-        // bounding-box we will mesh inside of. We use the min-corner and
-        // the width/height/depth, but do not clamp vertices to stay within max-corner,
-        // we may spill one cell over
+        /// <summary> bounding-box we will mesh inside of. We use the min-corner and
+        /// the width/height/depth, but do not clamp vertices to stay within max-corner,
+        /// we may spill one cell over </summary>
         public AxisAlignedBox3d Bounds;
 
-        // Length of edges of cubes that are marching.
-        // currently, # of cells along axis = (int)(bounds_dimension / CellSize) + 1
+        /// <summary>
+        /// Length of edges of cubes that are marching.
+        /// currently, # of cells along axis = (int)(bounds_dimension / CellSize) + 1
+        /// </summary>
         public double CubeSize = 0.1;
 
-        // Use multi-threading? Generally a good idea unless problem is very small or
-        // you are multi-threading at a higher level (which may be more efficient as
-        // we currently use very fine-grained spinlocks to synchronize)
+        /// <summary>
+        /// Use multi-threading? Generally a good idea unless problem is very small or
+        /// you are multi-threading at a higher level (which may be more efficient as
+        /// we currently use very fine-grained spinlocks to synchronize)
+        /// </summary>
         public bool ParallelCompute = true;
 
+
+        public enum RootfindingModes { SingleLerp, LerpSteps, Bisection }
+
+        /// <summary>
+        /// Which rootfinding method will be used to converge on surface along edges
+        /// </summary>
+        public RootfindingModes RootMode = RootfindingModes.SingleLerp;
+
+        /// <summary>
+        /// number of iterations of rootfinding method (ignored for SingleLerp)
+        /// </summary>
+        public int RootModeSteps = 5;
+
+
+        /// <summary> if this function returns true, we should abort calculation </summary>
+        public Func<bool> CancelF = () => { return false; };
 
         /*
          * Outputs
@@ -187,6 +211,8 @@ namespace g3
                 GridCell cell = new GridCell();
                 Vector3d[] vertlist = new Vector3d[12];
                 for (int yi = 0; yi < CellDimensions.y; ++yi) {
+                    if (CancelF())
+                        return;
                     // compute full cell at x=0, then slide along x row, which saves half of value computes
                     Vector3i idx = new Vector3i(0, yi, zi);
                     initialize_cell(cell, ref idx);
@@ -215,6 +241,8 @@ namespace g3
 
             for (int zi = 0; zi < CellDimensions.z; ++zi) {
                 for (int yi = 0; yi < CellDimensions.y; ++yi) {
+                    if (CancelF())
+                        return;
                     // compute full cell at x=0, then slide along x row, which saves half of value computes
                     Vector3i idx = new Vector3i(0, yi, zi);
                     initialize_cell(cell, ref idx);
@@ -354,7 +382,7 @@ namespace g3
 
 
         /// <summary>
-        /// estimate intersection along edge from f(p1)=valp1 to f(p2)=valp2, using linear interpolation
+        /// root-find the intersection along edge from f(p1)=valp1 to f(p2)=valp2
         /// </summary>
         void find_iso(ref Vector3d p1, ref Vector3d p2, double valp1, double valp2, ref Vector3d pIso)
         {
@@ -381,18 +409,51 @@ namespace g3
 
             // [RMS] if we don't maintain min/max order here, then numerical error means
             //   that hashing on point x/y/z doesn't work
-            if (valp1 < valp2) {
-                double mu = (IsoValue - valp1) / (valp2 - valp1);
-                pIso.x = p1.x + mu * (p2.x - p1.x);
-                pIso.y = p1.y + mu * (p2.y - p1.y);
-                pIso.z = p1.z + mu * (p2.z - p1.z);
+            Vector3d a = p1, b = p2;
+            double fa = valp1, fb = valp2;
+            if (valp2 < valp1) {
+                a = p2; b = p1;
+                fb = valp1; fa = valp2;
+            }
+
+            // converge on root
+            if (RootMode == RootfindingModes.Bisection) {
+                for (int k = 0; k < RootModeSteps; ++k) {
+                    pIso.x = (a.x + b.x) * 0.5; pIso.y = (a.y + b.y) * 0.5; pIso.z = (a.z + b.z) * 0.5;
+                    double mid_f = Implicit.Value(ref pIso);
+                    if (mid_f < IsoValue) {
+                        a = pIso; fa = mid_f;
+                    } else {
+                        b = pIso; fb = mid_f;
+                    }
+                }
+                pIso = Vector3d.Lerp(a, b, 0.5);
+
             } else {
-                double mu = (IsoValue - valp2) / (valp1 - valp2);
-                pIso.x = p2.x + mu * (p1.x - p2.x);
-                pIso.y = p2.y + mu * (p1.y - p2.y);
-                pIso.z = p2.z + mu * (p1.z - p2.z);
+                double mu = 0;
+                if (RootMode == RootfindingModes.LerpSteps) {
+                    for (int k = 0; k < RootModeSteps; ++k) {
+                        mu = (IsoValue - fa) / (fb - fa);
+                        pIso.x = a.x + mu * (b.x - a.x);
+                        pIso.y = a.y + mu * (b.y - a.y);
+                        pIso.z = a.z + mu * (b.z - a.z);
+                        double mid_f = Implicit.Value(ref pIso);
+                        if (mid_f < IsoValue) {
+                            a = pIso; fa = mid_f;
+                        } else {
+                            b = pIso; fb = mid_f;
+                        }
+                    }
+                }
+
+                // final lerp
+                mu = (IsoValue - fa) / (fb - fa);
+                pIso.x = a.x + mu * (b.x - a.x);
+                pIso.y = a.y + mu * (b.y - a.y);
+                pIso.z = a.z + mu * (b.z - a.z);
             }
         }
+
 
 
 

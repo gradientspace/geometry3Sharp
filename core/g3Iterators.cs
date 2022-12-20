@@ -93,5 +93,63 @@ namespace g3
     }
 
 
+    
+
+    /// <summary>
+    /// IList wrapper for an Interval1i, ie sequential list of integers
+    /// </summary>
+    public struct IntSequence : IList<int>
+    {
+        Interval1i range;
+
+        public IntSequence(Interval1i ival) {
+            range = ival;
+        }
+        public IntSequence(int iStart, int iEnd) {
+            range = new Interval1i(iStart, iEnd);
+        }
+
+        /// <summary> construct interval [0, N-1] </summary>
+        static public IntSequence Range(int N) { return new IntSequence(0, N - 1); }
+
+        /// <summary> construct interval [0, N-1] </summary>
+        static public IntSequence RangeInclusive(int N) { return new IntSequence(0, N); }
+
+        /// <summary> construct interval [start, start+N-1] </summary>
+        static public IntSequence Range(int start, int N) { return new IntSequence(start, start + N - 1); }
+
+
+        /// <summary> construct interval [a, b] </summary>
+        static public IntSequence FromToInclusive(int a, int b) { return new IntSequence(a, b); }
+
+        public int this[int index] {
+            get { return range.a + index; }
+            set { throw new NotImplementedException(); }
+        }
+        public int Count { get { return range.Length+1; } }
+        public bool IsReadOnly { get { return true; } }
+
+        public void Add(int item) { throw new NotImplementedException(); }
+        public void Clear() { throw new NotImplementedException(); }
+        public void Insert(int index, int item) { throw new NotImplementedException(); }
+        public bool Remove(int item) { throw new NotImplementedException(); }
+        public void RemoveAt(int index) { throw new NotImplementedException(); }
+
+        // could be implemented...
+        public bool Contains(int item) { return range.Contains(item); }
+        public int IndexOf(int item) { throw new NotImplementedException(); }
+        public void CopyTo(int[] array, int arrayIndex) { throw new NotImplementedException(); }
+
+        public IEnumerator<int> GetEnumerator() {
+            return range.GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
+        }
+    }
+
+
+
+
 
 }

@@ -1,14 +1,28 @@
+# A Short Note about the future of geometry3Sharp
+
+I have not been able to work on or maintain geometry3Sharp for the past few years, due to some restrictive employment-contract terms. Various forks now exist that have active maintainers, and I would recommend you consider switching to one of those. In particular I would recommend the geometry4Sharp fork being developed by New Wheel Technology (_who also does C# development consulting, if you are looking for that_):
+
+https://github.com/NewWheelTech/geometry4Sharp
+
 # geometry3Sharp
 
 Open-Source (Boost-license) C# library for geometric computing. 
 
-geometry3Sharp only uses C# language features available in .NET 3.5, so it works with the Mono C# runtime used in Unity 5.x (*NOTE: you must configure Unity for this to work, see note at bottom of this file*). 
+geometry3Sharp is compatible with Unity. Set the G3_USING_UNITY Scripting Define and you will have transparent interop between g3 and Unity vector types (*see details at the very bottom of this README*). Although the library is written for C# 4.5, if you are using the .NET 3.5 Unity runtime, it will still work, just with a few missing features.
 
 Currently there is a small amount of unsafe code, however this code is only used in a few fast-buffer-copy routines, which can be deleted if you need a safe version (eg for Unity web player).
 
 [A Nuget Package is available](https://www.nuget.org/packages/geometry3Sharp). This package is updated roughly monthly from the github master branch. So, it's "more" stable. Currently this package includes .NET 4.5 and .NET Standard 2.0 dlls. If you would like others, please email and they can be added.
 
 Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradientspace](http://www.gradientspace.com)
+
+# Projects using g3Sharp
+
+* [Gradientspace Cotangent](https://www.cotangent.io/) - 3D printing and Mesh Repair/Modeling Tool
+* [Nia Technologies NiaFit](https://niatech.org/technology/niafit/) - 3D-printed prosthetic and orthotic design
+* [OrthoVR Project](https://orthovrproject.org/) - 3D-printed lower-leg prosthetic design in VR
+* [Archform](https://www.archform.co/) - Clear Dental Aligner design/planning app
+* [Your Project Here?](rms@gradientspace.com) - *we are very excited to hear about your project!*
 
 
 # Credits
@@ -23,10 +37,14 @@ The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](h
 
 Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 
-- [Creating meshes, Mesh File I/O, Ray/Mesh Intersection and Nearest-Point](http://www.gradientspace.com/tutorials/2017/7/20/basic-mesh-creation-with-g3sharp)
-- [Mesh Simplification with Reducer class](http://www.gradientspace.com/tutorials/2017/8/30/mesh-simplification)
-- [Voxelization/Signed Distance Fields and Marching Cubes Remeshing](http://www.gradientspace.com/tutorials/2017/11/21/signed-distance-fields-tutorial)
-
+- [Creating meshes, Mesh File I/O, Ray/Mesh Intersection and Nearest-Point](http://www.gradientspace.com/tutorials/2017/7/20/basic-mesh-creation-with-g3sharp) - Explains DMesh3 basics, StandardMeshReader, DMeshAABBTree3 ray and point queries and custom traversals
+- [Mesh Simplification with Reducer class](http://www.gradientspace.com/tutorials/2017/8/30/mesh-simplification) - Reducer class, DMesh3.CheckValidity, MeshConstraints
+- [Remeshing and Mesh Constraints](http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints) - Remesher class, projection targets, MeshConstraints, Unity remeshing animations
+- [Voxelization/Signed Distance Fields and Marching Cubes Remeshing](http://www.gradientspace.com/tutorials/2017/11/21/signed-distance-fields-tutorial) - MeshSignedDistanceGrid, MarchingCubes, DenseGridTrilinearImplicit, generating 3D lattices
+- [3D Bitmaps, Minecraft Cubes, and Mesh Winding Numbers](http://www.gradientspace.com/tutorials/2017/12/14/3d-bitmaps-and-minecraft-meshes) - Bitmap3, VoxelSurfaceGenerator, DMeshAABBTree3 Mesh Winding Number, 
+- [Implicit Surface Modeling](http://www.gradientspace.com/tutorials/2018/2/20/implicit-surface-modeling) - Implicit primitives, voxel/levelset/functional booleans, offsets, and blending, lattice/lightweighting demo
+- [DMesh3: A Dynamic Indexed Triangle Mesh](http://www.gradientspace.com/tutorials/dmesh3) - deep dive into the DMesh3 class's internal data structures and operations
+- [Surfacing Point Sets with Fast Winding Numbers](http://www.gradientspace.com/tutorials/2018/9/14/point-set-fast-winding) - tutorial on the Fast Mesh/PointSet Winding Number, and how to use the g3Sharp implementation
 
 
 # Main Classes
@@ -47,6 +65,13 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 - **IndexPriorityQueue**: min-heap priority queue for dense situations (ie small or large number of items in queue)
 - **DijkstraGraphDistance**: compute shortest-path distances between nodes in graph, from seed points. Graph is defined externally by iterators and Func's, so this class can easily be applied to many situations.
 - **SmallListSet**: efficient allocation of a large number of small lists, with initial fixed-size buffer and "spilling" into linked list.
+- **BufferUtil**: utilities for working with arrays. Math on float/double arrays, automatic conversions, byte[] conversions, compression
+- **FileSystemUtils**: utilities for filesystem stuff
+- *g3Iterators*: IEnumerable utils **ConstantItr**, **RemapItr**, IList hacks **MappedList**, **IntSequence**
+- **HashUtil**: **HashBuilder** util for constructing FNV hashes of g3 types
+- **MemoryPool**: basic object pool
+- *ProfileUtil*: code profiling utility **LocalProfiler** supports multiple timers, accumulating, etc
+- *SafeCollections*: **SafeListBuilder** multi-threaded List construction and operator-apply
 
 ## Math
 
@@ -164,6 +189,10 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 	 - vertices can be pinned to fixed positions
 	 - vertices can be constrained to an IProjectionTarget - eg 3D polylines, smooth curves, surfaces, etc
     - **MeshConstraintUtil** constructs common constraint situations
+- **RemesherPro**: extension of Remesher that can remesh much more quickly
+    - FastestRemesh() uses active-set queue to converge, instead of fixed full-mesh passes
+    - SharpEdgeReprojectionRemesh() tries to remesh while aligning triangle face normals to the projection target, in an attempt to preserve sharp edges
+    - FastSplitIteration() quickly splits edges to increase available vertex resolution
 - **RegionRemesher**: applies *Remesher* to sub-region of a *DMesh3*, via *DSubmesh3*
     - boundary of sub-region automatically preserved
     - *BackPropropagate()* function integrates submesh back into input mesh
@@ -202,8 +231,10 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
     - **TubeGenerator**: polygon swept along polyline
     - **Curve3Axis3RevolveGenerator**: 3D polyline revolved around 3D axis
     - **Curve3Curve3RevolveGenerator**: 3D polyline revolved around 3D polyline (!)
+    - **TriangulatedPolygonGenerator**: triangulate 2D polygon-with-holes
     - **VoxelSurfaceGenerator**: generates minecraft-y voxel mesh surface
     - **MarchingCubes**: multi-threaded triangulation of implicit functions / scalar fields
+    - **MarchingCubesPro**: continuation-method approach to marching cubes that explores isosurface from seed points (more efficient but may miss things if seed points are insufficient)
     
 
 ## Mesh Selections
@@ -230,24 +261,44 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 - **MeshExtrudeMesh**: extrude all faces of mesh and stitch boundaries w/ triangle strips
 - **MeshICP**: basic iterative-closest-point alignment to target surface
 - **MeshInsertUVPolyCurve**: insert a 2D polyline (optionally closed) into a 2D mesh
+- **MeshInsertPolygon**: insert a 2D polygon-with-holes into a 2D mesh and return set of triangles "inside" polygon
+- **MeshInsertProjectedPolygon**: variant of MeshInsertPolygon that inserts 2D polygon onto 3D mesh surface via projection plane
 - **MeshIterativeSmooth**: standard iterative vertex-laplacian smoothing with uniform, cotan, mean-value weights
 - **MeshLocalParam**: calculate Discrete Exponential Map uv-coords around a point on mesh
 - **MeshLoopClosure**: cap open region of mesh with a plane
 - **MeshLoopSmooth**: smooth an embedded *EdgeLoop* of a mesh
 - **MeshPlaneCut**: cut a mesh with a plane, return new **EdgeLoop**s and **EdgeSpans**, and optionally fill holes
 - **RegionOperator**: support class that makes it easy to extract a submesh and safely re-integrate it back into base mesh. IE like RegionRemesher, but you can do arbitrary changes to the submesh (as long as you preserve boundary).
-- **SimpleHoleFiller**: topological filling of an open boundary edge loop. No attempt to preserve shape whatsoever!
+- **MeshStitchLoops**: Stitch together two edge loops without any constraint that they have the same vertex count
+- **MeshTrimLoop**: trim mesh with 3D polyline curve lying on mesh faces (approximately)
 - **MeshIsoCurve**: compute piecewise-linear iso-curves of a function on a mesh, as a **DGraph3**
+- **MeshTopology**: Extract mesh sharp-edge-path topology based on crease angle
+- **MeshAssembly**: Decompose mesh into submeshes based on connected solids and open patches
+- **MeshSpatialSort**: sorts set of mesh components into "solids" (each solid is outer mesh and contained cavity meshes)
+- **MeshMeshCut**: Cut one mesh with another, and optionally remove contained regions
+- **MeshBoolean**: Apply **MeshMeshCut** to each of a pair of meshes, and then try to resample cut boundaries so they have same vertices. **This is not a robust mesh boolean!**
+- **SimpleHoleFiller**: topological filling of an open boundary edge loop. No attempt to preserve shape whatsoever!
+- **SmoothedHoleFill**: fill hole in mesh smoothly, ie with (approximate) boundary tangent continuity
+- **MinimalHoleFill**: construct "minimal" fill that is often developable (recovers sharp edges well)
+- **PlanarHoleFiller**: fill planar holes in mesh by mapping to 2D, handles nested holes (eg from plane cut through torus)
+- **PlanarSpansFiller**: try to fill disconnected set of planar spans, by chaining them (WIP)
+- **MeshRepairOrientation**: make triangle winding order consistent across mesh connected components (if possible), and then assign global orientation via spatial sorting/nesting
+- **MergeCoincidentEdges**: weld coincident open boundary edges of mesh (more robust than weld vertices!)
+- **RemoveDuplicateTriangles**: remove duplicate triangles of mesh
+- **RemoteOccludedTriangles**: remove triangles that are "occluded" under various definitions
+- **MeshAutoRepair**: apply many of the above algorithms in an attempt to automatically "repair" an input mesh, where "repaired" means the mesh is closed and manifold.
 
 
 ## Spatial Data Structures
 
-- **DMeshAABBTree**: triangle mesh axis-aligned bounding box tree
+- **DMeshAABBTree3**: triangle mesh axis-aligned bounding box tree
 	- bottom-up construction using mesh topology to accelerate leaf node layer
 	- generic traversal interface DoTraversal(TreeTraversal)
-	- Queries for NearestTriangle(point), FindNearestHitTriangle(ray) and FindAllHitTriangles(ray)
-	- TestIntersection(triangle), TestIntersection(other_tree), FindIntersections(other_tree)
-	- IsInside(point)
+	- FindNearestTriangle(point), FindNearestHitTriangle(ray) and FindAllHitTriangles(ray), FindNearestVertex(point)
+	- FindNearestTriangles(other_tree)
+	- TestIntersection(triangle), TestIntersection(other_tree), FindAllIntersections(other_tree)
+	- IsInside(point), WindingNumber(point), FastWindingNumber(point)
+- **PointAABBTree3**: point variant of DMeshAABBTree3, with PointSet Fast Winding Number
 - **Polygon2dBoxTree**: 2D segment bbox-tree, distance query
 - **PointHashGrid2d**, **SegmentHashGrid2d**: hash tables for 2D geometry elements
 - **PointHashGrid3d**: hash tables for 3D geometry elements
@@ -256,6 +307,9 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 - **Bitmap3**: 3D dense bitmap
 - **BiGrid3**: two-level DSparseGrid3
 - **MeshSignedDistanceGrid**: 3D fast-marching construction of narrow-band level set / voxel-distance-field for mesh
+- **MeshScalarSamplingGrid**: Samples scalar function on 3D grid. Can sample full grid or narrow band around specific iso-contour
+- **MeshWindingNumberGrid**: MeshScalarSamplingGrid variant specifically for computing narrow-band Mesh Winding Number field on meshes with holes (finds narrow-band in hole regions via flood-fill)
+- **CachingMeshSDF**: variant of MeshSignedDistanceGrid that does lazy evaluation of distances (eg for use with continuation-method MarchingCubesPro)
 - **IProjectionTarget** implementations for DCurve3, DMesh3, Plane3, Circle3d, Cylinder3d, etc, for use w/ reprojection in Remesher and other algorithms
 - **IIntersectionTarget** implementations for DMesh3, transformed DMesh3, Plane3
 
@@ -302,6 +356,7 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 
 - **Cylinder3d**
 - **DenseGridTrilinearImplicit**: trilinear interpolant of 3D grid
+- **CachingDenseGridTrilinearImplicit**: variant of DenseGridTrilinearImplicit that does lazy evaluation of grid values based on an implicit function
 
 
 ## I/O    

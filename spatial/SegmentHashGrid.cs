@@ -126,6 +126,7 @@ namespace g3
         /// Find nearest segment in grid, within radius, without locking / thread-safety
         /// You must provided distF which returns distance between query_pt and the segment argument
         /// You can ignore specific segments via ignoreF lambda - return true to ignore 
+        /// Return value is pair (nearest_index,min_dist) or (invalidValue,double.MaxValue)
         /// </summary>
         public KeyValuePair<T, double> FindNearestInRadius(Vector2d query_pt, double radius, Func<T, double> distF, Func<T, bool> ignoreF = null)
         {
@@ -165,7 +166,8 @@ namespace g3
 
 
         /// <summary>
-        /// Variant of FindNearestInRadius that works with squared-distances
+        /// Variant of FindNearestInRadius that works with squared-distances.
+        /// Return value is pair (nearest_index,min_dist) or (invalidValue,double.MaxValue)
         /// </summary>
         public KeyValuePair<T, double> FindNearestInSquaredRadius(Vector2d query_pt, double radiusSqr, Func<T, double> distSqrF, Func<T, bool> ignoreF = null)
         {

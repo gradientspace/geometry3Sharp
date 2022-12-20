@@ -40,6 +40,14 @@ namespace g3
         }
 
 
+        public HashSet<int> ExtractSelected()
+        {
+            var ret = Selected;
+            Selected = new HashSet<int>();
+            return ret;
+        }
+
+
         public IEnumerator<int> GetEnumerator() {
             return Selected.GetEnumerator();
         }
@@ -110,6 +118,84 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// for each vertex of input triangle set, select vertex if all
+        /// one-ring triangles are contained in triangle set (ie vertex is not on boundary of triangle set).
+        /// </summary>
+        public void SelectInteriorVertices(MeshFaceSelection triangles)
+        {
+            HashSet<int> borderv = new HashSet<int>();
+            foreach ( int tid in triangles ) {
+                Index3i tv = Mesh.GetTriangle(tid);
+                for ( int j = 0; j < 3; ++j ) {
+                    int vid = tv[j];
+                    if (Selected.Contains(vid) || borderv.Contains(vid))
+                        continue;
+                    bool full_ring = true;
+                    foreach (int ring_tid in Mesh.VtxTrianglesItr(vid)) {
+                        if (triangles.IsSelected(ring_tid) == false) {
+                            full_ring = false;
+                            break;
+                        }
+                    }
+                    if (full_ring)
+                        add(vid);
+                    else
+                        borderv.Add(vid);
+                }
+            }
+        }
+
+
+
+
+        /// <summary>
+        /// Select set of boundary vertices connected to vSeed.
+        /// </summary>
+        public void SelectConnectedBoundaryV(int vSeed)
+        {
+            if ( ! Mesh.IsBoundaryVertex(vSeed))
+                throw new Exception("MeshConnectedComponents.FindConnectedBoundaryV: vSeed is not a boundary vertex");
+
+            HashSet<int> found = (Selected.Count == 0) ? Selected : new HashSet<int>();
+            found.Add(vSeed);
+            List<int> queue = temp; queue.Clear();
+            queue.Add(vSeed);
+            while (queue.Count > 0) {
+                int vid = queue[queue.Count - 1];
+                queue.RemoveAt(queue.Count - 1);
+                foreach (int nbrid in Mesh.VtxVerticesItr(vid)) {
+                    if (Mesh.IsBoundaryVertex(nbrid) && found.Contains(nbrid) == false) {
+                        found.Add(nbrid);
+                        queue.Add(nbrid);
+                    }
+                }
+            }
+            if ( found != Selected ) {
+                foreach (int vid in found)
+                    add(vid);
+            }
+            temp.Clear();
+        }
+
+
+
+
+        public void SelectEdgeVertices(int[] edges)
+        {
+            for (int i = 0; i < edges.Length; ++i) {
+                Index2i ev = Mesh.GetEdgeV(edges[i]);
+                add(ev.a); add(ev.b);
+            }
+        }
+        public void SelectEdgeVertices(IEnumerable<int> edges) {
+            foreach (int eid in edges) {
+                Index2i ev = Mesh.GetEdgeV(eid);
+                add(ev.a); add(ev.b);
+            }
+        }
+
+
 
         public void Deselect(int vID) {
             remove(vID);
@@ -121,6 +207,16 @@ namespace g3
         public void Deselect(IEnumerable<int> vertices) {
             foreach ( int vid in vertices )
                 remove(vid);
+        }
+        public void DeselectEdge(int eid) {
+            Index2i ev = Mesh.GetEdgeV(eid);
+            remove(ev.a); remove(ev.b);
+        }
+        public void DeselectEdges(IEnumerable<int> edges) {
+            foreach ( int eid in edges ) {
+                Index2i ev = Mesh.GetEdgeV(eid);
+                remove(ev.a); remove(ev.b);
+            }
         }
 
         public int[] ToArray()

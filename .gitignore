@@ -1,3 +1,6 @@
+# Folders
+.vs/
+
 # Compiled Object files
 *.slo
 *.lo
@@ -32,4 +35,5 @@ geometry3Sharp/obj
 geometry3Sharp.csproj.user
 bin
 obj
+.vs
 *.meta

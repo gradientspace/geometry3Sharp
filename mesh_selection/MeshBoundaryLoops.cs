@@ -25,7 +25,8 @@ namespace g3
 
         public List<EdgeSpan> Spans;       // spans are unclosed loops
         public bool SawOpenSpans = false;  // will be set to true if we find any open spans
-
+        public bool FellBackToSpansOnFailure = false;       // set to true if we had to add spans to recover from failure
+                                                            // currently this happens if we cannot extract simple loops from a loop with bowties
 
         // What should we do if we encounter open spans. Mainly a result of EdgeFilter, but can also
         // happen on meshes w/ crazy bowties
@@ -45,6 +46,10 @@ namespace g3
 
         // if enabled, only edges where this returns true are considered
         public Func<int, bool> EdgeFilterF = null;
+
+        // if we throw an exception, we will try to set FailureBowties, so that client
+        // can try repairing these vertices
+        public List<int> FailureBowties = null;
 
 
         public MeshBoundaryLoops(DMesh3 mesh, bool bAutoCompute = true)
@@ -144,6 +149,10 @@ namespace g3
 
 			Loops = new List<EdgeLoop>();
             Spans = new List<EdgeSpan>();
+
+            // early-out if we don't actually have boundaries
+            if (Mesh.CachedIsClosed)
+                return true;
 
             int NE = Mesh.MaxEdgeID;
 
@@ -309,9 +318,14 @@ namespace g3
                 } else if (bowties.Count > 0) {
                     // if we saw a bowtie vertex, we might need to break up this loop,
                     // so call extract_subloops
-                    List<EdgeLoop> subloops = extract_subloops(loop_verts, loop_edges, bowties);
-                    for (int i = 0; i < subloops.Count; ++i)
-                        Loops.Add(subloops[i]);
+                    Subloops subloops = extract_subloops(loop_verts, loop_edges, bowties);
+                    foreach ( var loop in subloops.Loops )
+                        Loops.Add(loop);
+                    if ( subloops.Spans.Count > 0 ) {
+                        FellBackToSpansOnFailure = true;
+                        foreach (var span in subloops.Spans)
+                            Spans.Add(span);
+                    }
                 } else {
                     // clean simple loop, convert to EdgeLoop instance
                     EdgeLoop loop = new EdgeLoop(Mesh);
@@ -391,6 +405,11 @@ namespace g3
 
 
 
+        struct Subloops
+        {
+            public List<EdgeLoop> Loops;
+            public List<EdgeSpan> Spans;
+        }
 
 
         // This is called when loopV contains one or more "bowtie" vertices.
@@ -402,9 +421,14 @@ namespace g3
         //
         // Currently loopE is not used, and the returned EdgeLoop objects do not have their Edges
         // arrays initialized. Perhaps to improve in future.
-        List<EdgeLoop> extract_subloops(List<int> loopV, List<int> loopE, List<int> bowties )
+        //
+        // An unhandled case to think about is where we have a sequence [..A..B..A..B..] where
+        // A and B are bowties. In this case there are no A->A or B->B subloops. What should
+        // we do here??
+        Subloops extract_subloops(List<int> loopV, List<int> loopE, List<int> bowties )
         {
-            List<EdgeLoop> subs = new List<EdgeLoop>();
+            Subloops subs = new Subloops();
+            subs.Loops = new List<EdgeLoop>(); subs.Spans = new List<EdgeSpan>();
 
             // figure out which bowties we saw are actually duplicated in loopV
             List<int> dupes = new List<int>();
@@ -415,7 +439,7 @@ namespace g3
 
             // we might not actually have any duplicates, if we got luck. Early out in that case
             if ( dupes.Count == 0 ) {
-                subs.Add(new EdgeLoop(Mesh) {
+                subs.Loops.Add(new EdgeLoop(Mesh) {
                     Vertices = loopV.ToArray(), Edges = loopE.ToArray(), BowtieVertices = bowties.ToArray()
                 });
                 return subs;
@@ -441,9 +465,29 @@ namespace g3
                         }
                     }
                 }
+
+                // failed to find a simple loop. Not sure what to do in this situation. 
+                // If we don't want to throw, all we can do is convert the remaining 
+                // loop to a span and return. 
+                // (Or should we keep it as a loop and set flag??)
                 if (bv_shortest == -1) {
-                    throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: Cannot find a valid simple loop");
+                    if (FailureBehavior == FailureBehaviors.ThrowException) {
+                        FailureBowties = dupes;
+                        throw new MeshBoundaryLoopsException("MeshBoundaryLoops.Compute: Cannot find a valid simple loop");
+                    }
+                    EdgeSpan span = new EdgeSpan(Mesh);
+                    List<int> verts = new List<int>();
+                    for (int i = 0; i < loopV.Count; ++i) {
+                        if (loopV[i] != -1)
+                            verts.Add(loopV[i]);
+                    }
+                    span.Vertices = verts.ToArray();
+                    span.Edges = EdgeSpan.VerticesToEdges(Mesh, span.Vertices);
+                    span.BowtieVertices = bowties.ToArray();
+                    subs.Spans.Add(span);
+                    return subs;
                 }
+
                 if (bv != bv_shortest) {
                     bv = bv_shortest;
                     // running again just to get start_i and end_i...
@@ -456,7 +500,7 @@ namespace g3
                 loop.Vertices = extract_span(loopV, start_i, end_i, true);
                 loop.Edges = EdgeLoop.VertexLoopToEdgeLoop(Mesh, loop.Vertices);
                 loop.BowtieVertices = bowties.ToArray();
-                subs.Add(loop);
+                subs.Loops.Add(loop);
 
                 // If there are no more duplicates of this bowtie, we can treat
                 // it like a regular vertex now
@@ -481,7 +525,7 @@ namespace g3
                 }
                 loop.Edges = EdgeLoop.VertexLoopToEdgeLoop(Mesh, loop.Vertices);
                 loop.BowtieVertices = bowties.ToArray();
-                subs.Add(loop);
+                subs.Loops.Add(loop);
             }
 
             return subs;

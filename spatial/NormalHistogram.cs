@@ -6,64 +6,75 @@ using System.Text;
 namespace g3
 {
     /// <summary>
-    /// Construct "histogram" of normals of mesh. Basically each normal is scaled up
-    /// and then rounded to int. This is not a great strategy, but it works for 
-    /// finding planes/etc.
-    /// 
-    /// [TODO] variant that bins normals based on semi-regular mesh of sphere
+    /// Construct spherical histogram of normals of mesh. 
+    /// Binning is done using a Spherical Fibonacci point set.
     /// </summary>
     public class NormalHistogram
     {
-        public DMesh3 Mesh;
+        public int Bins = 1024;
+        public SphericalFibonacciPointSet Points;
+        public double[] Counts;
 
-        public int IntScale = 256;
-        public bool UseAreaWeighting = true;
-        public Dictionary<Vector3i, double> Histogram;
+        public HashSet<int> UsedBins;
 
-
-        public NormalHistogram(DMesh3 mesh)
+        public NormalHistogram(int bins, bool bTrackUsed = false)
         {
-            Mesh = mesh;
-            Histogram = new Dictionary<Vector3i, double>();
-            build();
+            Bins = bins;
+            Points = new SphericalFibonacciPointSet(bins);
+            Counts = new double[bins];
+            if (bTrackUsed)
+                UsedBins = new HashSet<int>();
+        }
+
+        /// <summary>
+        /// legacy API
+        /// </summary>
+        public NormalHistogram(DMesh3 mesh, bool bWeightByArea = true, int bins = 1024) : this(bins)
+        {
+            CountFaceNormals(mesh, bWeightByArea);
         }
 
 
         /// <summary>
-        /// return (rounded) normal associated w/ maximum weight/area
+        /// bin and count point, and optionally normalize
+        /// </summary>
+        public void Count(Vector3d pt, double weight = 1.0, bool bIsNormalized = false) {
+            int bin = Points.NearestPoint(pt, bIsNormalized);
+            Counts[bin] += weight;
+            if (UsedBins != null)
+                UsedBins.Add(bin);
+        }
+
+        /// <summary>
+        /// Count all input mesh face normals
+        /// </summary>
+        public void CountFaceNormals(DMesh3 mesh, bool bWeightByArea = true)
+        {
+            foreach (int tid in mesh.TriangleIndices()) {
+                if (bWeightByArea) {
+                    Vector3d n, c; double area;
+                    mesh.GetTriInfo(tid, out n, out area, out c);
+                    Count(n, area, true);
+                } else {
+                    Count(mesh.GetTriNormal(tid), 1.0, true);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// return (quantized) normal associated w/ maximum weight/area
         /// </summary>
         public Vector3d FindMaxNormal()
         {
-            Vector3i maxN = Vector3i.AxisY; double maxArea = 0;
-            foreach (var pair in Histogram) {
-                if (pair.Value > maxArea) {
-                    maxArea = pair.Value;
-                    maxN = pair.Key;
-                }
+            int max_i = 0;
+            for ( int k = 1; k < Bins; ++k ) {
+                if (Counts[k] > Counts[max_i])
+                    max_i = k;
             }
-            Vector3d n = new Vector3d(maxN.x, maxN.y, maxN.z);
-            n.Normalize();
-            return n;
+            return Points[max_i];
         }
 
-
-
-
-        void build()
-        {
-            foreach (int tid in Mesh.TriangleIndices()) {
-                double w = (UseAreaWeighting) ? Mesh.GetTriArea(tid) : 1.0;
-
-                Vector3d n = Mesh.GetTriNormal(tid);
-
-                Vector3i up = new Vector3i((int)(n.x * IntScale), (int)(n.y * IntScale), (int)(n.z * IntScale));
-
-                if (Histogram.ContainsKey(up))
-                    Histogram[up] += w;
-                else
-                    Histogram[up] = w;
-            }
-        }
 
     }
 }

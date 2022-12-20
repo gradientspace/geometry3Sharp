@@ -107,5 +107,65 @@ namespace g3
             Result = IntersectionResult.NoIntersection;
             return false;
         }
+
+
+
+        /// <summary>
+        /// minimal intersection test, computes ray-t
+        /// </summary>
+        public static bool Intersects(ref Ray3d ray, ref Vector3d V0, ref Vector3d V1, ref Vector3d V2, out double rayT)
+        {
+            // Compute the offset origin, edges, and normal.
+            Vector3d diff = ray.Origin - V0;
+            Vector3d edge1 = V1 - V0;
+            Vector3d edge2 = V2 - V0;
+            Vector3d normal = edge1.Cross(ref edge2);
+
+            rayT = double.MaxValue;
+
+            // Solve Q + t*D = b1*E1 + b2*E2 (Q = kDiff, D = ray direction,
+            // E1 = kEdge1, E2 = kEdge2, N = Cross(E1,E2)) by
+            //   |Dot(D,N)|*b1 = sign(Dot(D,N))*Dot(D,Cross(Q,E2))
+            //   |Dot(D,N)|*b2 = sign(Dot(D,N))*Dot(D,Cross(E1,Q))
+            //   |Dot(D,N)|*t = -sign(Dot(D,N))*Dot(Q,N)
+            double DdN = ray.Direction.Dot(ref normal);
+            double sign;
+            if (DdN > MathUtil.ZeroTolerance) {
+                sign = 1;
+            } else if (DdN < -MathUtil.ZeroTolerance) {
+                sign = -1;
+                DdN = -DdN;
+            } else {
+                // Ray and triangle are parallel, call it a "no intersection"
+                // even if the ray does intersect.
+                return false;
+            }
+
+            Vector3d cross = diff.Cross(ref edge2);
+            double DdQxE2 = sign * ray.Direction.Dot(ref cross);
+            if (DdQxE2 >= 0) {
+                cross = edge1.Cross(ref diff);
+                double DdE1xQ = sign * ray.Direction.Dot(ref cross);
+                if (DdE1xQ >= 0) {
+                    if (DdQxE2 + DdE1xQ <= DdN) {
+                        // Line intersects triangle, check if ray does.
+                        double QdN = -sign * diff.Dot(ref normal);
+                        if (QdN >= 0) {
+                            // Ray intersects triangle.
+                            double inv = (1) / DdN;
+                            rayT = QdN * inv;
+                            return true;
+                        }
+                        // else: t < 0, no intersection
+                    }
+                    // else: b1+b2 > 1, no intersection
+                }
+                // else: b2 < 0, no intersection
+            }
+            // else: b1 < 0, no intersection
+
+            return false;
+        }
+
     }
 }

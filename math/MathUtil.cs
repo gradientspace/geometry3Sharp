@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 namespace g3
@@ -10,6 +11,7 @@ namespace g3
         public const double Deg2Rad = (Math.PI / 180.0);
         public const double Rad2Deg = (180.0 / Math.PI);
         public const double TwoPI = 2.0 * Math.PI;
+        public const double FourPI = 4.0 * Math.PI;
         public const double HalfPI = 0.5 * Math.PI;
         public const double ZeroTolerance = 1e-08;
         public const double Epsilon = 2.2204460492503131e-016;
@@ -370,12 +372,12 @@ namespace g3
         }
 
         public static float WyvillRise01(float fX) {
-            float d = 1 - fX * fX;
-            return (d >= 0) ? 1 - (d * d * d) : 0;
+            float d = MathUtil.Clamp(1.0f - fX*fX, 0.0f, 1.0f);
+            return 1 - (d * d * d);
         }
         public static double WyvillRise01(double fX) {
-            double d = 1 - fX * fX;
-            return (d >= 0) ? 1 - (d * d * d) : 0;
+            double d = MathUtil.Clamp(1.0 - fX*fX, 0.0, 1.0);
+            return 1 - (d * d * d);
         }
 
         public static float WyvillFalloff01(float fX) {
@@ -482,6 +484,19 @@ namespace g3
 			return vCross;
 		}
 
+
+        /// <summary>
+        /// aspect ratio of triangle 
+        /// </summary>
+        public static double AspectRatio(ref Vector3d v1, ref Vector3d v2, ref Vector3d v3)
+        {
+            double a = v1.Distance(ref v2), b = v2.Distance(ref v3), c = v3.Distance(ref v1);
+            double s = (a + b + c) / 2.0;
+            return (a * b * c) / (8.0 * (s - a) * (s - b) * (s - c));
+        }
+        public static double AspectRatio(Vector3d v1, Vector3d v2, Vector3d v3) {
+            return AspectRatio(ref v1, ref v2, ref v3);
+        }
 
 
 		//! fast cotangent between two normalized vectors 
@@ -626,6 +641,21 @@ namespace g3
         static readonly int[] powers_of_10 = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
         public static int PowerOf10(int n) {
             return powers_of_10[n];
+        }
+
+
+        /// <summary>
+        /// Iterate from 0 to (nMax-1) using prime-modulo, so we see every index once, but not in-order
+        /// </summary>
+        public static IEnumerable<int> ModuloIteration(int nMaxExclusive, int nPrime = 31337)
+        {
+            int i = 0;
+            bool done = false;
+            while (done == false) {
+                yield return i;
+                i = (i + nPrime) % nMaxExclusive;
+                done = (i == 0);
+            }
         }
 
 

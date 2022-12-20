@@ -157,7 +157,7 @@ namespace g3
         /// split input mesh into submeshes based on group ID
         /// **does not** separate disconnected components w/ same group ID
         /// </summary>
-        public static DMesh3[] SeparateMeshByGroups(DMesh3 mesh)
+        public static DMesh3[] SeparateMeshByGroups(DMesh3 mesh, out int[] groupIDs)
         {
             Dictionary<int, List<int>> meshes = new Dictionary<int, List<int>>();
             foreach ( int tid in mesh.TriangleIndices() ) {
@@ -167,18 +167,23 @@ namespace g3
                     tris = new List<int>();
                     meshes[gid] = tris;
                 }
-                tris.Add(gid);
+                tris.Add(tid);
             }
 
             DMesh3[] result = new DMesh3[meshes.Count];
+            groupIDs = new int[meshes.Count];
             int k = 0;
-            foreach ( var tri_list in meshes.Values) {
+            foreach ( var pair in meshes ) {
+                groupIDs[k] = pair.Key;
+                List<int> tri_list = pair.Value;
                 result[k++] = DSubmesh3.QuickSubmesh(mesh, tri_list);
             }
 
             return result;
         }
-
+        public static DMesh3[] SeparateMeshByGroups(DMesh3 mesh) {
+            int[] ids; return SeparateMeshByGroups(mesh, out ids);
+        }
 
 
     }

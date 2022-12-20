@@ -124,6 +124,18 @@ namespace g3
         }
 
 
+		public static IEnumerable<int> InteriorEdges(DMesh3 mesh)
+		{
+			int N = mesh.MaxEdgeID;
+			for (int i = 0; i < N; ++i) {
+				if (mesh.IsEdge(i)) {
+					if (mesh.IsBoundaryEdge(i) == false)
+						yield return i;
+				}
+			}
+		}
+
+
         public static IEnumerable<int> GroupBoundaryEdges(DMesh3 mesh)
         {
             int N = mesh.MaxEdgeID;

@@ -34,6 +34,11 @@ namespace g3
         Vector3d Project(Vector3d vPoint, int identifier = -1);
     }
 
+    public interface IOrientedProjectionTarget : IProjectionTarget
+    {
+        Vector3d Project(Vector3d vPoint, out Vector3d vProjectNormal, int identifier = -1);
+    }
+
     public interface IIntersectionTarget
     {
         bool HasNormal { get; }

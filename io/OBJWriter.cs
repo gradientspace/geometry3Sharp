@@ -15,6 +15,14 @@ namespace g3
 	/// </summary>
     public class OBJWriter : IMeshWriter
     {
+        // stream-opener. Override to write to something other than a file.
+        public Func<string, Stream> OpenStreamF = (sFilename) => {
+            return File.Open(sFilename, FileMode.Create);
+        };
+        public Action<Stream> CloseStreamF = (stream) => {
+            stream.Dispose();
+        };
+
         public string GroupNamePrefix = "mmGroup";   // default, compatible w/ meshmixer
         public Func<int, string> GroupNameF = null;  // use this to replace standard group names w/ your own
 
@@ -57,7 +65,7 @@ namespace g3
                 IMesh mesh = vMeshes[mi].Mesh;
 
                 if (options.ProgressFunc != null)
-                    options.ProgressFunc(mi, vMeshes.Count - 1);
+                    options.ProgressFunc(mi, vMeshes.Count);
 
                 bool bVtxColors = options.bPerVertexColors && mesh.HasVertexColors;
                 bool bNormals = options.bPerVertexNormals && mesh.HasVertexNormals;
@@ -117,6 +125,8 @@ namespace g3
                 else
 					write_triangles_flat(writer, vMeshes[mi], mapV, uvSet, mapUV, bNormals, bWriteMaterials);
 
+                if (options.ProgressFunc != null)
+                    options.ProgressFunc(mi+1, vMeshes.Count);
             }
 
 
@@ -233,61 +243,67 @@ namespace g3
 		// write .mtl file
 		IOWriteResult write_materials(List<GenericMaterial> vMaterials, WriteOptions options) 
 		{
-			StreamWriter w = new StreamWriter(options.MaterialFilePath);
-			if (w.BaseStream == null)
-				return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + options.MaterialFilePath + " for writing");
+            Stream stream = OpenStreamF(options.MaterialFilePath);
+            if (stream == null)
+                return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + options.MaterialFilePath + " for writing");
 
-			foreach ( GenericMaterial gmat in vMaterials ) {
-				if ( gmat is OBJMaterial == false )
-					continue;
-				OBJMaterial mat = gmat as OBJMaterial;
 
-				w.WriteLine("newmtl {0}", mat.name);
-				if ( mat.Ka != GenericMaterial.Invalid )
-					w.WriteLine("Ka {0} {1} {2}", mat.Ka.x, mat.Ka.y, mat.Ka.z);
-				if ( mat.Kd != GenericMaterial.Invalid)
-					w.WriteLine("Kd {0} {1} {2}", mat.Kd.x, mat.Kd.y, mat.Kd.z);
-				if ( mat.Ks != GenericMaterial.Invalid )
-					w.WriteLine("Ks {0} {1} {2}", mat.Ks.x, mat.Ks.y, mat.Ks.z);
-				if ( mat.Ke != GenericMaterial.Invalid )
-					w.WriteLine("Ke {0} {1} {2}", mat.Ke.x, mat.Ke.y, mat.Ke.z);
-				if ( mat.Tf != GenericMaterial.Invalid )
-					w.WriteLine("Tf {0} {1} {2}", mat.Tf.x, mat.Tf.y, mat.Tf.z);
-				if ( mat.d != Single.MinValue )
-					w.WriteLine("d {0}", mat.d);
-				if ( mat.Ns != Single.MinValue )
-					w.WriteLine("Ns {0}", mat.Ns);
-				if ( mat.Ni != Single.MinValue )
-					w.WriteLine("Ni {0}", mat.Ni);
-				if ( mat.sharpness != Single.MinValue )
-					w.WriteLine("sharpness {0}", mat.sharpness);
-				if ( mat.illum != -1 )
-					w.WriteLine("illum {0}", mat.illum);
+            try { 
+                StreamWriter w = new StreamWriter(stream);
 
-				if ( mat.map_Ka != null && mat.map_Ka != "" )
-					w.WriteLine("map_Ka {0}", mat.map_Ka);
-				if ( mat.map_Kd != null && mat.map_Kd != "" )
-					w.WriteLine("map_Kd {0}", mat.map_Kd);
-				if ( mat.map_Ks != null && mat.map_Ks != "" )
-					w.WriteLine("map_Ks {0}", mat.map_Ks);
-				if ( mat.map_Ke != null && mat.map_Ke != "" )
-					w.WriteLine("map_Ke {0}", mat.map_Ke);
-				if ( mat.map_d != null && mat.map_d != "" )
-					w.WriteLine("map_d {0}", mat.map_d);
-				if ( mat.map_Ns != null && mat.map_Ns != "" )
-					w.WriteLine("map_Ns {0}", mat.map_Ns);
+			    foreach ( GenericMaterial gmat in vMaterials ) {
+				    if ( gmat is OBJMaterial == false )
+					    continue;
+				    OBJMaterial mat = gmat as OBJMaterial;
+
+				    w.WriteLine("newmtl {0}", mat.name);
+				    if ( mat.Ka != GenericMaterial.Invalid )
+					    w.WriteLine("Ka {0} {1} {2}", mat.Ka.x, mat.Ka.y, mat.Ka.z);
+				    if ( mat.Kd != GenericMaterial.Invalid)
+					    w.WriteLine("Kd {0} {1} {2}", mat.Kd.x, mat.Kd.y, mat.Kd.z);
+				    if ( mat.Ks != GenericMaterial.Invalid )
+					    w.WriteLine("Ks {0} {1} {2}", mat.Ks.x, mat.Ks.y, mat.Ks.z);
+				    if ( mat.Ke != GenericMaterial.Invalid )
+					    w.WriteLine("Ke {0} {1} {2}", mat.Ke.x, mat.Ke.y, mat.Ke.z);
+				    if ( mat.Tf != GenericMaterial.Invalid )
+					    w.WriteLine("Tf {0} {1} {2}", mat.Tf.x, mat.Tf.y, mat.Tf.z);
+				    if ( mat.d != Single.MinValue )
+					    w.WriteLine("d {0}", mat.d);
+				    if ( mat.Ns != Single.MinValue )
+					    w.WriteLine("Ns {0}", mat.Ns);
+				    if ( mat.Ni != Single.MinValue )
+					    w.WriteLine("Ni {0}", mat.Ni);
+				    if ( mat.sharpness != Single.MinValue )
+					    w.WriteLine("sharpness {0}", mat.sharpness);
+				    if ( mat.illum != -1 )
+					    w.WriteLine("illum {0}", mat.illum);
+
+				    if ( mat.map_Ka != null && mat.map_Ka != "" )
+					    w.WriteLine("map_Ka {0}", mat.map_Ka);
+				    if ( mat.map_Kd != null && mat.map_Kd != "" )
+					    w.WriteLine("map_Kd {0}", mat.map_Kd);
+				    if ( mat.map_Ks != null && mat.map_Ks != "" )
+					    w.WriteLine("map_Ks {0}", mat.map_Ks);
+				    if ( mat.map_Ke != null && mat.map_Ke != "" )
+					    w.WriteLine("map_Ke {0}", mat.map_Ke);
+				    if ( mat.map_d != null && mat.map_d != "" )
+					    w.WriteLine("map_d {0}", mat.map_d);
+				    if ( mat.map_Ns != null && mat.map_Ns != "" )
+					    w.WriteLine("map_Ns {0}", mat.map_Ns);
 				
-				if ( mat.bump != null && mat.bump != "" )
-					w.WriteLine("bump {0}", mat.bump);
-				if ( mat.disp != null && mat.disp != "" )
-					w.WriteLine("disp {0}", mat.disp);				
-				if ( mat.decal != null && mat.decal != "" )
-					w.WriteLine("decal {0}", mat.decal);
-				if ( mat.refl != null && mat.refl != "" )
-					w.WriteLine("refl {0}", mat.refl);
-			}
+				    if ( mat.bump != null && mat.bump != "" )
+					    w.WriteLine("bump {0}", mat.bump);
+				    if ( mat.disp != null && mat.disp != "" )
+					    w.WriteLine("disp {0}", mat.disp);				
+				    if ( mat.decal != null && mat.decal != "" )
+					    w.WriteLine("decal {0}", mat.decal);
+				    if ( mat.refl != null && mat.refl != "" )
+					    w.WriteLine("refl {0}", mat.refl);
+			    }
 
-			w.Close();
+            } finally {
+                CloseStreamF(stream);
+            }
 
 			return IOWriteResult.Ok;
 		}

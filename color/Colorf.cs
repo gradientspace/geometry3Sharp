@@ -73,7 +73,10 @@ namespace g3
         {
             r -= o.r; g -= o.g; b -= o.b; a -= o.a;
         }
-
+        public Colorf WithAlpha(float newAlpha)
+        {
+            return new Colorf(r, g, b, newAlpha);
+        }
 
 
         public static Colorf operator -(Colorf v)
@@ -220,6 +223,12 @@ namespace g3
         static public readonly Colorf DimGrey = new Colorf(105, 105, 105, 255);
         static public readonly Colorf DarkSlateGrey = new Colorf(47,  79,  79, 255);
 
+
+
+        // default colors
+        static readonly public Colorf StandardBeige = new Colorf(0.75f, 0.75f, 0.5f);
+        static readonly public Colorf SelectionGold = new Colorf(1.0f, 0.6f, 0.05f);
+        static readonly public Colorf PivotYellow = new Colorf(1.0f, 1.0f, 0.05f);
 
 
 

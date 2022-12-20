@@ -16,17 +16,29 @@ namespace g3
         {
             public List<DCurve3> Loops;
             public List<DCurve3> Paths;
+
+            public HashSet<int> BoundaryV;
+            public HashSet<int> JunctionV;
+
+            public List<List<int>> LoopEdges;
+            public List<List<int>> PathEdges;
         }
 
 
         /// <summary>
         /// Decompose graph into simple polylines and polygons. 
         /// </summary>
-        public static Curves ExtractCurves(DGraph3 graph)
+        public static Curves ExtractCurves(DGraph3 graph,
+            bool bWantLoopIndices = false,
+            Func<int, bool> CurveOrientationF = null )
         {
             Curves c = new Curves();
             c.Loops = new List<DCurve3>();
             c.Paths = new List<DCurve3>();
+            if (bWantLoopIndices) {
+                c.LoopEdges = new List<List<int>>();
+                c.PathEdges = new List<List<int>>();
+            }
 
             HashSet<int> used = new HashSet<int>();
 
@@ -46,9 +58,13 @@ namespace g3
                 int eid = graph.GetVtxEdges(vid)[0];
                 if (used.Contains(eid))
                     continue;
+                bool reverse = (CurveOrientationF != null) ? CurveOrientationF(eid) : false;
 
                 DCurve3 path = new DCurve3() { Closed = false };
+                List<int> pathE = (bWantLoopIndices) ? new List<int>() : null;
                 path.AppendVertex(graph.GetVertex(vid));
+                if (pathE != null)
+                    pathE.Add(eid);
                 while ( true ) {
                     used.Add(eid);
                     Index2i next = NextEdgeAndVtx(eid, vid, graph);
@@ -57,12 +73,24 @@ namespace g3
                     path.AppendVertex(graph.GetVertex(vid));
                     if (boundaries.Contains(vid) || junctions.Contains(vid))
                         break;  // done!
+                    if (pathE != null)
+                        pathE.Add(eid);
                 }
+                if (reverse) 
+                    path.Reverse();
                 c.Paths.Add(path);
+
+                if ( pathE != null ) {
+                    Util.gDevAssert(pathE.Count == path.VertexCount - 1);
+                    if (reverse)
+                        pathE.Reverse();
+                    c.PathEdges.Add(pathE);
+                }
             }
 
             // ok we should be done w/ boundary verts now...
-            boundaries.Clear();
+            //boundaries.Clear();
+            c.BoundaryV = boundaries;
 
 
             foreach ( int start_vid in junctions ) {
@@ -72,8 +100,13 @@ namespace g3
                     int vid = start_vid;
                     int eid = outgoing_eid;
 
+                    bool reverse = (CurveOrientationF != null) ? CurveOrientationF(eid) : false;
+
                     DCurve3 path = new DCurve3() { Closed = false };
+                    List<int> pathE = (bWantLoopIndices) ? new List<int>() : null;
                     path.AppendVertex(graph.GetVertex(vid));
+                    if (pathE != null)
+                        pathE.Add(eid);
                     while (true) {
                         used.Add(eid);
                         Index2i next = NextEdgeAndVtx(eid, vid, graph);
@@ -82,24 +115,46 @@ namespace g3
                         path.AppendVertex(graph.GetVertex(vid));
                         if (eid == int.MaxValue || junctions.Contains(vid))
                             break;  // done!
+                        if (pathE != null)
+                            pathE.Add(eid);
                     }
 
                     // we could end up back at our start junction vertex!
                     if (vid == start_vid) {
                         path.RemoveVertex(path.VertexCount - 1);
                         path.Closed = true;
+                        if (reverse)
+                            path.Reverse();
                         c.Loops.Add(path);
+
+                        if (pathE != null) {
+                            Util.gDevAssert(pathE.Count == path.VertexCount);
+                            if (reverse)
+                                pathE.Reverse();
+                            c.LoopEdges.Add(pathE);
+                        }
+
                         // need to mark incoming edge as used...but is it valid now?
                         //Util.gDevAssert(eid != int.MaxValue);
-                        if ( eid != int.MaxValue )
+                        if (eid != int.MaxValue)
                             used.Add(eid);
 
                     } else {
+                        if (reverse)
+                            path.Reverse();
                         c.Paths.Add(path);
+
+                        if (pathE != null) {
+                            Util.gDevAssert(pathE.Count == path.VertexCount - 1);
+                            if (reverse)
+                                pathE.Reverse();
+                            c.PathEdges.Add(pathE);
+                        }
                     }
                 }
 
             }
+            c.JunctionV = junctions;
 
 
             // all that should be left are continuous loops...
@@ -111,23 +166,39 @@ namespace g3
                 Index2i ev = graph.GetEdgeV(eid);
                 int vid = ev.a;
 
+                bool reverse = (CurveOrientationF != null) ? CurveOrientationF(eid) : false;
+
                 DCurve3 poly = new DCurve3() { Closed = true };
+                List<int> polyE = (bWantLoopIndices) ? new List<int>() : null;
                 poly.AppendVertex(graph.GetVertex(vid));
+                if (polyE != null)
+                    polyE.Add(eid);
                 while (true) {
                     used.Add(eid);
                     Index2i next = NextEdgeAndVtx(eid, vid, graph);
                     eid = next.a;
                     vid = next.b;
                     poly.AppendVertex(graph.GetVertex(vid));
+                    if (polyE != null)
+                        polyE.Add(eid);
                     if (eid == int.MaxValue || junctions.Contains(vid))
                         throw new Exception("how did this happen??");
                     if (used.Contains(eid))
                         break;
                 }
                 poly.RemoveVertex(poly.VertexCount - 1);
+                if (reverse)
+                    poly.Reverse();
                 c.Loops.Add(poly);
-            }
 
+                if (polyE != null) {
+                    polyE.RemoveAt(polyE.Count - 1);
+                    Util.gDevAssert(polyE.Count == poly.VertexCount);
+                    if (reverse)
+                        polyE.Reverse();
+                    c.LoopEdges.Add(polyE);
+                }
+            }
 
             return c;
         }
@@ -209,6 +280,59 @@ namespace g3
                 }
             }
             return path;
+        }
+
+
+
+
+
+        /// <summary>
+        /// Erode inwards from open boundary vertices of graph (ie vtx with single edge).
+        /// Resulting graph is not compact (!)
+        /// </summary>
+        public static void ErodeOpenSpurs(DGraph3 graph)
+        {
+            HashSet<int> used = new HashSet<int>();     // do we need this?
+
+            // find boundary and junction vertices
+            HashSet<int> boundaries = new HashSet<int>();
+            HashSet<int> junctions = new HashSet<int>();
+            foreach (int vid in graph.VertexIndices()) {
+                if (graph.IsBoundaryVertex(vid))
+                    boundaries.Add(vid);
+                if (graph.IsJunctionVertex(vid))
+                    junctions.Add(vid);
+            }
+
+            // walk paths from boundary vertices
+            foreach (int start_vid in boundaries) {
+                if (graph.IsVertex(start_vid) == false)
+                    continue;
+
+                int vid = start_vid;
+                int eid = graph.GetVtxEdges(vid)[0];
+                if (used.Contains(eid))
+                    continue;
+
+                List<int> pathE = new List<int>();
+                if (pathE != null)
+                    pathE.Add(eid);
+                while (true) {
+                    used.Add(eid);
+                    Index2i next = NextEdgeAndVtx(eid, vid, graph);
+                    eid = next.a;
+                    vid = next.b;
+                    if (boundaries.Contains(vid) || junctions.Contains(vid))
+                        break;  // done!
+                    if (pathE != null)
+                        pathE.Add(eid);
+                }
+
+                // delete this path
+                foreach (int path_eid in pathE)
+                    graph.RemoveEdge(path_eid, true);
+            }
+
         }
 
 

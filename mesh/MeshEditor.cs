@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 
 namespace g3
@@ -24,6 +25,42 @@ namespace g3
 
 
 
+        public virtual int[] AddTriangleStrip(IList<Frame3f> frames, IList<Interval1d> spans, int group_id = -1)
+        {
+            int N = frames.Count;
+            if (N != spans.Count)
+                throw new Exception("MeshEditor.AddTriangleStrip: spans list is not the same size!");
+            int[] new_tris = new int[2*(N-1)];
+
+            int prev_a = -1, prev_b = -1;
+            int i = 0, ti = 0;
+            for (i = 0; i < N; ++i) {
+                Frame3f f = frames[i];
+                Interval1d span = spans[i];
+
+                Vector3d va = f.Origin + (float)span.a * f.Y;
+                Vector3d vb = f.Origin + (float)span.b * f.Y;
+
+                // [TODO] could compute normals here...
+
+                int a = Mesh.AppendVertex(va);
+                int b = Mesh.AppendVertex(vb);
+
+                if ( prev_a != -1 ) {
+                    new_tris[ti++] = Mesh.AppendTriangle(prev_a, b, prev_b);
+                    new_tris[ti++] = Mesh.AppendTriangle(prev_a, a, b);
+
+                }
+                prev_a = a; prev_b = b;
+            }
+
+            return new_tris;
+        }
+
+
+
+
+
         public virtual int[] AddTriangleFan_OrderedVertexLoop(int center, int[] vertex_loop, int group_id = -1)
         {
             int N = vertex_loop.Length;
@@ -36,7 +73,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -49,7 +86,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, i) == false)
-                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedVertexLoop: failed to add fan, and also falied to back out changes.");
+                        throw new Exception("MeshEditor.AddTriangleFan_OrderedVertexLoop: failed to add fan, and also falied to back out changes.");
                 }
                 return null;
         }
@@ -73,7 +110,7 @@ namespace g3
 
                 Index3i newT = new Index3i(center, b, a);
                 int new_tid = Mesh.AppendTriangle(newT, group_id);
-                if (new_tid == DMesh3.InvalidID)
+                if (new_tid < 0)
                     goto operation_failed;
 
                 new_tris[i] = new_tid;
@@ -86,7 +123,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, i-1) == false)
-                        throw new Exception("MeshConstructor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.AddTriangleFan_OrderedEdgeLoop: failed to add fan, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -119,12 +156,11 @@ namespace g3
 
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
-
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
-                    goto operation_failed;
-
                 new_tris[2 * i] = tid1;
                 new_tris[2 * i + 1] = tid2;
+
+                if (tid1 < 0 || tid2 < 0)
+                    goto operation_failed;
             }
 
             return new_tris;
@@ -133,8 +169,8 @@ namespace g3
             operation_failed:
                 // remove what we added so far
                 if (i > 0) {
-                    if (remove_triangles(new_tris, 2*(i-1)) == false)
-                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                    if (remove_triangles(new_tris, 2*i+1) == false)
+                        throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -143,15 +179,63 @@ namespace g3
 
 
 
+
+
+        /// <summary>
+        /// Trivial back-and-forth stitch between two vertex loops with same length. 
+        /// If nearest vertices of input loops would not be matched, cycles loops so
+        /// that this is the case. 
+        /// Loops must have appropriate orientation.
+        /// </summary>
+        public virtual int[] StitchVertexLoops_NearestV(int[] loop0, int[] loop1, int group_id = -1)
+        {
+            int N = loop0.Length;
+            Index2i iBestPair = Index2i.Zero;
+            double best_dist = double.MaxValue;
+            for (int i = 0; i < N; ++i) {
+                Vector3d v0 = Mesh.GetVertex(loop0[i]);
+                for (int j = 0; j < N; ++j) {
+                    double dist_sqr = v0.DistanceSquared(Mesh.GetVertex(loop1[j]));
+                    if (dist_sqr < best_dist) {
+                        best_dist = dist_sqr;
+                        iBestPair = new Index2i(i, j);
+                    }
+                }
+            }
+            if (iBestPair.a != iBestPair.b) {
+                int[] newLoop0 = new int[N];
+                int[] newLoop1 = new int[N];
+                for (int i = 0; i < N; ++i) {
+                    newLoop0[i] = loop0[(iBestPair.a + i) % N];
+                    newLoop1[i] = loop1[(iBestPair.b + i) % N];
+                }
+                return StitchLoop(newLoop0, newLoop1, group_id);
+            } else {
+                return StitchLoop(loop0, loop1, group_id);
+            }
+
+        }
+
+
+
+
+
+
         /// <summary>
         /// Stitch two sets of boundary edges that are provided as unordered pairs of edges, by
         /// adding triangulated quads between each edge pair. 
-        /// If a failure is encountered during stitching, the triangles added up to that point are removed.
+        /// If bAbortOnFailure==true and a failure is encountered during stitching, the triangles added up to that point are removed.
+        /// If bAbortOnFailure==false, failures are ignored and the returned triangle list may contain invalid values!
         /// </summary>
-        public virtual int[] StitchUnorderedEdges(List<Index2i> EdgePairs, int group_id = -1)
+        public virtual int[] StitchUnorderedEdges(List<Index2i> EdgePairs, int group_id, bool bAbortOnFailure, out bool stitch_incomplete)
         {
             int N = EdgePairs.Count;
             int[] new_tris = new int[N * 2];
+            if (bAbortOnFailure == false) {
+                for (int k = 0; k < new_tris.Length; ++k)
+                    new_tris[k] = DMesh3.InvalidID;
+            }
+            stitch_incomplete = false;
 
             int i = 0;
             for (; i < N; ++i) {
@@ -159,16 +243,20 @@ namespace g3
 
                 // look up and orient the first edge
                 Index4i edge_a = Mesh.GetEdge(edges.a);
-                if ( edge_a.d != DMesh3.InvalidID )
-                    goto operation_failed;
+                if (edge_a.d != DMesh3.InvalidID) {
+                    if (bAbortOnFailure) goto operation_failed;
+                    else { stitch_incomplete = true; continue; }
+                }
                 Index3i edge_a_tri = Mesh.GetTriangle(edge_a.c);
                 int a = edge_a.a, b = edge_a.b;
                 IndexUtil.orient_tri_edge(ref a, ref b, edge_a_tri);
 
                 // look up and orient the second edge
                 Index4i edge_b = Mesh.GetEdge(edges.b);
-                if (edge_b.d != DMesh3.InvalidID)
-                    goto operation_failed;
+                if (edge_b.d != DMesh3.InvalidID) {
+                    if (bAbortOnFailure) goto operation_failed;
+                    else { stitch_incomplete = true; continue; }
+                }
                 Index3i edge_b_tri = Mesh.GetTriangle(edge_b.c);
                 int c = edge_b.a, d = edge_b.b;
                 IndexUtil.orient_tri_edge(ref c, ref d, edge_b_tri);
@@ -182,8 +270,10 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
-                    goto operation_failed;
+                if (tid1 < 0 || tid2 < 0) {
+                    if (bAbortOnFailure) goto operation_failed;
+                    else { stitch_incomplete = true; continue; }
+                }
 
                 new_tris[2 * i] = tid1;
                 new_tris[2 * i + 1] = tid2;
@@ -195,9 +285,14 @@ namespace g3
             // remove what we added so far
             if (i > 0) {
                 if (remove_triangles(new_tris, 2 * (i - 1)) == false)
-                    throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                    throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
             }
             return null;
+        }
+        public virtual int[] StitchUnorderedEdges(List<Index2i> EdgePairs, int group_id = -1, bool bAbortOnFailure = true)
+        {
+            bool incomplete = false;
+            return StitchUnorderedEdges(EdgePairs, group_id, bAbortOnFailure, out incomplete);
         }
 
 
@@ -210,10 +305,10 @@ namespace g3
         /// vertex ordering must reslut in appropriate orientation (which is...??)
         /// [TODO] check and fail on bad orientation
         /// </summary>
-        public virtual int[] StitchSpan(int[] vspan1, int[] vspan2, int group_id = -1)
+        public virtual int[] StitchSpan(IList<int> vspan1, IList<int> vspan2, int group_id = -1)
         {
-            int N = vspan1.Length;
-            if (N != vspan2.Length)
+            int N = vspan1.Count;
+            if (N != vspan2.Count)
                 throw new Exception("MeshEditor.StitchSpan: spans are not the same length!!");
             N--;
 
@@ -232,7 +327,7 @@ namespace g3
                 int tid1 = Mesh.AppendTriangle(t1, group_id);
                 int tid2 = Mesh.AppendTriangle(t2, group_id);
 
-                if (tid1 == DMesh3.InvalidID || tid2 == DMesh3.InvalidID)
+                if (tid1 < 0 || tid2 < 0)
                     goto operation_failed;
 
                 new_tris[2 * i] = tid1;
@@ -246,7 +341,7 @@ namespace g3
                 // remove what we added so far
                 if (i > 0) {
                     if (remove_triangles(new_tris, 2*(i-1)) == false)
-                        throw new Exception("MeshConstructor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
+                        throw new Exception("MeshEditor.StitchLoop: failed to add all triangles, and also failed to back out changes.");
                 }
                 return null;
         }
@@ -260,10 +355,10 @@ namespace g3
         // [TODO] cannot back-out this operation right now
         //
         // Remove list of triangles. Values of triangles[] set to InvalidID are ignored.
-        public bool RemoveTriangles(int[] triangles, bool bRemoveIsolatedVerts)
+        public bool RemoveTriangles(IList<int> triangles, bool bRemoveIsolatedVerts)
         {
             bool bAllOK = true;
-            for (int i = 0; i < triangles.Length; ++i ) {
+            for (int i = 0; i < triangles.Count; ++i ) {
                 if (triangles[i] == DMesh3.InvalidID)
                     continue;
 
@@ -309,10 +404,61 @@ namespace g3
             return bAllOK;
         }
 
+        public static bool RemoveTriangles(DMesh3 Mesh, IList<int> triangles, bool bRemoveIsolatedVerts = true) {
+            MeshEditor editor = new MeshEditor(Mesh);
+            return editor.RemoveTriangles(triangles, bRemoveIsolatedVerts);
+        }
+        public static bool RemoveTriangles(DMesh3 Mesh, IEnumerable<int> triangles, bool bRemoveIsolatedVerts = true) {
+            MeshEditor editor = new MeshEditor(Mesh);
+            return editor.RemoveTriangles(triangles, bRemoveIsolatedVerts);
+        }
+
+
+        /// <summary>
+        /// Remove 'loner' triangles that have no connected neighbours. 
+        /// </summary>
+        public static bool RemoveIsolatedTriangles(DMesh3 mesh)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            return editor.RemoveTriangles((tid) => {
+                Index3i tnbrs = mesh.GetTriNeighbourTris(tid);
+                return (tnbrs.a == DMesh3.InvalidID && tnbrs.b == DMesh3.InvalidID && tnbrs.c == DMesh3.InvalidID);
+            }, true);
+        }
 
 
 
+        /// <summary>
+        /// Remove 'fin' triangles that have only one connected triangle.
+        /// Removing one fin can create another, by default will keep iterating
+        /// until all fins removed (in a not very efficient way!).
+        /// Pass bRepeatToConvergence=false to only do one pass.
+        /// [TODO] if we are repeating, construct face selection from nbrs of first list and iterate over that on future passes!
+        /// </summary>
+        public static int RemoveFinTriangles(DMesh3 mesh, Func<DMesh3, int, bool> removeF = null, bool bRepeatToConvergence = true)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
 
+            int nRemoved = 0;
+            List<int> to_remove = new List<int>();
+            repeat:
+            foreach ( int tid in mesh.TriangleIndices()) {
+                Index3i nbrs = mesh.GetTriNeighbourTris(tid);
+                int c = ((nbrs.a != DMesh3.InvalidID)?1:0) + ((nbrs.b != DMesh3.InvalidID)?1:0) + ((nbrs.c != DMesh3.InvalidID)?1:0);
+                if (c <= 1) {
+                    if (removeF == null || removeF(mesh, tid) == true )
+                        to_remove.Add(tid);
+                }
+            }
+            if (to_remove.Count == 0)
+                return nRemoved;
+            nRemoved += to_remove.Count;
+            RemoveTriangles(mesh, to_remove, true);
+            to_remove.Clear();
+            if (bRepeatToConvergence)
+                goto repeat;
+            return nRemoved;
+        }
 
 
 
@@ -449,6 +595,68 @@ namespace g3
 
         }
 
+
+
+        /// <summary>
+        /// separate triangle one-ring at vertex into connected components, and
+        /// then duplicate vertex once for each component
+        /// </summary>
+        public void DisconnectBowtie(int vid)
+        {
+            List<List<int>> sets = new List<List<int>>();
+            foreach ( int tid in Mesh.VtxTrianglesItr(vid)) {
+                Index3i nbrs = Mesh.GetTriNeighbourTris(tid);
+                bool found = false;
+                foreach ( List<int> set in sets ) {
+                    if ( set.Contains(nbrs.a) || set.Contains(nbrs.b) || set.Contains(nbrs.c) ) {
+                        set.Add(tid);
+                        found = true;
+                        break;
+                    }
+                }
+                if ( found == false ) {
+                    List<int> set = new List<int>() { tid };
+                    sets.Add(set);
+                }
+            }
+            if (sets.Count == 1)
+                return;  // not a bowtie!
+            sets.Sort(bowtie_sorter);
+            for ( int k = 1; k < sets.Count; ++k ) {
+                int copy_vid = Mesh.AppendVertex(Mesh, vid);
+                List<int> tris = sets[k];
+                foreach ( int tid in tris ) {
+                    Index3i t = Mesh.GetTriangle(tid);
+                    if (t.a == vid) t.a = copy_vid;
+                    else if (t.b == vid) t.b = copy_vid;
+                    else t.c = copy_vid;
+                    Mesh.SetTriangle(tid, t, false);
+                }
+            }
+        }
+        static int bowtie_sorter(List<int> l1, List<int> l2) {
+            if (l1.Count == l2.Count) return 0;
+            return (l1.Count > l2.Count) ? -1 : 1;
+        }
+
+
+
+        /// <summary>
+        /// Disconnect all bowtie vertices in mesh. Iterates because sometimes
+		/// disconnecting a bowtie creates new bowties (how??).
+		/// Returns number of remaining bowties after iterations.
+        /// </summary>
+        public int DisconnectAllBowties(int nMaxIters = 10)
+        {
+            List<int> bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
+            int iter = 0;
+            while (bowties.Count > 0 && iter++ < nMaxIters) {
+                foreach (int vid in bowties) 
+                    DisconnectBowtie(vid);
+                bowties = new List<int>(MeshIterators.BowtieVertices(Mesh));
+            }
+			return bowties.Count;
+        }
 
 
 
@@ -647,6 +855,10 @@ namespace g3
         }
         public void AppendBox(Frame3f frame, Vector3f size)
         {
+            AppendBox(frame, size, Colorf.White);
+        }
+        public void AppendBox(Frame3f frame, Vector3f size, Colorf color)
+        {
             TrivialBox3Generator boxgen = new TrivialBox3Generator() {
                 Box = new Box3d(frame, size),
                 NoSharedVertices = false
@@ -654,6 +866,69 @@ namespace g3
             boxgen.Generate();
             DMesh3 mesh = new DMesh3();
             boxgen.MakeMesh(mesh);
+            if (Mesh.HasVertexColors)
+                mesh.EnableVertexColors(color);
+            AppendMesh(mesh, Mesh.AllocateTriangleGroup());
+        }
+        public void AppendLine(Segment3d seg, float size)
+        {
+            Frame3f f = new Frame3f(seg.Center);
+            f.AlignAxis(2, (Vector3f)seg.Direction);
+            AppendBox(f, new Vector3f(size, size, seg.Extent));
+        }
+        public void AppendLine(Segment3d seg, float size, Colorf color)
+        {
+            Frame3f f = new Frame3f(seg.Center);
+            f.AlignAxis(2, (Vector3f)seg.Direction);
+            AppendBox(f, new Vector3f(size, size, seg.Extent), color);
+        }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos), size);
+        }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos), size*Vector3f.One, color);
+        }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos, normal), size);
+        }
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3f(pos, normal), size*Vector3f.One, color);
+        }
+        public static void AppendBox(DMesh3 mesh, Frame3f frame, Vector3f size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(frame, size, color);
+        }
+
+        public static void AppendLine(DMesh3 mesh, Segment3d seg, float size)
+        {
+            Frame3f f = new Frame3f(seg.Center);
+            f.AlignAxis(2, (Vector3f)seg.Direction);
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(f, new Vector3f(size, size, seg.Extent));
+        }
+
+
+
+
+        public void AppendPathSolid(IEnumerable<Vector3d> vertices, double radius, Colorf color)
+        {
+            TubeGenerator tubegen = new TubeGenerator() {
+                Vertices = new List<Vector3d>(vertices),
+                Polygon = Polygon2d.MakeCircle(radius, 6),
+                NoSharedVertices = false
+            };
+            DMesh3 mesh = tubegen.Generate().MakeDMesh();
+            if (Mesh.HasVertexColors)
+                mesh.EnableVertexColors(color);
             AppendMesh(mesh, Mesh.AllocateTriangleGroup());
         }
 
@@ -694,10 +969,67 @@ namespace g3
 
 
 
+
+        /// <summary>
+        /// Remove any unused vertices in mesh, ie vertices with no edges.
+        /// Returns number of removed vertices.
+        /// </summary>
+        public int RemoveUnusedVertices()
+        {
+            int nRemoved = 0;
+            int NV = Mesh.MaxVertexID;
+            for ( int vid = 0; vid < NV; ++vid) {
+                if (Mesh.IsVertex(vid) && Mesh.GetVtxEdgeCount(vid) == 0) {
+                    Mesh.RemoveVertex(vid);
+                    ++nRemoved;
+                }
+            }
+            return nRemoved;
+        }
+        public static int RemoveUnusedVertices(DMesh3 mesh) {
+            MeshEditor e = new MeshEditor(mesh); return e.RemoveUnusedVertices();
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// Remove any connected components with volume &lt; min_volume area lt; min_area
+        /// </summary>
+        public int RemoveSmallComponents(double min_volume, double min_area)
+        {
+            MeshConnectedComponents C = new MeshConnectedComponents(Mesh);
+            C.FindConnectedT();
+            if (C.Count == 1)
+                return 0;
+            int nRemoved = 0;
+            foreach (var comp in C.Components) {
+                Vector2d vol_area = MeshMeasurements.VolumeArea(Mesh, comp.Indices, Mesh.GetVertex);
+                if (vol_area.x < min_volume || vol_area.y < min_area) {
+                    MeshEditor.RemoveTriangles(Mesh, comp.Indices);
+                    nRemoved++;
+                }
+            }
+            return nRemoved;
+        }
+        public static int RemoveSmallComponents(DMesh3 mesh, double min_volume, double min_area) {
+            MeshEditor e = new MeshEditor(mesh); return e.RemoveSmallComponents(min_volume, min_area);
+        }
+
+
+
+
+
+
+
         // this is for backing out changes we have made...
         bool remove_triangles(int[] tri_list, int count)
         {
             for (int i = 0; i < count; ++i) {
+                if (Mesh.IsTriangle(tri_list[i]) == false)
+                    continue;
                 MeshResult result = Mesh.RemoveTriangle(tri_list[i], false, false);
                 if (result != MeshResult.Ok)
                     return false;

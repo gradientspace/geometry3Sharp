@@ -5,6 +5,24 @@ using System.Text;
 
 namespace g3
 {
+    /// <summary>
+    /// Try to fill planar holes in a mesh. The fill is computed by mapping the hole boundary into 2D,
+    /// filling using 2D algorithms, and then mapping back to 3D. This allows us to properly handle cases like
+    /// nested holes (eg from slicing a torus in half). 
+    /// 
+    /// PlanarComplex is used to sort the input 2D polyons. 
+    /// 
+    /// MeshInsertUVPolyCurve is used to insert each 2D polygon into a generated planar mesh.
+    /// The resolution of the generated mesh is controlled by .FillTargetEdgeLen
+    /// 
+    /// In theory this approach can handle more geometric degeneracies than Delaunay triangluation.
+    /// However, the current code requires that MeshInsertUVPolyCurve produce output boundary loops that
+    /// have a 1-1 correspondence with the input polygons. This is not always possible.
+    /// 
+    /// Currently these failure cases are not handled properly. In that case the loops will
+    /// not be stitched.
+    /// 
+    /// </summary>
     public class PlanarHoleFiller
     {
         public DMesh3 Mesh;
@@ -17,6 +35,20 @@ namespace g3
         /// double.MaxValue to use zero-length tessellation
         /// </summary>
         public double FillTargetEdgeLen = double.MaxValue;
+
+        /// <summary>
+        /// in some cases fill can succeed but we can't merge w/o creating holes. In
+        /// such cases it might be better to not merge at all...
+        /// </summary>
+        public bool MergeFillBoundary = true;
+
+
+        /*
+         * Error feedback
+         */
+        public bool OutputHasCracks = false;
+        public int FailedInsertions = 0;
+        public int FailedMerges = 0;
 
         // these will be computed if you don't set them
         Vector3d PlaneX, PlaneY;
@@ -70,6 +102,11 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Compute the fill mesh and append it.
+        /// This returns false if anything went wrong. 
+        /// The Error Feedback properties (.OutputHasCracks, etc) will provide more info.
+        /// </summary>
         public bool Fill()
         {
             compute_polygons();
@@ -148,7 +185,8 @@ namespace g3
                         if (insert.Apply()) {
                             insert.Simplify();
                             polyVertices[pi] = insert.CurveVertices;
-                            failed = false;
+                            failed = (insert.Loops.Count != 1) ||
+                                     (insert.Loops[0].VertexCount != polys[pi].VertexCount);
                         }
                     }
                     if (failed)
@@ -181,32 +219,30 @@ namespace g3
                 //Util.WriteDebugMesh(MeshEditor.Combine(FillMesh, Mesh), "c:\\scratch\\FILLED_MESH.obj");
 
                 // figure out map between new mesh and original edge loops
-                // [TODO] if # of verts is different, we can still find correspondence, it is just harder
                 // [TODO] should check that edges (ie sequential verts) are boundary edges on fill mesh
                 //    if not, can try to delete nbr tris to repair
                 IndexMap mergeMapV = new IndexMap(true);
-                for ( int pi = 0; pi < polys.Count; ++pi ) {
-                    if (polyVertices[pi] == null)
-                        continue;
-                    int[] fillLoopVerts = polyVertices[pi];
-                    int NV = fillLoopVerts.Length;
+                if (MergeFillBoundary) {
+                    for (int pi = 0; pi < polys.Count; ++pi) {
+                        if (polyVertices[pi] == null)
+                            continue;
+                        int[] fillLoopVerts = polyVertices[pi];
+                        int NV = fillLoopVerts.Length;
 
-                    PlanarComplex.Element sourceElem = (pi == 0) ? gsolid.Outer : gsolid.Holes[pi - 1];
-                    int loopi = ElemToLoopMap[sourceElem];
-                    EdgeLoop sourceLoop = Loops[loopi].edgeLoop;
+                        PlanarComplex.Element sourceElem = (pi == 0) ? gsolid.Outer : gsolid.Holes[pi - 1];
+                        int loopi = ElemToLoopMap[sourceElem];
+                        EdgeLoop sourceLoop = Loops[loopi].edgeLoop;
 
-                    if (sourceLoop.VertexCount != NV) {
-                        failed_merges.Add(new Index2i(fi, pi));
-                        continue;
+                        // construct vertex-merge map for this loop
+                        List<int> bad_indices = build_merge_map(FillMesh, fillLoopVerts, Mesh, sourceLoop.Vertices,
+                            MathUtil.ZeroTolerancef, mergeMapV);
+
+                        bool errors = (bad_indices != null && bad_indices.Count > 0);
+                        if (errors) {
+                            failed_inserts.Add(new Index2i(fi, pi));
+                            OutputHasCracks = true;
+                        }
                     }
-
-                    for ( int k = 0; k < NV; ++k ) {
-                        Vector3d fillV = FillMesh.GetVertex(fillLoopVerts[k]);
-                        Vector3d sourceV = Mesh.GetVertex(sourceLoop.Vertices[k]);
-                        if (fillV.Distance(sourceV) < MathUtil.ZeroTolerancef)
-                            mergeMapV[fillLoopVerts[k]] = sourceLoop.Vertices[k];
-                    }
-
                 }
 
                 // append this fill to input mesh
@@ -214,14 +250,112 @@ namespace g3
                 int[] mapV;
                 editor.AppendMesh(FillMesh, mergeMapV, out mapV, Mesh.AllocateTriangleGroup());
 
-                // [TODO] should verify that we actually merged the loops...
+                // [TODO] should verify that we actually merged all the loops. If there are bad_indices
+                // we could fill them
             }
 
+            FailedInsertions = failed_inserts.Count;
+            FailedMerges = failed_merges.Count;
             if (failed_inserts.Count > 0 || failed_merges.Count > 0)
                 return false;
 
             return true;
         }
+
+
+
+
+        /// <summary>
+        /// Construct vertex correspondences between fill mesh boundary loop
+        /// and input mesh boundary loop. In ideal case there is an easy 1-1 
+        /// correspondence. If that is not true, then do a brute-force search
+        /// to find the best correspondences we can.
+        /// 
+        /// Currently only returns unique correspondences. If any vertex
+        /// matches with multiple input vertices it is not merged. 
+        /// [TODO] we could do better in many cases...
+        /// 
+        /// Return value is list of indices into fillLoopV that were not merged
+        /// </summary>
+        List<int> build_merge_map(DMesh3 fillMesh, int[] fillLoopV,
+                             DMesh3 targetMesh, int[] targetLoopV,
+                             double tol, IndexMap mergeMapV)
+        {
+            if (fillLoopV.Length == targetLoopV.Length) {
+                if (build_merge_map_simple(fillMesh, fillLoopV, targetMesh, targetLoopV, tol, mergeMapV))
+                    return null;
+            }
+
+            int NF = fillLoopV.Length, NT = targetLoopV.Length;
+            bool[] doneF = new bool[NF], doneT = new bool[NT];
+            int[] countF = new int[NF], countT = new int[NT];
+            List<int> errorV = new List<int>();
+
+            SmallListSet matchF = new SmallListSet(); matchF.Resize(NF);
+
+            // find correspondences
+            double tol_sqr = tol*tol;
+            for (int i = 0; i < NF; ++i ) {
+                if ( fillMesh.IsVertex(fillLoopV[i]) == false ) {
+                    doneF[i] = true;
+                    errorV.Add(i);
+                    continue;
+                }
+                matchF.AllocateAt(i);
+                Vector3d v = fillMesh.GetVertex(fillLoopV[i]);
+                for ( int j = 0; j < NT; ++j ) {
+                    Vector3d v2 = targetMesh.GetVertex(targetLoopV[j]);
+                    if ( v.DistanceSquared(ref v2) < tol_sqr ) {
+                        matchF.Insert(i, j);
+                    }
+                }
+            }
+
+            for ( int i = 0; i < NF; ++i ) {
+                if (doneF[i]) continue;
+                if ( matchF.Count(i) == 1 ) {
+                    int j = matchF.First(i);
+                    mergeMapV[fillLoopV[i]] = targetLoopV[j];
+                    doneF[i] = true;
+                }
+            }
+
+            for ( int i = 0; i < NF; ++i ) {
+                if (doneF[i] == false)
+                    errorV.Add(i);
+            }
+
+            return errorV;
+        }
+
+
+
+
+        /// <summary>
+        /// verifies that there is a 1-1 correspondence between the fill and target loops.
+        /// If so, adds to mergeMapV and returns true;
+        /// </summary>
+        bool build_merge_map_simple(DMesh3 fillMesh, int[] fillLoopV, 
+                                    DMesh3 targetMesh, int[] targetLoopV, 
+                                    double tol, IndexMap mergeMapV )
+        {
+            if (fillLoopV.Length != targetLoopV.Length)
+                return false;
+            int NV = fillLoopV.Length;
+            for (int k = 0; k < NV; ++k) {
+                if (!fillMesh.IsVertex(fillLoopV[k]))
+                    return false;
+                Vector3d fillV = fillMesh.GetVertex(fillLoopV[k]);
+                Vector3d sourceV = Mesh.GetVertex(targetLoopV[k]);
+                if (fillV.Distance(sourceV) > tol)
+                    return false;
+            }
+            for (int k = 0; k < NV; ++k)
+                mergeMapV[fillLoopV[k]] = targetLoopV[k];
+            return true;
+        }
+
+
 
 
 

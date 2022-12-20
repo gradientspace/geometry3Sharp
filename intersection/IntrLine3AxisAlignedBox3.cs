@@ -61,7 +61,7 @@ namespace g3
 
 			LineParam0 = -double.MaxValue;
 			LineParam1 = double.MaxValue;
-			DoClipping(ref LineParam0, ref LineParam1, line.Origin, line.Direction, box,
+			DoClipping(ref LineParam0, ref LineParam1, ref line.Origin, ref line.Direction, ref box,
 			          true, ref Quantity, ref Point0, ref Point1, ref Type);
 
 			Result = (Type != IntersectionType.Empty) ?
@@ -111,8 +111,8 @@ namespace g3
 
 
 		static public bool DoClipping (ref double t0, ref double t1,
-		                 Vector3d origin, Vector3d direction,
-		                 AxisAlignedBox3d box, bool solid, ref int quantity, 
+		                 ref Vector3d origin, ref Vector3d direction,
+		                 ref AxisAlignedBox3d box, bool solid, ref int quantity, 
                          ref Vector3d point0, ref Vector3d point1,
 		                 ref IntersectionType  intrType)
 		{

@@ -149,6 +149,54 @@ namespace g3
 
 
 
+        /// <summary>
+        /// Compute volume and surface area of triangles of mesh.
+        /// Return value is (volume,area)
+        /// Note that if triangles don't define closed region, volume is probably nonsense...
+        /// </summary>
+        public static Vector2d VolumeArea( DMesh3 mesh, IEnumerable<int> triangles,
+            Func<int, Vector3d> getVertexF)
+        {
+            double mass_integral = 0.0;
+            double area_sum = 0;
+            foreach (int tid in triangles) {
+                Index3i tri = mesh.GetTriangle(tid);
+                // Get vertices of triangle i.
+                Vector3d v0 = getVertexF(tri.a);
+                Vector3d v1 = getVertexF(tri.b);
+                Vector3d v2 = getVertexF(tri.c);
+
+                // Get cross product of edges and (un-normalized) normal vector.
+                Vector3d V1mV0 = v1 - v0;
+                Vector3d V2mV0 = v2 - v0;
+                Vector3d N = V1mV0.Cross(V2mV0);
+
+                area_sum += 0.5 * N.Length;
+
+                double tmp0 = v0.x + v1.x;
+                double f1x = tmp0 + v2.x;
+                mass_integral += N.x * f1x;
+            }
+
+            return new Vector2d(mass_integral * (1.0/6.0), area_sum);
+        }
+
+
+
+        /// <summary>
+        /// Compute area of one-ring of mesh vertex by summing triangle areas.
+        /// If bDisjoint = true, we multiple each triangle area by 1/3
+        /// </summary>
+        public static double VertexOneRingArea( DMesh3 mesh, int vid, bool bDisjoint = true )
+        {
+            double sum = 0;
+            double mul = (bDisjoint) ? (1.0/3.0) : 1.0;
+            foreach (int tid in mesh.VtxTrianglesItr(vid))
+                sum += mesh.GetTriArea(tid) * mul;
+            return sum;
+        }
+
+
 
         public static Vector3d Centroid(IEnumerable<Vector3d> vertices)
         {
@@ -200,7 +248,7 @@ namespace g3
             } else {
                 foreach (Vector3d v in mesh.Vertices()) {
                     Vector3d vT = TransformF(v);
-                    bounds.Contain(vT);
+                    bounds.Contain(ref vT);
                 }
             }
             return bounds;
@@ -214,7 +262,7 @@ namespace g3
             } else {
                 foreach (int vID in mesh.VertexIndices()) {
                     Vector3d vT = TransformF(mesh.GetVertex(vID));
-                    bounds.Contain(vT);
+                    bounds.Contain(ref vT);
                 }
             }
             return bounds;
@@ -268,23 +316,102 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// calculate extents of mesh along axes of frame, with optional transform
+        /// </summary>
+        public static AxisAlignedBox3d BoundsInFrame(DMesh3 mesh, Frame3f frame, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
+            if (TransformF == null) {
+                foreach (Vector3d v in mesh.Vertices()) {
+                    Vector3d fv = frame.ToFrameP(v);
+                    bounds.Contain(ref fv);
+                }
+            } else {
+                foreach (Vector3d v in mesh.Vertices()) {
+                    Vector3d vT = TransformF(v);
+                    Vector3d fv = frame.ToFrameP(ref vT);
+                    bounds.Contain(ref fv);
+                }
+            }
+            return bounds;
+        }
 
 
-
+        /// <summary>
+        /// Calculate extents of mesh along an axis, with optional transform
+        /// </summary>
         public static Interval1d ExtentsOnAxis(DMesh3 mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
         {
             Interval1d extent = Interval1d.Empty;
             if (TransformF == null) {
                 foreach (Vector3d v in mesh.Vertices()) 
-                    extent.Contain(v.Dot(axis));
+                    extent.Contain(v.Dot(ref axis));
             } else {
                 foreach (Vector3d v in mesh.Vertices()) {
                     Vector3d vT = TransformF(v);
-                    extent.Contain(vT.Dot(axis));
+                    extent.Contain(vT.Dot(ref axis));
                 }
             }
             return extent;
         }
+
+
+        /// <summary>
+        /// Calculate extents of mesh along an axis, with optional transform
+        /// </summary>
+        public static Interval1d ExtentsOnAxis(IMesh mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            Interval1d extent = Interval1d.Empty;
+            if (TransformF == null) {
+                foreach (int vid in mesh.VertexIndices())
+                    extent.Contain(mesh.GetVertex(vid).Dot(ref axis));
+            } else {
+                foreach (int vid in mesh.VertexIndices()) {
+                    Vector3d vT = TransformF(mesh.GetVertex(vid));
+                    extent.Contain(vT.Dot(ref axis));
+                }
+            }
+            return extent;
+        }
+
+
+
+
+
+        /// <summary>
+        /// Calculate the two most extreme vertices along an axis, with optional transform
+        /// </summary>
+        public static Interval1i ExtremeVertices(DMesh3 mesh, Vector3d axis, Func<Vector3d, Vector3d> TransformF = null)
+        {
+            Interval1d extent = Interval1d.Empty;
+            Interval1i extreme = new Interval1i(DMesh3.InvalidID, DMesh3.InvalidID);
+            if (TransformF == null) {
+                foreach (int vid in mesh.VertexIndices()) {
+                    double t = mesh.GetVertex(vid).Dot(ref axis);
+                    if ( t < extent.a ) {
+                        extent.a = t;
+                        extreme.a = vid;
+                    } else if ( t > extent.b ) {
+                        extent.b = t;
+                        extreme.b = vid;
+                    }
+                }
+            } else {
+                foreach (int vid in mesh.VertexIndices()) {
+                    double t = TransformF(mesh.GetVertex(vid)).Dot(ref axis);
+                    if (t < extent.a) {
+                        extent.a = t;
+                        extreme.a = vid;
+                    } else if (t > extent.b) {
+                        extent.b = t;
+                        extreme.b = vid;
+                    }
+                }
+            }
+            return extreme;
+        }
+
 
 
 

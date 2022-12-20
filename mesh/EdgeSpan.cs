@@ -63,6 +63,27 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// construct EdgeSpan from a list of vertices of mesh
+        /// </summary>
+        public static EdgeSpan FromVertices(DMesh3 mesh, IList<int> vertices)
+        {
+            int NV = vertices.Count;
+            int[] Vertices = new int[NV];
+            for (int i = 0; i < NV; ++i)
+                Vertices[i] = vertices[i];
+            int NE = NV - 1;
+            int[] Edges = new int[NE];
+            for ( int i = 0; i < NE; ++i ) {
+                Edges[i] = mesh.FindEdge(Vertices[i], Vertices[i + 1]);
+                if (Edges[i] == DMesh3.InvalidID)
+                    throw new Exception("EdgeSpan.FromVertices: vertices are not connected by edge!");
+            }
+            return new EdgeSpan(mesh, Vertices, Edges, false);
+        }
+
+
+
         public int VertexCount {
             get { return Vertices.Length; }
         }
@@ -84,6 +105,16 @@ namespace g3
         }
 
 
+        public DCurve3 ToCurve(DMesh3 sourceMesh = null)
+        {
+            if (sourceMesh == null)
+                sourceMesh = Mesh;
+            DCurve3 curve = MeshUtil.ExtractLoopV(sourceMesh, Vertices);
+            curve.Closed = false;
+            return curve;
+        }
+
+
         public bool IsInternalSpan()
         {
             int NV = Vertices.Length;
@@ -97,13 +128,15 @@ namespace g3
         }
 
 
-        public bool IsBoundarySpan()
+        public bool IsBoundarySpan(DMesh3 testMesh = null)
         {
+            DMesh3 useMesh = (testMesh != null) ? testMesh : Mesh;
+
             int NV = Vertices.Length;
             for (int i = 0; i < NV-1; ++i ) {
-                int eid = Mesh.FindEdge(Vertices[i], Vertices[i + 1]);
+                int eid = useMesh.FindEdge(Vertices[i], Vertices[i + 1]);
                 Debug.Assert(eid != DMesh3.InvalidID);
-                if (Mesh.IsBoundaryEdge(eid) == false)
+                if (useMesh.IsBoundaryEdge(eid) == false)
                     return false;
             }
             return true;
