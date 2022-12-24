@@ -12,7 +12,15 @@
     <PackageTags>geometry3;graphics;math;approximation;solvers;color;convexhull;meshes;spatial;curves;solids;3d;unity</PackageTags>
 	<RepositoryUrl>https://github.com/gradientspace/geometry3Sharp</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
