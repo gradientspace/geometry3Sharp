@@ -1,33 +1,72 @@
-# geometry3Sharp
+[![openupm](https://img.shields.io/npm/v/com.virgis.geometry3sharp?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.virgis.geometry3sharp/)
 
-Open-Source (Boost-license) C# library for geometric computing. 
+# ViRGiS Geometry Package 
 
-geometry3Sharp is compatible with Unity. Set the G3_USING_UNITY Scripting Define and you will have transparent interop between g3 and Unity vector types (*see details at the very bottom of this README*). Although the library is written for C# 4.5, if you are using the .NET 3.5 Unity runtime, it will still work, just with a few missing features.
+Open-Source (Boost-license) Unity library for 3D geometric computing.
 
-Currently there is a small amount of unsafe code, however this code is only used in a few fast-buffer-copy routines, which can be deleted if you need a safe version (eg for Unity web player).
+This package is forked from [Geometry3Sharp](https://github.com/gradientspace/geometry3Sharp) which was a package developed by [GradientSpace](https://www.gradientspace.com/).
 
-[A Nuget Package is available](https://www.nuget.org/packages/geometry3Sharp). This package is updated roughly monthly from the github master branch. So, it's "more" stable. Currently this package includes .NET 4.5 and .NET Standard 2.0 dlls. If you would like others, please email and they can be added.
+This package has been extensively re-engineered for use with Unity as part of the [ViRGiS Project](https://www.virgis.org)
 
-Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradientspace](http://www.gradientspace.com)
+# Projects using ViRGiS Geometry
 
-# Projects using g3Sharp
-
-* [Gradientspace Cotangent](https://www.cotangent.io/) - 3D printing and Mesh Repair/Modeling Tool
-* [Nia Technologies NiaFit](https://niatech.org/technology/niafit/) - 3D-printed prosthetic and orthotic design
-* [OrthoVR Project](https://orthovrproject.org/) - 3D-printed lower-leg prosthetic design in VR
-* [Archform](https://www.archform.co/) - Clear Dental Aligner design/planning app
 * [ViRGIS](https://www.virgis.org/) - A Unity based GIS in VR platform
-* [UpCodes AI](https://up.codes/features/ai) - Building code automation plugin
 * [Your Project Here?](rms@gradientspace.com) - *we are very excited to hear about your project!*
 
 
 # Credits
 
+Many thanks to [GradientSpace](https://www.gradientspace.com/) for creating this package.
+
 Many, many data structures and algorithms have been ported from the WildMagic5 and GTEngine C++ libraries, which are developed by David Eberly at [Geometric Tools](https://www.geometrictools.com/). WildMagic5 and GTEngine are distributed under the Boost license as well, available [here](https://www.geometrictools.com/Downloads/Downloads.html). Any errors in code marked as ported from WildMagic5/GTEngine are most certainly ours!
 
 The **MeshSignedDistanceGrid** class was implemented based on the C++ [SDFGen](https://github.com/christopherbatty/SDFGen) code written by [Christopher Batty](https://cs.uwaterloo.ca/~c2batty/) and [Robert Bridson](http://www.cs.ubc.ca/~rbridson/). 
 
+This package uses the [Burst Triangulation Package](https://github.com/andywiecko/BurstTriangulator) for shape triangulation.
 
+## Installation
+
+The Package can be installed from [Open UPM](https://openupm.com/packages/com.virgis.geometry/). If you use this method, the dependencies will be automatically loaded provided the relevent scoped registry is included in your project's `manifest.json` :
+
+```
+scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.openupm",
+        "com.virgis.geometr"
+      ]
+    }
+  ],
+```
+
+
+The Package can also be installed using the Unity Package Manager directly from the [GitHub Repo](https://github.com/ViRGIS-Team/ViRGiS-Geometry).
+
+# Unity Interop
+
+geometry3Sharp supports transparent conversion with Unity types.
+
+
+~~~~
+Vector3 unityVec;
+Vector3f g3Vec;
+unityVec = g3vec;
+g3vec = unityVec;
+~~~~
+
+float->double types will work transparently, while double->float will require an explicit cast:
+
+~~~~
+Vector3d g3vecd;
+g3vecd = gameObject.transform.position;
+gameObject.transform.position = (Vector3)g3vecd;
+~~~~
+
+This will work for **Vector2**, **Vector3**, **Quaterion**, **Ray**, **Color**, and **Bounds** (w/ AxisAlignedBox3f)
+Note that these conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
+will need to explicitly cast one to the other.
 
 # Tutorials
 
@@ -378,32 +417,4 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 - 2D Marching Quads
 
 
-
-
-# Unity Interop
-
-geometry3Sharp supports transparent conversion with Unity types.
-To enable this, define **G3_USING_UNITY** in your Unity project, by adding this
-string to the **Scripting Define Symbols** box in the **Player Settings**.  
-
-Once enabled, code like this will work transparently:
-
-~~~~
-Vector3 unityVec;
-Vector3f g3Vec;
-unityVec = g3vec;
-g3vec = unityVec;
-~~~~
-
-float->double types will work transparently, while double->float will require an explicit cast:
-
-~~~~
-Vector3d g3vecd;
-g3vecd = gameObject.transform.position;
-gameObject.transform.position = (Vector3)g3vecd;
-~~~~
-
-This will work for **Vector2**, **Vector3**, **Quaterion**, **Ray**, **Color**, and **Bounds** (w/ AxisAlignedBox3f)
-Note that these conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
-will need to explicitly cast one to the other.
 
