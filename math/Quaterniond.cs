@@ -1,8 +1,5 @@
 ﻿using System;
-
-#if G3_USING_UNITY
 using UnityEngine;
-#endif
 
 
 namespace g3
@@ -339,8 +336,6 @@ namespace g3
             return string.Format("{0} {1} {2} {3}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt), w.ToString(fmt));
         }
 
-
-#if G3_USING_UNITY
         public static implicit operator Quaterniond(Quaternion q)
         {
             return new Quaterniond(q.x, q.y, q.z, q.w);
@@ -349,7 +344,5 @@ namespace g3
         {
             return new Quaternion((float)q.x, (float)q.y, (float)q.z, (float)q.w);
         }
-#endif
-
     }
 }

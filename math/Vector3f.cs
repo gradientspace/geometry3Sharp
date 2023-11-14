@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
-#if G3_USING_UNITY
 using UnityEngine;
-#endif
 
 namespace g3
 {
@@ -311,11 +308,6 @@ namespace g3
             return string.Format("{0} {1} {2}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt));
         }
 
-
-
-
-
-#if G3_USING_UNITY
         public static implicit operator Vector3f(UnityEngine.Vector3 v)
         {
             return new Vector3f(v.x, v.y, v.z);
@@ -332,7 +324,5 @@ namespace g3
         {
             return new Vector3f(c.r, c.g, c.b);
         }
-#endif
-
     }
 }
