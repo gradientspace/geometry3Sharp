@@ -171,8 +171,6 @@ namespace g3
             return to;
         }
 
-
-
         public static string MakeFloatFormatString(int i, int nPrecision)
         {
             return string.Format("{{{0}:F{1}}}", i, nPrecision);
@@ -182,17 +180,10 @@ namespace g3
             return string.Format("{{{0}:F{3}}} {{{1}:F{3}}} {{{2}:F{3}}}", i0, i1, i2, nPrecision);
         }
 
-
-
         static public string ToSecMilli(TimeSpan t)
         {
             return string.Format("{0}", t.TotalSeconds);
-#else
-            return string.Format("{0:F5}", t.TotalSeconds);
-#endif
         }
-
-
 
         static public T[] AppendArrays<T>(params object[] args)
         {
@@ -211,8 +202,6 @@ namespace g3
 
             return result;
         }
-
-
 
 
         // conversion to/from bytes
@@ -235,8 +224,6 @@ namespace g3
             obj = Marshal.PtrToStructure(i, obj.GetType());
             Marshal.FreeHGlobal(i);
         }
-
-
 
         public static void WriteDebugMesh(IMesh mesh, string sPath)
         {
