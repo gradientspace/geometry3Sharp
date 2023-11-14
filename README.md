@@ -66,8 +66,8 @@ gameObject.transform.position = (Vector3)g3vecd;
 
 This works for **Vector2**, **Vector3**, **Quaterion**, **Ray**, **Color**, and **Bounds** (w/ AxisAlignedBox3f).
 
-[!NOTE]
-These conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
+> [!NOTE]
+>These conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
 will need to explicitly cast one to the other.
 
 # Tutorials
