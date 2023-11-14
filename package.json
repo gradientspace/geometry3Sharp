@@ -1,14 +1,15 @@
 {
-    "name": "com.virgis.geometry3sharp",
-    "version": "2.0.0",
-    "displayName": "Geometry 3 Sharp",
-    "description": "Open-Source (Boost-license) C# library for geometric computing.",
-    "unity": "2018.1",
+    "name": "com.virgis.geometry",
+    "version": "3.0.0",
+    "displayName": "ViRGiS Geometry Package",
+    "description": "Open-Source (Boost-license) Unity library for geometric computing.",
+    "unity": "2020.1",
    "keywords": [
       "geometry",
       "mesh",
-      "g3",
-      "toolkit"
+      "3D",
+      "toolkit",
+      "virgis"
     ],  
     "author": {
       "name": "Virgis Team",

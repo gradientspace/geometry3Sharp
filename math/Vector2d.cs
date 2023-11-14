@@ -280,8 +280,6 @@ namespace g3
             return new Vector2f((float)v.x, (float)v.y);
         }
 
-
-#if G3_USING_UNITY
         public static implicit operator Vector2d(UnityEngine.Vector2 v)
         {
             return new Vector2d(v.x, v.y);
@@ -290,13 +288,6 @@ namespace g3
         {
             return new UnityEngine.Vector2((float)v.x, (float)v.y);
         }
-#endif
-
-
-
-
-
-
 
 
         // from WildMagic5 Vector2, used in ConvexHull2

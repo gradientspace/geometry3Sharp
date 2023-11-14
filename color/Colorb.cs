@@ -1,8 +1,5 @@
 ﻿using System;
-
-#if G3_USING_UNITY
 using UnityEngine;
-#endif
 
 namespace g3
 {
@@ -32,8 +29,6 @@ namespace g3
             set { if (key == 0) r = value; else if (key == 1) g = value; else if (key == 2) b = value; else a = value; }
         }
 
-
-#if G3_USING_UNITY
         public static implicit operator Colorb(UnityEngine.Color32 c)
         {
             return new Colorb(c.r, c.g, c.b, c.a);
@@ -42,7 +37,5 @@ namespace g3
         {
             return new Color32(c.r, c.g, c.b, c.a);
         }
-#endif
-
     }
 }

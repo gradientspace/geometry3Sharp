@@ -1,8 +1,5 @@
 ﻿using System;
-
-#if G3_USING_UNITY
 using UnityEngine;
-#endif
 
 namespace g3
 {
@@ -249,10 +246,6 @@ namespace g3
             return new Vector3i((int)Math.Round(c.x), (int)Math.Round(c.y), (int)Math.Round(c.z));
         }
 
-
-
-
-#if G3_USING_UNITY
         // generate unity mesh. 
         // [TODO] The left/right flip here may not work...
 
@@ -301,14 +294,5 @@ namespace g3
             if (bRecalcNormals)
                 m.RecalculateNormals();
         }
-#endif
     }
-
-
-
-
-
-
-
-
 }

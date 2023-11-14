@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
-#if G3_USING_UNITY
 using UnityEngine;
-#endif
 
 namespace g3
 {
@@ -242,9 +239,6 @@ namespace g3
             return new Colorf(c.x, c.y, c.z, 1);
         }
 
-
-
-#if G3_USING_UNITY
         public static implicit operator Colorf(UnityEngine.Color c)
         {
             return new Colorf(c.r, c.g, c.b, c.a);
@@ -258,7 +252,5 @@ namespace g3
             Colorb cb = c.ToBytes();
             return new Color32(cb.r, cb.g, cb.b, cb.a);
         }
-#endif
-
     }
 }

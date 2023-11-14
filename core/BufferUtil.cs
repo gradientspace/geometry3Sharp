@@ -513,7 +513,7 @@ namespace g3
         static public byte[] CompressZLib(byte[] buffer, bool bFast)
         {
             MemoryStream ms = new MemoryStream();
-#if G3_USING_UNITY && (NET_2_0 || NET_2_0_SUBSET)
+#if NET_2_0 || NET_2_0_SUBSET
             DeflateStream zip = new DeflateStream(ms, CompressionMode.Compress);
 #else
             DeflateStream zip = new DeflateStream(ms, (bFast) ? CompressionLevel.Fastest : CompressionLevel.Optimal, true);

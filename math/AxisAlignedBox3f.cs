@@ -1,8 +1,5 @@
 ﻿using System;
-
-#if G3_USING_UNITY
 using UnityEngine;
-#endif
 
 namespace g3
 {
@@ -303,9 +300,6 @@ namespace g3
             return string.Format("x[{0:F8},{1:F8}] y[{2:F8},{3:F8}] z[{4:F8},{5:F8}]", Min.x, Max.x, Min.y, Max.y, Min.z, Max.z);
         }
 
-
-
-#if G3_USING_UNITY
         public static implicit operator AxisAlignedBox3f(UnityEngine.Bounds b)
         {
             return new AxisAlignedBox3f(b.min, b.max);
@@ -316,8 +310,5 @@ namespace g3
             ub.SetMinMax(b.Min, b.Max);
             return ub;
         }
-#endif
-
-
     }
 }

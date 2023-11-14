@@ -20,7 +20,7 @@ namespace g3
         }
         public static void ForEach<T>( IEnumerable<T> source, Action<T> body )
         {
-#if G3_USING_UNITY && (NET_2_0 || NET_2_0_SUBSET)
+NET_2_0 || NET_2_0_SUBSET
             for_each<T>(source, body);
 #else
             Parallel.ForEach<T>(source, body);
@@ -274,7 +274,7 @@ namespace g3
 
 
 
-#if G3_USING_UNITY && (NET_2_0 || NET_2_0_SUBSET)
+NET_2_0 || NET_2_0_SUBSET
 
     /*
      * .NET 3.5 (default in Unity) does not have SpinLock object, which we
