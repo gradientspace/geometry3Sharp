@@ -1,4 +1,4 @@
-[![openupm](https://img.shields.io/npm/v/com.virgis.geometry3sharp?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.virgis.geometry3sharp/)
+[![openupm](https://img.shields.io/npm/v/com.virgis.geometry?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.virgis.geometry/)
 
 # ViRGiS Geometry Package 
 
