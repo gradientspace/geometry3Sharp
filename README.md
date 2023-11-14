@@ -35,7 +35,7 @@ scopedRegistries": [
       "url": "https://package.openupm.com",
       "scopes": [
         "com.openupm",
-        "com.virgis.geometr"
+        "com.virgis.geometry"
       ]
     }
   ],
@@ -44,9 +44,9 @@ scopedRegistries": [
 
 The Package can also be installed using the Unity Package Manager directly from the [GitHub Repo](https://github.com/ViRGIS-Team/ViRGiS-Geometry).
 
-# Unity Interop
+# Unity Primitives
 
-geometry3Sharp supports transparent conversion with Unity types.
+ViRGiS Geometry supports transparent conversion with Unity types.
 
 
 ~~~~
@@ -56,7 +56,7 @@ unityVec = g3vec;
 g3vec = unityVec;
 ~~~~
 
-float->double types will work transparently, while double->float will require an explicit cast:
+Conversion from float types to double types  works transparently, while from double tyes to float types requires an explicit cast:
 
 ~~~~
 Vector3d g3vecd;
@@ -64,8 +64,10 @@ g3vecd = gameObject.transform.position;
 gameObject.transform.position = (Vector3)g3vecd;
 ~~~~
 
-This will work for **Vector2**, **Vector3**, **Quaterion**, **Ray**, **Color**, and **Bounds** (w/ AxisAlignedBox3f)
-Note that these conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
+This works for **Vector2**, **Vector3**, **Quaterion**, **Ray**, **Color**, and **Bounds** (w/ AxisAlignedBox3f).
+
+[!NOTE]
+These conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
 will need to explicitly cast one to the other.
 
 # Tutorials
