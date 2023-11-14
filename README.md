@@ -4,7 +4,7 @@
 
 Open-Source (Boost-license) Unity library for 3D geometric computing.
 
-This package is forked from [Geometry3Sharp](https://github.com/gradientspace/geometry3Sharp) which was a package developed by [GradientSpace](https://www.gradientspace.com/).
+This package is forked from [Geometry3Sharp](https://github.com/gradientspace/geometry3Sharp) which was a package developed by [GradientSpace](https://www.gradientspace.com/). That package is now archived and will not be maintained.
 
 This package has been extensively re-engineered for use with Unity as part of the [ViRGiS Project](https://www.virgis.org)
 
