@@ -14,7 +14,7 @@ This package has been extensively re-engineered for use with Unity as part of th
 # Projects using ViRGiS Geometry
 
 * [ViRGIS](https://www.virgis.org/) - A Unity based GIS in VR platform
-* [Your Project Here?](rms@gradientspace.com) - *we are very excited to hear about your project!*
+* [Your Project Here?](mailto:info@runette.co.uk) - *we are very excited to hear about your project!*
 
 
 # Credits
@@ -47,31 +47,29 @@ scopedRegistries": [
 
 The Package can also be installed using the Unity Package Manager directly from the [GitHub Repo](https://github.com/ViRGIS-Team/ViRGiS-Geometry).
 
-# Unity Primitives
+# Primitives
 
 ViRGiS Geometry supports transparent conversion with Unity types.
 
+ViRGiS Geometry has the following Primitive types mostly implemented as Structs:
+- **Vector** 2d/2f,2i,3d/3f,3i,4d,4f
+- **Matrix** 2d/2f/3f/3d,
+- **Quaternion** f/d,
+- **Index** 2/3/4,
+- **AxisAlignedBox**2d/3d/2f/3f, (oriented) **Box**2d/3d/2f/3f
+- **Ray**3d/3f
+- **Segment**2d/3d/2f/3f, **Line**2d/3d/2f/3f,
+- **Triangle**2d/3d/2f/3f, **Plane**3d/3f
+- 1D intervals **Interval1d**, and **Interval1i** which is IEnumerable
+- **VectorTuple** 2/3/4 element 2d/3d vector-tuples (convenient())
 
-~~~~
-Vector3 unityVec;
-Vector3f g3Vec;
-unityVec = g3vec;
-g3vec = unityVec;
-~~~~
-
-Conversion from float types to double types  works transparently, while from double tyes to float types requires an explicit cast:
-
-~~~~
-Vector3d g3vecd;
-g3vecd = gameObject.transform.position;
-gameObject.transform.position = (Vector3)g3vecd;
-~~~~
-
-This works for **Vector2**, **Vector3**, **Quaterion**, **Ray**, **Color**, and **Bounds** (w/ AxisAlignedBox3f).
+The majority of these have implicit or explicit conversions to UnityEngine (e.g. **Vector3** ) and Unity.Mathematics (e.g. **float3** ) types as shown in the table below. The conversions are all implicit where the conversions can be done without precision loss (e.g. float to float) and explicit where there is precision loss (e.g. double to float).
 
 > [!NOTE]
 >These conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
 will need to explicitly cast one to the other.
+
+TABLE TODO
 
 # Tutorials
 
@@ -115,16 +113,6 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 
 ## Math
 
-- reasonably complete set of vector-math objects, implemented as structs
-    - **Vector**2d/3d/4d/2f/3f, **Matrix**2d/2f/3f/3d, **Quaternionf/d**
-    - **Segment**2d/3d/2f/3f, **Line**2d/3d/2f/3f, **Ray**3d/3f
-    - **Triangle**2d/3d/2f/3f, **Plane**3d/3f
-    - **AxisAlignedBox**2d/3d/2f/3f, (oriented) **Box**2d/3d/2f/3f
-    - **Index**2/3/4, int **Vector**2i/3i, int **AxisAlignedBox**3i
-    - 1D intervals **Interval1d**, and **Interval1i** which is IEnumerable
-    - **VectorTuple** 2/3/4 element 2d/3d vector-tuples (convenient())
-    - implicit float->double conversion operators between types, explicit double->float operators
-    - transparent Unity interop (see below)
 - **Frame3f**: position+orientation representation
     - accessors for transformed x/y/z axes 
     - frame transformations
