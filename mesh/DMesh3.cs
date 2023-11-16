@@ -2448,46 +2448,52 @@ namespace g3
         /// <summary>
         /// Converts g3.DMesh3 to UnityEngine.Mesh. 
         /// The DMesh3 must be compact. If neccesary - run Compactify first.
+        /// 
+        /// Converts from DMesh3 ccw to Unity cw
         /// </summary>
         /// <returns>UnityEngine.Mesh</returns>
         public static explicit operator Mesh(DMesh3 mesh)
         {
             Mesh unityMesh = new Mesh();
             unityMesh.MarkDynamic();
-            unityMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            Vector3[] vertices = new Vector3[mesh.VertexCount];
-            Color[] colors = new Color[mesh.VertexCount];
-            Vector2[] uvs = new Vector2[mesh.VertexCount];
-            Vector3[] normals = new Vector3[mesh.VertexCount];
-            NewVertexInfo data;
-            for (int i = 0; i < mesh.VertexCount; i++)
-            {
-                if (mesh.IsVertex(i))
-                {
-                    data = mesh.GetVertexAll(i);
-                    vertices[i] = (Vector3)data.v;
-                    if (data.bHaveC)
-                        colors[i] = (Color)data.c;
-                    if (data.bHaveUV)
-                        uvs[i] = (Vector2)data.uv;
-                    if (data.bHaveN)
-                        normals[i] = (Vector3)data.n;
-                }
-            }
-            unityMesh.vertices = vertices;
-            if (mesh.HasVertexColors) unityMesh.SetColors(colors);
-            if (mesh.HasVertexUVs) unityMesh.SetUVs(0, uvs);
-            if (mesh.HasVertexNormals) unityMesh.SetNormals(normals);
-            int[] triangles = new int[mesh.TriangleCount * 3];
-            int j = 0;
-            foreach (Index3i tri in mesh.Triangles())
-            {
-                triangles[j * 3] = tri.a;
-                triangles[j * 3 + 1] = tri.b;
-                triangles[j * 3 + 2] = tri.c;
-                j++;
-            }
-            unityMesh.triangles = triangles;
+            MeshGenerator mg = new();
+            mesh.Reverse();
+            mg.MakeMesh(mesh);
+            mg.MakeMesh(unityMesh, true);
+            // unityMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            // Vector3[] vertices = new Vector3[mesh.VertexCount];
+            // Color[] colors = new Color[mesh.VertexCount];
+            // Vector2[] uvs = new Vector2[mesh.VertexCount];
+            // Vector3[] normals = new Vector3[mesh.VertexCount];
+            // NewVertexInfo data;
+            // for (int i = 0; i < mesh.VertexCount; i++)
+            // {
+            //     if (mesh.IsVertex(i))
+            //     {
+            //         data = mesh.GetVertexAll(i);
+            //         vertices[i] = (Vector3)data.v;
+            //         if (data.bHaveC)
+            //             colors[i] = (Color)data.c;
+            //         if (data.bHaveUV)
+            //             uvs[i] = (Vector2)data.uv;
+            //         if (data.bHaveN)
+            //             normals[i] = (Vector3)data.n;
+            //     }
+            // }
+            // unityMesh.vertices = vertices;
+            // if (mesh.HasVertexColors) unityMesh.SetColors(colors);
+            // if (mesh.HasVertexUVs) unityMesh.SetUVs(0, uvs);
+            // if (mesh.HasVertexNormals) unityMesh.SetNormals(normals);
+            // int[] triangles = new int[mesh.TriangleCount * 3];
+            // int j = 0;
+            // foreach (Index3i tri in mesh.Triangles())
+            // {
+            //     triangles[j * 3] = tri.a;
+            //     triangles[j * 3 + 1] = tri.b;
+            //     triangles[j * 3 + 2] = tri.c;
+            //     j++;
+            // }
+            // unityMesh.triangles = triangles;
             return unityMesh;
         }
 
@@ -2504,6 +2510,7 @@ namespace g3
             {
                 dmesh.AppendTriangle(tris[i], tris[i + 1], tris[i + 2]);
             }
+            mesh.Reverse();
             return dmesh;
         }
 
