@@ -40,7 +40,8 @@ scopedRegistries": [
       "url": "https://package.openupm.com",
       "scopes": [
         "com.openupm",
-        "com.virgis.geometry"
+        "com.virgis.geometry",
+	"com.andywiecko"
       ]
     }
   ],
@@ -71,7 +72,11 @@ The majority of these have implicit or explicit conversions to UnityEngine (e.g.
 >These conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
 will need to explicitly cast one to the other.
 
-TABLE TODO
+<img width="635" alt="Screenshot 2023-11-15 at 23 13 02" src="https://github.com/ViRGIS-Team/ViRGiS-Geometry/assets/2239795/2b6d379c-cf90-4673-8502-9d5f0e0de357">
+
+# Mesh Entities
+
+# Geoometry Entitiies
 
 # Tutorials
 
