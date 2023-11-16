@@ -1,8 +1,6 @@
 using System;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -178,7 +176,6 @@ namespace g3
         {
             return new Vector2f(f / v.x, f / v.y);
         }
-
 		public static Vector2f operator *(Vector2f a, Vector2f b)
 		{
 			return new Vector2f(a.x * b.x, a.y * b.y);
@@ -253,6 +250,22 @@ namespace g3
         public static implicit operator Vector2(Vector2f v)
         {
             return new Vector2(v.x, v.y);
+        }
+        public static implicit operator Vector2f(float2 v)
+        {
+            return new Vector2f(v.x, v.y);
+        }
+        public static implicit operator float2(Vector2f v)
+        {
+            return new float2(v.x, v.y);
+        }
+        public static explicit operator Vector2f(double2 v)
+        {
+            return new Vector2f((float)v.x, (float)v.y);
+        }
+        public static implicit operator double2(Vector2f v)
+        {
+            return new double2(v.x, v.y);
         }
     }
 }

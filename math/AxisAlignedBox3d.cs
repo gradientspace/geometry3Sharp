@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace g3
 {
@@ -375,7 +376,15 @@ namespace g3
             return new AxisAlignedBox3f((Vector3f)v.Min, (Vector3f)v.Max);
         }
 
-
-
+        public static implicit operator AxisAlignedBox3d(UnityEngine.Bounds b)
+        {
+            return new AxisAlignedBox3f(b.min, b.max);
+        }
+        public static explicit operator UnityEngine.Bounds(AxisAlignedBox3d b)
+        {
+            UnityEngine.Bounds ub = new Bounds();
+            ub.SetMinMax((Vector3)b.Min, (Vector3)b.Max);
+            return ub;
+        }
     }
 }

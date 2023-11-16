@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -150,6 +151,15 @@ namespace g3
             return string.Format("[{0},{1},{2}]", a, b, c);
         }
 
+        public static implicit operator Index3i(int3 v)
+        {
+            return new Index3i(v.x, v.y, v.z);
+        }
+        public static implicit operator int3(Index3i v)
+        {
+            return new int3(v.a, v.b, v.c);
+        }
+
     }
 
 
@@ -297,6 +307,15 @@ namespace g3
 
         public override string ToString() {
             return string.Format("[{0},{1}]", a, b);
+        }
+
+        public static implicit operator Index2i(int2 v)
+        {
+            return new Index2i(v.x, v.y);
+        }
+        public static implicit operator int2(Index2i v)
+        {
+            return new int2(v.a, v.b);
         }
 
     }
@@ -465,12 +484,18 @@ namespace g3
             return (a == other.a && b == other.b && c == other.c&& d == other.d);
         }  
         
-
-
         public override string ToString() {
             return string.Format("[{0},{1},{2},{3}]", a, b, c, d);
         }
 
+        public static implicit operator Index4i(int4 v)
+        {
+            return new Index4i(v.x, v.y, v.z, v.w);
+        }
+        public static implicit operator int4(Index4i v)
+        {
+            return new int4(v.a, v.b, v.c, v.d);
+        }
     }
 
 

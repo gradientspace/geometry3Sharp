@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace g3
 {
@@ -248,6 +245,10 @@ namespace g3
             return Intersects(ref seg2, dotThresh, intervalThresh);
         }
 
+        public bool BiEquals( Segment2d seg)
+        {
+            return seg.Center == Center && seg.Extent == Extent;
+        }
 
     }
 
@@ -336,9 +337,6 @@ namespace g3
             Extent = 0.5f * Direction.Normalize();
         }
 
-
-
-
         /// <summary>
         /// distance from pt to segment (a,b), with no square roots
         /// </summary>
@@ -363,6 +361,10 @@ namespace g3
             return dx * dx + dy * dy;
         }
 
+                public bool BiEquals( Segment2d seg)
+        {
+            return seg.Center == Center && seg.Extent == Extent;
+        }
     }
 
 

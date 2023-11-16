@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 
 namespace g3
 {
@@ -191,24 +188,50 @@ namespace g3
                 yield return vertices[0];
         }
 
-        // [RMS] have removed IEnumerable interface because these are ambiguous - should
-        //  first vertex be repeated? Has caused too many bugs!
-		//public IEnumerator<Vector2d> GetEnumerator() {
-		//	for ( int i = 0; i < vertices.Count; ++i )
-		//		yield return vertices[i];
-		//	yield return vertices[0];
-		//}
-		//IEnumerator IEnumerable.GetEnumerator() {
-		//	for ( int i = 0; i < vertices.Count; ++i )
-		//		yield return vertices[i];
-		//	yield return vertices[0];
-		//}
-
+        public  IEnumerable<(int, int)> EdgeItr()
+        {
+            for (int i = 0; i < VertexCount; ++i)
+                yield return (i, i != VertexCount - 1 ? i + 1 : 0);
+        }
 
         public bool IsClockwise {
 			get { return SignedArea < 0; }
 		}
-		public double SignedArea {
+
+        /// <summary>
+        /// Returns true if this Polygon conatins the segment using the BiEquals test
+        /// <param name="seg"></param>
+        /// <returns></returns>
+        public bool BiContains( Segment2d seg)
+        {
+            foreach (Segment2d thisSeg in SegmentItr())
+            {
+                if (thisSeg.BiEquals(seg))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// A segment is a member if the the ends of the segment are in the polygon.
+        /// It isOutside if it fails the BiContains test - i.e. TODO
+        /// </summary>
+        /// <param name="seg"></param>
+        /// <param name="IsOutside"></param>
+        /// <returns></returns>
+        public bool IsMember(Segment2d seg, out bool IsOutside)
+        {
+            IsOutside = true;
+            if (Vertices.Contains(seg.P0) && Vertices.Contains(seg.P1))
+            {
+                if (BiContains(seg))
+                    IsOutside = false;
+                return true;
+            }
+            return false;
+        }
+
+        public double SignedArea {
 			get {
 				double fArea = 0;
 				int N = vertices.Count;

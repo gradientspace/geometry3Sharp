@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Unity.Mathematics;
 
 
 namespace g3
@@ -418,6 +419,15 @@ namespace g3
         public static implicit operator Quaternion(Quaternionf q)
         {
             return new Quaternion(q.x, q.y, q.z, q.w);
+        }
+        public static implicit operator Quaternionf(quaternion q)
+        {
+            float4 v = q.value;
+            return new Quaternionf(v.x, v.y, v.z, v.w);
+        }
+        public static implicit operator quaternion(Quaternionf q)
+        {
+            return new quaternion((Single)q.x, (Single)q.y, (Single)q.z, (Single)q.w);
         }
     }
 }

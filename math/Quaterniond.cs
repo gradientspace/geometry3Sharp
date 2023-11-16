@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Unity.Mathematics;
 
 
 namespace g3
@@ -153,7 +154,6 @@ namespace g3
             return q.Inverse();
         }
 
-
         /// <summary>
         /// Equivalent to transpose of matrix. similar to inverse, but w/o normalization...
         /// </summary>
@@ -161,7 +161,6 @@ namespace g3
             return new Quaterniond(-x, -y, -z, w);
         }
 
-        
         public Matrix3d ToRotationMatrix()
         {
             double twoX = 2 * x; double twoY = 2 * y; double twoZ = 2 * z;
@@ -173,8 +172,6 @@ namespace g3
                 twoXY + twoWZ, 1 - (twoXX + twoZZ), twoYZ - twoWX,
                 twoXZ - twoWY, twoYZ + twoWX, 1 - (twoXX + twoYY));
         }
-
-
 
         public void SetAxisAngleD(Vector3d axis, double AngleDeg) {
             double angle_rad = MathUtil.Deg2Rad * AngleDeg;
@@ -234,8 +231,6 @@ namespace g3
             double fAngle = MathUtil.PlaneAngleSignedD(vFrom, vTo, vAround);
             return Quaterniond.AxisAngleD(vAround, fAngle);
         }
-
-
         public void SetToSlerp(Quaterniond p, Quaterniond q, double t)
         {
             double cs = p.Dot(q);
@@ -260,7 +255,6 @@ namespace g3
         public static Quaterniond Slerp(Quaterniond p, Quaterniond q, double t) {
             return new Quaterniond(p, q, t);
         }
-
 
         public void SetFromRotationMatrix(Matrix3d rot) {
             SetFromRotationMatrix(ref rot);
@@ -308,10 +302,6 @@ namespace g3
             Normalize();   // we prefer normalized quaternions...
         }
 
-
-
-
-
         public bool EpsilonEqual(Quaterniond q2, double epsilon) {
             return Math.Abs(x - q2.x) <= epsilon && 
                    Math.Abs(y - q2.y) <= epsilon &&
@@ -343,6 +333,15 @@ namespace g3
         public static explicit operator Quaternion(Quaterniond q)
         {
             return new Quaternion((float)q.x, (float)q.y, (float)q.z, (float)q.w);
+        }
+        public static implicit operator Quaterniond(quaternion q)
+        {
+            float4 v = q.value;
+            return new Quaterniond(v.x, v.y, v.z, v.w);
+        }
+        public static explicit operator quaternion(Quaterniond q)
+        {
+            return new quaternion((Single)q.x, (Single)q.y, (Single)q.z, (Single)q.w);
         }
     }
 }

@@ -310,15 +310,9 @@ namespace g3
             }
         }
 
-
-
         public override string ToString()
         {
             return string.Format("x[{0},{1}] y[{2},{3}] z[{4},{5}]", Min.x, Max.x, Min.y, Max.y, Min.z, Max.z);
         }
-
-
-
-
     }
 }

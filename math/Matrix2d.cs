@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -235,5 +236,13 @@ namespace g3
                                  v.x * m.m01 + v.y * m.m11 );
         }
 
+        public static implicit operator Matrix2d(double2x2 m)
+        {
+            return new Matrix2d(m.c0, m.c1, true);
+        }
+        public static explicit operator double2x2(Matrix2d m)
+        {
+            return new double2x2(m.Column(0),m.Column(1));
+        }
     }
 }
