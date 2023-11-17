@@ -164,7 +164,6 @@ namespace g3
             get { return vertices; }
         }
 
-
         public Segment3d GetSegment(int iSegment)
         {
             return (Closed) ? new Segment3d(vertices[iSegment], vertices[(iSegment+1)%vertices.Count])

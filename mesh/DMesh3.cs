@@ -134,10 +134,12 @@ namespace g3
 
         int max_group_id = 0;
 
+        // "normal" meshes are counter-clockwise. Unity is CW though...
+        public bool Clockwise = false;
+
 
         /// <summary>
         /// Support attaching arbitrary data to mesh. 
-        /// Note that metadata is currently **NOT** copied when copying a mesh.
         /// </summary>
         Dictionary<string, object> Metadata = null;
 
@@ -244,6 +246,9 @@ namespace g3
                 max_group_id = Math.Max(max_group_id, g+1);
             }
 
+            if (copy.Metadata != null)
+                Metadata = copy.Metadata;
+
             return new CompactInfo() {
                 MapV = new IndexMap(mapV, this.MaxVertexID)
             };
@@ -267,6 +272,8 @@ namespace g3
             triangles_refcount = new RefCountVector(copy.triangles_refcount);
             if (copy.triangle_groups != null)
                 triangle_groups = new DVector<int>(copy.triangle_groups);
+            if (copy.Metadata!= null)
+                Metadata= copy.Metadata;
             max_group_id = copy.max_group_id;
 
             edges = new DVector<int>(copy.edges);
@@ -2447,14 +2454,18 @@ namespace g3
 
         /// <summary>
         /// Converts g3.DMesh3 to UnityEngine.Mesh. 
-        /// The DMesh3 must be compact. If neccesary - run Compactify first.
+        /// 
+        /// Takes accoun t of the fact that generally Dmesh are ccw but Unity is cw
         /// </summary>
         /// <returns>UnityEngine.Mesh</returns>
         public static explicit operator Mesh(DMesh3 mesh)
         {
+            if (!mesh.Clockwise)
+                mesh.ReverseOrientation();
             Mesh unityMesh = new Mesh();
             unityMesh.MarkDynamic();
-            unityMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            if (mesh.VertexCount > 64000 || mesh.TriangleCount > 64000)
+                unityMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             Vector3[] vertices = new Vector3[mesh.VertexCount];
             Color[] colors = new Color[mesh.VertexCount];
             Vector2[] uvs = new Vector2[mesh.VertexCount];
@@ -2499,11 +2510,13 @@ namespace g3
         public static explicit operator DMesh3(Mesh mesh)
         {
             DMesh3 dmesh = new DMesh3();
+            dmesh.Clockwise= true;
             int[] tris = mesh.triangles;
             for (int i = 0; i < tris.Length; i += 3)
             {
                 dmesh.AppendTriangle(tris[i], tris[i + 1], tris[i + 2]);
             }
+            dmesh.ReverseOrientation();
             return dmesh;
         }
 

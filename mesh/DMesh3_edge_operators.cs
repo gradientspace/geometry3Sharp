@@ -37,6 +37,7 @@ namespace g3
 				}
 			}
             updateTimeStamp(true);
+			Clockwise = !Clockwise;
 		}
 
 
