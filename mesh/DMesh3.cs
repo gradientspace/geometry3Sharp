@@ -2488,7 +2488,6 @@ namespace g3
             unityMesh.vertices = vertices;
             if (mesh.HasVertexColors) unityMesh.SetColors(colors);
             if (mesh.HasVertexUVs) unityMesh.SetUVs(0, uvs);
-            if (mesh.HasVertexNormals) unityMesh.SetNormals(normals);
             int[] triangles = new int[mesh.TriangleCount * 3];
             int j = 0;
             foreach (Index3i tri in mesh.Triangles())
@@ -2499,6 +2498,16 @@ namespace g3
                 j++;
             }
             unityMesh.triangles = triangles;
+            if (mesh.HasVertexNormals)
+            {
+                unityMesh.SetNormals(normals);
+            }
+            else
+            {
+                unityMesh.RecalculateNormals();
+            }
+            unityMesh.RecalculateBounds();
+            unityMesh.RecalculateTangents();
             return unityMesh;
         }
 
