@@ -73,6 +73,12 @@ namespace g3
             MakeMesh(m);
             return m;
         }
+
+
+
+
+
+
         public virtual void MakeMesh(NTMesh3 m)
         {
             int nV = vertices.Count;
@@ -97,6 +103,14 @@ namespace g3
             return m;
         }
 
+
+
+
+
+
+
+
+
         public struct CircularSection
         {
             public float Radius;
@@ -108,6 +122,7 @@ namespace g3
             }
         }
 
+
         protected void duplicate_vertex_span(int nStart, int nCount)
         {
             for (int i = 0; i < nCount; ++i) {
@@ -116,6 +131,7 @@ namespace g3
                 uv[(nStart + nCount) + i] = uv[nStart + i];
             }
         }
+
 
         protected void append_disc(int Slices, int nCenterV, int nRingStart, bool bClosed, bool bCycle, ref int tri_counter, int groupid = -1)
         {
@@ -194,6 +210,7 @@ namespace g3
             Vector3d e2 = (c - a).Normalized;
             return new Vector3f(e1.Cross(e2));
         }
+
 
         protected Vector3d bilerp(ref Vector3d v00, ref Vector3d v10, ref Vector3d v11, ref Vector3d v01, double tx, double ty)
         {
@@ -276,7 +293,6 @@ namespace g3
             m.triangles = triangles.array;
             if (bRecalcNormals)
                 m.RecalculateNormals();
-                m.RecalculateTangents();
         }
     }
 }
