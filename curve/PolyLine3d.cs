@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using UnityEngine;
 
 namespace g3
 {
@@ -26,12 +27,17 @@ namespace g3
 			vertices = new List<Vector3d>(v);
 			Timestamp = 0;
 		}
+
+		public PolyLine3d(IEnumerable<Vector3d> v) {
+			vertices = new List<Vector3d>(v);
+			Timestamp = 0;
+		}
+
 		public PolyLine3d(VectorArray3d v)
 		{
 			vertices = new List<Vector3d>(v.AsVector3d());
 			Timestamp = 0;
 		}
-
 
 		public Vector3d this[int key]
 		{
