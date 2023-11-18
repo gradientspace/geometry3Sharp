@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -42,6 +43,15 @@ namespace g3
             } else {
                 m00 = u.x; m01 = u.y; m10 = v.x; m11 = v.y;
             }
+        }
+
+        public Vector2f Row(int i)
+        {
+            return (i == 0) ? new Vector2f(m00, m01) : new Vector2f(m10, m11);
+        }
+        public Vector2f Column(int i)
+        {
+            return (i == 0) ? new Vector2f(m00, m10) : new Vector2f(m01, m11);
         }
 
         // Create a tensor product U*V^T.
@@ -216,6 +226,15 @@ namespace g3
         public static Vector2f operator*(Vector2f v, Matrix2f m) {
             return new Vector2f( v.x * m.m00 + v.y * m.m10,
                                  v.x * m.m01 + v.y * m.m11 );
+        }
+
+        public static implicit operator Matrix2f(float2x2 m)
+        {
+            return new Matrix2f(m.c0, m.c1, true);
+        }
+        public static explicit operator float2x2(Matrix2f m)
+        {
+            return new float2x2(m.Column(0), m.Column(1));
         }
 
     }

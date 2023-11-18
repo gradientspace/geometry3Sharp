@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using UnityEngine;
+using System.Threading.Tasks;
 
 namespace g3
 {
@@ -134,10 +134,12 @@ namespace g3
 
         int max_group_id = 0;
 
+        // "normal" meshes are counter-clockwise. Unity is CW though...
+        public bool Clockwise = false;
+
 
         /// <summary>
         /// Support attaching arbitrary data to mesh. 
-        /// Note that metadata is currently **NOT** copied when copying a mesh.
         /// </summary>
         Dictionary<string, object> Metadata = null;
 
@@ -244,6 +246,9 @@ namespace g3
                 max_group_id = Math.Max(max_group_id, g+1);
             }
 
+            if (copy.Metadata != null)
+                Metadata = copy.Metadata;
+
             return new CompactInfo() {
                 MapV = new IndexMap(mapV, this.MaxVertexID)
             };
@@ -267,6 +272,8 @@ namespace g3
             triangles_refcount = new RefCountVector(copy.triangles_refcount);
             if (copy.triangle_groups != null)
                 triangle_groups = new DVector<int>(copy.triangle_groups);
+            if (copy.Metadata!= null)
+                Metadata= copy.Metadata;
             max_group_id = copy.max_group_id;
 
             edges = new DVector<int>(copy.edges);
@@ -414,7 +421,7 @@ namespace g3
         }
 
         public void SetVertex(int vID, Vector3d vNewPos) {
-            Debug.Assert(vNewPos.IsFinite);     // this will really catch a lot of bugs...
+            System.Diagnostics.Debug.Assert(vNewPos.IsFinite);     // this will really catch a lot of bugs...
             debug_check_is_vertex(vID);
 
 			int i = 3*vID;
@@ -558,7 +565,7 @@ namespace g3
         /// </summary>
         public Frame3f GetVertexFrame(int vID, bool bFrameNormalY = false)
         {
-            Debug.Assert(HasVertexNormals);
+            System.Diagnostics.Debug.Assert(HasVertexNormals);
 
             int vi = 3 * vID;
             Vector3d v = new Vector3d(vertices[vi], vertices[vi + 1], vertices[vi + 2]);
@@ -1484,7 +1491,7 @@ namespace g3
                 }
                 return count;
             }
-            Debug.Assert(false);
+            System.Diagnostics.Debug.Assert(false);
             return -1;
         }
 
@@ -1504,7 +1511,7 @@ namespace g3
                 }
                 return count;
             }
-            Debug.Assert(false);
+            System.Diagnostics.Debug.Assert(false);
             return -1;
         }
 
@@ -2445,6 +2452,132 @@ namespace g3
             return ci;
         }
 
+        /// <summary>
+        /// Converts g3.DMesh3 to UnityEngine.Mesh. 
+        /// 
+        /// Takes accoun t of the fact that generally Dmesh are ccw but Unity is cw
+        /// </summary>
+        /// <returns>UnityEngine.Mesh</returns>
+        public static explicit operator Mesh(DMesh3 mesh)
+        {
+            if (!mesh.Clockwise)
+                mesh.ReverseOrientation();
+            Mesh unityMesh = new Mesh();
+            unityMesh.MarkDynamic();
+            if (mesh.VertexCount > 64000 || mesh.TriangleCount > 64000)
+                unityMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            Vector3[] vertices = new Vector3[mesh.VertexCount];
+            Color[] colors = new Color[mesh.VertexCount];
+            Vector2[] uvs = new Vector2[mesh.VertexCount];
+            Vector3[] normals = new Vector3[mesh.VertexCount];
+            NewVertexInfo data;
+            for (int i = 0; i < mesh.VertexCount; i++)
+            {
+                if (mesh.IsVertex(i))
+                {
+                    data = mesh.GetVertexAll(i);
+                    vertices[i] = (Vector3)data.v;
+                    if (data.bHaveC)
+                        colors[i] = (Color)data.c;
+                    if (data.bHaveUV)
+                        uvs[i] = (Vector2)data.uv;
+                    if (data.bHaveN)
+                        normals[i] = (Vector3)data.n;
+                }
+            }
+            unityMesh.vertices = vertices;
+            if (mesh.HasVertexColors) unityMesh.SetColors(colors);
+            if (mesh.HasVertexUVs) unityMesh.SetUVs(0, uvs);
+            int[] triangles = new int[mesh.TriangleCount * 3];
+            int j = 0;
+            foreach (Index3i tri in mesh.Triangles())
+            {
+                triangles[j * 3] = tri.a;
+                triangles[j * 3 + 1] = tri.b;
+                triangles[j * 3 + 2] = tri.c;
+                j++;
+            }
+            unityMesh.triangles = triangles;
+            if (mesh.HasVertexNormals)
+            {
+                unityMesh.SetNormals(normals);
+            }
+            else
+            {
+                unityMesh.RecalculateNormals();
+            }
+            unityMesh.RecalculateBounds();
+            unityMesh.RecalculateTangents();
+            return unityMesh;
+        }
+
+        /// <summary>
+        /// Convert a Unity Mesh to DMesh3 in Local Coordinates taking into account mapscale zoom etc
+        /// </summary>
+        /// <param name="mesh"> Unity Mesh</param>
+        /// <returns>DMesh3</returns>
+        public static explicit operator DMesh3(Mesh mesh)
+        {
+            DMesh3 dmesh = new DMesh3();
+            dmesh.Clockwise= true;
+            int[] tris = mesh.triangles;
+            for (int i = 0; i < tris.Length; i += 3)
+            {
+                dmesh.AppendTriangle(tris[i], tris[i + 1], tris[i + 2]);
+            }
+            dmesh.ReverseOrientation();
+            return dmesh;
+        }
+
+        /// <summary>
+        /// Calculates the UVs for the mesh on the assumption that the Mesh is approximately planar
+        /// (without assumptions about what Frame it is planar in).
+        /// 
+        /// The method creates a Frame that is approximately orthogonal to the mesh and maps the UVs
+        /// in that frame. If the mesh is largely concave then you will get odd results.
+        /// </summary>
+        public void CalculateUVs()
+        {
+            EnableVertexUVs(Vector2f.Zero);
+            OrthogonalPlaneFit3 orth = new OrthogonalPlaneFit3(Vertices());
+            Frame3f frame = new Frame3f(orth.Origin, orth.Normal);
+            AxisAlignedBox3d bounds = CachedBounds;
+            AxisAlignedBox2d boundsInFrame = new AxisAlignedBox2d();
+            for (int i = 0; i < 8; i++)
+            {
+                boundsInFrame.Contain(frame.ToPlaneUV((Vector3f)bounds.Corner(i), 3));
+            }
+            Vector2f min = (Vector2f)boundsInFrame.Min;
+            float width = (float)boundsInFrame.Width;
+            float height = (float)boundsInFrame.Height;
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                Vector2f UV = frame.ToPlaneUV((Vector3f)GetVertex(i), 3);
+                UV.x = (UV.x - min.x) / width;
+                UV.y = (UV.y - min.y) / height;
+                SetVertexUV(i, UV);
+            }
+        }
+
+        /// <summary>
+        /// Aaitable version of CalculateUVs
+        /// </summary>
+        /// <returns></returns>
+        public Task<int> CalculateUVsAsync()
+        {
+
+            TaskCompletionSource<int> tcs1 = new TaskCompletionSource<int>();
+            Task<int> t1 = tcs1.Task;
+            t1.ConfigureAwait(false);
+
+            // Start a background task that will complete tcs1.Task
+            Task.Factory.StartNew(() => {
+                CalculateUVs();
+                tcs1.SetResult(1);
+            });
+            return t1;
+        }
     }
 }
 

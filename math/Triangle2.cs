@@ -29,6 +29,15 @@ namespace g3
             return bary.x* V0 + bary.y* V1 + bary.z* V2;
         }
 
+        /// <summary>
+        /// Returns the Centroid or Barycenter of the Traingle
+        /// </summary>
+        /// <returns></returns>
+        public Vector2d Centroid()
+        {
+            return PointAt(0.3, 0.3, 0.3);
+        }
+
         // conversion operators
         public static implicit operator Triangle2d(Triangle2f v)
         {
@@ -65,6 +74,15 @@ namespace g3
         public Vector2f PointAt(Vector3f bary)
         {
             return bary.x * V0 + bary.y * V1 + bary.z * V2;
+        }
+
+        /// <summary>
+        /// Returns the Centroid or Barycenter of the Traingle
+        /// </summary>
+        /// <returns></returns>
+        public Vector2f Centroid()
+        {
+            return PointAt(0.3f, 0.3f, 0.3f);
         }
     }
 

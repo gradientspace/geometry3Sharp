@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -160,12 +159,20 @@ namespace g3
 
 
 
-        // implicit cast between Index3i and Vector3i
+        // implicit cast between Index3i and Vector3i anf int3
         public static implicit operator Vector3i(Index3i v) {
             return new Vector3i(v.a, v.b, v.c);
         }
         public static implicit operator Index3i(Vector3i v) {
             return new Index3i(v.x, v.y, v.z);
+        }
+        public static implicit operator Vector3i(int3 v)
+        {
+            return new Vector3i(v.x, v.y, v.z);
+        }
+        public static implicit operator int3(Vector3i v)
+        {
+            return new int3(v.x, v.y, v.z);
         }
 
         // explicit cast to double/float vector types
@@ -181,6 +188,5 @@ namespace g3
         public static explicit operator Vector3d(Vector3i v) {
             return new Vector3d((double)v.x, (double)v.y, (double)v.z);
         }
-
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using UnityEngine;
 
 namespace g3
 {
@@ -67,6 +67,18 @@ namespace g3
             Timestamp = 1;
         }
 
+        /// <summary>
+        /// Creates g3.DCurve from Vector3[]
+        /// </summary>
+        /// <param name="v_in">Vextor3[]</param>
+        /// <param name="bClosed">whether the line is closed</param>
+        public DCurve3(Vector3[] v_in, bool bClosed)
+        {
+            Closed = bClosed;
+            vertices = v_in.ToList<Vector3>().Select(vertex => (Vector3d)vertex).ToList<Vector3d>();
+            Timestamp = 1;
+        }
+
         public void AppendVertex(Vector3d v) {
             vertices.Add(v);
             Timestamp++;
@@ -82,6 +94,12 @@ namespace g3
         public Vector3d GetVertex(int i) {
             return vertices[i];
         }
+
+        public IEnumerable<Vector3d> VertexItr()
+        {
+            return vertices;
+        }
+
         public void SetVertex(int i, Vector3d v) {
             vertices[i] = v;
             Timestamp++;
@@ -145,7 +163,6 @@ namespace g3
         public IEnumerable<Vector3d> Vertices {
             get { return vertices; }
         }
-
 
         public Segment3d GetSegment(int iSegment)
         {
@@ -328,6 +345,44 @@ namespace g3
                 }
             }
             return resampled;
+        }
+
+        /// <summary>
+        /// Estimates the 3D centroid of a DCurve 
+        /// </summary>
+        /// <returns>Vector3[]</returns>
+        public Vector3d Center()
+        {
+            Vector3d center = Vector3d.Zero;
+            int len = SegmentCount;
+            if (!Closed) len++;
+            foreach( Vector3d v in Vertices )
+            {
+                center += v;
+            }
+            center /= len;
+            return center;
+        }
+
+        /// <summary>
+        /// Estimates the nearest point on a DCurve to the centroid of that DCurve
+        /// </summary>
+        /// <returns>g3.Vector3d Centroid</returns>
+        public Vector3d CenterMark()
+        {
+            Vector3d center = Center();
+            return GetSegment(NearestSegment(center)).NearestPoint(center);
+        }
+
+        /// <summary>
+        /// Finds the Segment from the DCurve3 closes to the position
+        /// </summary>
+        /// <param name="position">Vector3d</param>
+        /// <returns>Integer Sgement index</returns>
+        public int NearestSegment( Vector3d position)
+        {
+            _ = DistanceSquared(position, out int iSeg, out double tangent);
+            return iSeg;
         }
 
     }

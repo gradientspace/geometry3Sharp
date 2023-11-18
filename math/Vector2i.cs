@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -127,6 +128,15 @@ namespace g3
         {
             return string.Format("{0} {1}", x, y);
         }
+
+        public static implicit operator Vector2i(int2 v)
+        {
+            return new Vector2i(v.x, v.y);
+        }
+        public static implicit operator int2(Vector2i v)
+        {
+            return new int2(v.x, v.y);
+        }
     }
 
 
@@ -154,12 +164,14 @@ namespace g3
         static public readonly Vector2l AxisX = new Vector2l(1, 0);
         static public readonly Vector2l AxisY = new Vector2l(0, 1);
 
-        public long this[long key] {
+        public long this[long key]
+        {
             get { return (key == 0) ? x : y; }
             set { if (key == 0) x = value; else y = value; }
         }
 
-        public long[] array {
+        public long[] array
+        {
             get { return new long[] { x, y }; }
         }
 
@@ -234,7 +246,8 @@ namespace g3
         }
         public override int GetHashCode()
         {
-            unchecked {
+            unchecked
+            {
                 int hash = (int)2166136261;
                 // Suitable nullity checks etc, of course :)
                 hash = (hash * 16777619) ^ x.GetHashCode();
@@ -256,14 +269,18 @@ namespace g3
             return (x == other.x && y == other.y);
         }
 
-
-
         public override string ToString()
         {
             return string.Format("{0} {1}", x, y);
         }
+
+        public static implicit operator Vector2l(int2 v)
+        {
+            return new Vector2l(v.x, v.y);
+        }
+        public static explicit operator int2(Vector2l v)
+        {
+            return new int2((int)v.x, (int)v.y);
+        }
     }
-
-
-
 }

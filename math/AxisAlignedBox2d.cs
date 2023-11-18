@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace g3
 {
@@ -299,12 +300,18 @@ namespace g3
             Min.Set(fNewX, fNewY);
         }
 
-
-
         public override string ToString() {
             return string.Format("[{0:F8},{1:F8}] [{2:F8},{3:F8}]", Min.x, Max.x, Min.y, Max.y);
         }
-
-
+        public static implicit operator AxisAlignedBox2d(UnityEngine.Rect b)
+        {
+            return new AxisAlignedBox2d(b.min, b.max);
+        }
+        public static explicit operator UnityEngine.Rect(AxisAlignedBox2d b)
+        {
+            Rect ub = new Rect();
+            ub.min = (Vector2)b.Min; ub.max = (Vector2)b.Max;
+            return ub;
+        }
     }
 }

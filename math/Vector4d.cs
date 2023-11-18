@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -240,8 +239,6 @@ namespace g3
                    Math.Abs(w - v2.w) <= epsilon;
         }
 
-
-
         public override string ToString() {
             return string.Format("{0:F8} {1:F8} {2:F8} {3:F8}", x, y, z, w);
         }
@@ -249,6 +246,37 @@ namespace g3
             return string.Format("{0} {1} {2} {3}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt), w.ToString(fmt));
         }
 
-
+        public static implicit operator Vector4d(Vector4f v)
+        {
+            return new Vector4d(v.x, v.y, v.z, v.w);
+        }
+        public static explicit operator Vector4f(Vector4d v)
+        {
+            return new Vector4f((float)v.x, (float)v.y, (float)v.z, (float)v.w);
+        }
+        public static implicit operator Vector4d(Vector4 v)
+        {
+            return new Vector4d(v.x, v.y, v.z, v.w);
+        }
+        public static explicit operator Vector4(Vector4d v)
+        {
+            return new Vector4((float)v.x, (float)v.y, (float)v.z, (float)v.w);
+        }
+        public static implicit operator Vector4d(float4 v)
+        {
+            return new Vector4d( v.x, v.y, v.z, v.w);
+        }
+        public static explicit operator float4(Vector4d v)
+        {
+            return new float4((float)v.x, (float)v.y, (float)v.z, (float)v.w);
+        }
+        public static implicit operator Vector4d(double4 v)
+        {
+            return new Vector4d(v.x, v.y, v.z, v.w);
+        }
+        public static implicit operator double4(Vector4d v)
+        {
+            return new double4((float)v.x, (float)v.y, (float)v.z, (float)v.w);
+        }
     }
 }

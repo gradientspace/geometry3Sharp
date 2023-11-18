@@ -40,7 +40,8 @@ scopedRegistries": [
       "url": "https://package.openupm.com",
       "scopes": [
         "com.openupm",
-        "com.virgis.geometry"
+        "com.virgis.geometry",
+	"com.andywiecko"
       ]
     }
   ],
@@ -54,24 +55,48 @@ The Package can also be installed using the Unity Package Manager directly from 
 ViRGiS Geometry supports transparent conversion with Unity types.
 
 ViRGiS Geometry has the following Primitive types mostly implemented as Structs:
-- **Vector** 2d/2f,2i,3d/3f,3i,4d,4f
-- **Matrix** 2d/2f/3f/3d,
-- **Quaternion** f/d,
-- **Index** 2/3/4,
-- **AxisAlignedBox**2d/3d/2f/3f, (oriented) **Box**2d/3d/2f/3f
-- **Ray**3d/3f
-- **Segment**2d/3d/2f/3f, **Line**2d/3d/2f/3f,
-- **Triangle**2d/3d/2f/3f, **Plane**3d/3f
-- 1D intervals **Interval1d**, and **Interval1i** which is IEnumerable
-- **VectorTuple** 2/3/4 element 2d/3d vector-tuples (convenient())
+- `Vector2d, 2f, 2i, 3d, 3f, 3i, 4d, 4f`
+- `Matrix2d, 2f, 3f, 3d`
+- `Quaterniond, f`
+- `Index2, 3, 4`
+- `AxisAlignedBox2d, 3d, 2f, 3f`
+- (oriented) `Box2d, 3d, 2f, 3f`
+- `Ray3d, 3f`
+- `Segment2d, 3d, 2f, 3f`
+- `Line2d, 3d, 2f, 3f `
+- `Triangle2d, 3d, 2f, 3f`
+- `Plane3d, 3f`
+- 1D intervals `Interval1d`, and `Interval1i` which is `IEnumerable`
+- `VectorTuple2, 3, 4`
+- `element2d, 3d` vector-tuples (convenient())
 
-The majority of these have implicit or explicit conversions to UnityEngine (e.g. **Vector3** ) and Unity.Mathematics (e.g. **float3** ) types as shown in the table below. The conversions are all implicit where the conversions can be done without precision loss (e.g. float to float) and explicit where there is precision loss (e.g. double to float).
+The majority of these have implicit or explicit conversions to UnityEngine (e.g. `Vector3` ) and Unity.Mathematics (e.g. `float3` ) types as shown in the table below. The conversions are all implicit where the conversions can be done without precision loss (e.g. float to float) and explicit where there is precision loss (e.g. double to float).
 
 > [!NOTE]
->These conversions will **not** work for equations, so to add a Vector3f and a Vector3, you
+>These conversions will **not** work for equations, so to add a `Vector3f` and a `Vector3`, you
 will need to explicitly cast one to the other.
 
-TABLE TODO
+<img width="635" alt="Screenshot 2023-11-15 at 23 13 02" src="https://github.com/ViRGIS-Team/ViRGiS-Geometry/assets/2239795/2b6d379c-cf90-4673-8502-9d5f0e0de357">
+
+# Mesh Entities
+
+The main mesh entity in this package is the `DMesh3` and this is the main attraction of this package. It is a very efficient and effective tool for managing and manipulating mesh entities.
+
+There are explicit conversions between Unity `Mesh` and `DMesh3`. Note that there is an intrincsic loss of precision in going from DMesh3 to Unity Mesh so the round trip is not recommended.
+
+The `DMesh3` includes a simply routine to calculate the UVs for a mesh. This is intended for mesh that are largely planar (but does not care which reference frame they are planar in) and will return unexpected results if the mesh is not planar.
+
+# Geoometry Entitiies
+
+There are a multitude of Geometric entities in this package. A few which we find of particular value:
+
+- `Polyline2D` and 3D. Provide useful extensions to Lists of `Vector3d` and 2d.
+
+- `DCurve3` - provides a good of managing lines in 3D space.
+
+- `GeneralPolygon2D` - A vary good way of managing and manipulating arbitrary Polygons with holes as meshes. The class includes the ability to create from a list of `DCurve3` linear rings - with the expectation that the polygons are approximately planar - at least locally - and the 3D curves are mapped onto the best orthogonal plan of reference using a Frame3f. 
+
+The Polygon can then be meshed using fast Delaunay algorithms - preserving the vertices, the boundaries and holes and the vertex order which makes it very easy to map the triangulation back into the original 3D vertices.
 
 # Tutorials
 

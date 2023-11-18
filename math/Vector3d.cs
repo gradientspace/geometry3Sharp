@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -348,6 +347,22 @@ namespace g3
         public static explicit operator Vector3(Vector3d v)
         {
             return new Vector3((float)v.x, (float)v.y, (float)v.z);
+        }
+        public static implicit operator Vector3d(float3 v)
+        {
+            return new Vector3d(v.x, v.y, v.z);
+        }
+        public static explicit operator float3(Vector3d v)
+        {
+            return new float3((float)v.x, (float)v.y, (float)v.z);
+        }
+        public static implicit operator Vector3d(double3 v)
+        {
+            return new Vector3d(v.x, v.y, v.z);
+        }
+        public static implicit operator double3(Vector3d v)
+        {
+            return new double3(v.x, v.y, v.z);
         }
 
 

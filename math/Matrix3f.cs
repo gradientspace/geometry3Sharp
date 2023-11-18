@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -235,19 +233,12 @@ namespace g3
             return new Quaternionf(this);
         }
 
-
-
-
-
         public bool EpsilonEqual(Matrix3f m2, float epsilon)
         {
             return Row0.EpsilonEqual(m2.Row0, epsilon) &&
                 Row1.EpsilonEqual(m2.Row1, epsilon) &&
                 Row2.EpsilonEqual(m2.Row2, epsilon);
         }
-
-
-
 
         public static Matrix3f AxisAngleD(Vector3f axis, float angleDeg)
         {
@@ -270,14 +261,21 @@ namespace g3
                 xzm - ySin, yzm + xSin, z2 * oneMinusCos + cs);
         }
 
-
-
-
         public override string ToString() {
             return string.Format("[{0}] [{1}] [{2}]", Row0, Row1, Row2);
         }
+
         public string ToString(string fmt) {
             return string.Format("[{0}] [{1}] [{2}]", Row0.ToString(fmt), Row1.ToString(fmt), Row2.ToString(fmt));
+        }
+
+        public static implicit operator Matrix3f(float3x3 m)
+        {
+            return new Matrix3f(m.c0, m.c1, m.c2, false);
+        }
+        public static explicit operator float3x3(Matrix3f m)
+        {
+            return new float3x3(m.Column(0), m.Column(1), m.Column(3));
         }
     }
 }

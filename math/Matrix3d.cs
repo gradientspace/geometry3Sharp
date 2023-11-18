@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -84,7 +82,6 @@ namespace g3
             Row2 = new Vector3d(m20, m21, m22);
         }
 
-
         /// <summary>
         /// Construct outer-product of u*transpose(v) of u and v
         /// result is that Mij = u_i * v_j
@@ -96,11 +93,8 @@ namespace g3
             Row2 = new Vector3d(u.z*v.x, u.z*v.y, u.z*v.z);
         }
 
-
         public static readonly Matrix3d Identity = new Matrix3d(true);
         public static readonly Matrix3d Zero = new Matrix3d(false);
-
-
 
         public double this[int r, int c] {
             get {
@@ -113,7 +107,6 @@ namespace g3
             }
         }
 
-
         public double this[int i] {
             get {
                 return (i > 5) ? Row2[i%3] : ((i > 2) ? Row1[i%3] : Row0[i%3]);
@@ -125,8 +118,6 @@ namespace g3
             }
         }
 
-
-
         public Vector3d Row(int i) {
             return (i == 0) ? Row0 : (i == 1) ? Row1 : Row2;
         }
@@ -135,7 +126,6 @@ namespace g3
             else if ( i==1) return new Vector3d(Row0.y, Row1.y, Row2.y);
             else return new Vector3d(Row0.z, Row1.z, Row2.z);
         }
-
 
         public double[] ToBuffer() {
             return new double[9] {
@@ -297,14 +287,21 @@ namespace g3
                 xzm - ySin, yzm + xSin, z2 * oneMinusCos + cs);
         }
 
-
-
-
         public override string ToString() {
             return string.Format("[{0}] [{1}] [{2}]", Row0, Row1, Row2);
         }
+
         public string ToString(string fmt) {
             return string.Format("[{0}] [{1}] [{2}]", Row0.ToString(fmt), Row1.ToString(fmt), Row2.ToString(fmt));
+        }
+
+        public static implicit operator Matrix3d(double3x3 m)
+        {
+            return new Matrix3d(m.c0, m.c1, m.c2, false);
+        }
+        public static explicit operator double3x3(Matrix3d m)
+        {
+            return new double3x3(m.Column(0), m.Column(1), m.Column(3));
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -264,6 +263,24 @@ namespace g3
         public static implicit operator Vector4f(Color c)
         {
             return new Vector4f(c.r, c.g, c.b, c.a);
+        }
+        public static implicit operator Vector4f(float4 v)
+        {
+            return new Vector4f(v.x, v.y, v.z, v.w);
+        }
+        public static implicit operator float4(Vector4f v)
+        {
+            return new Vector4(v.x, v.y, v.z, v.w);
+        }
+
+        // explicit conversions from double types
+        public static implicit operator double4(Vector4f v)
+        {
+            return new double4(v.x, v.y, v.z, v.w);
+        }
+        public static explicit operator Vector4f(double4 v)
+        {
+            return new Vector4f((float)v.x, (float)v.y, (float)v.z, (float)v.w);
         }
     }
 }

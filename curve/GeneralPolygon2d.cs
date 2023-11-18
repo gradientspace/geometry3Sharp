@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using Unity.Collections;
+using Unity.Mathematics;
+using andywiecko.BurstTriangulator;
+
 
 namespace g3 
 {
@@ -27,7 +32,67 @@ namespace g3
 				holes.Add(new Polygon2d(hole));
 		}
 
-		public virtual GeneralPolygon2d Duplicate() {
+        /// <summary>
+        /// Create a Polygon 2D from a list of DCurve3's using a Frame that is as orthogonal to the dataset as poissible
+        /// Return the Frame3f used and the original Vertices sorted.
+        /// </summary>
+        /// <param name="curve">The input IEumerable of DCurve3</param>
+        /// <param name="frame">The Frame3f used</param>
+        /// <param name="AllVerticesItr">The original 3D vertices usd n the same order as the AllVerticesItr of the General Polygon2D</param>
+        public GeneralPolygon2d(IEnumerable<DCurve3> curves, out Frame3f frame, out IEnumerable<Vector3d> AllVerticesItr)
+        {
+            OrthogonalPlaneFit3 orth = new OrthogonalPlaneFit3(curves.ElementAt(0).Vertices);
+            frame = new Frame3f(orth.Origin, orth.Normal);
+            AllVerticesItr = null;
+            int i = 0;
+            foreach (DCurve3 curve in curves)
+            {
+                List<Vector3d> vertices = curve.Vertices.ToList();
+                List<Vector2d> vertices2d = new List<Vector2d>();
+                foreach (Vector3d v in vertices)
+                {
+                    Vector2f vertex = frame.ToPlaneUV((Vector3f)v, 3);
+                    if (i != 0 && !Outer.Contains(vertex)) break;
+                    vertices2d.Add(vertex);
+                }
+                Polygon2d p2d = new Polygon2d(vertices2d);
+                if (i == 0)
+                {
+                    p2d = new Polygon2d(vertices2d);
+                    p2d.Reverse();
+                    Outer = p2d;
+                    vertices.Reverse();
+                    AllVerticesItr = vertices;
+                }
+                else
+                {
+                    try
+                    {
+                        try
+                        {
+                            AddHole(p2d, true, true);
+                            AllVerticesItr = AllVerticesItr.Concat(vertices);
+                        }
+                        catch (Exception e)
+                        {
+                            _ = e;
+                            p2d.Reverse();
+                            AddHole(p2d, true, true);
+                            vertices.Reverse();
+                            AllVerticesItr = AllVerticesItr.Concat(vertices);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        _ = e;
+                        // skip this hole
+                    }
+                }
+                i++;
+            }
+        }
+
+        public virtual GeneralPolygon2d Duplicate() {
 			return new GeneralPolygon2d(this);
 		}
 
@@ -39,7 +104,6 @@ namespace g3
 				bOuterIsCW = outer.IsClockwise;
 			}
 		}
-
 
 		public void AddHole(Polygon2d hole, bool bCheckContainment = true, bool bCheckOrientation = true) {
 			if ( outer == null )
@@ -278,10 +342,105 @@ namespace g3
 			}
 		}
 
+        public IEnumerable<Index2i> AllEdgesItr()
+        {
+            int j = Outer.VertexCount;
+            for (int i = 0; i < j; i++)
+                yield return new Index2i(i, i != j - 1 ? i + 1 : 0);
+            foreach (var hole in Holes)
+            {
+                for (int i = 0; i < hole.VertexCount; i++)
+                    yield return new Index2i(j + i, i != hole.VertexCount - 1 ? j + i + 1 : j);
+                j += hole.VertexCount;
+            }
+        }
+
+        private NativeArray<int> ToEdges()
+        {
+            int edge_count = VertexCount;
+
+            NativeArray<int> edges = new(edge_count * 2, Allocator.Persistent);
+
+            int idx = 0;
+            foreach (Index2i edge in AllEdgesItr())
+            {
+                edges[idx] = edge.a;
+                idx++;
+                edges[idx] = edge.b;
+                idx++;
+            }
+            return edges;
+        }
+
+        private  NativeArray<float2> ToHoleSeeds()
+        {
+            List<Vector2d> seeds = new();
+            foreach (Polygon2d hole in Holes)
+            {
+                seeds.Add(hole.PointInPolygon());
+            }
+            return new NativeArray<float2>(seeds.Select(vertex => (float2)vertex).ToArray(), Allocator.Persistent);
+        }
+
+        /// <summary>
+        /// Calculates the Delaunay triangulation for the Polygon, respecting the outer border and the holes
+        /// </summary>
+        /// <returns name="triangles"> Indes3i holding the triangles as indexes into AllVerticesItr</param>
+        public Index3i[] GetMesh()
+        {
+            Triangulator triangulator = new Triangulator(Allocator.Persistent)
+            {
+                Input = {
+                    Positions = new NativeArray<float2>(AllVerticesItr().Select(vertex => (float2)vertex).ToArray(), Allocator.Persistent),
+                    ConstraintEdges = ToEdges(),
+                    HoleSeeds = ToHoleSeeds()
+                },
+                Settings = {
+                    RestoreBoundary = true,
+                    ConstrainEdges = true
+                }
+            };
+            try
+            {
+
+                triangulator.Run();
+
+                if ( ! triangulator.Output.Status.IsCreated || 
+                       triangulator.Output.Status.Value != Triangulator.Status.OK
+                   )
+                {
+                    throw new Exception("Could not create Delaunay Triangulation");
+                }
 
 
+                // 
+                // extract the triangles from the delaunay triangulation 
+                //
+                int[] tris = triangulator.Output.Triangles.AsArray().ToArray();
+                int tri_count = tris.Length / 3;
+                Index3i[] triangles = new Index3i[tri_count];
+                long idx = 0;
+
+                for ( int i = 0; i < tri_count; i++)
+                {
+                    triangles[i] = new(tris[idx++], tris[idx++], tris[idx++] );
+                }
 
 
+                triangulator.Input.Positions.Dispose();
+                triangulator.Input.ConstraintEdges.Dispose();
+                triangulator.Input.HoleSeeds.Dispose();
+                triangulator.Dispose();
+                return triangles;
+            } catch
+            {
+                triangulator.Input.Positions.Dispose();
+                triangulator.Input.ConstraintEdges.Dispose();
+                triangulator.Input.HoleSeeds.Dispose();
+                triangulator.Dispose();
+                return default;
+            }
+        }
 
         public void Simplify(double clusterTol = 0.0001,
                               double lineDeviationTol = 0.01,
@@ -293,7 +452,28 @@ namespace g3
                 hole.Simplify(clusterTol, lineDeviationTol, bSimplifyStraightLines);
         }
 
-
+        public bool IsOutside(Segment2d seg)
+        {
+            bool isOutside = true;
+            if (Outer.IsMember(seg, out isOutside))
+            {
+                if (isOutside)
+                    return true;
+                else
+                    return false;
+            }
+            foreach (Polygon2d hole in Holes)
+            {
+                if (hole.IsMember(seg, out isOutside))
+                {
+                    if (isOutside)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            return false;
+        }
 
     }
 }
