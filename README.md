@@ -86,7 +86,7 @@ There are explicit conversions between Unity `Mesh` and `DMesh3`. Note that ther
 
 The `DMesh3` includes a simply routine to calculate the UVs for a mesh. This is intended for mesh that are largely planar (but does not care which reference frame they are planar in) and will return unexpected results if the mesh is not planar.
 
-# Geoometry Entitiies
+# Geometry Entitiies
 
 There are a multitude of Geometric entities in this package. A few which we find of particular value:
 
