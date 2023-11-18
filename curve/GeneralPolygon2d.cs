@@ -342,15 +342,15 @@ namespace g3
 			}
 		}
 
-        public IEnumerable<(int, int)> AllEdgesItr()
+        public IEnumerable<Index2i> AllEdgesItr()
         {
             int j = Outer.VertexCount;
             for (int i = 0; i < j; i++)
-                yield return (i, i != j - 1 ? i + 1 : 0);
+                yield return new Index2i(i, i != j - 1 ? i + 1 : 0);
             foreach (var hole in Holes)
             {
                 for (int i = 0; i < hole.VertexCount; i++)
-                    yield return (j + i, i != hole.VertexCount - 1 ? j + i + 1 : j);
+                    yield return new Index2i(j + i, i != hole.VertexCount - 1 ? j + i + 1 : j);
                 j += hole.VertexCount;
             }
         }
@@ -362,11 +362,11 @@ namespace g3
             NativeArray<int> edges = new(edge_count * 2, Allocator.Persistent);
 
             int idx = 0;
-            foreach ((int, int) edge in AllEdgesItr())
+            foreach (Index2i edge in AllEdgesItr())
             {
-                edges[idx] = edge.Item1;
+                edges[idx] = edge.a;
                 idx++;
-                edges[idx] = edge.Item2;
+                edges[idx] = edge.b;
                 idx++;
             }
             return edges;
@@ -377,10 +377,7 @@ namespace g3
             List<Vector2d> seeds = new();
             foreach (Polygon2d hole in Holes)
             {
-                Vector2d seed = hole.Bounds.Center;
-                if (hole.Contains(seed))
-                    seeds.Add(seed);
-                else throw new Exception("Cannot find Hole Seed");
+                seeds.Add(hole.PointInPolygon());
             }
             return new NativeArray<float2>(seeds.Select(vertex => (float2)vertex).ToArray(), Allocator.Persistent);
         }

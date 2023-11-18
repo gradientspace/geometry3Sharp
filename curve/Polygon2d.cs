@@ -188,10 +188,10 @@ namespace g3
                 yield return vertices[0];
         }
 
-        public  IEnumerable<(int, int)> EdgeItr()
+        public  IEnumerable<Index2i> EdgeItr()
         {
             for (int i = 0; i < VertexCount; ++i)
-                yield return (i, i != VertexCount - 1 ? i + 1 : 0);
+                yield return new Index2i(i, i != VertexCount - 1 ? i + 1 : 0);
         }
 
         public bool IsClockwise {
@@ -213,8 +213,8 @@ namespace g3
         }
 
         /// <summary>
-        /// A segment is a member if the the ends of the segment are in the polygon.
-        /// It isOutside if it fails the BiContains test - i.e. TODO
+        /// A segment is a member if the the ends of the segment are vertices of the polygon.
+        /// It isOutside if it fails the BiContains test - i.e. the segment is not part of the perimeter
         /// </summary>
         /// <param name="seg"></param>
         /// <param name="IsOutside"></param>
@@ -338,8 +338,6 @@ namespace g3
 			return nWindingNumber != 0;
 		}
 
-
-
 		public bool Contains(Polygon2d o) {
 
 			// [TODO] fast bbox check?
@@ -424,6 +422,22 @@ namespace g3
                         }
                     }
 				}
+			}
+			return v;
+		}
+
+        public List<Vector2d> FindIntersections(Segment2d s) {
+			List<Vector2d> v = new List<Vector2d>();
+			foreach ( Segment2d seg in SegmentItr() ) {
+                if (seg.Intersects(s)) {
+                    IntrSegment2Segment2 intr = new IntrSegment2Segment2(seg, s);
+                    if (intr.Find()) {
+                        v.Add(intr.Point0);
+                        if (intr.Quantity == 2)
+                            v.Add(intr.Point1);
+                    }
+                }
+
 			}
 			return v;
 		}
@@ -769,7 +783,29 @@ namespace g3
             Timestamp++;
         }
 
+        /// <summary>
+        /// Returns an arbitrary point that is guaranteed to be inside the polygon
+        /// </summary>
+        /// <returns>Vector2d Point</returns>
+        public Vector2d PointInPolygon(){
+            AxisAlignedBox2d bbox = Bounds;
+            Vector2d a = bbox.GetCorner(3); // upper left
+            Vector2d b = bbox.GetCorner(1); // bottom right
 
+            // unless both a and b are vertices of the polygon, the lineab must intersect the polygon
+            if ( Vertices.Contains(a) && Vertices.Contains(b)) 
+            {
+                // use the oter diagnonal instead
+                a = bbox.GetCorner(2); 
+                b = bbox.GetCorner(0); 
+            }
+
+            List<Vector2d> its = FindIntersections( new Segment2d(a, b));
+            Segment2d diag = new(its[0], its[1]);
+            if  (Contains(diag.Center))
+                return diag.Center;
+            throw new Exception("Failed to find a point in the polygon");
+        }
 
 
 		/// <summary>
