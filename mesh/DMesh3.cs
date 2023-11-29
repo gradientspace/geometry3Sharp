@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System.Threading.Tasks;
+using Unity.Mathematics;
 
 namespace g3
 {
@@ -2520,6 +2521,11 @@ namespace g3
         {
             DMesh3 dmesh = new DMesh3();
             dmesh.Clockwise= true;
+            Vector3[] vertices = mesh.vertices;
+            foreach( Vector3 v in vertices) {
+                dmesh.AppendVertex(v);
+            }
+
             int[] tris = mesh.triangles;
             for (int i = 0; i < tris.Length; i += 3)
             {
@@ -2530,7 +2536,7 @@ namespace g3
         }
 
         /// <summary>
-        /// Calculates the UVs for the mesh on the assumption that the Mesh is approximately planar
+        /// Calculates the UVs for the mesh on the assumption that the Mesh is planar in some frame of ref
         /// (without assumptions about what Frame it is planar in).
         /// 
         /// The method creates a Frame that is approximately orthogonal to the mesh and maps the UVs
@@ -2561,7 +2567,7 @@ namespace g3
         }
 
         /// <summary>
-        /// Aaitable version of CalculateUVs
+        /// Awaitable version of CalculateUVs
         /// </summary>
         /// <returns></returns>
         public Task<int> CalculateUVsAsync()
@@ -2577,6 +2583,114 @@ namespace g3
                 tcs1.SetResult(1);
             });
             return t1;
+        }
+
+        /// <summary>
+        /// Attempts to create a lowest degree colorisation - outputting up to 6 colors
+        /// 6Colorisation should always be possible for a planar network.
+        /// 
+        /// Outputs  Int4[].
+        /// 
+        /// The output  should be interpreted as a compressed 6 color 
+        /// representation - with values r, g, b and an invett flag that can be applied to each of the other 
+        /// colors - making six colors r [1,0,01], r'[1,0,0,0], b[0,1,0,1], b'[0,1,0,0],g[0,0,1,1] and g'[0,0,1,0].
+        /// Each Color at any vertex is either 1 (present) or 0 (absent) The sum of the int4 is either 1 or 2.
+        /// </summary>
+        /// <param name="uv0"> Vector2f[] containing  the r an g values</param>
+        /// <param name="uv1"> Vector</param>
+        /// <returns></returns>
+        public int4[] Colorisation() {
+            int4[] colorisation = new int4[VertexCount];
+
+
+            int4 r = new(1,0,0,1);
+            int4 g = new(0,1,0,1);
+            int4 b = new(0,0,1,1);
+
+            int4 ri = new(1,0,0,0);
+            int4 gi = new(0,1,0,0);
+            int4 bi = new(0,0,1,0);
+
+            int4[] patterns = new int4[6] {r,g,b,ri,bi,gi};
+            int[] inverted = new int[] {3,4, 5, 0, 1, 2};
+
+            // iterate through the trianglesin the mesh
+            foreach (Index3i triangle in Triangles()) {
+
+                /// holds the summary of current vertex colors
+                int[] mask = new int[6];
+                /// the vertex indices for this triangle
+                int[] tri = triangle.array;
+
+                ///iterate through the vertices and add the color to mask
+                foreach(int v in tri) {
+                    int4 c = colorisation[v];
+                    if ( c.Equals(int4.zero) ) continue;
+                    for(int i =0; i<6; i++){
+                        if (c.Equals(patterns[i])){
+                            mask[i] += 1;
+                            break;
+                        }
+                    }
+                }
+
+                // if there are any vertex color clashes ...
+                if (mask.Max() > 1) {
+                    for(int i =0; i<6; i++){
+                        if (mask[i] > 1) {
+                            foreach(int v in tri) {
+                                if (colorisation[v].Equals(patterns[i])){
+                                    // flip the conflicted color to it's inverse
+                                    // TODO There is a small chance that it has already been flipped
+                                    // should really check other triangles
+                                    colorisation[v] = patterns[inverted[i]];
+                                    break;
+                                }
+                            };
+                            throw new Exception("six colorisation error");
+                        }
+                        mask[i] -=1;
+                        mask[inverted[i]] +=1;
+                    }
+                }
+
+                // fill out the triangle
+
+                while (mask.Sum() < 3) {
+                    foreach(int v in tri) {
+                        if ( colorisation[v].Equals(int4.zero)){
+                            /// fill with the lowest available color
+                            for(int i =0; i<6; i++){
+                                if (mask[i] == 0 ) {
+                                    // check the inverse does aready exist
+                                    if (mask[inverted[i]] > 0) continue;
+                                    colorisation[v] = patterns[i];
+                                    mask[i] +=1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (mask.Max( ) > 1 || (mask[3] + mask[4] + mask[5]) >1 ) {
+                    var a = 1;
+                }
+            }
+            return colorisation;
+        }
+
+
+        public void Colorisation( out Vector2[] uv1, out Vector2[] uv2){
+            int4[] colorisation = Colorisation();
+
+            uv1 = new Vector2[colorisation.Length];
+            uv2 = new Vector2[colorisation.Length];
+
+            for ( int i =0; i < colorisation.Length; i++) {
+                int4 c = colorisation[i];
+                uv1[i] = new Vector2(c.x, c.y);
+                uv2[i] = new Vector2(c.z, c.w);
+            } 
         }
     }
 }
