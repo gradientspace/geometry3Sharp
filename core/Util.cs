@@ -16,11 +16,11 @@ namespace g3
     {
 
 		static public void gBreakToDebugger() {
-			if ( System.Diagnostics.Debugger.IsAttached)
-				System.Diagnostics.Debugger.Break();
+			// if ( System.Diagnostics.Debugger.IsAttached)
+			// 	System.Diagnostics.Debugger.Break();
 		}
 
-        static public bool DebugBreakOnDevAssert = true;
+        static public bool DebugBreakOnDevAssert = false;
 
         [Conditional("DEBUG")] 
         static public void gDevAssert(bool bValue, string message = "gDevAssert") {
