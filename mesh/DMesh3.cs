@@ -2678,22 +2678,7 @@ namespace g3
             uv = new Vector2[colorisation.Length];
 
             for ( int i =0; i < colorisation.Length; i++) {
-                switch(colorisation[i]) {
-                    case 1:
-                    case 4:
-                        uv[i] = new(1, 0);
-                        break;
-                    case 2:
-                    case 5:
-                        uv[i] = new(2, 0);
-                        break;
-                    case 3:
-                    case 6:
-                        uv[i] = new(3, 0);
-                        break;
-                    default:
-                        throw new Exception("Invalid Color in colorisation");
-                }
+                uv[i] = new Vector3(colorisation[i], 0);
             };
         }
     }
