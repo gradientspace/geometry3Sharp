@@ -2589,30 +2589,17 @@ namespace g3
         /// Attempts to create a lowest degree colorisation - outputting up to 6 colors
         /// 6Colorisation should always be possible for a planar network.
         /// 
-        /// Outputs  Int4[].
+        /// Outputs  Int[] of colors numbered [1..6]
         /// 
-        /// The output  should be interpreted as a compressed 6 color 
-        /// representation - with values r, g, b and an invett flag that can be applied to each of the other 
-        /// colors - making six colors r [1,0,01], r'[1,0,0,0], b[0,1,0,1], b'[0,1,0,0],g[0,0,1,1] and g'[0,0,1,0].
-        /// Each Color at any vertex is either 1 (present) or 0 (absent) The sum of the int4 is either 1 or 2.
         /// </summary>
         /// <param name="uv0"> Vector2f[] containing  the r an g values</param>
         /// <param name="uv1"> Vector</param>
         /// <returns></returns>
-        public int4[] Colorisation() {
-            int4[] colorisation = new int4[VertexCount];
+        public int[] Colorisation() {
+            int[] colorisation = new int[VertexCount];
 
-
-            int4 r = new(1,0,0,1);
-            int4 g = new(0,1,0,1);
-            int4 b = new(0,0,1,1);
-
-            int4 ri = new(1,0,0,0);
-            int4 gi = new(0,1,0,0);
-            int4 bi = new(0,0,1,0);
-
-            int4[] patterns = new int4[6] {r,g,b,ri,bi,gi};
-            int[] inverted = new int[] {3,4, 5, 0, 1, 2};
+            int[] patterns = new int[] {1, 2, 3, 4, 5, 6};
+            int[] inverted = new int[] {3, 4, 5, 0, 1, 2};
 
             // iterate through the trianglesin the mesh
             foreach (Index3i triangle in Triangles()) {
@@ -2624,10 +2611,10 @@ namespace g3
 
                 ///iterate through the vertices and add the color to mask
                 foreach(int v in tri) {
-                    int4 c = colorisation[v];
-                    if ( c.Equals(int4.zero) ) continue;
+                    int c = colorisation[v];
+                    if ( c == 0 ) continue;
                     for(int i =0; i<6; i++){
-                        if (c.Equals(patterns[i])){
+                        if (c == patterns[i]){
                             mask[i] += 1;
                             break;
                         }
@@ -2639,7 +2626,7 @@ namespace g3
                     for(int i =0; i<6; i++){
                         if (mask[i] > 1) {
                             foreach(int v in tri) {
-                                if (colorisation[v].Equals(patterns[i])){
+                                if (colorisation[v] == patterns[i]){
                                     // flip the conflicted color to it's inverse
                                     // TODO There is a small chance that it has already been flipped
                                     // should really check other triangles
@@ -2647,10 +2634,9 @@ namespace g3
                                     break;
                                 }
                             };
-                            throw new Exception("six colorisation error");
+                            mask[i] -= 1;
+                            mask[inverted[i]] += 1;
                         }
-                        mask[i] -=1;
-                        mask[inverted[i]] +=1;
                     }
                 }
 
@@ -2658,7 +2644,7 @@ namespace g3
 
                 while (mask.Sum() < 3) {
                     foreach(int v in tri) {
-                        if ( colorisation[v].Equals(int4.zero)){
+                        if ( colorisation[v] == 0){
                             /// fill with the lowest available color
                             for(int i =0; i<6; i++){
                                 if (mask[i] == 0 ) {
@@ -2672,25 +2658,43 @@ namespace g3
                         }
                     }
                 }
-                if (mask.Max( ) > 1 || (mask[3] + mask[4] + mask[5]) >1 ) {
-                    var a = 1;
-                }
             }
             return colorisation;
         }
 
+        /// <summary>
+        /// Dop the 6Colorisation on the mesh and return the result
+        /// as a uv wiht three pseudo colors in. 
+        /// 
+        /// NOTE - this is not a valid 3Colorisation - which is impossible. It is just a reasonable visual 
+        /// facsimile and is also usable in the shader to calculate barycentric coords.
+        /// </summary>
+        /// <param name="uv"></param>
+        /// <exception cref="Exception"></exception>
+        public void Colorisation(out Vector2[] uv)
+        {
+            int[] colorisation = Colorisation();
 
-        public void Colorisation( out Vector2[] uv1, out Vector2[] uv2){
-            int4[] colorisation = Colorisation();
-
-            uv1 = new Vector2[colorisation.Length];
-            uv2 = new Vector2[colorisation.Length];
+            uv = new Vector2[colorisation.Length];
 
             for ( int i =0; i < colorisation.Length; i++) {
-                int4 c = colorisation[i];
-                uv1[i] = new Vector2(c.x, c.y);
-                uv2[i] = new Vector2(c.z, c.w);
-            } 
+                switch(colorisation[i]) {
+                    case 1:
+                    case 4:
+                        uv[i] = new(1, 0);
+                        break;
+                    case 2:
+                    case 5:
+                        uv[i] = new(2, 0);
+                        break;
+                    case 3:
+                    case 6:
+                        uv[i] = new(3, 0);
+                        break;
+                    default:
+                        throw new Exception("Invalid Color in colorisation");
+                }
+            };
         }
     }
 }
