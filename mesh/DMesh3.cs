@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using UnityEngine;
 using System.Threading.Tasks;
-using Unity.Mathematics;
+using UnityEngine;
 
 namespace g3
 {
@@ -2589,76 +2588,73 @@ namespace g3
         /// Attempts to create a lowest degree colorisation - outputting up to 6 colors
         /// 6Colorisation should always be possible for a planar network.
         /// 
-        /// Outputs  Int[] of colors numbered [1..6]
-        /// 
         /// </summary>
-        /// <param name="uv0"> Vector2f[] containing  the r an g values</param>
-        /// <param name="uv1"> Vector</param>
-        /// <returns></returns>
+        /// <returns>Int[] of colors numbered [1..6]</returns>
         public int[] Colorisation() {
             int[] colorisation = new int[VertexCount];
+            Queue<int> queue = new();
+            Stack<int> previous = new();
+ 
+            bool TryChangeVertex( int id)
+            {
+                int[] vmask = new int[7];
 
-            int[] patterns = new int[] {1, 2, 3, 4, 5, 6};
-            int[] inverted = new int[] {3, 4, 5, 0, 1, 2};
-
-            // iterate through the trianglesin the mesh
-            foreach (Index3i triangle in Triangles()) {
-
-                /// holds the summary of current vertex colors
-                int[] mask = new int[6];
-                /// the vertex indices for this triangle
-                int[] tri = triangle.array;
-
-                ///iterate through the vertices and add the color to mask
-                foreach(int v in tri) {
-                    int c = colorisation[v];
-                    if ( c == 0 ) continue;
-                    for(int i =0; i<6; i++){
-                        if (c == patterns[i]){
-                            mask[i] += 1;
-                            break;
-                        }
-                    }
+                // try simple brute force - look for a color not used in any of this vertex's neighbours
+                // Get the one-ring around the vertex and collect their colors
+                foreach(int v in VtxVerticesItr(id))
+                {
+                    vmask[colorisation[v]] += 1;
+                    if (! previous.Contains(v) && ! queue.Contains(v)) 
+                        queue.Enqueue(v);
                 }
 
-                // if there are any vertex color clashes ...
-                if (mask.Max() > 1) {
-                    for(int i =0; i<6; i++){
-                        if (mask[i] > 1) {
-                            foreach(int v in tri) {
-                                if (colorisation[v] == patterns[i]){
-                                    // flip the conflicted color to it's inverse
-                                    // TODO There is a small chance that it has already been flipped
-                                    // should really check other triangles
-                                    colorisation[v] = patterns[inverted[i]];
-                                    break;
-                                }
-                            };
-                            mask[i] -= 1;
-                            mask[inverted[i]] += 1;
-                        }
+                // if there is an unused color - use it
+                for(int i = colorisation[id] +1 ; i < 7; i++) 
+                {
+                    if (vmask[i] == 0)
+                    {
+                        colorisation[id] = i;
+                        return true;
                     }
                 }
+                colorisation[id] = 0;
+                return false;
+            }
 
-                // fill out the triangle
 
-                while (mask.Sum() < 3) {
-                    foreach(int v in tri) {
-                        if ( colorisation[v] == 0){
-                            /// fill with the lowest available color
-                            for(int i =0; i<6; i++){
-                                if (mask[i] == 0 ) {
-                                    // check the inverse does aready exist
-                                    if (mask[inverted[i]] > 0) continue;
-                                    colorisation[v] = patterns[i];
-                                    mask[i] +=1;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+            queue.Enqueue(0);
+            while (queue.Count > 0)
+            {
+                if (TryChangeVertex(queue.Peek()))
+                {
+                    previous.Push(queue.Dequeue());
+                } else
+                {
+                    queue.Dequeue();
+                    queue.Enqueue(previous.Pop());
+                    if (queue.Count == VertexCount) throw new Exception("Colorisation of Mesh Failed!");
                 }
             }
+
+
+#if UNITY_EDITOR
+
+            int[] mask = new int[7];
+            foreach (int c in colorisation)
+            {
+                if (c < 1 || c > 6) Debug.Log("Vertex colour out of range");
+                mask[c] = +1;
+            }
+            Debug.Log($"{TriangleCount} triangles, {mask.Sum()} colors");
+            foreach (Index3i tri in Triangles())
+            {
+                int c1 = colorisation[tri.a];
+                int c2 = colorisation[tri.b];
+                int c3 = colorisation[tri.c];
+
+                if (c1 == c2 || c2 == c3 || c3 == c1) Debug.Log("Triangle is not three colors");
+            }
+#endif
             return colorisation;
         }
 
