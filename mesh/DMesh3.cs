@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -2590,7 +2591,7 @@ namespace g3
         /// 
         /// </summary>
         /// <returns>Int[] of colors numbered [1..6]</returns>
-        public int[] Colorisation() {
+        public IEnumerator<int[]> Colorisation() {
             int[] colorisation = new int[VertexCount];
             Queue<int> queue = new();
             Stack<int> previous = new();
@@ -2617,26 +2618,33 @@ namespace g3
                         return true;
                     }
                 }
+
                 colorisation[id] = 0;
                 return false;
             }
 
-
+            int tracker = 0;
             queue.Enqueue(0);
             while (queue.Count > 0)
             {
+                if (tracker > 100)
+                {
+                    yield return colorisation;
+                    tracker = 0;
+                }
                 if (TryChangeVertex(queue.Peek()))
                 {
                     previous.Push(queue.Dequeue());
                 } else
                 {
-                    queue.Dequeue();
                     queue.Enqueue(previous.Pop());
                     if (queue.Count == VertexCount) throw new Exception("Colorisation of Mesh Failed!");
                 }
-            }
+                tracker++;
+            };
+            yield return colorisation;
 
-
+// If in the Editor - sanity check the results
 #if UNITY_EDITOR
 
             int[] mask = new int[7];
@@ -2655,7 +2663,6 @@ namespace g3
                 if (c1 == c2 || c2 == c3 || c3 == c1) Debug.Log("Triangle is not three colors");
             }
 #endif
-            return colorisation;
         }
 
         /// <summary>
@@ -2667,15 +2674,24 @@ namespace g3
         /// </summary>
         /// <param name="uv"></param>
         /// <exception cref="Exception"></exception>
-        public void Colorisation(out Vector2[] uv)
+        public IEnumerator ColorisationCoroutine(Action<Vector2[]> callback)
         {
-            int[] colorisation = Colorisation();
+            Vector2[] uv = new Vector2[VertexCount];
 
-            uv = new Vector2[colorisation.Length];
-
-            for ( int i =0; i < colorisation.Length; i++) {
-                uv[i] = new Vector3(colorisation[i], 0);
-            };
+            IEnumerator<int[]> colorizer = Colorisation();
+            System.Diagnostics.Stopwatch stopwatch = new();
+            stopwatch.Start();
+            while (colorizer.MoveNext())
+            {
+                for (int i = 0; i < colorizer.Current.Length; i++)
+                {
+                    uv[i] = new Vector2(colorizer.Current[i], 0);
+                };
+                callback(uv);
+                yield return null;
+            }
+            stopwatch.Stop();
+            Debug.Log($"{TriangleCount} triangles took {stopwatch.Elapsed.TotalSeconds}");
         }
     }
 }
