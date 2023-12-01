@@ -2462,7 +2462,9 @@ namespace g3
         public static explicit operator Mesh(DMesh3 mesh)
         {
             if (!mesh.Clockwise)
-                mesh.ReverseOrientation();
+            {
+                //mesh.ReverseOrientation();
+            }
             Mesh unityMesh = new Mesh();
             unityMesh.MarkDynamic();
             if (mesh.VertexCount > 64000 || mesh.TriangleCount > 64000)
@@ -2627,7 +2629,7 @@ namespace g3
             queue.Enqueue(0);
             while (queue.Count > 0)
             {
-                if (tracker > 100)
+                if (tracker > 10)
                 {
                     yield return colorisation;
                     tracker = 0;
