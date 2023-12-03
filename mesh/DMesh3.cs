@@ -2632,7 +2632,7 @@ namespace g3
             while (queue.Count > 0)
             {
                 watch.Restart();
-                while (queue.Count < 0 && watch.ElapsedTicks < tickBudget)
+                while (queue.Count > 0 && watch.ElapsedTicks < tickBudget)
                 {
                     if (TryChangeVertex(queue.Peek()))
                     {
