@@ -2593,7 +2593,7 @@ namespace g3
         /// 
         /// </summary>
         /// <returns>Int[] of colors numbered [1..6]</returns>
-        public IEnumerator<int[]> Colorisation() {
+        public IEnumerator<int[]> Colorisation(int cycleTimer = 10) {
             int[] colorisation = new int[VertexCount];
             Queue<int> queue = new();
             Stack<int> previous = new();
@@ -2627,44 +2627,26 @@ namespace g3
 
             int tracker = 0;
             queue.Enqueue(0);
+            System.Diagnostics.Stopwatch watch = new();
+            long tickBudget = (long)System.Diagnostics.Stopwatch.Frequency * cycleTimer / 1000;
             while (queue.Count > 0)
             {
-                if (tracker > 10)
+                watch.Restart();
+                while (queue.Count < 0 && watch.ElapsedTicks < tickBudget)
                 {
-                    yield return colorisation;
-                    tracker = 0;
+                    if (TryChangeVertex(queue.Peek()))
+                    {
+                        previous.Push(queue.Dequeue());
+                    }
+                    else
+                    {
+                        queue.Enqueue(previous.Pop());
+                        if (queue.Count == VertexCount) throw new Exception("Colorisation of Mesh Failed!");
+                    }
                 }
-                if (TryChangeVertex(queue.Peek()))
-                {
-                    previous.Push(queue.Dequeue());
-                } else
-                {
-                    queue.Enqueue(previous.Pop());
-                    if (queue.Count == VertexCount) throw new Exception("Colorisation of Mesh Failed!");
-                }
-                tracker++;
+                yield return colorisation;
             };
             yield return colorisation;
-
-// If in the Editor - sanity check the results
-#if UNITY_EDITOR
-
-            int[] mask = new int[7];
-            foreach (int c in colorisation)
-            {
-                if (c < 1 || c > 6) Debug.Log("Vertex colour out of range");
-                mask[c] = +1;
-            }
-            Debug.Log($"{TriangleCount} triangles, {mask.Sum()} colors");
-            foreach (Index3i tri in Triangles())
-            {
-                int c1 = colorisation[tri.a];
-                int c2 = colorisation[tri.b];
-                int c3 = colorisation[tri.c];
-
-                if (c1 == c2 || c2 == c3 || c3 == c1) Debug.Log("Triangle is not three colors");
-            }
-#endif
         }
 
         /// <summary>
@@ -2676,22 +2658,17 @@ namespace g3
         /// </summary>
         /// <param name="uv"></param>
         /// <exception cref="Exception"></exception>
-        public IEnumerator ColorisationCoroutine(Action<Vector2[]> callback)
+        public IEnumerator ColorisationCoroutine(Action<int[]> callback)
         {
-            Vector2[] uv = new Vector2[VertexCount];
-
             IEnumerator<int[]> colorizer = Colorisation();
             System.Diagnostics.Stopwatch stopwatch = new();
             stopwatch.Start();
             while (colorizer.MoveNext())
             {
-                for (int i = 0; i < colorizer.Current.Length; i++)
-                {
-                    uv[i] = new Vector2(colorizer.Current[i], 0);
-                };
-                callback(uv);
                 yield return null;
             }
+
+            callback(colorizer.Current);
             stopwatch.Stop();
             Debug.Log($"{TriangleCount} triangles took {stopwatch.Elapsed.TotalSeconds}");
         }
