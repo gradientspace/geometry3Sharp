@@ -2595,7 +2595,7 @@ namespace g3
         /// <returns>Int[] of colors numbered [1..6]</returns>
         public IEnumerator<int[]> Colorisation(int cycleTimer = 10) {
             int[] colorisation = new int[VertexCount];
-            Queue<int> queue = new();
+            LinkedList<int> queue = new();
             Stack<int> previous = new();
  
             bool TryChangeVertex( int id)
@@ -2608,7 +2608,7 @@ namespace g3
                 {
                     vmask[colorisation[v]] += 1;
                     if (! previous.Contains(v) && ! queue.Contains(v)) 
-                        queue.Enqueue(v);
+                        queue.AddLast(v);
                 }
 
                 // if there is an unused color - use it
@@ -2625,28 +2625,26 @@ namespace g3
                 return false;
             }
 
-            int tracker = 0;
-            queue.Enqueue(0);
+            queue.AddLast(0);
             System.Diagnostics.Stopwatch watch = new();
-            long tickBudget = (long)System.Diagnostics.Stopwatch.Frequency * cycleTimer / 1000;
             while (queue.Count > 0)
             {
                 watch.Restart();
-                while (queue.Count > 0 && watch.ElapsedTicks < tickBudget)
+                while (queue.Count > 0 && watch.ElapsedMilliseconds < cycleTimer)
                 {
-                    if (TryChangeVertex(queue.Peek()))
+                    if (TryChangeVertex(queue.First()))
                     {
-                        previous.Push(queue.Dequeue());
-                    }
-                    else
+                        previous.Push(queue.First());
+                        queue.RemoveFirst();
+                    } else
                     {
-                        queue.Enqueue(previous.Pop());
+                        queue.AddFirst(previous.Pop());
                         if (queue.Count == VertexCount) throw new Exception("Colorisation of Mesh Failed!");
                     }
                 }
                 yield return colorisation;
             };
-            yield return colorisation;
+            yield break;
         }
 
         /// <summary>
@@ -2658,9 +2656,9 @@ namespace g3
         /// </summary>
         /// <param name="uv"></param>
         /// <exception cref="Exception"></exception>
-        public IEnumerator ColorisationCoroutine(Action<int[]> callback)
+        public IEnumerator ColorisationCoroutine(int cycleTimer, Action<int[]> callback)
         {
-            IEnumerator<int[]> colorizer = Colorisation();
+            IEnumerator<int[]> colorizer = Colorisation(cycleTimer);
             System.Diagnostics.Stopwatch stopwatch = new();
             stopwatch.Start();
             while (colorizer.MoveNext())
