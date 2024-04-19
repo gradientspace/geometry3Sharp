@@ -1,3 +1,7 @@
+# Version 3.1.1
+
+- added a 6-color colorisation routine to DMesh3
+
 # Version 3.1.0
 
 - Added support for Unity.Mathematics primities using implict and explicit conversions.
