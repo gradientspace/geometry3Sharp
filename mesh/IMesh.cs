@@ -85,6 +85,12 @@ namespace g3
 			this.v = v; this.n = n; this.c = c; this.uv = uv;
 			bHaveN = bHaveC = bHaveUV = true;
 		}
+        public NewVertexInfo(Vector3d v, Vector3f c, Vector2f uv)
+        {
+            this.v = v; this.c = c; this.uv = uv; n = Vector3f.Zero;
+            bHaveC = bHaveUV = true;
+            bHaveN = false;
+        }
     }
 
 

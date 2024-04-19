@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using UnityEngine;
 using System.Threading.Tasks;
-using Unity.Mathematics;
+using UnityEngine;
 
 namespace g3
 {
@@ -2462,7 +2462,9 @@ namespace g3
         public static explicit operator Mesh(DMesh3 mesh)
         {
             if (!mesh.Clockwise)
-                mesh.ReverseOrientation();
+            {
+                //mesh.ReverseOrientation();
+            }
             Mesh unityMesh = new Mesh();
             unityMesh.MarkDynamic();
             if (mesh.VertexCount > 64000 || mesh.TriangleCount > 64000)
@@ -2589,77 +2591,60 @@ namespace g3
         /// Attempts to create a lowest degree colorisation - outputting up to 6 colors
         /// 6Colorisation should always be possible for a planar network.
         /// 
-        /// Outputs  Int[] of colors numbered [1..6]
-        /// 
         /// </summary>
-        /// <param name="uv0"> Vector2f[] containing  the r an g values</param>
-        /// <param name="uv1"> Vector</param>
-        /// <returns></returns>
-        public int[] Colorisation() {
+        /// <returns>Int[] of colors numbered [1..6]</returns>
+        public IEnumerator<int[]> Colorisation(int cycleTimer = 10) {
             int[] colorisation = new int[VertexCount];
+            LinkedList<int> queue = new();
+            Stack<int> previous = new();
+ 
+            bool TryChangeVertex( int id)
+            {
+                int[] vmask = new int[7];
 
-            int[] patterns = new int[] {1, 2, 3, 4, 5, 6};
-            int[] inverted = new int[] {3, 4, 5, 0, 1, 2};
+                // try simple brute force - look for a color not used in any of this vertex's neighbours
+                // Get the one-ring around the vertex and collect their colors
+                foreach(int v in VtxVerticesItr(id))
+                {
+                    vmask[colorisation[v]] += 1;
+                    if (! previous.Contains(v) && ! queue.Contains(v)) 
+                        queue.AddLast(v);
+                }
 
-            // iterate through the trianglesin the mesh
-            foreach (Index3i triangle in Triangles()) {
-
-                /// holds the summary of current vertex colors
-                int[] mask = new int[6];
-                /// the vertex indices for this triangle
-                int[] tri = triangle.array;
-
-                ///iterate through the vertices and add the color to mask
-                foreach(int v in tri) {
-                    int c = colorisation[v];
-                    if ( c == 0 ) continue;
-                    for(int i =0; i<6; i++){
-                        if (c == patterns[i]){
-                            mask[i] += 1;
-                            break;
-                        }
+                // if there is an unused color - use it
+                for(int i = colorisation[id] +1 ; i < 7; i++) 
+                {
+                    if (vmask[i] == 0)
+                    {
+                        colorisation[id] = i;
+                        return true;
                     }
                 }
 
-                // if there are any vertex color clashes ...
-                if (mask.Max() > 1) {
-                    for(int i =0; i<6; i++){
-                        if (mask[i] > 1) {
-                            foreach(int v in tri) {
-                                if (colorisation[v] == patterns[i]){
-                                    // flip the conflicted color to it's inverse
-                                    // TODO There is a small chance that it has already been flipped
-                                    // should really check other triangles
-                                    colorisation[v] = patterns[inverted[i]];
-                                    break;
-                                }
-                            };
-                            mask[i] -= 1;
-                            mask[inverted[i]] += 1;
-                        }
-                    }
-                }
-
-                // fill out the triangle
-
-                while (mask.Sum() < 3) {
-                    foreach(int v in tri) {
-                        if ( colorisation[v] == 0){
-                            /// fill with the lowest available color
-                            for(int i =0; i<6; i++){
-                                if (mask[i] == 0 ) {
-                                    // check the inverse does aready exist
-                                    if (mask[inverted[i]] > 0) continue;
-                                    colorisation[v] = patterns[i];
-                                    mask[i] +=1;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+                colorisation[id] = 0;
+                return false;
             }
-            return colorisation;
+
+            queue.AddLast(0);
+            System.Diagnostics.Stopwatch watch = new();
+            while (queue.Count > 0)
+            {
+                watch.Restart();
+                while (queue.Count > 0 && watch.ElapsedMilliseconds < cycleTimer)
+                {
+                    if (TryChangeVertex(queue.First()))
+                    {
+                        previous.Push(queue.First());
+                        queue.RemoveFirst();
+                    } else
+                    {
+                        queue.AddFirst(previous.Pop());
+                        if (queue.Count == VertexCount) throw new Exception("Colorisation of Mesh Failed!");
+                    }
+                }
+                yield return colorisation;
+            };
+            yield break;
         }
 
         /// <summary>
@@ -2671,30 +2656,19 @@ namespace g3
         /// </summary>
         /// <param name="uv"></param>
         /// <exception cref="Exception"></exception>
-        public void Colorisation(out Vector2[] uv)
+        public IEnumerator ColorisationCoroutine(int cycleTimer, Action<int[]> callback)
         {
-            int[] colorisation = Colorisation();
+            IEnumerator<int[]> colorizer = Colorisation(cycleTimer);
+            System.Diagnostics.Stopwatch stopwatch = new();
+            stopwatch.Start();
+            while (colorizer.MoveNext())
+            {
+                yield return null;
+            }
 
-            uv = new Vector2[colorisation.Length];
-
-            for ( int i =0; i < colorisation.Length; i++) {
-                switch(colorisation[i]) {
-                    case 1:
-                    case 4:
-                        uv[i] = new(1, 0);
-                        break;
-                    case 2:
-                    case 5:
-                        uv[i] = new(2, 0);
-                        break;
-                    case 3:
-                    case 6:
-                        uv[i] = new(3, 0);
-                        break;
-                    default:
-                        throw new Exception("Invalid Color in colorisation");
-                }
-            };
+            callback(colorizer.Current);
+            stopwatch.Stop();
+            Debug.Log($"{TriangleCount} triangles took {stopwatch.Elapsed.TotalSeconds}");
         }
     }
 }
