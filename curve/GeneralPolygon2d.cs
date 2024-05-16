@@ -397,7 +397,6 @@ namespace g3
                 },
                 Settings = {
                     RestoreBoundary = true,
-                    ConstrainEdges = true
                 }
             };
             try
