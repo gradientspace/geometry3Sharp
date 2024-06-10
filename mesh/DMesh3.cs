@@ -2670,6 +2670,32 @@ namespace g3
             stopwatch.Stop();
             Debug.Log($"{TriangleCount} triangles took {stopwatch.Elapsed.TotalSeconds}");
         }
+
+        /// <summary>
+        /// Transforms Dmesh3 from World Space coordinates to Local Space Coordinates 
+        /// based upon the provided Transform
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <returns></returns>
+        public bool ToLocal (Transform transform)
+        {
+            try
+            {
+                for (int i = 0; i < VertexCount; i++)
+                {
+                    if (IsVertex(i))
+                    {
+                        Vector3d vertex = GetVertex(i);
+                        SetVertex(i, transform.TransformPoint((Vector3)vertex));
+                    }
+                };
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
 
