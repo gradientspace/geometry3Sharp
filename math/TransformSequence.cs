@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 
 namespace g3
 {
@@ -314,7 +315,19 @@ namespace g3
             }
         }
 
-
-
+        /// <summary>
+        /// Explic cast between Unity Matrix4x4 transformation matrix and TransformSequence.
+        ///
+        /// </summary>
+        /// <param name="transform"></param>
+        public static implicit operator TransformSequence(Matrix4x4 transform)
+        {
+            TransformSequence value = new();
+            if (transform.isIdentity) return value;
+            value.AppendRotation(transform.rotation);
+            value.AppendScale(transform.lossyScale);
+            value.AppendTranslation(transform.GetPosition());
+            return value;
+        }
     }
 }
