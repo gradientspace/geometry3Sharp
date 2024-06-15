@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace g3
+namespace VirgisGeometry
 {
     // Port of Wm5 Query/Query2 from WildMagic5 library by David Eberly / geometrictools.com
 

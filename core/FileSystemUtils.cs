@@ -2,7 +2,7 @@
 using System.Linq;
 using System.IO;
 
-namespace g3
+namespace VirgisGeometry
 {
     public static class FileSystemUtils
     {

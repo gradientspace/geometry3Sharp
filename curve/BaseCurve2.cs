@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic5 Curve2/SingleCurve2
     // Abstract base class for 2D parametric curves

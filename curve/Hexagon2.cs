@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     public class Hexagon2d
     {

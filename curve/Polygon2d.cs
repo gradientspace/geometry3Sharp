@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace g3
+namespace VirgisGeometry
 {
 	public class Polygon2d : IDuplicatable<Polygon2d>
     {

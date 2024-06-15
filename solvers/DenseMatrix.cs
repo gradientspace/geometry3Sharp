@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace g3
+namespace VirgisGeometry
 {
 	/// <summary>
 	/// Row-major dense matrix

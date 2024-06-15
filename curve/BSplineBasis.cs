@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic5 BSplineBasis
     public class BSplineBasis

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic5 IntrTriangle3Triangle3
     // use Test() for fast boolean query, does not compute intersection info
@@ -59,7 +59,7 @@ namespace g3
         public bool Find()
         {
             if (Result != IntersectionResult.NotComputed)
-                return (Result != g3.IntersectionResult.NoIntersection);
+                return (Result != VirgisGeometry.IntersectionResult.NoIntersection);
 
 
             // in this code the results get initialized in subroutines, so we

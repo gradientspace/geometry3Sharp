@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Given input mesh with a set of face groups, optimize the face group boundaries.

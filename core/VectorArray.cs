@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     //
     // This class is just a wrapper around a static array that provides convenient 3-element set/get access

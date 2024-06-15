@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from GTEngine (WildMagic5 doesn't have cylinder primitive)
     public class Cylinder3d

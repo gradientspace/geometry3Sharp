@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Vector2i : IComparable<Vector2i>, IEquatable<Vector2i>
     {

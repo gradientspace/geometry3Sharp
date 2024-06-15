@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace g3
+namespace VirgisGeometry
 {
     //
     // Parse 3DS mesh format

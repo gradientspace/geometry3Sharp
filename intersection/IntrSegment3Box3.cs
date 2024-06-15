@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
 	// ported from WildMagic5 
 	public class IntrSegment3Box3

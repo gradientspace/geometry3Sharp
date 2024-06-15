@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
-namespace g3 
+namespace VirgisGeometry 
 {
     // This class is analogous to GeneralPolygon2d, but for closed loops of curves, instead
     // of polygons. However, we cannot do some of the operations we would otherwise do in

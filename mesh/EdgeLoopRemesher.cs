@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// This is a custom Remesher that only affects the edges along an EdgeLoop.

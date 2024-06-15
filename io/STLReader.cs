@@ -6,7 +6,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Read ASCII/Binary STL file and produce set of meshes.

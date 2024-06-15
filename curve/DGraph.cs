@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 
-namespace g3
+namespace VirgisGeometry
 {
 
     /// <summary>

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct AxisAlignedBox2f
     {

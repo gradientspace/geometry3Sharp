@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic5 ContMinBox2. 
     // Compute a minimum-area oriented box containing the specified points.  The

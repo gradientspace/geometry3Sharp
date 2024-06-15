@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
 	public class PolyLine3d : IEnumerable<Vector3d>
 	{

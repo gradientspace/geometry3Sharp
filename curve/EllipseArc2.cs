@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3 {
+namespace VirgisGeometry {
 
 	// [RMS] partial ellipse. 
 	//   Note: Seems like there is something weird about start/end angles for elliptic arcs. 

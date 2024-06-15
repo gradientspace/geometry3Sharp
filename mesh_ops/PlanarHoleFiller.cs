@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Try to fill planar holes in a mesh. The fill is computed by mapping the hole boundary into 2D,

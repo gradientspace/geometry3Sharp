@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // Port of Wm5Query2Int64 from WildMagic5 library by David Eberly / geometrictools.com
 

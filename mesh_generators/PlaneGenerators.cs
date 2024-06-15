@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     // generate a two-triangle rect, centered at origin
     public class TrivialRectGenerator : MeshGenerator

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic5 MinCircle2. 
     // Compute the minimum area circle containing the input set of points.  The

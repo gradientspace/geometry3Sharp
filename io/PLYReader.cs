@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace g3
+namespace VirgisGeometry
 {
     //
     // Parse PLY mesh format

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic 5's DistPoint2Box2
     // https://www.geometrictools.com/Downloads/Downloads.html

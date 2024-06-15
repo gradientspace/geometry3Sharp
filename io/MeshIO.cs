@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace g3
+namespace VirgisGeometry
 {
 
     public enum IOCode

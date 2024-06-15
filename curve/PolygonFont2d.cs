@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// This class represents an outline font, where the outline is composed of polygons.

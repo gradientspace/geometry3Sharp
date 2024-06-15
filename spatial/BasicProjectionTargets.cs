@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// MeshProjectionTarget provides an IProjectionTarget interface to a mesh + spatial data structure.

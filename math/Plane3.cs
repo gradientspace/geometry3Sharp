@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     //3D plane, based on WildMagic5 Wm5Plane3 class
 

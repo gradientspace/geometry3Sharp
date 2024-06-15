@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// This class is used to bisect an existing DGraph2 with infinite lines.

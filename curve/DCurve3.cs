@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// DCurve3 is a 3D polyline, either open or closed (via .Closed)

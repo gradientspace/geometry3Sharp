@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3 {
+namespace VirgisGeometry {
 
 	// partially based on WildMagic5 Box2
 	public struct Box2d

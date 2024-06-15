@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Matrix3f
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// SimpleTriangleMesh but for quads. Data packed into buffers, no dynamics.

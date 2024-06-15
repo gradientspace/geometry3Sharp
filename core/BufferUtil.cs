@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Convenience functions for working with arrays. 

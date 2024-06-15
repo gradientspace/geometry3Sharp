@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Triangulate a 2D polygon-with-holes by inserting it's edges into a meshed rectangle

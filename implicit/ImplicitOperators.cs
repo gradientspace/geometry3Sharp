@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     abstract public class ImplicitNAryOp2d : ImplicitOperator2d
     {

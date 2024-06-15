@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // radially-symmetric 3D arrow
     public class Radial3DArrowGenerator : VerticalGeneralizedCylinderGenerator

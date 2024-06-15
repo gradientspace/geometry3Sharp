@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct AxisAlignedBox2i : IComparable<AxisAlignedBox2i>, IEquatable<AxisAlignedBox2i>
     {

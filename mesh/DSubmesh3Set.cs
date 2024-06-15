@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 
 
-namespace g3
+namespace VirgisGeometry
 {
 
     /// <summary>

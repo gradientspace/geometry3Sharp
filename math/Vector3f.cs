@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Vector3f : IComparable<Vector3f>, IEquatable<Vector3f>
     {

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 
 
-namespace g3
+namespace VirgisGeometry
 {
     public class RegionRemesher : Remesher
     {

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Colorb
     {

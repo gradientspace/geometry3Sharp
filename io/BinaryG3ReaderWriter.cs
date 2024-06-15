@@ -6,7 +6,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace g3
+namespace VirgisGeometry
 {
 
     public class BinaryG3Writer : IMeshWriter

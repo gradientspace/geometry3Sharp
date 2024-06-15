@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     public enum MeshResult
     {

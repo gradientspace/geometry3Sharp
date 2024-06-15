@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using g3;
+using VirgisGeometry;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Basic implementation of marching cubes mesh generation, which can be applied to

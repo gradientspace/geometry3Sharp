@@ -5,7 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Threading;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Basic sparse-symmetric-matrix class. Stores upper-triangular portion.
