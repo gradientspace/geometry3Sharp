@@ -275,7 +275,7 @@ namespace VirgisGeometry
         }
         public static explicit operator float3x3(Matrix3f m)
         {
-            return new float3x3(m.Column(0), m.Column(1), m.Column(3));
+            return new float3x3(m.Column(0), m.Column(1), m.Column(2));
         }
     }
 }

@@ -40,6 +40,22 @@ namespace VirgisGeometry
             Timestamp = 1;
         }
 
+        /// <summary>
+        /// Assumes SFA standards - LineString is closed if the first and last vertices are the same
+        /// </summary>
+        /// <param name="verticesIn"></param>
+        public DCurve3(IEnumerable<Vector3d> verticesInSFA)
+        {
+            this.vertices = new List<Vector3d>(verticesInSFA);
+            Closed = false;
+            if (this.vertices.Last() == this.vertices.First())
+            {
+                this.vertices.RemoveAt(this.vertices.Count - 1);
+                Closed = true;
+            }
+            Timestamp = 1;
+        }
+
         public DCurve3(DCurve3 copy)
         {
             vertices = new List<Vector3d>(copy.vertices);

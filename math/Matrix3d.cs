@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Matrix3d
     {
@@ -202,6 +202,21 @@ namespace g3
             return new Matrix3d(mat1.Row0 - mat2.Row0, mat1.Row1 - mat2.Row1, mat1.Row2 - mat2.Row2, true);
         }
 
+        public static bool operator ==(Matrix3d a, Matrix3d b)
+        {
+            return a.Row0 == b.Row0 && a.Row1 == b.Row1 && a.Row2 == b.Row2;
+        }
+
+        public static bool operator !=(Matrix3d a, Matrix3d b)
+        {
+            return a.Row0 != b.Row0 || a.Row1 != b.Row1 || a.Row2 != b.Row2;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return this == (Matrix3d)obj;
+        }
+
 
 
         public double InnerProduct(ref Matrix3d m2)
@@ -301,7 +316,7 @@ namespace g3
         }
         public static explicit operator double3x3(Matrix3d m)
         {
-            return new double3x3(m.Column(0), m.Column(1), m.Column(3));
+            return new double3x3(m.Column(0), m.Column(1), m.Column(2));
         }
     }
 }
