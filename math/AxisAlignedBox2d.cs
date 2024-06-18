@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct AxisAlignedBox2d
     {

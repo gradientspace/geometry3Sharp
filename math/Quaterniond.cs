@@ -3,7 +3,7 @@ using UnityEngine;
 using Unity.Mathematics;
 
 
-namespace g3
+namespace VirgisGeometry
 {
     // mostly ported from WildMagic5 Wm5Quaternion, from geometrictools.com
     public struct Quaterniond

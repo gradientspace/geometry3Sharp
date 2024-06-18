@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace g3
+namespace VirgisGeometry
 {
     // Ported from WildMagic5 Wm5ApprPlaneFit3
     // Least-squares fit of a plane to (x,y,z) data by using distance measurements

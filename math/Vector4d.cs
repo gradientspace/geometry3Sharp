@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Vector4d : IComparable<Vector4d>, IEquatable<Vector4d>
     {
@@ -15,6 +15,9 @@ namespace g3
         public Vector4d(double x, double y, double z, double w) { this.x = x; this.y = y; this.z = z; this.w = w; }
         public Vector4d(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; w = v2[3]; }
         public Vector4d(Vector4d copy) { x = copy.x; y = copy.y; z = copy.z; w = copy.w; }
+
+        // create homogenous coordinates for a 3D vector or point
+        public Vector4d(Vector3d copy) { x = copy.x; y = copy.y; z = copy.z; w = 1; }
 
         static public readonly Vector4d Zero = new Vector4d(0.0f, 0.0f, 0.0f, 0.0f);
         static public readonly Vector4d One = new Vector4d(1.0f, 1.0f, 1.0f, 1.0f);
@@ -277,6 +280,10 @@ namespace g3
         public static implicit operator double4(Vector4d v)
         {
             return new double4((float)v.x, (float)v.y, (float)v.z, (float)v.w);
+        }
+        public static explicit operator Vector3d(Vector4d v)
+        {
+            return new Vector3d(v.x, v.y, v.z);
         }
     }
 }

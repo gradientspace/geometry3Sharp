@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// A Spherical Fibonacci Point Set is a set of points that are roughly evenly distributed on

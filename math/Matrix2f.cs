@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     // some functions ported from WildMagic5 Matrix2
     public class Matrix2f

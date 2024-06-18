@@ -7,7 +7,7 @@ using Unity.Mathematics;
 using andywiecko.BurstTriangulator;
 
 
-namespace g3 
+namespace VirgisGeometry 
 {
 	public class GeneralPolygon2d : IDuplicatable<GeneralPolygon2d>
 	{

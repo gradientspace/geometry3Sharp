@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Vector3d : IComparable<Vector3d>, IEquatable<Vector3d>
     {
@@ -15,6 +15,7 @@ namespace g3
         public Vector3d(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; }
         public Vector3d(Vector3d copy) { x = copy.x; y = copy.y; z = copy.z; }
         public Vector3d(Vector3f copy) { x = copy.x; y = copy.y; z = copy.z; }
+        public Vector3d(Vector2d copy) { x = copy.x; y = copy.y; z = 1; }
 
         static public readonly Vector3d Zero = new Vector3d(0.0f, 0.0f, 0.0f);
         static public readonly Vector3d One = new Vector3d(1.0f, 1.0f, 1.0f);
@@ -363,6 +364,15 @@ namespace g3
         public static implicit operator double3(Vector3d v)
         {
             return new double3(v.x, v.y, v.z);
+        }
+
+        public static explicit operator Vector3d(Vector2d v)
+        {
+            return new Vector3d(v);
+        }
+        public static explicit operator Vector2d(Vector3d v)
+        {
+            return new Vector2d(v.x, v.y);
         }
 
 

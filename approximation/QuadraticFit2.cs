@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace g3
+namespace VirgisGeometry
 {
 	// ported from WildMagic5 Wm5ApprQuadraticFit2
 	public static class QuadraticFit2

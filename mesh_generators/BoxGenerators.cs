@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Generate a minimal box

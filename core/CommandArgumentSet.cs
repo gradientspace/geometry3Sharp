@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // this is a utility class for parsing command-line arguments, but can
     // also be used for other things (eg like constructing command-line arguments!)

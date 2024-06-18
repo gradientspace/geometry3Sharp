@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3 
+namespace VirgisGeometry 
 {
 	// ported from WildMagic5 
     // [TODO] Vector2d 6-tuple, to avoid internal arrays

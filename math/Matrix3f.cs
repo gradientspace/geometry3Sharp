@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct Matrix3f
     {
@@ -275,7 +275,7 @@ namespace g3
         }
         public static explicit operator float3x3(Matrix3f m)
         {
-            return new float3x3(m.Column(0), m.Column(1), m.Column(3));
+            return new float3x3(m.Column(0), m.Column(1), m.Column(2));
         }
     }
 }

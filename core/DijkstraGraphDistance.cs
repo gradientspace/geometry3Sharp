@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Compute Dijkstra shortest-path algorithm on a graph. 

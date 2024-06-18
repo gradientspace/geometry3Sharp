@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
     public class MeshEdgeSelection : IEnumerable<int>
     {

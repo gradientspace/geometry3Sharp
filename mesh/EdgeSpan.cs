@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
 	/// <summary>
 	/// An EdgeSpan is a continous set of edges in a Mesh that is *not* closed

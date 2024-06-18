@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Arrangement2d constructs a planar arrangement of a set of 2D line segments.

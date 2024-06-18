@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic5 NURBSCurve2
     public class NURBSCurve2 : BaseCurve2, IParametricCurve2d

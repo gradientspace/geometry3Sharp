@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
 	public class MeshBoundaryLoopsException : Exception
 	{

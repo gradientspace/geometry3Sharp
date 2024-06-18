@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// This class automatically extracts a submesh from a mesh, and can re-insert it after you have

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     abstract public class MeshGenerator
     {

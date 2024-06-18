@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 
 
-namespace g3
+namespace VirgisGeometry
 {
 	/// <summary>
 	/// 2D MarchingQuads polyline extraction from scalar field

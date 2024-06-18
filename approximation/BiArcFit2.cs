@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
 	//
 	// 2D Biarc fitting ported from http://www.ryanjuckett.com/programming/biarc-interpolation/

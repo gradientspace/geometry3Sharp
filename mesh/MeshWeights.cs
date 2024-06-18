@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3 
+namespace VirgisGeometry 
 {
 	public static class MeshWeights {
 

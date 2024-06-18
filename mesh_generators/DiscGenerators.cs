@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // generate a triangle fan, no subdvisions
     public class TrivialDiscGenerator : MeshGenerator

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Assumption is that Loop is a boundary loop on Mesh.

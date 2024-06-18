@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     public struct AxisAlignedBox3f : IComparable<AxisAlignedBox3f>, IEquatable<AxisAlignedBox3f>
     {

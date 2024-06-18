@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Create a mesh that contains a planar element for each point and normal

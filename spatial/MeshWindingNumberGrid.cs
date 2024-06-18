@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using g3;
+using VirgisGeometry;
 
 namespace gs
 {

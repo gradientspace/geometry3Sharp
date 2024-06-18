@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// DCurve3 is a 3D polyline, either open or closed (via .Closed)
@@ -37,6 +37,22 @@ namespace g3
         {
             this.vertices = new List<Vector3d>(verticesIn);
             Closed = bClosed;
+            Timestamp = 1;
+        }
+
+        /// <summary>
+        /// Assumes SFA standards - LineString is closed if the first and last vertices are the same
+        /// </summary>
+        /// <param name="verticesIn"></param>
+        public DCurve3(IEnumerable<Vector3d> verticesInSFA)
+        {
+            this.vertices = new List<Vector3d>(verticesInSFA);
+            Closed = false;
+            if (this.vertices.Last() == this.vertices.First())
+            {
+                this.vertices.RemoveAt(this.vertices.Count - 1);
+                Closed = true;
+            }
             Timestamp = 1;
         }
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace g3 
+namespace VirgisGeometry 
 {
 	public class ParametricCurveSequence2 : IParametricCurve2d, IMultiCurve2d
 	{

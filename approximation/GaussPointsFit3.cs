@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace g3
+namespace VirgisGeometry
 {
     // ported from WildMagic5 Wm5ApprGaussPointsFit3
     // Fit points with a Gaussian distribution.  The center is the mean of the

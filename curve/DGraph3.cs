@@ -5,7 +5,7 @@ using System.Linq;
 using System.Diagnostics;
 
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Arbitrary-Topology 3D Graph. This is similar to DMesh3 but without faces. 

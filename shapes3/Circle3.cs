@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
     // somewhat ported from WildMagic5
     public class Circle3d

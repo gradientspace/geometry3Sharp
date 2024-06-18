@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
-using g3;
+using VirgisGeometry;
 
 namespace gs
 {

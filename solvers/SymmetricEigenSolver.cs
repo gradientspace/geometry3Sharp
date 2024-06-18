@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace g3
+namespace VirgisGeometry
 {
     // port of WildMagic5 Wm5SymmetricEigensolverGTE class (which is a back-port
     // of GTEngine Symmetric Eigensolver class) see geometrictools.com

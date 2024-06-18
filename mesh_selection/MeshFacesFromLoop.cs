@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Find mesh triangles enclosed by a curve embedded in the mesh

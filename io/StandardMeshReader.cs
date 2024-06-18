@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Globalization;
 
-namespace g3
+namespace VirgisGeometry
 {
 
     public delegate void ParsingMessagesHandler(string message, object extra_data);

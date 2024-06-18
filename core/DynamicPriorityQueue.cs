@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace g3
+namespace VirgisGeometry
 {
 
 

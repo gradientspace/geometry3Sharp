@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// Extrude all faces of a mesh, and stitch together any boundary loops. Steps are:

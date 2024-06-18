@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.IO;
 
-namespace g3
+namespace VirgisGeometry
 {
 
     public enum FailMode { DebugAssert, gDevAssert, Throw, ReturnOnly }

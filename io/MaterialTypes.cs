@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace g3
+namespace VirgisGeometry
 {
     // Very hard to abstract material definitions from different formats.
     // basically we just have a generic top-level class and then completely different subclasses...

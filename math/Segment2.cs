@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace g3
+namespace VirgisGeometry
 {
 	public struct Segment2d : IParametricCurve2d
     {

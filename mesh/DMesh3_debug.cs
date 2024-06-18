@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Collections.Generic;
 
-namespace g3
+namespace VirgisGeometry
 {
     public partial class DMesh3
     {

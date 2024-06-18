@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// TransformSequence stores an ordered list of basic transformations.
@@ -21,10 +22,11 @@ namespace g3
             Translation = 0,
             QuaterionRotation = 1,
             QuaternionRotateAroundPoint = 2,
-            Scale = 3,
-            ScaleAroundPoint = 4,
-            ToFrame = 5,
-            FromFrame = 6
+            RotationMatrix = 3,
+            Scale = 4,
+            ScaleAroundPoint = 5,
+            ToFrame = 6,
+            FromFrame = 7
         }
 
         struct XForm
@@ -48,6 +50,11 @@ namespace g3
             public Frame3f Frame {
                 get { return new Frame3f((Vector3f)RotateOrigin, Quaternion); }
             }
+
+            public Matrix3d Matrix
+            {
+                get { return new Matrix3d(data.V0, data.V1, data.V2, true); }
+            }
         }
 
         List<XForm> Operations;
@@ -63,8 +70,6 @@ namespace g3
         {
             Operations = new List<XForm>(copy.Operations);
         }
-
-
 
         public void Append(TransformSequence sequence)
         {
@@ -137,6 +142,15 @@ namespace g3
             });
         }
 
+        public void AppendRotation(Matrix3d rot)
+        {
+            Operations.Add(new XForm()
+            {
+                type = XFormType.RotationMatrix,
+                data = new Vector3dTuple3(rot.Row0, rot.Row1, rot.Row2)
+            });
+        }
+
 
         /// <summary>
         /// Apply transforms to point
@@ -158,6 +172,10 @@ namespace g3
                         p -= Operations[i].RotateOrigin;
                         p = Operations[i].Quaternion * p;
                         p += Operations[i].RotateOrigin;
+                        break;
+
+                    case XFormType.RotationMatrix:
+                        p = Operations[i].Matrix * p;
                         break;
 
                     case XFormType.Scale:
@@ -203,6 +221,9 @@ namespace g3
                     case XFormType.QuaternionRotateAroundPoint:
                     case XFormType.QuaterionRotation:
                         v = Operations[i].Quaternion * v;
+                        break;
+                    case XFormType.RotationMatrix:
+                        v = Operations[i].Matrix * v;
                         break;
 
                     case XFormType.ScaleAroundPoint:
@@ -256,6 +277,10 @@ namespace g3
 
                     case XFormType.QuaternionRotateAroundPoint:
                         reverse.AppendRotation(Operations[i].Quaternion.Inverse(), Operations[i].RotateOrigin);
+                        break;
+
+                    case XFormType.RotationMatrix:
+                        reverse.AppendRotation(Operations[i].Matrix.Inverse());
                         break;
 
                     case XFormType.Scale:
@@ -314,7 +339,76 @@ namespace g3
             }
         }
 
+        /// <summary>
+        /// Explic cast between Unity Matrix4x4 transformation matrix and TransformSequence.
+        ///
+        /// </summary>
+        /// <param name="transform"></param>
+        public static implicit operator TransformSequence(Matrix4x4 transform)
+        {
+            TransformSequence value = new();
+            if (transform.isIdentity) return value;
+            Vector3 translate = transform.GetPosition();
+            Matrix3d rot = new (
+                transform.m00,
+                transform.m01,
+                transform.m02,
+                transform.m10,
+                transform.m11,
+                transform.m12,
+                transform.m20,
+                transform.m21,
+                transform.m22
+                );
+            if (rot != Matrix3d.Identity)
+                value.AppendRotation(rot);
+            if (translate != Vector3.zero)
+                value.AppendTranslation(translate);
+            return value;
+        }
 
 
+        public override string ToString()
+        {
+            string value = "";
+            int N = Operations.Count;
+            for (int i = 0; i < N; ++i)
+            {
+                switch (Operations[i].type)
+                {
+                    case XFormType.Translation:
+                        value += $"Translate {Operations[i].Translation}{Environment.NewLine}";
+                        break;
+
+                    case XFormType.QuaternionRotateAroundPoint:
+                    case XFormType.QuaterionRotation:
+                        value += $"Rotate {Operations[i].Quaternion}{Environment.NewLine}";
+                        break;
+
+                    case XFormType.RotationMatrix:
+                        value += $"Rotaion Matrix {Operations[i].Matrix}{Environment.NewLine}";
+                        break;
+
+                    case XFormType.ScaleAroundPoint:
+                    case XFormType.Scale:
+                        value += $"Scale {Operations[i].Scale}{Environment.NewLine}";
+                        break;
+
+                    case XFormType.ToFrame:
+                        value += $"To Frame {Operations[i].Frame}{Environment.NewLine}";
+                        break;
+
+                    case XFormType.FromFrame:
+                        value += $"From Frame {Operations[i].Frame}{Environment.NewLine}";
+                        break;
+
+                    default:
+                        value += $"Unknown Operation {Operations[i]}{Environment.NewLine}";
+                        break;
+                }
+            }
+
+            return value;
+        }
     }
 }

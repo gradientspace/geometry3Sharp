@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// 3D integer vector type. This is basically the same as Index3i but

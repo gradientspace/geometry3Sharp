@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 
 
-namespace g3
+namespace VirgisGeometry
 {
     // This class implements various ways to do low-level edits to a mesh, in
     // a robust/reliable way.

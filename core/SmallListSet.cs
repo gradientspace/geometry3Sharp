@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace g3
+namespace VirgisGeometry
 {
     /// <summary>
     /// SmallListSet stores a set of short integer-valued variable-size lists.

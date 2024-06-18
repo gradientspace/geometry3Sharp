@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Globalization;
 
-namespace g3
+namespace VirgisGeometry
 {
 	public class SVGWriter
 	{
