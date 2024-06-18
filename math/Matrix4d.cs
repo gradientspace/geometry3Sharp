@@ -108,8 +108,8 @@ namespace VirgisGeometry
         //    Row2 = new Vector3d(u.z*v.x, u.z*v.y, u.z*v.z);
         //}
 
-        public static readonly Matrix3d Identity = new Matrix3d(true);
-        public static readonly Matrix3d Zero = new Matrix3d(false);
+        public static readonly Matrix4d Identity = new Matrix4d(true);
+        public static readonly Matrix4d Zero = new Matrix4d(false);
 
         public double this[int r, int c] {
             get {
