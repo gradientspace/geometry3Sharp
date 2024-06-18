@@ -16,6 +16,7 @@ namespace VirgisGeometry
         protected List<Vector3d> vertices;
         public bool Closed { get; set; }
         public int Timestamp;
+        protected List<object> data = new();
 
         public DCurve3()
         {
@@ -59,6 +60,7 @@ namespace VirgisGeometry
         public DCurve3(DCurve3 copy)
         {
             vertices = new List<Vector3d>(copy.vertices);
+            data = new (copy.data);
             Closed = copy.Closed;
             Timestamp = 1;
         }
@@ -98,6 +100,16 @@ namespace VirgisGeometry
         public void AppendVertex(Vector3d v) {
             vertices.Add(v);
             Timestamp++;
+        }
+
+        /// <summary>
+        /// Insert a new vertex as vertex i
+        /// </summary>
+        /// <param name="v"></param>
+        /// <param name="i"></param>
+        public void InsertVertex(Vector3d v, int i)
+        {
+            vertices.Insert(i, v);
         }
 
         public int VertexCount {
@@ -401,5 +413,48 @@ namespace VirgisGeometry
             return iSeg;
         }
 
+        /// <summary>
+        /// Add an item to the data array
+        /// </summary>
+        /// <param name="item"></param>
+        public void SetData(object item, int idx = -1)
+        {
+            if (idx == -1)
+            {
+                data.Add(item);
+            } else
+            {
+                data[idx] = item;
+            }
+        }
+
+        /// <summary>
+        /// Insert an item to the data array as vertex idx
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="idx"></param>
+        public void InsertData(object item, int idx)
+        {
+            data.Insert(idx, item);
+        }
+
+        /// <summary>
+        /// Get the idx'th item of data as type T
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="idx"></param>
+        /// <returns></returns>
+        public T GetData<T>(int idx)
+        {
+            return (T)data[idx];
+        }
+
+        public IEnumerable<T> GetDataItr<T>()
+        {
+            for(int i =0; i<data.Count; i++)
+            {
+                yield return GetData<T>(i);
+            }
+        }
     }
 }

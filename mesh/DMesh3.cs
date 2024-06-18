@@ -61,6 +61,8 @@ namespace VirgisGeometry
 	//
 	// DMesh3 is a dynamic triangle mesh class. The mesh has has connectivity, 
 	//  is an indexed mesh, and allows for gaps in the index space.
+    //
+    // The BEST WAY to create a new DMesh3 is to use a DMesh3Builder
 	//
 	// internally, all data is stored in POD-type buffers, except for the vertex->edge
 	// links, which are stored as List<int>'s. The arrays of POD data are stored in
@@ -2669,6 +2671,32 @@ namespace VirgisGeometry
             callback(colorizer.Current);
             stopwatch.Stop();
             Debug.Log($"{TriangleCount} triangles took {stopwatch.Elapsed.TotalSeconds}");
+        }
+
+        /// <summary>
+        /// Transforms Dmesh3 from World Space coordinates to Local Space Coordinates 
+        /// based upon the provided Transform
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <returns></returns>
+        public bool ToLocal (Transform transform)
+        {
+            try
+            {
+                for (int i = 0; i < VertexCount; i++)
+                {
+                    if (IsVertex(i))
+                    {
+                        Vector3d vertex = GetVertex(i);
+                        SetVertex(i, transform.TransformPoint((Vector3)vertex));
+                    }
+                };
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

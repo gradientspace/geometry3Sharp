@@ -258,7 +258,7 @@ namespace VirgisGeometry
                     result[k++] = (Vector3f)v;
 
             } else
-                throw new NotSupportedException("ToVector3d: unknown type " + t.ToString());
+                throw new NotSupportedException("ToIndex3i: unknown type " + t.ToString());
 
             return result;
         }
@@ -300,6 +300,54 @@ namespace VirgisGeometry
                     result[k++] = v;
 
             } else
+                throw new NotSupportedException("ToIndex2i: unknown type " + t.ToString());
+
+            return result;
+        }
+
+        /// <summary>
+        /// convert input set into Index2i.
+        /// Supports packed list of int tuples, list of Vector2i/Index2i
+        /// </summary>
+        static public Index2i[] ToIndex2i<T>(IEnumerable<T> values)
+        {
+            Index2i[] result = null;
+
+            int N = values.Count();
+            int k = 0; int j = 0;
+
+            Type t = typeof(T);
+            if (t == typeof(int))
+            {
+                N /= 3;
+                result = new Index2i[N];
+                IEnumerable<int> valuesi = values as IEnumerable<int>;
+                foreach (int i in valuesi)
+                {
+                    result[k][j++] = i;
+                    if (j == 3)
+                    {
+                        j = 0; k++;
+                    }
+                }
+            }
+            else if (t == typeof(Index2i))
+            {
+                result = new Index2i[N];
+                IEnumerable<Index2i> valuesvi = values as IEnumerable<Index2i>;
+                foreach (Index2i v in valuesvi)
+                    result[k++] = v;
+
+            }
+            else if (t == typeof(Vector2i))
+            {
+                result = new Index2i[N];
+                IEnumerable<Vector2i> valuesvi = values as IEnumerable<Vector2i>;
+                foreach (Vector2i v in valuesvi)
+                    result[k++] = v;
+
+            }
+            else
                 throw new NotSupportedException("ToVector3d: unknown type " + t.ToString());
 
             return result;
