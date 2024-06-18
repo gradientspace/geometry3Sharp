@@ -159,7 +159,7 @@ namespace g3
 
 
 
-        // implicit cast between Index3i and Vector3i anf int3
+        // implicit cast between Index3i and Vector3i and int3
         public static implicit operator Vector3i(Index3i v) {
             return new Vector3i(v.a, v.b, v.c);
         }

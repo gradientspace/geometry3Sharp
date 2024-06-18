@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
+using Unity.Mathematics;
+using andywiecko.BurstTriangulator;
 
 
 namespace g3
@@ -194,17 +197,117 @@ namespace g3
                 for (int i = 0; i < t.Length; ++i)
                     mesh.SetTriangleGroup(i, groups[i]);
             }
-
             return mesh;
         }
 
-         
+
+        /// <summary>
+        /// Create a Dmesh3 from the vertices. This routine will only "work" if the INTENDED output mesh is planar. 
+        /// This routine does not support creating holes in the mesh.
+        /// 
+        /// Pass it arrays of floats/doubles, or lists
+        /// of Vector3d, or anything in-between. Will figure out how to interpret.
+        /// 
+        /// If you do NOT want the convex hull of the points, you must pass it a set of edge constraints.
+        /// 
+        /// 
+        /// The mesh is triangulated using a Frame that is as orthogonal to the dataset as possible. 
+        /// The Dmesh3 UVs are created in this frame
+        /// 
+        /// NOTE:
+        /// - vertices cannot be repeated
+        /// - constraint edges cannot intersect or be duplicated (even if reversed)
+        /// - constraint edges cannot intesect any other vertex except the the vertices for which they are defined
+        /// </summary>
+        /// <param name="vertices">IEnumberable of type VType containing the vertices</param>
+        /// <param name="constraint_edges">IEnumerable of type EType containg the constraint edges</param>
+        public static DMesh3 Build<VType, EType>(IEnumerable<VType> vertices, IEnumerable<EType> constraint_edges = null)
+        {
+            Vector3d[] vertices3d = BufferUtil.ToVector3d(vertices);
+            Index3i[] triangles;
+
+            OrthogonalPlaneFit3 orth = new (vertices3d);
+            Frame3f frame = new (orth.Origin, orth.Normal);
+
+            List<Vector2d> vertices2d = new ();
+            foreach (Vector3d v in vertices3d)
+            {
+                Vector2f vertex = frame.ToPlaneUV((Vector3f)v, 3);
+                vertices2d.Add(vertex);
+            }
+
+            Triangulator triangulator = new (Allocator.Persistent)
+            {
+                Settings = {
+                    RestoreBoundary = true,
+                }
+            };
+            Triangulator.InputData input = new ()
+            {
+                Positions = new NativeArray<float2>(vertices2d.Select(vertex => (float2)vertex).ToArray(), Allocator.Persistent),
+            };
+
+            if (constraint_edges != null)
+            {
+                NativeArray<int> edges = new(constraint_edges.Count() * 2, Allocator.Persistent);
+
+                int idx = 0;
+                foreach (Index2i edge in BufferUtil.ToIndex2i(constraint_edges))
+                {
+                    edges[idx] = edge.a;
+                    idx++;
+                    edges[idx] = edge.b;
+                    idx++;
+                }
+                input.ConstraintEdges = edges;
+            }
+
+            triangulator.Input = input;
+            try
+            {
+
+                triangulator.Run();
+
+                if (!triangulator.Output.Status.IsCreated ||
+                       triangulator.Output.Status.Value != Triangulator.Status.OK
+                   )
+                {
+                    throw new Exception("Could not create Delaunay Triangulation");
+                }
 
 
+                // 
+                // extract the triangles from the delaunay triangulation 
+                //
+                int[] tris = triangulator.Output.Triangles.AsArray().ToArray();
+                int tri_count = tris.Length / 3;
+                triangles = new Index3i[tri_count];
+                long idx = 0;
+
+                for (int i = 0; i < tri_count; i++)
+                {
+                    triangles[i] = new(tris[idx++], tris[idx++], tris[idx++]);
+                }
+
+
+                triangulator.Input.Positions.Dispose();
+                triangulator.Input.ConstraintEdges.Dispose();
+                triangulator.Dispose();
+            }
+            catch
+            {
+                triangulator.Input.Positions.Dispose();
+                triangulator.Input.ConstraintEdges.Dispose();
+                triangulator.Dispose();
+                throw new Exception("DMesh3 creation Failed");
+            }
+
+            DMesh3 res = Build<Vector3d, Index3i, Vector3d>(vertices3d, triangles);
+            for (int i = 0; i < vertices2d.Count; i++)
+            {
+                res.SetVertexUV(i, (Vector2f)vertices2d[i]);
+            }
+            return res;
+        }
     }
-
-
-
-
-
 }

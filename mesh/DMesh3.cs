@@ -61,6 +61,8 @@ namespace g3
 	//
 	// DMesh3 is a dynamic triangle mesh class. The mesh has has connectivity, 
 	//  is an indexed mesh, and allows for gaps in the index space.
+    //
+    // The BEST WAY to create a new DMesh3 is to use a DMesh3Builder
 	//
 	// internally, all data is stored in POD-type buffers, except for the vertex->edge
 	// links, which are stored as List<int>'s. The arrays of POD data are stored in

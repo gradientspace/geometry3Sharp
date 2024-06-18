@@ -230,14 +230,6 @@ namespace g3
             float fv = d.Dot(GetAxis(nAxis1));
             return new Vector2f(fu, fv);
         }
-        [System.Obsolete("Use explicit ToPlaneUV instead")]
-        public Vector2f ToPlaneUV(Vector3f p, int nNormal, int nAxis0 = -1, int nAxis1 = -1)
-        {
-            if (nAxis0 != -1 || nAxis1 != -1)
-                throw new Exception("[RMS] was this being used?");
-            return ToPlaneUV(p, nNormal);
-        }
-
 
         ///<summary> distance from p to frame-axes-plane perpendicular to normal axis </summary>
         public float DistanceToPlane(Vector3f p, int nNormal)

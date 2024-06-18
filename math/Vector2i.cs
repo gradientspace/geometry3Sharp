@@ -137,6 +137,10 @@ namespace g3
         {
             return new int2(v.x, v.y);
         }
+        public static implicit operator Index2i(Vector2i v)
+        {
+            return new Index2i(v.x, v.y);
+        }
     }
 
 
