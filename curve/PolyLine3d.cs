@@ -10,7 +10,6 @@ namespace VirgisGeometry
 		protected List<Vector3d> vertices;
 		public int Timestamp;
 
-		public PolyLine3d() {
         public PolyLine3d() {
 			vertices = new List<Vector3d>();
 			Timestamp = 0;
