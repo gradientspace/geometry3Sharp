@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using UnityEngine;
+
 
 namespace VirgisGeometry
 {
@@ -12,6 +11,7 @@ namespace VirgisGeometry
 		public int Timestamp;
 
 		public PolyLine3d() {
+        public PolyLine3d() {
 			vertices = new List<Vector3d>();
 			Timestamp = 0;
 		}

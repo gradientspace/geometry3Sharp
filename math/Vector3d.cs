@@ -8,14 +8,15 @@ namespace VirgisGeometry
     {
         public double x;
         public double y;
-        public double z; 
+        public double z;
+        public AxisOrder axisOrder;
 
-        public Vector3d(double f) { x = y = z = f; }
-        public Vector3d(double x, double y, double z) { this.x = x; this.y = y; this.z = z; }
-        public Vector3d(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; }
-        public Vector3d(Vector3d copy) { x = copy.x; y = copy.y; z = copy.z; }
-        public Vector3d(Vector3f copy) { x = copy.x; y = copy.y; z = copy.z; }
-        public Vector3d(Vector2d copy) { x = copy.x; y = copy.y; z = 1; }
+        public Vector3d(double f) { x = y = z = f; axisOrder = AxisOrder.ENU; }
+        public Vector3d(double x, double y, double z) { this.x = x; this.y = y; this.z = z; axisOrder = AxisOrder.ENU; }
+        public Vector3d(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; axisOrder = AxisOrder.ENU; }
+        public Vector3d(Vector3d copy) { x = copy.x; y = copy.y; z = copy.z; axisOrder = copy.axisOrder; }
+        public Vector3d(Vector3f copy) { x = copy.x; y = copy.y; z = copy.z; axisOrder = copy.axisOrder; }
+        public Vector3d(Vector2d copy) { x = copy.x; y = copy.y; z = 1; axisOrder = AxisOrder.ENU; }
 
         static public readonly Vector3d Zero = new Vector3d(0.0f, 0.0f, 0.0f);
         static public readonly Vector3d One = new Vector3d(1.0f, 1.0f, 1.0f);
@@ -334,20 +335,21 @@ namespace VirgisGeometry
 
         public static implicit operator Vector3d(Vector3f v)
         {
-            return new Vector3d(v.x, v.y, v.z);
+            return new Vector3d(v);
         }
         public static explicit operator Vector3f(Vector3d v)
         {
-            return new Vector3f((float)v.x, (float)v.y, (float)v.z);
+            return new Vector3f(v);
         }
 
         public static implicit operator Vector3d(UnityEngine.Vector3 v)
         {
-            return new Vector3d(v.x, v.y, v.z);
+            return new Vector3d() { x = v.x, y = v.y, z = v.z, axisOrder = AxisOrder.EUN };
         }
         public static explicit operator Vector3(Vector3d v)
         {
-            return new Vector3((float)v.x, (float)v.y, (float)v.z);
+            if (v.axisOrder == AxisOrder.EUN) return new Vector3((float)v.x, (float)v.y, (float)v.z);
+            return new Vector3((float)v.x, (float)v.z, (float)v.y);
         }
         public static implicit operator Vector3d(float3 v)
         {
@@ -481,14 +483,14 @@ namespace VirgisGeometry
             return 0;
         }
 
-
-
         /// <summary>
         /// Returns two vectors perpendicular to n, as efficiently as possible.
         /// Duff et all method, from https://graphics.pixar.com/library/OrthonormalB/paper.pdf
         /// </summary>
         public static void MakePerpVectors(ref Vector3d n, out Vector3d b1, out Vector3d b2)
         {
+            b1 = new() { axisOrder = n.axisOrder};
+            b2 = new() { axisOrder = n.axisOrder };
             if (n.z < 0.0) {
                 double a = 1.0 / (1.0 - n.z);
                 double b = n.x * n.y * a;
@@ -513,6 +515,5 @@ namespace VirgisGeometry
                 b2.z = -n.y;
             }
         }
-
     }
 }

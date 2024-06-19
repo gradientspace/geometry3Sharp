@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.Collections;
 using Unity.Mathematics;
 using andywiecko.BurstTriangulator;
+using static UnityEngine.GraphicsBuffer;
 
 
 namespace VirgisGeometry
@@ -170,9 +171,11 @@ namespace VirgisGeometry
         public static DMesh3 Build<VType,TType,NType>(IEnumerable<VType> Vertices,  
                                                       IEnumerable<TType> Triangles, 
                                                       IEnumerable<NType> Normals = null,
-                                                      IEnumerable<int> TriGroups = null)
+                                                      IEnumerable<int> TriGroups = null, 
+                                                      AxisOrder ax = default)
         {
             DMesh3 mesh = new DMesh3(Normals != null, false, false, TriGroups != null);
+            if (ax == default) mesh.axisOrder = AxisOrder.ENU; else mesh.axisOrder = ax;
 
             Vector3d[] v = BufferUtil.ToVector3d(Vertices);
             for (int i = 0; i < v.Length; ++i)
@@ -221,7 +224,9 @@ namespace VirgisGeometry
         /// </summary>
         /// <param name="vertices">IEnumberable of type VType containing the vertices</param>
         /// <param name="constraint_edges">IEnumerable of type EType containg the constraint edges</param>
-        public static DMesh3 Build<VType, EType>(IEnumerable<VType> vertices, IEnumerable<EType> constraint_edges = null)
+        public static DMesh3 Build<VType, EType>(IEnumerable<VType> vertices,
+                                                 IEnumerable<EType> constraint_edges = null,
+                                                 AxisOrder ax = default)
         {
             Vector3d[] vertices3d = BufferUtil.ToVector3d(vertices);
             Index3i[] triangles;
@@ -302,7 +307,7 @@ namespace VirgisGeometry
                 throw new Exception("DMesh3 creation Failed");
             }
 
-            DMesh3 res = Build<Vector3d, Index3i, Vector3d>(vertices3d, triangles);
+            DMesh3 res = Build<Vector3d, Index3i, Vector3d>(vertices3d, triangles, null, null, ax);
             for (int i = 0; i < vertices2d.Count; i++)
             {
                 res.SetVertexUV(i, (Vector2f)vertices2d[i]);

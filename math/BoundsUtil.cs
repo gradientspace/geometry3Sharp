@@ -29,7 +29,7 @@ namespace VirgisGeometry
 
         public static AxisAlignedBox3d Bounds(ref Vector3d v0, ref Vector3d v1, ref Vector3d v2)
         {
-            AxisAlignedBox3d box;
+            AxisAlignedBox3d box = new();
             MathUtil.MinMax(v0.x, v1.x, v2.x, out box.Min.x, out box.Max.x);
             MathUtil.MinMax(v0.y, v1.y, v2.y, out box.Min.y, out box.Max.y);
             MathUtil.MinMax(v0.z, v1.z, v2.z, out box.Min.z, out box.Max.z);
@@ -38,7 +38,7 @@ namespace VirgisGeometry
 
         public static AxisAlignedBox2d Bounds(ref Vector2d v0, ref Vector2d v1, ref Vector2d v2)
         {
-            AxisAlignedBox2d box;
+            AxisAlignedBox2d box = new();
             MathUtil.MinMax(v0.x, v1.x, v2.x, out box.Min.x, out box.Max.x);
             MathUtil.MinMax(v0.y, v1.y, v2.y, out box.Min.y, out box.Max.y);
             return box;

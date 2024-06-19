@@ -139,6 +139,7 @@ namespace VirgisGeometry
 
         // "normal" meshes are counter-clockwise. Unity is CW though...
         public bool Clockwise = false;
+        public AxisOrder axisOrder;
 
 
         /// <summary>
@@ -170,6 +171,7 @@ namespace VirgisGeometry
 
             edges = new DVector<int>();
             edges_refcount = new RefCountVector();
+            axisOrder = AxisOrder.ENU;
         }
         public DMesh3(MeshComponents flags) : 
             this( (flags & MeshComponents.VertexNormals) != 0,  (flags & MeshComponents.VertexColors) != 0,
@@ -252,6 +254,8 @@ namespace VirgisGeometry
             if (copy.Metadata != null)
                 Metadata = copy.Metadata;
 
+            axisOrder = copy.axisOrder;
+
             return new CompactInfo() {
                 MapV = new IndexMap(mapV, this.MaxVertexID)
             };
@@ -281,6 +285,7 @@ namespace VirgisGeometry
 
             edges = new DVector<int>(copy.edges);
             edges_refcount = new RefCountVector(copy.edges_refcount);
+            axisOrder = copy.axisOrder;
         }
 
 
@@ -2536,6 +2541,7 @@ namespace VirgisGeometry
                 dmesh.AppendTriangle(tris[i], tris[i + 1], tris[i + 2]);
             }
             dmesh.ReverseOrientation();
+            dmesh.axisOrder = AxisOrder.EUN;
             return dmesh;
         }
 

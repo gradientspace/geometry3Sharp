@@ -96,6 +96,27 @@ namespace VirgisGeometry
         public static readonly Matrix3d Identity = new Matrix3d(true);
         public static readonly Matrix3d Zero = new Matrix3d(false);
 
+        /// <summary>
+        /// Creates a rotation of 90 degs anti-clockwise around the z axis)
+        /// </summary>
+        public static readonly Matrix3d AxisZ = new Matrix3d(0, -1, 0,
+                                                             1, 0, 0,
+                                                             0, 0, 1);
+
+        /// <summary>
+        /// Creates a rotation of 90 degs anti-clockwise around the x axis)
+        /// </summary>
+        public static readonly Matrix3d AxisX = new Matrix3d(1, 0, 0,
+                                                             0, 0, -1,
+                                                             0, 1, 0);
+
+        /// <summary>
+        /// Creates a rotation of 90 degs anti-clockwise around the y axis)
+        /// </summary>
+        public static readonly Matrix3d AxisY = new Matrix3d(0, 0, 1,
+                                                             0, 1, 0,
+                                                             -1, 0, 0);
+
         public double this[int r, int c] {
             get {
                 return (r == 0) ? Row0[c] : ( (r == 1) ? Row1[c] : Row2[c] );
