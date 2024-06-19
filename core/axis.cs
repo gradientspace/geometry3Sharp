@@ -51,6 +51,8 @@ namespace VirgisGeometry
         ///  
         ///  This is not reprojection - the coordinates MUSTbe in the correct CRS and this 
         ///  just swaps the axes for those specific cases
+        ///  
+        /// ToDo this is not generic enough
         /// 
         /// </summary>
         /// <param name="other"></param>
@@ -75,6 +77,21 @@ namespace VirgisGeometry
         public static bool operator !=(AxisOrder lhs, AxisOrder rhs)
         {
             return !(lhs == rhs);
+        }
+
+        public static implicit operator AxisOrder(string value)
+        {
+            switch (value)
+            {
+                case "ENU":
+                    return ENU;
+                case "EUN":
+                    return EUN;
+                case "NED":
+                    return NED;
+                default:
+                    return default;
+            }
         }
     }
 }

@@ -420,17 +420,18 @@ namespace VirgisGeometry
         public Vector3d GetVertex(int vID) {
             debug_check_is_vertex(vID);
             int i = 3 * vID;
-            return new Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
+            return new Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]) { axisOrder = axisOrder } ;
         }
         public Vector3f GetVertexf(int vID) {
             debug_check_is_vertex(vID);
             int i = 3 * vID;
-            return new Vector3f((float)vertices[i], (float)vertices[i + 1], (float)vertices[i + 2]);
+            return new Vector3f((float)vertices[i], (float)vertices[i + 1], (float)vertices[i + 2]) { axisOrder = axisOrder };
         }
 
         public void SetVertex(int vID, Vector3d vNewPos) {
             System.Diagnostics.Debug.Assert(vNewPos.IsFinite);     // this will really catch a lot of bugs...
             debug_check_is_vertex(vID);
+            if (axisOrder != vNewPos.axisOrder) vNewPos.ChangeAxisOrderTo(axisOrder);
 
 			int i = 3*vID;
 			vertices[i] = vNewPos.x; vertices[i+1] = vNewPos.y; vertices[i+2] = vNewPos.z;
@@ -963,7 +964,11 @@ namespace VirgisGeometry
         /// <summary>
         /// Append new vertex at position, returns new vid
         /// </summary>
-        public int AppendVertex(Vector3d v) {
+        public int AppendVertex(Vector3d v, bool bCheckOrientation = false) {
+            if (bCheckOrientation)
+            {
+                if (axisOrder != v.axisOrder) v.ChangeAxisOrderTo(axisOrder); 
+            }
             return AppendVertex(new NewVertexInfo() {
                 v = v, bHaveC = false, bHaveUV = false, bHaveN = false
             });
@@ -2472,6 +2477,9 @@ namespace VirgisGeometry
             {
                 //mesh.ReverseOrientation();
             }
+
+
+
             Mesh unityMesh = new Mesh();
             unityMesh.MarkDynamic();
             if (mesh.VertexCount > 64000 || mesh.TriangleCount > 64000)
@@ -2683,9 +2691,9 @@ namespace VirgisGeometry
         /// Transforms Dmesh3 from World Space coordinates to Local Space Coordinates 
         /// based upon the provided Transform
         /// </summary>
-        /// <param name="transform"></param>
+        /// <param name="transform">Matrix4d transformation matrix</param>
         /// <returns></returns>
-        public bool ToLocal (Transform transform)
+        public bool Transform (Matrix4d transform)
         {
             try
             {
@@ -2693,8 +2701,7 @@ namespace VirgisGeometry
                 {
                     if (IsVertex(i))
                     {
-                        Vector3d vertex = GetVertex(i);
-                        SetVertex(i, transform.TransformPoint((Vector3)vertex));
+                        SetVertex(i, transform * GetVertex(i));
                     }
                 };
                 return true;

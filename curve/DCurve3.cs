@@ -123,6 +123,38 @@ namespace VirgisGeometry
             return vertices[i];
         }
 
+        /// <summary>
+        /// Get a Unity Vertex
+        /// 
+        /// The vertex is a Vector3 corrected for y-up and has the
+        /// Unity Transformation Matrix applied
+        /// </summary>
+        /// <param name="i"> Vertex Index</param>
+        /// <param name="transform"> Matrix4x4 Transformation Matrix</param>
+        /// <returns>Vector3</returns>
+        public Vector3 GetVertex(int i, Matrix4x4 transform)
+        {
+            return transform.MultiplyVector((Vector3)vertices[i]);
+        }
+
+
+        /// <summary>
+        /// Get a Unity Vertex Iterator
+        /// 
+        /// The verteces are Vector3's corrected for y-up and have the
+        /// Unity Transformation Matrix applied
+        /// </summary>
+        /// <param name="i"> Vertex Index</param>
+        /// <param name="transform"> Matrix4x4 Transformation Matrix</param>
+        /// <returns>IEnumerable<Vector3></returns>
+        public IEnumerable<Vector3> VertexItr(Matrix4x4 transform)
+        {
+            foreach (Vector3d v in vertices)
+            {
+                yield return transform.MultiplyVector((Vector3)v);
+            }
+        }
+
         public IEnumerable<Vector3d> VertexItr()
         {
             return vertices;

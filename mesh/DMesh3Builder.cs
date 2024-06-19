@@ -179,7 +179,7 @@ namespace VirgisGeometry
 
             Vector3d[] v = BufferUtil.ToVector3d(Vertices);
             for (int i = 0; i < v.Length; ++i)
-                mesh.AppendVertex(v[i]);
+                mesh.AppendVertex(v[i], true);
 
             if ( Normals != null ) {
                 Vector3f[] n = BufferUtil.ToVector3f(Normals);

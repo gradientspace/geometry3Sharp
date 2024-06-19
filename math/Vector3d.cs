@@ -515,5 +515,18 @@ namespace VirgisGeometry
                 b2.z = -n.y;
             }
         }
+
+        public void ChangeAxisOrderTo(AxisOrder ax)
+        {
+            if (axisOrder == ax) return;
+            if (axisOrder.Axis2 == ax.Axis2) return;
+            if (axisOrder.Axis2 == ax.Axis2) return;
+            if (axisOrder.Axis2 == AxisType.Up || ax.Axis2 == AxisType.Up)
+            {
+                double temp = y;
+                y = z;
+                z = temp;
+            }
+        }
     }
 }
