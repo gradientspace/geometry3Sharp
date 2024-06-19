@@ -2688,13 +2688,18 @@ namespace VirgisGeometry
         }
 
         /// <summary>
-        /// Transforms Dmesh3 from World Space coordinates to Local Space Coordinates 
-        /// based upon the provided Transform
+        /// Transforms Dmesh3 based upon the provided Transform
         /// </summary>
         /// <param name="transform">Matrix4d transformation matrix</param>
         /// <returns></returns>
-        public bool Transform (Matrix4d transform)
+        public bool Transform (Matrix4d transform, AxisOrder target = default, bool isYup = false)
         {
+            if (target != default)
+                axisOrder = target;
+            if (isYup && axisOrder != AxisOrder.EUN)
+            {
+                transform = new Matrix4d(transform.Row0, transform.Row2, transform.Row1, transform.Row3, true);
+            }
             try
             {
                 for (int i = 0; i < VertexCount; i++)
@@ -2703,8 +2708,8 @@ namespace VirgisGeometry
                     {
                         SetVertex(i, transform * GetVertex(i));
                     }
-                };
-                return true;
+            };
+            return true;
             }
             catch
             {

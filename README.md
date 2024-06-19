@@ -10,8 +10,13 @@ This package is forked from [Geometry3Sharp](https://github.com/gradientspace/ge
 
 This package has been extensively re-engineered for use with Unity as part of the [ViRGiS Project](https://www.virgis.org)
 
-> [!NOTE]
-> You cannot use the old Geometry3sharp and the new ViRGiS-Geometry package in the same project. They use the same namespace.
+## Version 4 - Breaking Change
+
+Version 4 of the package has been released. This has many improvements to the Unity Integration (see the [CHANGELOG.md](https://github.com/ViRGIS-Team/ViRGiS-Geometry/blob/master/CHANGELOG.md) ).
+
+This Version has the following BREAKING CHANGE :
+
+- The Namespace has been changed from `g3` to `VirgisGeometry`.
 
 # Projects using ViRGiS Geometry
 
