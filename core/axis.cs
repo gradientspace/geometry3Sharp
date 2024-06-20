@@ -93,5 +93,10 @@ namespace VirgisGeometry
                     return default;
             }
         }
+
+        public readonly byte[] ToArray()
+        {
+            return new byte[] { (byte)Axis1, (byte)Axis2, (byte)Axis3 };
+        }
     }
 }
