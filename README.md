@@ -10,8 +10,19 @@ This package is forked from [Geometry3Sharp](https://github.com/gradientspace/ge
 
 This package has been extensively re-engineered for use with Unity as part of the [ViRGiS Project](https://www.virgis.org)
 
-> [!NOTE]
-> You cannot use the old Geometry3sharp and the new ViRGiS-Geometry package in the same project. They use the same namespace.
+## Version 4 - Breaking Changes
+
+Version 4 of the package has been released. This has many improvements to the Unity Integration (see the [CHANGELOG.md](https://github.com/ViRGIS-Team/ViRGiS-Geometry/blob/master/CHANGELOG.md) ).
+
+This Version has the following BREAKING CHANGEs :
+
+- The Namespace has been changed from `g3` to `VirgisGeometry`.
+- Vector3d and Vector3f now include details of the Axis Order. This is used when casting the Vector to Unity Vector3. If the Vector3[d,f] is defined as ENU or NED (i.e. Z-up) axis order then  it is correctly rotated automatically to Y-up. If you do not want this rotation then the Vector3[d,f] must be defined as ENU as follows:
+
+```
+Vector3d v = new Vector3d(...) { axisOrder= AxisOrder.ENU }
+```
+- DMesh3 now includes details of the Axis Order and this is used when casting to Unity Mesh.
 
 # Projects using ViRGiS Geometry
 
@@ -56,7 +67,7 @@ ViRGiS Geometry supports transparent conversion with Unity types.
 
 ViRGiS Geometry has the following Primitive types mostly implemented as Structs:
 - `Vector2d, 2f, 2i, 3d, 3f, 3i, 4d, 4f`
-- `Matrix2d, 2f, 3f, 3d`
+- `Matrix2d, 2f, 3f, 3d, 4d`
 - `Quaterniond, f`
 - `Index2, 3, 4`
 - `AxisAlignedBox2d, 3d, 2f, 3f`
@@ -69,6 +80,7 @@ ViRGiS Geometry has the following Primitive types mostly implemented as Structs:
 - 1D intervals `Interval1d`, and `Interval1i` which is `IEnumerable`
 - `VectorTuple2, 3, 4`
 - `element2d, 3d` vector-tuples (convenient())
+- `TransformSequence`
 
 The majority of these have implicit or explicit conversions to UnityEngine (e.g. `Vector3` ) and Unity.Mathematics (e.g. `float3` ) types as shown in the table below. The conversions are all implicit where the conversions can be done without precision loss (e.g. float to float) and explicit where there is precision loss (e.g. double to float).
 
@@ -77,6 +89,10 @@ The majority of these have implicit or explicit conversions to UnityEngine (e.g.
 will need to explicitly cast one to the other.
 
 <img width="635" alt="Screenshot 2023-11-15 at 23 13 02" src="https://github.com/ViRGIS-Team/ViRGiS-Geometry/assets/2239795/2b6d379c-cf90-4673-8502-9d5f0e0de357">
+
+# Transforms
+
+
 
 # Mesh Entities
 

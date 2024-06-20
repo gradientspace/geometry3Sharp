@@ -1,3 +1,15 @@
+# Version 4.0.0
+
+The manin changes in this Version are that the Namespace has been changed from `g3` to `VirgisGeometry` and there are many new integrations into Unity.
+
+- Namespace changed from `g3` to `VirgisGeometry`
+- Add Matrix4d Type
+- Add Cast from Unity Matrix4x4 to Matrix4d and double4x4 to Matrix4d. This allows the use of Unity Transforms in VirgisGeometry.
+- Add Casts of Vector2d and Vector3d as (homogeneous coordinates) in Vector3d and Vector4d
+- Added management of AxisOrder for Vector3d, Vector3f and DMesh3.
+- Added arbitrary data objects to DCurve3 to allow per vertex data - e.g. feature IDs
+- Added the ability to triangulate a mesh from vertices in DMesh3Builder.
+
 # Version 3.1.2
 
 - Updated Burst Triangulator to version 2.5.0
