@@ -66,7 +66,7 @@ The Package can also be installed using the Unity Package Manager directly from 
 ViRGiS Geometry supports transparent conversion with Unity types.
 
 > [!NOTE]
->All VirgisGeometry primitives are available as double types. Using these types to hold and manipulate data and only converting to Unity Vectors and Meshes for the actual presentation, retains the precision of the data!
+>All VirgisGeometry primitives are available as double types. Using these types to hold and manipulate data and only converting to Unity Vectors and Meshes for the actual presentation retains the precision of the data!
 
 ViRGiS Geometry has the following Primitive types mostly implemented as Structs:
 - `Vector2d, 2f, 2i, 3d, 3f, 3i, 4d, 4f`
