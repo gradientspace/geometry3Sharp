@@ -2,9 +2,9 @@
     "name": "geometry3Sharp",
     "rootNamespace": "",
     "references": [
-        "GUID:d8b63aba1907145bea998dd612889d6b",
-        "GUID:db11b4b5d7520bc479416b48c98206cb",
-        "GUID:e0cd26848372d4e5c891c569017e11f1"
+        "Unity.Mathematics",
+        "andywiecko.BurstTriangulator",
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
