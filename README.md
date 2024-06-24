@@ -66,7 +66,7 @@ The Package can also be installed using the Unity Package Manager directly from 
 ViRGiS Geometry supports transparent conversion with Unity types.
 
 > [!NOTE]
->All VirgisGeometry primitives are available as double types. Using these types to hold and manipulate data - onlt convertign to Unity Vectors and Meshes for presentation - retains the precision of the data!
+>All VirgisGeometry primitives are available as double types. Using these types to hold and manipulate data and only converting to Unity Vectors and Meshes for the actual presentation, retains the precision of the data!
 
 ViRGiS Geometry has the following Primitive types mostly implemented as Structs:
 - `Vector2d, 2f, 2i, 3d, 3f, 3i, 4d, 4f`
@@ -95,7 +95,7 @@ will need to explicitly cast one to the other.
 
 # Axis Order
 
-One of the biggest confusions when dealing with data in the Unity world is the axis order. Principly, most data realms represent data as being "Z up" (i.e. Z is the vertical dimension) but Unity represents data using "Y up" (i.e. Y is the vertical dimension),
+One of the biggest confusions when dealing with data in the Unity world is the axis order. Simply put, most data realms represent data as being "Z up" (i.e. Z is the vertical dimension) but Unity represents data using "Y up" (i.e. Y is the vertical dimension),
 
 Trying to keep track of this in your code as you go from importing data to manipulating data to saving data will induce paranoia!
 
@@ -114,7 +114,7 @@ VirgisGeometry supports the following axis, the first two being the most common 
 - EUN (left handed) (Unity Game Space)
 
 > [!NOTE]
-> The axis order is only used when casting Vectors and Meshes to Unity Vector3s and Meshes - when the order is checked to ensure that the result is corrrectly in EUN order. This does mean that - if you do not explicitly set the `Vector3d` axis order, teh cast will assume that you want to rotate the date from a Z up `Vector3d` to a Y up `Vector3`
+> The axis order is only used when casting Vectors and Meshes to Unity Vector3s and Meshes, at which popint the order is checked and if neccesary changed to ensure that the result is corrrectly in EUN order. This does mean that - if you do not explicitly set the `Vector3d` axis order, the cast will assume that you want to rotate the data from a Z up `Vector3d` to a Y up `Vector3`. It you do not, then set the data as being in EUN coordinates already!
 >
 > When casting FROM Unity to VirgisGeometry, the data is NOT changed but the axis order is set. This ensures round trip integrity but means that the resulting Vector3d (dor instance) is in EUN. If you are exporting the data or manipulating it, you need to confirm that you are using the right axis order yourself.
 
@@ -128,11 +128,19 @@ v.ChangeAxisOrderTo(AxisOrder.ENU);
 
 This is a NOP if the AxisOrder is correct and should be called before any AxisOrder critical operation on the Vector since you may not know the whole life history of the Vector.
 
-For `DMesh3` this can be done using the `Transform` functions.
+For `DMesh3` the axis order for all verteces can be changed with the `Transform` function - note that you need to give it the transformation matix to make the change AND the target axis order.
 
 # Transforms
 
-Unity Transforms can be represented 
+Unity Transforms can be represented and used with VirgisGeometry enitiies using [transformation matricies](https://en.wikipedia.org/wiki/Transformation_matrix). Doing the transform in VirgisGeometry has the advantage of preserving double precision.
+
+Transformation matricies are represented in VirgisGeometry as `Matrix4d` and in Unity as `Matrix4x4`. There are instrinsic casts between these types (but keep in mind axis order).
+
+You can use a `Matrix4d` directly on a vector using matrix multiplication or you can cast a matrix to a `TransformSequence` which allows you to add more transformations etc.
+
+You can convert a Unity Transform to a transformation matrix using [Transform.localToWorldMatrix](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Transform-localToWorldMatrix.html) and [Transform.worldToLocalMatrix](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Transform-worldToLocalMatrix.html).
+
+
 
 # Mesh Entities
 
