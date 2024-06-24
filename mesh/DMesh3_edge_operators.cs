@@ -8,8 +8,7 @@ namespace VirgisGeometry
     {
 
 
-        // edits
-
+		// reverse the chirality of a single Triangle without changing the entire Mesh
         public MeshResult ReverseTriOrientation(int tID) {
             if (!IsTriangle(tID))
                 return MeshResult.Failed_NotATriangle;
@@ -24,20 +23,12 @@ namespace VirgisGeometry
             set_triangle_edges(tID, te[0], te[2], te[1]);
         }
 
+		// Fast change the chirality of the entire Mesh
 		public void ReverseOrientation(bool bFlipNormals = true) {
-			foreach ( int tid in TriangleIndices() ) {
-				internal_reverse_tri_orientation(tid);
-			}
-			if ( bFlipNormals && HasVertexNormals ) {
-				foreach ( int vid in VertexIndices() ) {
-					int i = 3*vid;
-					normals[i] = -normals[i];
-					normals[i+1] = -normals[i+1];
-					normals[i+2] = -normals[i+2];
-				}
-			}
             updateTimeStamp(true);
 			Clockwise = !Clockwise;
+			bFlip = !bFlip;
+			this.bFlipNormals = bFlipNormals ^ this.bFlipNormals;
 		}
 
 

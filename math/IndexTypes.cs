@@ -53,9 +53,17 @@ namespace VirgisGeometry
         {
             a = o[0]; b = o[1]; c = o[2];
         }
+
         public void Set(int ii, int jj, int kk)
         {
             a = ii; b = jj; c = kk;
+        }
+
+        public void Set(int[] array)
+        {
+            a = array[0];
+            b = array[1];
+            c = array[2];
         }
 
 

@@ -65,6 +65,9 @@ The Package can also be installed using the Unity Package Manager directly from 
 
 ViRGiS Geometry supports transparent conversion with Unity types.
 
+> [!NOTE]
+>All VirgisGeometry primitives are available as double types. Using these types to hold and manipulate data - onlt convertign to Unity Vectors and Meshes for presentation - retains the precision of the data!
+
 ViRGiS Geometry has the following Primitive types mostly implemented as Structs:
 - `Vector2d, 2f, 2i, 3d, 3f, 3i, 4d, 4f`
 - `Matrix2d, 2f, 3f, 3d, 4d`
@@ -90,9 +93,46 @@ will need to explicitly cast one to the other.
 
 <img width="635" alt="Screenshot 2023-11-15 at 23 13 02" src="https://github.com/ViRGIS-Team/ViRGiS-Geometry/assets/2239795/2b6d379c-cf90-4673-8502-9d5f0e0de357">
 
+# Axis Order
+
+One of the biggest confusions when dealing with data in the Unity world is the axis order. Principly, most data realms represent data as being "Z up" (i.e. Z is the vertical dimension) but Unity represents data using "Y up" (i.e. Y is the vertical dimension),
+
+Trying to keep track of this in your code as you go from importing data to manipulating data to saving data will induce paranoia!
+
+Therefore, we have introduced the concept of "Axis Order" into VirgisGeometry, using conventions from the Geo Data. This concept is implemented on:
+
+- `Vector3d`
+- `Vector3f`
+- `DMesh3`
+
+Basically, each of the three axis is represented as being North, South, East, West, Up or Down. Note that the choice of horizontal axes (e.g. which is North and which is East) is to some extent arbitrary unless you are using AR, however historically there has been a preference for [right handed coordinate systems](https://en.wikipedia.org/wiki/Right-hand_rule#:~:text=For%20right%2Dhanded%20coordinates%2C%20if,axis%20(second%20coordinate%20vector)). However, the choice of vertical axis is critical since we perceive that axis very different.
+
+VirgisGeometry supports the following axis, the first two being the most common for data and the third represents the Unity Game Space axis order:
+
+- ENU (right handed)
+- NED (right handed)
+- EUN (left handed) (Unity Game Space)
+
+> [!NOTE]
+> The axis order is only used when casting Vectors and Meshes to Unity Vector3s and Meshes - when the order is checked to ensure that the result is corrrectly in EUN order. This does mean that - if you do not explicitly set the `Vector3d` axis order, teh cast will assume that you want to rotate the date from a Z up `Vector3d` to a Y up `Vector3`
+>
+> When casting FROM Unity to VirgisGeometry, the data is NOT changed but the axis order is set. This ensures round trip integrity but means that the resulting Vector3d (dor instance) is in EUN. If you are exporting the data or manipulating it, you need to confirm that you are using the right axis order yourself.
+
+For Vectors, the axis order can be checked and changed in on go, e.g. :
+
+```
+Vector3 v = ...;
+v.ChangeAxisOrderTo(AxisOrder.ENU);
+        
+```
+
+This is a NOP if the AxisOrder is correct and should be called before any AxisOrder critical operation on the Vector since you may not know the whole life history of the Vector.
+
+For `DMesh3` this can be done using the `Transform` functions.
+
 # Transforms
 
-
+Unity Transforms can be represented 
 
 # Mesh Entities
 

@@ -139,6 +139,8 @@ namespace VirgisGeometry
 
         // "normal" meshes are counter-clockwise. Unity is CW though...
         public bool Clockwise = false;
+        bool bFlip = false;
+        bool bFlipNormals = false;
         public AxisOrder axisOrder;
 
 
@@ -444,7 +446,10 @@ namespace VirgisGeometry
             } else {
                 debug_check_is_vertex(vID);
                 int i = 3 * vID;
-                return new Vector3f(normals[i], normals[i + 1], normals[i + 2]);
+                if (bFlipNormals)
+                    return new Vector3f(-normals[i], -normals[i + 1], -normals[i + 2]);
+                else
+                    return new Vector3f(normals[i], normals[i + 1], normals[i + 2]);
             }
 		}
 
@@ -503,7 +508,7 @@ namespace VirgisGeometry
             vinfo.bHaveN = vinfo.bHaveUV = vinfo.bHaveC = false;
             if (HasVertexNormals && bWantNormals) {
                 vinfo.bHaveN = true;
-                vinfo.n.Set(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]);
+                vinfo.n.Set(GetVertexNormal(vID));
             }
             if (HasVertexColors && bWantColors) {
                 vinfo.bHaveC = true;
@@ -516,22 +521,8 @@ namespace VirgisGeometry
             return true;
         }
 
-
-        [System.Obsolete("GetVtxEdges will be removed in future, use VtxEdgesItr instead")]
-        public ReadOnlyCollection<int> GetVtxEdges(int vID) {
-            if (vertices_refcount.isValid(vID) == false)
-                return null;
-            return vertex_edges_list(vID).AsReadOnly();
-        }
-
         public int GetVtxEdgeCount(int vID) {
             return vertices_refcount.isValid(vID) ? vertex_edges.Count(vID) : -1;
-        }
-
-
-        [System.Obsolete("GetVtxEdgeValence will be removed in future, use GetVtxEdgeCount instead")]
-        public int GetVtxEdgeValence(int vID) {
-            return vertex_edges.Count(vID);
         }
 
 
@@ -576,12 +567,11 @@ namespace VirgisGeometry
         {
             System.Diagnostics.Debug.Assert(HasVertexNormals);
 
-            int vi = 3 * vID;
-            Vector3d v = new Vector3d(vertices[vi], vertices[vi + 1], vertices[vi + 2]);
-            Vector3d normal = new Vector3d(normals[vi], normals[vi + 1], normals[vi + 2]);
+            Vector3d v = GetVertex(vID);
+            Vector3d normal = GetVertexNormal(vID);
             int eid = vertex_edges.First(vID);
             int ovi = 3 * edge_other_v(eid, vID);
-            Vector3d ov = new Vector3d(vertices[ovi], vertices[ovi + 1], vertices[ovi + 2]);
+            Vector3d ov = GetVertex(ovi);
             Vector3d edge = (ov - v);
             edge.Normalize();
 
@@ -594,22 +584,33 @@ namespace VirgisGeometry
         }
 
 
-
-
         public Index3i GetTriangle(int tID) {
+            int[] array = GetTriangleArray(tID);
+            return new Index3i() { a = array[0], b = array[1], c = array[2]};
+        }
+
+        public int[] GetTriangleArray(int tID)
+        {
             debug_check_is_triangle(tID);
             int i = 3 * tID;
-            return new Index3i(triangles[i], triangles[i + 1], triangles[i + 2]);
+            if (bFlip)
+                return new int[] { triangles[i + 2], triangles[i + 1], triangles[i] };
+            else
+                return new int[] { triangles[i], triangles[i + 1], triangles[i + 2] };
         }
 
         public Index3i GetTriEdges(int tID) {
             debug_check_is_triangle(tID);
             int i = 3 * tID;
-            return new Index3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
+            if (bFlip)
+                return new Index3i(triangle_edges[i + 2], triangle_edges[i + 1], triangle_edges[i]);
+            else
+                return new Index3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
         }
 
         public int GetTriEdge(int tid, int j) {
             debug_check_is_triangle(tid);
+            if (bFlip) j = 3 - j;
             return triangle_edges[3*tid+j];
         }
 
@@ -660,23 +661,26 @@ namespace VirgisGeometry
 
 
         public void GetTriVertices(int tID, ref Vector3d v0, ref Vector3d v1, ref Vector3d v2) {
-            int ai = 3 * triangles[3 * tID];
+            int[] tri = GetTriangleArray(tID);
+            int ai = tri[0];
+            int bi = tri[1];
+            int ci = tri[2];
             v0.x = vertices[ai]; v0.y = vertices[ai + 1]; v0.z = vertices[ai + 2];
-            int bi = 3 * triangles[3 * tID + 1];
             v1.x = vertices[bi]; v1.y = vertices[bi + 1]; v1.z = vertices[bi + 2];
-            int ci = 3 * triangles[3 * tID + 2];
             v2.x = vertices[ci]; v2.y = vertices[ci + 1]; v2.z = vertices[ci + 2];
         }
 
         public Vector3d GetTriVertex(int tid, int j) {
+            if (bFlip) j = 3 - j;
             int a = triangles[3 * tid + j];
             return new Vector3d(vertices[3 * a], vertices[3 * a + 1], vertices[3 * a + 2]);
         }
 
-        public Vector3d GetTriBaryPoint(int tID, double bary0, double bary1, double bary2) { 
-            int ai = 3 * triangles[3 * tID], 
-                bi = 3 * triangles[3 * tID + 1], 
-                ci = 3 * triangles[3 * tID + 2];
+        public Vector3d GetTriBaryPoint(int tID, double bary0, double bary1, double bary2) {
+            int[] tri = GetTriangleArray(tID);
+            int ai = tri[0];
+            int bi = tri[1];
+            int ci = tri[2];
             return new Vector3d(
                 (bary0*vertices[ai] + bary1*vertices[bi] + bary2*vertices[ci]),
                 (bary0*vertices[ai + 1] + bary1*vertices[bi + 1] + bary2*vertices[ci + 1]),
@@ -714,10 +718,11 @@ namespace VirgisGeometry
         /// <summary>
         /// interpolate vertex normals of triangle using barycentric coordinates
         /// </summary>
-        public Vector3d GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) { 
-            int ai = 3 * triangles[3 * tID], 
-                bi = 3 * triangles[3 * tID + 1], 
-                ci = 3 * triangles[3 * tID + 2];
+        public Vector3d GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) {
+            int[] tri = GetTriangleArray(tID);
+            int ai = tri[0];
+            int bi = tri[1];
+            int ci = tri[2];
             Vector3d n = new Vector3d(
                 (bary0*normals[ai] + bary1*normals[bi] + bary2*normals[ci]),
                 (bary0*normals[ai + 1] + bary1*normals[bi + 1] + bary2*normals[ci + 1]),
@@ -731,9 +736,10 @@ namespace VirgisGeometry
         /// </summary>
         public Vector3d GetTriCentroid(int tID)
         {
-            int ai = 3 * triangles[3 * tID], 
-                bi = 3 * triangles[3 * tID + 1], 
-                ci = 3 * triangles[3 * tID + 2];
+            int[] tri = GetTriangleArray(tID);
+            int ai = tri[0];
+            int bi = tri[1];
+            int ci = tri[2];
             double f = (1.0 / 3.0);
             return new Vector3d(
                 (vertices[ai] + vertices[bi] + vertices[ci]) * f,
@@ -748,9 +754,10 @@ namespace VirgisGeometry
         public void GetTriBaryPoint(int tID, double bary0, double bary1, double bary2, out NewVertexInfo vinfo)
         {
             vinfo = new NewVertexInfo();
-            int ai = 3 * triangles[3 * tID],
-                bi = 3 * triangles[3 * tID + 1],
-                ci = 3 * triangles[3 * tID + 2];
+            int[] tri = GetTriangleArray(tID);
+            int ai = tri[0];
+            int bi = tri[1];
+            int ci = tri[2];
             vinfo.v = new Vector3d(
                 (bary0 * vertices[ai] + bary1 * vertices[bi] + bary2 * vertices[ci]),
                 (bary0 * vertices[ai + 1] + bary1 * vertices[bi + 1] + bary2 * vertices[ci + 1]),
@@ -772,12 +779,9 @@ namespace VirgisGeometry
             }
             vinfo.bHaveUV = HasVertexUVs;
             if (vinfo.bHaveUV) {
-                ai = 2 * triangles[3 * tID];
-                bi = 2 * triangles[3 * tID + 1];
-                ci = 2 * triangles[3 * tID + 2];
                 vinfo.uv = new Vector2f(
-                    (bary0 * uv[ai] + bary1 * uv[bi] + bary2 * uv[ci]),
-                    (bary0 * uv[ai + 1] + bary1 * uv[bi + 1] + bary2 * uv[ci + 1]));
+                    (bary0 * uv[2 * ai] + bary1 * uv[2 * bi] + bary2 * uv[2 * ci]),
+                    (bary0 * uv[2 * ai + 1] + bary1 * uv[2 * bi + 1] + bary2 * uv[2 * ci + 1]));
             }
         }
 
@@ -787,11 +791,9 @@ namespace VirgisGeometry
         /// </summary>
         public AxisAlignedBox3d GetTriBounds(int tID)
         {
-            int vi = 3 * triangles[3 * tID];
-            double x = vertices[vi], y = vertices[vi + 1], z = vertices[vi + 2];
-            double minx = x, maxx = x, miny = y, maxy = y, minz = z, maxz = z;
-            for (int i = 1; i < 3; ++i) {
-                vi = 3 * triangles[3 * tID + i];
+            double x, y, z;
+            double minx = double.MaxValue, maxx = double.MinValue, miny = double.MaxValue , maxy = double.MinValue, minz = double.MaxValue, maxz = double.MinValue;
+            foreach (int vi in GetTriangle(tID).array) {
                 x = vertices[vi]; y = vertices[vi + 1]; z = vertices[vi + 2];
                 if (x < minx) minx = x; else if (x > maxx) maxx = x;
                 if (y < miny) miny = y; else if (y > maxy) maxy = y;
@@ -1371,8 +1373,7 @@ namespace VirgisGeometry
         /// </summary>
         public IEnumerable<Vector3d> Vertices() {
             foreach (int vid in vertices_refcount) {
-                int i = 3 * vid;
-                yield return new Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
+                yield return GetVertex(vid);
             }
         }
 
@@ -1381,8 +1382,7 @@ namespace VirgisGeometry
         /// </summary>
         public IEnumerable<Index3i> Triangles() {
             foreach (int tid in triangles_refcount) {
-                int i = 3 * tid;
-                yield return new Index3i(triangles[i], triangles[i + 1], triangles[i + 2]);
+                yield return GetTriangle(tid);
             }
         }
 
@@ -1391,8 +1391,7 @@ namespace VirgisGeometry
         /// </summary>
         public IEnumerable<Index4i> Edges() {
             foreach (int eid in edges_refcount) {
-                int i = 4 * eid;
-                yield return new Index4i(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]);
+                yield return GetEdge(eid);
             }
         }
 
@@ -2475,10 +2474,8 @@ namespace VirgisGeometry
         {
             if (!mesh.Clockwise)
             {
-                //mesh.ReverseOrientation();
+                mesh.ReverseOrientation();
             }
-
-
 
             Mesh unityMesh = new Mesh();
             unityMesh.MarkDynamic();
@@ -2489,19 +2486,21 @@ namespace VirgisGeometry
             Vector2[] uvs = new Vector2[mesh.VertexCount];
             Vector3[] normals = new Vector3[mesh.VertexCount];
             NewVertexInfo data;
-            for (int i = 0; i < mesh.VertexCount; i++)
+            int i = 0;
+            foreach (int vi in mesh.VertexIndices())
             {
-                if (mesh.IsVertex(i))
+                if (mesh.IsVertex(vi))
                 {
-                    data = mesh.GetVertexAll(i);
+                    data = mesh.GetVertexAll(vi);
                     vertices[i] = (Vector3)data.v;
                     if (data.bHaveC)
-                        colors[i] = (Color)data.c;
+                        colors[i] = data.c;
                     if (data.bHaveUV)
-                        uvs[i] = (Vector2)data.uv;
+                        uvs[i] = data.uv;
                     if (data.bHaveN)
-                        normals[i] = (Vector3)data.n;
+                        normals[i] = data.n;
                 }
+                i++;
             }
             unityMesh.vertices = vertices;
             if (mesh.HasVertexColors) unityMesh.SetColors(colors);
@@ -2548,7 +2547,6 @@ namespace VirgisGeometry
             {
                 dmesh.AppendTriangle(tris[i], tris[i + 1], tris[i + 2]);
             }
-            dmesh.ReverseOrientation();
             dmesh.axisOrder = AxisOrder.EUN;
             return dmesh;
         }
