@@ -38,9 +38,9 @@ namespace g3
 
         public static AxisAlignedBox2d Bounds(ref Vector2d v0, ref Vector2d v1, ref Vector2d v2)
         {
-            AxisAlignedBox2d box;
-            MathUtil.MinMax(v0.x, v1.x, v2.x, out box.Min.x, out box.Max.x);
-            MathUtil.MinMax(v0.y, v1.y, v2.y, out box.Min.y, out box.Max.y);
+            AxisAlignedBox2d box = new AxisAlignedBox2d();
+            MathUtil.MinMax(v0.x, v1.x, v2.x, out box.Min[0], out box.Max[0]);
+            MathUtil.MinMax(v0.y, v1.y, v2.y, out box.Min[1], out box.Max[1]);
             return box;
         }
 
