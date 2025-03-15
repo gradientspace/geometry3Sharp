@@ -20,12 +20,12 @@ namespace g3
     /// </summary>
     public class PackedSparseMatrix
     {
-        public struct nonzero
+        public struct NonZero
         {
             public int j;
             public double d;
         }
-        public nonzero[][] Rows;
+        public NonZero[][] Rows;
 
         public int Columns = 0;
         public bool Sorted = false;
@@ -44,9 +44,9 @@ namespace g3
         public PackedSparseMatrix(PackedSparseMatrix copy)
         {
             int N = copy.Rows.Length;
-            Rows = new nonzero[N][];
+            Rows = new NonZero[N][];
             for ( int r = 0; r < N; ++r ) {
-                Rows[r] = new nonzero[copy.Rows[r].Length];
+                Rows[r] = new NonZero[copy.Rows[r].Length];
                 Array.Copy(copy.Rows[r], Rows[r], Rows[r].Length);
             }
             Columns = copy.Columns;
@@ -62,7 +62,7 @@ namespace g3
             int numRows = (bTranspose) ? m.Columns : m.Rows;
             Columns = (bTranspose) ? m.Columns : m.Rows;
 
-            Rows = new nonzero[numRows][];
+            Rows = new NonZero[numRows][];
 
             int[] counts = new int[numRows];
             foreach ( Index2i ij in m.NonZeroIndices() ) {
@@ -73,7 +73,7 @@ namespace g3
 
             NumNonZeros = 0;
             for (int k = 0; k < numRows; ++k) {
-                Rows[k] = new nonzero[counts[k]];
+                Rows[k] = new NonZero[counts[k]];
                 NumNonZeros += counts[k];
             }
 
@@ -108,7 +108,7 @@ namespace g3
         public PackedSparseMatrix(DVector<matrix_entry> entries, int numRows, int numCols, bool bSymmetric = true)
         {
             Columns = numCols;
-            Rows = new nonzero[numRows][];
+            Rows = new NonZero[numRows][];
 
             int N = entries.size;
             int[] counts = new int[numRows];
@@ -120,7 +120,7 @@ namespace g3
 
             NumNonZeros = 0;
             for (int k = 0; k < numRows; ++k) {
-                Rows[k] = new nonzero[counts[k]];
+                Rows[k] = new NonZero[counts[k]];
                 NumNonZeros += counts[k];
             }
 
@@ -167,7 +167,7 @@ namespace g3
 
         public double this[int r, int c] {
             get {
-                nonzero[] row = Rows[r];
+                NonZero[] row = Rows[r];
                 int n = row.Length;
                 for (int k = 0; k < n; ++k) {
                     if (row[k].j == c)
@@ -176,7 +176,7 @@ namespace g3
                 return 0;
             }
             set {
-                nonzero[] row = Rows[r];
+                NonZero[] row = Rows[r];
                 int n = row.Length;
                 for (int k = 0; k < n; ++k) {
                     if (row[k].j == c) {
@@ -213,7 +213,7 @@ namespace g3
         /// </summary>
         public Interval1i NonZerosRange(int r)
         {
-            nonzero[] Row = Rows[r];
+            NonZero[] Row = Rows[r];
             if (Row.Length == 0)
                 return Interval1i.Empty;
             if (Sorted == false) {
@@ -233,7 +233,7 @@ namespace g3
                 throw new Exception("PackedSparseMatrix.NonZeroIndicesByRow: sorting requested but not available");
             int N = Rows.Length;
             for ( int r = 0; r < N; ++r ) {
-                nonzero[] Row = Rows[r];
+                NonZero[] Row = Rows[r];
                 for (int i = 0; i < Row.Length; ++i)
                     yield return new Vector2i(r, Row[i].j);
             }
@@ -245,7 +245,7 @@ namespace g3
         {
             if (bWantSorted && Sorted == false)
                 throw new Exception("PackedSparseMatrix.NonZeroIndicesByRow: sorting requested but not available");
-            nonzero[] Row = Rows[r];
+            NonZero[] Row = Rows[r];
             for (int i = 0; i < Row.Length; ++i)
                 yield return new Vector2i(r, Row[i].j);
         }
@@ -271,7 +271,7 @@ namespace g3
             gParallel.BlockStartEnd(0, Rows.Length - 1, (i_start, i_end) => {
                 for (int i = i_start; i <= i_end; ++i) {
                     Result[i] = 0;
-                    nonzero[] row = Rows[i];
+                    NonZero[] row = Rows[i];
                     int n = row.Length;
                     for (int k = 0; k < n; ++k) {
                         Result[i] += row[k].d * X[row[k].j];
@@ -290,7 +290,7 @@ namespace g3
             gParallel.BlockStartEnd(0, Rows.Length - 1, (i_start, i_end) => {
                 for (int i = i_start; i <= i_end; ++i) {
                     Result[0][i] = Result[1][i] = Result[2][i] = 0;
-                    nonzero[] row = Rows[i];
+                    NonZero[] row = Rows[i];
                     int n = row.Length;
                     for (int k = 0; k < n; ++k) {
                         int rowkj = row[k].j;
@@ -320,8 +320,8 @@ namespace g3
 
             int ri = 0;
             int ci = 0;
-            nonzero[] Row = Rows[r];
-            nonzero[] Col = MTranspose.Rows[c];
+            NonZero[] Row = Rows[r];
+            NonZero[] Col = MTranspose.Rows[c];
             int NR = Row.Length;
             int NC = Col.Length;
             int last_col_j = Col[NC-1].j;
@@ -352,7 +352,7 @@ namespace g3
         /// </summary>
         public double DotRowSelf(int r)
         {
-            nonzero[] Row = Rows[r];
+            NonZero[] Row = Rows[r];
             double sum = 0;
             for (int ri = 0; ri < Row.Length; ri++)
                 sum += Row[ri].d * Row[ri].d;
@@ -375,7 +375,7 @@ namespace g3
 
             int N = Rows.Length;
             int a = 0;
-            nonzero[] Row = Rows[r];
+            NonZero[] Row = Rows[r];
             int NA = Row.Length;
 
             Array.Clear(sums, 0,  N);
@@ -384,7 +384,7 @@ namespace g3
             while ( a < NA ) {
                 int aj = Row[a].j;
                 for ( int ci = 0; ci < N; ++ci ) {
-                    nonzero[] Col = MTranspose.Rows[ci];
+                    NonZero[] Col = MTranspose.Rows[ci];
 
                     int b = col_indices[ci];
                     if (b >= Col.Length)
@@ -420,8 +420,8 @@ namespace g3
 
             int r1i = 0;
             int r2i = 0;
-            nonzero[] Row1 = Rows[r1];
-            nonzero[] Row2 = Rows[r2];
+            NonZero[] Row1 = Rows[r1];
+            NonZero[] Row2 = Rows[r2];
             int N1 = Row1.Length;
             int N2 = Row2.Length;
             //int last_col_1 = Col[MaxCol - 1].j;
@@ -463,7 +463,7 @@ namespace g3
 
             MaxCol = Math.Min(MaxCol, Columns);
 
-            nonzero[] Row = Rows[r];
+            NonZero[] Row = Rows[r];
 
             double sum = 0;
             for ( int ri = 0; ri < Row.Length; ++ri ) { 
@@ -488,7 +488,7 @@ namespace g3
             double sum = 0;
             if (Sorted) {
                 for (int ri = start_row; ri <= end_row; ri++) {
-                    nonzero[] row = Rows[ri];
+                    NonZero[] row = Rows[ri];
                     for (int k = 0; k < row.Length; ++k) {
                         if (row[k].j == c) {
                             sum += row[k].d * vec[ri];
@@ -500,7 +500,7 @@ namespace g3
                 }
             } else {
                 for (int ri = start_row; ri <= end_row; ri++) {
-                    nonzero[] row = Rows[ri];
+                    NonZero[] row = Rows[ri];
                     for (int k = 0; k < row.Length; ++k) {
                         if (row[k].j == c) {
                             sum += row[k].d * vec[ri];
@@ -533,11 +533,11 @@ namespace g3
                     // determine which entries of squared matrix might be nonzeros
                     HashSet<int> nbrs = new HashSet<int>();
                     nbrs.Add(r1i);
-                    PackedSparseMatrix.nonzero[] row = Rows[r1i];
+                    PackedSparseMatrix.NonZero[] row = Rows[r1i];
                     for (int k = 0; k < row.Length; ++k) {
                         if (row[k].j > r1i)
                             nbrs.Add(row[k].j);
-                        PackedSparseMatrix.nonzero[] row2 = Rows[row[k].j];
+                        PackedSparseMatrix.NonZero[] row2 = Rows[row[k].j];
                         for (int j = 0; j < row2.Length; ++j) {
                             if (row2[j].j > r1i)     // only compute lower-triangular entries
                                 nbrs.Add(row2[j].j);
@@ -569,7 +569,7 @@ namespace g3
             get {
                 double sum = 0;
                 for (int i = 0; i < Rows.Length; ++i) {
-                    nonzero[] row = Rows[i];
+                    NonZero[] row = Rows[i];
                     for (int j = 0; j < row.Length; ++j)
                         sum += row[j].d * row[j].d;
                 }
@@ -582,7 +582,7 @@ namespace g3
             get {
                 double max = 0;
                 for (int i = 0; i < Rows.Length; ++i) {
-                    nonzero[] row = Rows[i];
+                    NonZero[] row = Rows[i];
                     for (int j = 0; j < row.Length; ++j) {
                         if (row[j].d > max)
                             max = row[j].d;
@@ -597,7 +597,7 @@ namespace g3
             get {
                 double sum = 0;
                 for (int i = 0; i < Rows.Length; ++i) {
-                    nonzero[] row = Rows[i];
+                    NonZero[] row = Rows[i];
                     for (int j = 0; j < row.Length; ++j) {
                         if (row[j].j == i)
                             sum += row[j].d;

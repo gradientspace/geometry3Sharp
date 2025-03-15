@@ -234,7 +234,7 @@ namespace g3
             if ( R == null )
                 R = new SymmetricSparseMatrix();
 
-            List<mval> row = new List<mval>(128);
+            List<MatVal> row = new List<MatVal>(128);
             for ( int r1i = 0; r1i < N; r1i++ ) {
 
                 row.Clear();
@@ -285,19 +285,19 @@ namespace g3
 
 
 
-        struct mval
+        struct MatVal
         {
             public int k;
             public double v;
         }
-        void get_row_nonzeros(int r, List<mval> buf)
+        void get_row_nonzeros(int r, List<MatVal> buf)
         {
             // TODO: optimize this - exploit symmetry, etc
             int N = Rows;
             for ( int i = 0; i < N; ++i ) {
                 double d = this[r, i];
                 if (d != 0) {
-                    buf.Add(new mval() { k = i, v = d });
+                    buf.Add(new MatVal() { k = i, v = d });
                 }
             }
         }
