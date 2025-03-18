@@ -32,6 +32,17 @@ namespace g3
             set { if (key == 0) r = value; else if (key == 1) g = value; else if (key == 2) b = value; else a = value; }
         }
 
+		public static explicit operator Colorf(Colorb c)
+		{
+			return new Colorf(c.r, c.g, c.b, c.a);
+		}
+
+
+		public static Colorb Lerp(Colorb a, Colorb b, double t)
+		{
+			return Colorf.Lerp((Colorf)a, (Colorf)b, (float)t).ToBytes();
+		}
+
 
 #if G3_USING_UNITY
         public static implicit operator Colorb(UnityEngine.Color32 c)
