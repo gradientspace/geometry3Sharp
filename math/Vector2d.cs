@@ -2,30 +2,18 @@ using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Text;
-using System.Runtime.CompilerServices;
-
 
 namespace g3
 {
-	[InlineArray(2)]
-	public struct Vector2d : IComparable<Vector2d>, IEquatable<Vector2d>
+    public struct Vector2d : IComparable<Vector2d>, IEquatable<Vector2d>
     {
-	    private double xy;
+        public double x;
+        public double y;
 
-        public double x {
-	        get => this[0];
-	        set => this[0] = value;
-        }
-        public double y {
-	        get => this[1];
-	        set => this[1] = value;
-        }
-
-		public Vector2d(double f) { x = y = f; }
+        public Vector2d(double f) { x = y = f; }
         public Vector2d(double x, double y) { this.x = x; this.y = y; }
         public Vector2d(double[] v2) { x = v2[0]; y = v2[1]; }
-		public Vector2d(ReadOnlySpan<double> v2) { x = v2[0]; y = v2[1]; }
-		public Vector2d(float f) { x = y = f; }
+        public Vector2d(float f) { x = y = f; }
         public Vector2d(float x, float y) { this.x = x; this.y = y; }
         public Vector2d(float[] v2) { x = v2[0]; y = v2[1]; }
         public Vector2d(Vector2d copy) { x = copy.x; y = copy.y; }
@@ -44,6 +32,13 @@ namespace g3
         public static Vector2d FromAngleDeg(double angle) {
             angle *= MathUtil.Deg2Rad;
             return new Vector2d(Math.Cos(angle), Math.Sin(angle));
+        }
+
+
+        public double this[int key]
+        {
+            get { return (key == 0) ? x : y; }
+            set { if (key == 0) x = value; else y = value; }
         }
 
 
@@ -285,11 +280,6 @@ namespace g3
             return new Vector2f((float)v.x, (float)v.y);
         }
 
-        //! implicit conversion from span to vector
-        public static implicit operator Vector2d(ReadOnlySpan<double> v)
-        {
-	        return new Vector2d(v[0], v[1]);
-        }
 
 #if G3_USING_UNITY
         public static implicit operator Vector2d(UnityEngine.Vector2 v)
@@ -309,9 +299,9 @@ namespace g3
 
 
 
-		// from WildMagic5 Vector2, used in ConvexHull2
+        // from WildMagic5 Vector2, used in ConvexHull2
 
-		public struct Information
+        public struct Information
         {
             // The intrinsic dimension of the input set.  The parameter 'epsilon'
             // to the GetInformation function is used to provide a tolerance when

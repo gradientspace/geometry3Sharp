@@ -2,8 +2,6 @@ using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Text;
-using System.Runtime.CompilerServices;
-
 
 #if G3_USING_UNITY
 using UnityEngine;
@@ -11,25 +9,15 @@ using UnityEngine;
 
 namespace g3
 {
-	[InlineArray(2)]
-	public struct Vector2f : IComparable<Vector2f>, IEquatable<Vector2f>
+    public struct Vector2f : IComparable<Vector2f>, IEquatable<Vector2f>
     {
-		private float xy;
+        public float x;
+        public float y;
 
-		public float x {
-			get => this[0];
-			set => this[0] = value;
-		}
-		public float y {
-			get => this[1];
-			set => this[1] = value;
-		}
-
-		public Vector2f(float f) { x = y = f; }
+        public Vector2f(float f) { x = y = f; }
         public Vector2f(float x, float y) { this.x = x; this.y = y; }
         public Vector2f(float[] v2) { x = v2[0]; y = v2[1]; }
-		public Vector2f(ReadOnlySpan<float> v2) { x = v2[0]; y = v2[1]; }
-		public Vector2f(double f) { x = y = (float)f; }
+        public Vector2f(double f) { x = y = (float)f; }
         public Vector2f(double x, double y) { this.x = (float)x; this.y = (float)y; }
         public Vector2f(double[] v2) { x = (float)v2[0]; y = (float)v2[1]; }
         public Vector2f(Vector2f copy) { x = copy[0]; y = copy[1]; }
@@ -42,6 +30,12 @@ namespace g3
         static public readonly Vector2f AxisY = new Vector2f(0.0f, 1.0f);
 		static public readonly Vector2f MaxValue = new Vector2f(float.MaxValue,float.MaxValue);
 		static public readonly Vector2f MinValue = new Vector2f(float.MinValue,float.MinValue);
+
+        public float this[int key]
+        {
+            get { return (key == 0) ? x : y; }
+            set { if (key == 0) x = value; else y = value; }
+        }
 
 
         public float LengthSquared
@@ -255,11 +249,7 @@ namespace g3
             return string.Format("{0:F8} {1:F8}", x, y);
         }
 
-		//! implicit conversion from span to vector
-		public static implicit operator Vector2f(ReadOnlySpan<float> v)
-		{
-			return new Vector2f(v[0], v[1]);
-		}
+
 
 
 #if G3_USING_UNITY
@@ -273,5 +263,5 @@ namespace g3
         }
 #endif
 
-	}
+    }
 }
