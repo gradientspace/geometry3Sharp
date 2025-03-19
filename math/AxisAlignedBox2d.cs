@@ -58,7 +58,15 @@ namespace g3
             Max = new Vector2d(o.Max);
         }
 
-        public double Width {
+
+		public readonly bool IsValid {
+			get { return Max.x >= Min.x && Max.y >= Min.y; }
+		}
+		public readonly bool IsEmpty {
+			get { return Max.x < Min.x || Max.y < Min.y; }
+		}
+
+		public double Width {
             get { return Math.Max(Max.x - Min.x, 0); }
         }
         public double Height {
@@ -278,8 +286,12 @@ namespace g3
             Min.Add(vTranslate);
             Max.Add(vTranslate);
         }
+		public AxisAlignedBox2d Translated(Vector2d Translation) {
+            return new AxisAlignedBox2d(this.Min + Translation, this.Max + Translation);
+		}
 
-        public void Scale(double scale) {
+
+		public void Scale(double scale) {
             Min = Min * scale;
             Max = Max * scale;
         }

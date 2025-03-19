@@ -256,6 +256,11 @@ namespace g3
         }
 
 
+		public readonly Vector2d Translated(double dx, double dy) {
+			return new Vector2d(x + dx, y + dy);
+		}
+
+
         public static Vector2d Lerp(Vector2d a, Vector2d b, double t) {
             double s = 1 - t;
             return new Vector2d(s * a.x + t * b.x, s * a.y + t * b.y);
