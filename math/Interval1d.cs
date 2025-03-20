@@ -147,5 +147,34 @@ namespace g3
         }
 
 
+		//! calculate the intersection of interval0 and interval1 
+		//! there may be 0, 1 (touching), or 2 (overlapping) intersection points
+		public static void FindIntersection(Interval1d interval0, Interval1d interval1, out LinearIntersection result)
+		{
+			result = LinearIntersection.NoIntersection;
+
+			if (interval0.b < interval1.a || interval0.a > interval1.b) {
+				result.numIntersections = 0;
+				result.parameter = Interval1d.Empty;
+			} else if (interval0.b > interval1.a) {
+				if (interval0.a < interval1.b) {
+					result.numIntersections = 2;
+					result.parameter.a = (interval0.a < interval1.a ? interval1.a : interval0.a);   // this is max
+					result.parameter.b = (interval0.b > interval1.b ? interval1.b : interval0.b);   // this is min
+					if (result.parameter.a == result.parameter.b) 
+						result.numIntersections = 1;
+
+				} else { // interval0.a == interval1.b
+					result.numIntersections = 1;
+					result.parameter = new Interval1d(interval0.a, interval0.a);
+				}
+			} else { // interval0.b == interval1.a
+				result.numIntersections = 1;
+				result.parameter = new Interval1d(interval0.b, interval0.b);
+			}
+
+			result.intersects = (result.numIntersections > 0);
+		}
+
     }
 }

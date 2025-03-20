@@ -73,7 +73,7 @@ namespace g3
 			} else {
 				Vector2d param = Vector2d.Zero;
 				GetInterval(line.Origin, line.Direction, triangle, dist, sign, ref param);
-
+				// todo replace with Interval1d.FindIntersection
 				Intersector1 intr = new Intersector1(param[0], param[1], -double.MaxValue, +double.MaxValue);
 				intr.Find();
 

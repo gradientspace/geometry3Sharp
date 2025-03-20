@@ -26,6 +26,8 @@ namespace g3
         public bool intersects;
         public int numIntersections;       // 0, 1, or 2
         public Interval1d parameter;       // t-values along ray
+
+        public readonly static LinearIntersection NoIntersection = new LinearIntersection() { intersects = false, numIntersections = 0 };
     }
 
 

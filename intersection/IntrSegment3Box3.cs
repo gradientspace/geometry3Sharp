@@ -162,12 +162,12 @@ namespace g3
 
 			double saveT0 = t0, saveT1 = t1;
 			bool notAllClipped =
-				Clip(+BDirection.x, -BOrigin.x-box.Extent.x, ref t0, ref t1) &&
-				Clip(-BDirection.x, +BOrigin.x-box.Extent.x, ref t0, ref t1) &&
-				Clip(+BDirection.y, -BOrigin.y-box.Extent.y, ref t0, ref t1) &&
-				Clip(-BDirection.y, +BOrigin.y-box.Extent.y, ref t0, ref t1) &&
-				Clip(+BDirection.z, -BOrigin.z-box.Extent.z, ref t0, ref t1) &&
-				Clip(-BDirection.z, +BOrigin.z-box.Extent.z, ref t0, ref t1);
+				IntersectionLowLevel.Clip(+BDirection.x, -BOrigin.x-box.Extent.x, ref t0, ref t1) &&
+				IntersectionLowLevel.Clip(-BDirection.x, +BOrigin.x-box.Extent.x, ref t0, ref t1) &&
+				IntersectionLowLevel.Clip(+BDirection.y, -BOrigin.y-box.Extent.y, ref t0, ref t1) &&
+				IntersectionLowLevel.Clip(-BDirection.y, +BOrigin.y-box.Extent.y, ref t0, ref t1) &&
+				IntersectionLowLevel.Clip(+BDirection.z, -BOrigin.z-box.Extent.z, ref t0, ref t1) &&
+				IntersectionLowLevel.Clip(-BDirection.z, +BOrigin.z-box.Extent.z, ref t0, ref t1);
 
 			if (notAllClipped && (solid || t0 != saveT0 || t1 != saveT1)) {
 				if (t1 > t0) {

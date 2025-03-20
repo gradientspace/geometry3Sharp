@@ -74,7 +74,7 @@ namespace g3
 			} else {
 				Vector2d param = Vector2d.Zero;
 				IntrLine2Triangle2.GetInterval(segment.Center, segment.Direction, triangle, dist, sign, ref param);
-
+				// todo replace with Interval1d.FindIntersection
 				Intersector1 intr = new Intersector1(param[0], param[1], -segment.Extent, +segment.Extent);
 				intr.Find();
 

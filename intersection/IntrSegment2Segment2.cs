@@ -133,6 +133,7 @@ namespace g3
 				double t1 = segment1.Direction.Dot(diff);
 				double tmin = t1 - segment2.Extent;
 				double tmax = t1 + segment2.Extent;
+				// todo replace with Interval1d.FindIntersection
 				Intersector1 calc = new Intersector1(-segment1.Extent, segment1.Extent, tmin, tmax);
 				calc.Find();
 				Quantity = calc.NumIntersections;

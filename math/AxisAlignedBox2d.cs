@@ -93,11 +93,13 @@ namespace g3
 			get { return Math.Max(Math.Max(Math.Abs(Min.x), Math.Abs(Max.x)), Math.Max(Math.Abs(Min.y), Math.Abs(Max.y))); }
 		}
 
-        public Vector2d Diagonal
-        {
+        public readonly Vector2d Diagonal {
             get { return new Vector2d(Max.x - Min.x, Max.y - Min.y); }
         }
-        public Vector2d Center {
+		public readonly Vector2d Extents {
+			get { return new Vector2d( (Max.x - Min.x)*0.5, (Max.y - Min.y)*0.5 ); }
+		}
+		public readonly Vector2d Center {
             get { return new Vector2d(0.5f * (Min.x + Max.x), 0.5f * (Min.y + Max.y)); }
         }
 
