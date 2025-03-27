@@ -91,7 +91,22 @@ namespace g3
             return (p - Center).Dot(Direction);
         }
 
-        void update_from_endpoints(Vector2d p0, Vector2d p1)
+		//! find distance parameter in range [-Extent,Extent] of nearest segment point to Point
+		public readonly double ProjectToSegmentParam(Vector2d Point)
+		{
+			double t = (Point - Center).Dot(Direction);
+			return Math.Clamp(t, -Extent, Extent);
+		}
+
+		//! find unit parameter in range [0,1] of nearest segment point to Point
+		public readonly double ProjectToUnitParam(Vector2d Point)
+		{
+            double t = (Point - Center).Dot(Direction);
+            t = Math.Clamp(t, -Extent, Extent);
+            return Math.Clamp((t + Extent) / (2 * Extent), 0, 1);
+		}
+
+		void update_from_endpoints(Vector2d p0, Vector2d p1)
         {
             Center = 0.5 * (p0 + p1);
             Direction = p1 - p0;
