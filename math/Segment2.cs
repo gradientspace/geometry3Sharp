@@ -26,33 +26,34 @@ namespace g3
 
         public Vector2d P0
         {
-            get { return Center - Extent * Direction; }
+            readonly get { return Center - Extent * Direction; }
             set { update_from_endpoints(value, P1); }
         }
         public Vector2d P1
         {
-            get { return Center + Extent * Direction; }
+			readonly get { return Center + Extent * Direction; }
             set { update_from_endpoints(P0, value); }
         }
-        public double Length {
+        public readonly double Length {
             get { return 2 * Extent; }
         }
 
-		public Vector2d Endpoint(int i) {
+		public readonly Vector2d Endpoint(int i) {
 			return (i == 0) ? (Center - Extent * Direction) : (Center + Extent * Direction);
 		}
 
-		// parameter is signed distance from center in direction
-		public Vector2d PointAt(double d) {
-			return Center + d * Direction;
+		//! DistanceParam is signed distance from segment center/origin
+		public readonly Vector2d PointAt(double DistanceParam) {
+			return Center + DistanceParam * Direction;
 		}
 
-		// t ranges from [0,1] over [P0,P1]
-		public Vector2d PointBetween(double t) {
-			return Center + (2 * t - 1) * Extent * Direction;
+		//! UnitParam ranges from [0,1] over [P0,P1]
+		public readonly Vector2d PointBetween(double UnitParam) {
+			return Center + (2 * UnitParam - 1) * Extent * Direction;
 		}
 
-		public double DistanceSquared(Vector2d p)
+		//! return squared distance from P to line segment
+		public readonly double DistanceSquared(Vector2d p)
 		{
 			double t = (p - Center).Dot(Direction);
 			if ( t >= Extent )
@@ -62,21 +63,24 @@ namespace g3
 			Vector2d proj = Center + t * Direction;
             return proj.DistanceSquared(p);
 		}
-        public double DistanceSquared(Vector2d p, out double t)
+
+        //! return squared distance from P to line segment, return clamped segment parameter in range [-Extent,Extent]
+        public readonly double DistanceSquared(Vector2d p, out double DistanceParam)
         {
-            t = (p - Center).Dot(Direction);
-            if (t >= Extent) {
-                t = Extent;
+            DistanceParam = (p - Center).Dot(Direction);
+            if (DistanceParam >= Extent) {
+                DistanceParam = Extent;
                 return P1.DistanceSquared(p);
-            } else if (t <= -Extent) {
-                t = -Extent;
+            } else if (DistanceParam <= -Extent) {
+                DistanceParam = -Extent;
                 return P0.DistanceSquared(p);
             }
-            Vector2d proj = Center + t * Direction;
+            Vector2d proj = Center + DistanceParam * Direction;
             return proj.DistanceSquared(p);
         }
 
-        public Vector2d NearestPoint(Vector2d p)
+        //! return nearest point on segment to P
+        public readonly Vector2d NearestPoint(Vector2d p)
         {
 			double t = (p - Center).Dot(Direction);
             if (t >= Extent)
@@ -86,7 +90,8 @@ namespace g3
 			return Center + t * Direction;
         }
 
-        public double Project(Vector2d p)
+        //! return distance from segment origin to closest point to P along segment line (*not* clamped to segment Extents!)
+        public readonly double Project(Vector2d p)
         {
             return (p - Center).Dot(Direction);
         }
@@ -106,6 +111,16 @@ namespace g3
             return Math.Clamp((t + Extent) / (2 * Extent), 0, 1);
 		}
 
+        //! convert distance parameter to unit parameter along segment in range [0,1]   (clamps distance to [-Extent,Extent])
+        public readonly double DistanceToUnitParam(double DistanceParam)
+        {
+			double t = Math.Clamp(DistanceParam, -Extent, Extent);
+			return Math.Clamp((t + Extent) / (2 * Extent), 0, 1);
+		}
+
+
+
+
 		void update_from_endpoints(Vector2d p0, Vector2d p1)
         {
             Center = 0.5 * (p0 + p1);
@@ -122,7 +137,7 @@ namespace g3
         ///   -1, on left of line
         ///    0, on the line
         /// </summary>
-        public int WhichSide(Vector2d test, double tol = 0)
+        public readonly int WhichSide(Vector2d test, double tol = 0)
         {
             // [TODO] subtract Center from test?
             Vector2d vec0 = Center + Extent * Direction;
@@ -225,7 +240,7 @@ namespace g3
         /// Test if segments intersect. Returns true for parallel-line overlaps.
         /// Returns same result as IntrSegment2Segment2.
         /// </summary>
-        public bool Intersects(ref Segment2d seg2, double dotThresh = double.Epsilon, double intervalThresh = 0)
+        public readonly bool Intersects(ref Segment2d seg2, double dotThresh = double.Epsilon, double intervalThresh = 0)
         {
             // see IntrLine2Line2 and IntrSegment2Segment2 for details on this code
 
@@ -259,7 +274,7 @@ namespace g3
             // lines are parallel but not collinear
             return false;
         }
-        public bool Intersects(Segment2d seg2, double dotThresh = double.Epsilon, double intervalThresh = 0) {
+        public readonly bool Intersects(Segment2d seg2, double dotThresh = double.Epsilon, double intervalThresh = 0) {
             return Intersects(ref seg2, dotThresh, intervalThresh);
         }
 

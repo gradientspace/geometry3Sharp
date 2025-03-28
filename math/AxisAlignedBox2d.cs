@@ -229,9 +229,15 @@ namespace g3
 			}
 		}
 
+        //! return axis box that contains this box and OtherBox
+		public readonly AxisAlignedBox2d CombineWith(AxisAlignedBox2d OtherBox) {
+			AxisAlignedBox2d newBox = this;
+			newBox.Contain(OtherBox);
+			return newBox;
+		}
 
 
-        public AxisAlignedBox2d Intersect(AxisAlignedBox2d box) {
+		public AxisAlignedBox2d Intersect(AxisAlignedBox2d box) {
             AxisAlignedBox2d intersect = new AxisAlignedBox2d(
                 Math.Max(Min.x, box.Min.x), Math.Max(Min.y, box.Min.y),
                 Math.Min(Max.x, box.Max.x), Math.Min(Max.y, box.Max.y));
@@ -240,7 +246,6 @@ namespace g3
             else
                 return intersect;
         }
-
 
 
         public bool Contains(Vector2d v) {
@@ -264,8 +269,15 @@ namespace g3
 			return !((box.Max.x < Min.x) || (box.Min.x > Max.x) || (box.Max.y < Min.y) || (box.Min.y > Max.y));
 		}
 
+        //! return true if this intersects B, where overlapping borders do not could as intersection
+		public readonly bool IntersectsExclusive(AxisAlignedBox2d B)
+		{
+            if (!(Max.x <= B.Min.x) && !(Min.x >= B.Max.x) && !(Max.y <= B.Min.y))
+                return !(Min.y >= B.Max.y);
+            return false;
+		}
 
-        public double Distance(Vector2d v)
+		public double Distance(Vector2d v)
         {
             double dx = (double)Math.Abs(v.x - Center.x);
             double dy = (double)Math.Abs(v.y - Center.y);
@@ -291,7 +303,9 @@ namespace g3
 		public AxisAlignedBox2d Translated(Vector2d Translation) {
             return new AxisAlignedBox2d(this.Min + Translation, this.Max + Translation);
 		}
-
+		public AxisAlignedBox2d Translated(double dx, double dy) {
+            return new AxisAlignedBox2d(this.Min.x+dx, this.Min.y+dy, this.Max.x+dx, this.Max.y+dy);
+		}
 
 		public void Scale(double scale) {
             Min = Min * scale;
@@ -316,7 +330,7 @@ namespace g3
 
 
         public override string ToString() {
-            return string.Format("[{0:F8},{1:F8}] [{2:F8},{3:F8}]", Min.x, Max.x, Min.y, Max.y);
+            return string.Format("X:[{0:F8},{1:F8}] Y:[{2:F8},{3:F8}]", Min.x, Max.x, Min.y, Max.y);
         }
 
 
