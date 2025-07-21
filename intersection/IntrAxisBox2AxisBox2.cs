@@ -33,8 +33,7 @@ namespace g3
 			// now CenterA is moves by CombinedTranslationA, ie it's a line segment and
 			// intersection time is where that segment intersects the box
 			Segment2d Seg = new Segment2d(CenterA, CenterA+CombinedTranslationA);
-			IntrSegment2AxisAlignedBox2 intersection = new IntrSegment2AxisAlignedBox2(
-				Seg, ExpandedB, true);
+			IntrSegment2AxisAlignedBox2 intersection = new IntrSegment2AxisAlignedBox2(Seg, ExpandedB);
 			if (!intersection.Find())
 				return false;
 

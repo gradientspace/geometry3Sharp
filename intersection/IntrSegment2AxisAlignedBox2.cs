@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+// derived from GTengine by David Eberly, Geometric Tools (boost license)
+// https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/IntrLine2AlignedBox2.h
+// https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/IntrSegment2AlignedBox2.h
 
 namespace g3
 {
@@ -21,12 +20,6 @@ namespace g3
 			set { box = value; Result = IntersectionResult.NotComputed; }
 		}
 
-		bool solid = false;
-		public bool Solid {
-			get { return solid; }
-			set { solid = value; Result = IntersectionResult.NotComputed; }
-		}
-
 		public int Quantity = 0;
 		public IntersectionResult Result = IntersectionResult.NotComputed;
 		public IntersectionType Type = IntersectionType.Empty;
@@ -35,10 +28,9 @@ namespace g3
 		public Vector2d Point0 = Vector2d.Zero;
 		public Vector2d Point1 = Vector2d.Zero;
 
-		// solidBox == false means fully contained segment does not intersect
-		public IntrSegment2AxisAlignedBox2(Segment2d s, AxisAlignedBox2d b, bool solidBox)
+		public IntrSegment2AxisAlignedBox2(Segment2d s, AxisAlignedBox2d b)
 		{
-			segment = s; box = b; this.solid = solidBox;
+			segment = s; box = b;
 		}
 
 		public IntrSegment2AxisAlignedBox2 Compute()
@@ -92,7 +84,7 @@ namespace g3
 
 
 
-		static void SegIntersection_DoQuery(Vector2d segOrigin, Vector2d segDirection, double segExtent, Vector2d boxExtent, out LinearIntersection result)
+		public static void SegIntersection_DoQuery(Vector2d segOrigin, Vector2d segDirection, double segExtent, Vector2d boxExtent, out LinearIntersection result)
 		{
 			result = LinearIntersection.NoIntersection;
 			LineIntersection_DoQuery(segOrigin, segDirection, boxExtent, out result);
@@ -108,7 +100,7 @@ namespace g3
 
 
 
-		static void LineIntersection_DoQuery(Vector2d lineOrigin, Vector2d lineDirection, Vector2d boxExtent, out LinearIntersection result)
+		public static void LineIntersection_DoQuery(Vector2d lineOrigin, Vector2d lineDirection, Vector2d boxExtent, out LinearIntersection result)
 		{
 			result = LinearIntersection.NoIntersection;
 
