@@ -28,5 +28,12 @@ namespace g3
             return box.SampleT(sx, sy);
 		}
 
+
+        public static Vector2d PointOnCircle2(Vector2d center, double Radius, ref Random random)
+        {
+            double AngleRad = random.NextDouble() * MathUtil.TwoPI;
+            return new Vector2d(Radius * Math.Cos(AngleRad), Radius * Math.Sin(AngleRad));
+        }
+
     }
 }
