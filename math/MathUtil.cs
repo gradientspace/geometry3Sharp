@@ -231,6 +231,11 @@ namespace g3
                 theta = (2 * Math.PI) + theta;
             return theta;
         }
+        // normal Atan2 returns in range [-pi,pi], this shifts to [0,2pi]
+        public static double Atan2Positive(double y, double x, bool bInRadians)
+        {
+            return (bInRadians) ? Atan2Positive(y, x) : MathUtil.Rad2Deg*Atan2Positive(y, x);
+        }
 
 
         public static float PlaneAngleD(Vector3f a, Vector3f b, int nPlaneNormalIdx = 1)
