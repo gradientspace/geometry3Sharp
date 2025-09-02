@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 #if G3_USING_UNITY
 using UnityEngine;
@@ -47,34 +48,34 @@ namespace g3
             set { y = value.x; z = value.y; }
         }
 
-        public double LengthSquared
+        public readonly double LengthSquared
         {
             get { return x * x + y * y + z * z; }
         }
-        public double Length
+        public readonly double Length
         {
             get { return Math.Sqrt(LengthSquared); }
         }
 
-        public double LengthL1
+        public readonly double LengthL1
         {
             get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
         }
 
-		public double Max {
+		public readonly double Max {
 			get { return Math.Max(x, Math.Max(y, z)); }
 		}
-		public double Min {
+		public readonly double Min {
 			get { return Math.Min(x, Math.Min(y, z)); }
 		}
-		public double MaxAbs {
+		public readonly double MaxAbs {
 			get { return Math.Max(Math.Abs(x), Math.Max(Math.Abs(y), Math.Abs(z))); }
 		}
-		public double MinAbs {
+		public readonly double MinAbs {
 			get { return Math.Min(Math.Abs(x), Math.Min(Math.Abs(y), Math.Abs(z))); }
 		}
 
-        public Vector3d Abs {
+        public readonly Vector3d Abs {
             get { return new Vector3d(Math.Abs(x), Math.Abs(y), Math.Abs(z)); }
         }
 
@@ -92,7 +93,8 @@ namespace g3
             }
             return length;
         }
-        public Vector3d Normalized
+
+        public readonly Vector3d Normalized
         {
             get {
                 double length = Length;
@@ -104,11 +106,11 @@ namespace g3
             }
         }
 
-		public bool IsNormalized {
+		public readonly bool IsNormalized {
 			get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerance; }
 		}
 
-        public bool IsFinite
+        public readonly bool IsFinite
         {
             get { double f = x + y + z; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
         }
@@ -118,7 +120,10 @@ namespace g3
             y = Math.Round(y, nDecimals);
             z = Math.Round(z, nDecimals);
         }
-
+        public readonly Vector3d RoundFrac(int nDecimals)
+        {
+            return new Vector3d( Math.Round(x, nDecimals), Math.Round(y, nDecimals), Math.Round(z, nDecimals));
+        }
 
         public double Dot(Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
@@ -332,7 +337,6 @@ namespace g3
         public string ToString(string fmt) {
             return string.Format("{0} {1} {2}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt));
         }
-
 
 
         public static implicit operator Vector3d(Vector3f v)
