@@ -379,22 +379,6 @@ namespace g3
 
 
         ///<summary> Map box *into* local coordinates of Frame </summary>
-        public Box3f ToFrame(ref Box3f box) {
-            box.Center = ToFrameP(ref box.Center);
-            box.AxisX = ToFrameV(ref box.AxisX);
-            box.AxisY = ToFrameV(ref box.AxisY);
-            box.AxisZ = ToFrameV(ref box.AxisZ);
-            return box;
-        }
-        /// <summary> Map box *from* local frame coordinates into "world" coordinates </summary>
-        public Box3f FromFrame(ref Box3f box) {
-            box.Center = FromFrameP(ref box.Center);
-            box.AxisX = FromFrameV(ref box.AxisX);
-            box.AxisY = FromFrameV(ref box.AxisY);
-            box.AxisZ = FromFrameV(ref box.AxisZ);
-            return box;
-        }
-        ///<summary> Map box *into* local coordinates of Frame </summary>
         public Box3d ToFrame(ref Box3d box) {
             box.Center = ToFrameP(ref box.Center);
             box.AxisX = ToFrameV(ref box.AxisX);
