@@ -31,10 +31,10 @@ namespace g3
             normals = new VectorArray3f(vertices.Count);
             triangles = new IndexArray3i(N);
 
-            Matrix2f matRot = new Matrix2f(120 * MathUtil.Deg2Radf);
-            Vector2f uva = new Vector2f(0, Radius);
-            Vector2f uvb = matRot * uva;
-            Vector2f uvc = matRot * uvb;
+            Matrix2d matRot = new Matrix2d(120 * MathUtil.Deg2Rad);
+            Vector2d uva = new Vector2d(0, Radius);
+            Vector2d uvb = matRot * uva;
+            Vector2d uvc = matRot * uvb;
 
             int vi = 0;
             int ti = 0;

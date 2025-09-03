@@ -50,7 +50,7 @@ namespace g3
                 for (int j = 0; j < nRingSize; ++j) {
                     double angle = (double)j * fDelta;
 
-                    // [TODO] this is not efficient...use Matrix3f?
+                    // [TODO] this is not efficient...use Matrix3d?
                     Vector3d v_rot = Quaterniond.AxisAngleR(Vector3d.AxisY, angle) * v_frame;
                     Vector3d v_new = f.FromFrameP(v_rot);
                     int k = nStartR + j;
@@ -219,7 +219,7 @@ namespace g3
                 for (int j = 0; j < nRingSize; ++j) {
                     double angle = (double)j * fDelta;
 
-                    // [TODO] this is not efficient...use Matrix3f?
+                    // [TODO] this is not efficient...use Matrix3d?
                     Vector3d v_rot = Quaterniond.AxisAngleR(Vector3d.AxisY, angle) * v_frame;
                     Vector3d v_new = fCur.FromFrameP(v_rot);
                     int k = nStartR + j;

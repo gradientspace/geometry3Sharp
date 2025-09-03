@@ -11,6 +11,10 @@ namespace g3
         public Vector3d Row1;
         public Vector3d Row2;
 
+        public static readonly Matrix3d Identity = new Matrix3d(true);
+        public static readonly Matrix3d Zero = new Matrix3d(false);
+
+
         public Matrix3d(bool bIdentity) {
             if (bIdentity) {
                 Row0 = Vector3d.AxisX; Row1 = Vector3d.AxisY; Row2 = Vector3d.AxisZ;
@@ -103,11 +107,6 @@ namespace g3
         {
             return new Matrix3f((Vector3f)matrix.Row0, (Vector3f)matrix.Row1, (Vector3f)matrix.Row2, true);
         }
-
-
-        public static readonly Matrix3d Identity = new Matrix3d(true);
-        public static readonly Matrix3d Zero = new Matrix3d(false);
-
 
 
         public double this[int r, int c] {

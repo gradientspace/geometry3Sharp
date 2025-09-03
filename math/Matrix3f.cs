@@ -15,46 +15,13 @@ namespace g3
         public Vector3f Row1;
         public Vector3f Row2;
 
-        public Matrix3f(bool bIdentity) {
+        public Matrix3f(bool bIdentity) 
+        {
             if (bIdentity) {
                 Row0 = Vector3f.AxisX; Row1 = Vector3f.AxisY; Row2 = Vector3f.AxisZ;
             } else {
                 Row0 = Row1 = Row2 = Vector3f.Zero;
             }
-        }
-
-        // assumes input is row-major...
-        public Matrix3f(float[,] mat) {
-            Row0 = new Vector3f(mat[0, 0], mat[0, 1], mat[0, 2]);
-            Row1 = new Vector3f(mat[1, 0], mat[1, 1], mat[1, 2]);
-            Row2 = new Vector3f(mat[2, 0], mat[2, 1], mat[2, 2]);
-        }
-        public Matrix3f(float[] mat) {
-            Row0 = new Vector3f(mat[0], mat[1], mat[2]);
-            Row1 = new Vector3f(mat[3], mat[4], mat[5]);
-            Row2 = new Vector3f(mat[6], mat[7], mat[8]);
-        }
-        public Matrix3f(double[,] mat) {
-            Row0 = new Vector3f(mat[0, 0], mat[0, 1], mat[0, 2]);
-            Row1 = new Vector3f(mat[1, 0], mat[1, 1], mat[1, 2]);
-            Row2 = new Vector3f(mat[2, 0], mat[2, 1], mat[2, 2]);
-        }
-        public Matrix3f(double[] mat) {
-            Row0 = new Vector3f(mat[0], mat[1], mat[2]);
-            Row1 = new Vector3f(mat[3], mat[4], mat[5]);
-            Row2 = new Vector3f(mat[6], mat[7], mat[8]);
-        }
-        public Matrix3f(Func<int,float> matBufferF)
-        {
-            Row0 = new Vector3f(matBufferF(0), matBufferF(1), matBufferF(2));
-            Row1 = new Vector3f(matBufferF(3), matBufferF(4), matBufferF(5));
-            Row2 = new Vector3f(matBufferF(6), matBufferF(7), matBufferF(8));
-        }
-        public Matrix3f(Func<int, int, float> matF)
-        {
-            Row0 = new Vector3f(matF(0,0), matF(0,1), matF(0,2));
-            Row1 = new Vector3f(matF(1,0), matF(1,1), matF(1,2));
-            Row2 = new Vector3f(matF(2,0), matF(1,2), matF(2,2));
         }
         public Matrix3f(float m00, float m11, float m22)
         {

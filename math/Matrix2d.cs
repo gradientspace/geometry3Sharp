@@ -56,6 +56,16 @@ namespace g3
         }
 
 
+        public static implicit operator Matrix2d(Matrix2f matrix)
+        {
+            return new Matrix2d(matrix.m00, matrix.m01, matrix.m10, matrix.m11);
+        }
+        public static explicit operator Matrix2f(Matrix2d matrix)
+        {
+            return new Matrix2f((float)matrix.m00, (float)matrix.m01, (float)matrix.m10, (float)matrix.m11);
+        }
+
+
 
         public double this[int r, int c] {
             get { return (r == 0) ? ((c == 0) ? m00 : m01) : ((c == 0) ? m10 : m11); }
