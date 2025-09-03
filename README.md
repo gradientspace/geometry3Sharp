@@ -76,16 +76,16 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
 ## Math
 
 - reasonably complete set of vector-math objects, implemented as structs
-    - **Vector**2d/3d/4d/2f/3f, **Matrix**2d/2f/3f/3d, **Quaternionf/d**
-    - **Segment**2d/3d/2f/3f, **Line**2d/3d/2f/3f, **Ray**3d/3f
-    - **Triangle**2d/3d/2f/3f, **Plane**3d/3f
-    - **AxisAlignedBox**2d/3d/2f/3f, (oriented) **Box**2d/3d/2f/3f
+    - **Vector**2d/3d/4d/2f/3f, **Matrix**2d/3d, **Quaterniond**
+    - **Segment**2d/3d, **Line**2d/3d, **Ray3d**
+    - **Triangle**2d/3d, **Plane3d**
+    - **AxisAlignedBox**2d/3d/2f/3f, (oriented) **Box**2d/3d
     - **Index**2/3/4, int **Vector**2i/3i, int **AxisAlignedBox**3i
     - 1D intervals **Interval1d**, and **Interval1i** which is IEnumerable
     - **VectorTuple** 2/3/4 element 2d/3d vector-tuples (convenient())
     - implicit float->double conversion operators between types, explicit double->float operators
     - transparent Unity interop (see below)
-- **Frame3f/Frame3d**: position+orientation representation
+- **Frame3d**: position+orientation representation
     - accessors for transformed x/y/z axes 
     - frame transformations
     - free and constrained axis alignment
