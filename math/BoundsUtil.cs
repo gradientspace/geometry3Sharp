@@ -120,7 +120,7 @@ namespace g3
         /// <summary>
         /// compute axis-aligned bounds of set of points after transforming into frame f
         /// </summary>
-        public static AxisAlignedBox3d BoundsInFrame(IEnumerable<Vector3d> values, Frame3f f) {
+        public static AxisAlignedBox3d BoundsInFrame(IEnumerable<Vector3d> values, Frame3d f) {
 			AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
 			foreach ( Vector3d v in values )
 				box.Contain( f.ToFrameP(v) );

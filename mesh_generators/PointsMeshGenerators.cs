@@ -41,7 +41,7 @@ namespace g3
             foreach (int pid in PointIndices) {
                 Vector3d v = PointF(pid);
                 Vector3d n = NormalF(pid);
-                Frame3f f = new Frame3f(v, n);
+                Frame3d f = new Frame3d(v, n);
                 triangles.Set(ti++, vi, vi + 1, vi + 2, Clockwise);
                 vertices[vi++] = f.FromPlaneUV(uva, 2);
                 vertices[vi++] = f.FromPlaneUV(uvb, 2);

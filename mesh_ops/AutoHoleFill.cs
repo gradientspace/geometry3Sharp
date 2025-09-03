@@ -207,7 +207,7 @@ namespace gs
         List<List<EdgeSpan>> sort_planar_spans(List<EdgeSpan> allspans, Vector3d normal)
         {
             List<List<EdgeSpan>> result = new List<List<EdgeSpan>>();
-            Frame3f polyFrame = new Frame3f(Vector3d.Zero, normal);
+            Frame3d polyFrame = new Frame3d(Vector3d.Zero, normal);
 
             int N = allspans.Count;
 
@@ -253,20 +253,20 @@ namespace gs
 
             return result;
         }
-        PolyLine2d to_polyline(EdgeSpan span, Frame3f polyFrame)
+        PolyLine2d to_polyline(EdgeSpan span, Frame3d polyFrame)
         {
             int NV = span.VertexCount;
             PolyLine2d poly = new PolyLine2d();
             for (int k = 0; k < NV; ++k)
-                poly.AppendVertex(polyFrame.ToPlaneUV((Vector3f)span.GetVertex(k), 2));
+                poly.AppendVertex(polyFrame.ToPlaneUV(span.GetVertex(k), 2));
             return poly;
         }
-        Polygon2d to_polygon(EdgeSpan span, Frame3f polyFrame)
+        Polygon2d to_polygon(EdgeSpan span, Frame3d polyFrame)
         {
             int NV = span.VertexCount;
             Polygon2d poly = new Polygon2d();
             for (int k = 0; k < NV; ++k)
-                poly.AppendVertex(polyFrame.ToPlaneUV((Vector3f)span.GetVertex(k), 2));
+                poly.AppendVertex(polyFrame.ToPlaneUV(span.GetVertex(k), 2));
             return poly;
         }
         bool self_intersects(PolyLine2d poly)

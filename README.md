@@ -85,7 +85,7 @@ Several tutorials for using g3Sharp have been posted on the Gradientspace blog:
     - **VectorTuple** 2/3/4 element 2d/3d vector-tuples (convenient())
     - implicit float->double conversion operators between types, explicit double->float operators
     - transparent Unity interop (see below)
-- **Frame3f**: position+orientation representation
+- **Frame3f/Frame3d**: position+orientation representation
     - accessors for transformed x/y/z axes 
     - frame transformations
     - free and constrained axis alignment

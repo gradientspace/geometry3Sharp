@@ -556,7 +556,7 @@ namespace g3
         /// by default, frame.Z is normal, and .X points along mesh edge
         /// if bFrameNormalY, then frame.Y is normal (X still points along mesh edge)
         /// </summary>
-        public Frame3f GetVertexFrame(int vID, bool bFrameNormalY = false)
+        public Frame3d GetVertexFrame(int vID, bool bFrameNormalY = false)
         {
             Debug.Assert(HasVertexNormals);
 
@@ -572,9 +572,9 @@ namespace g3
             Vector3d other = normal.Cross(edge);
             edge = other.Cross(normal);
             if (bFrameNormalY)
-                return new Frame3f((Vector3f)v, (Vector3f)edge, (Vector3f)normal, (Vector3f)(-other));
+                return new Frame3d(v, edge, normal, (-other));
             else 
-                return new Frame3f((Vector3f)v, (Vector3f)edge, (Vector3f)other, (Vector3f)normal);
+                return new Frame3d(v, edge, other, normal);
         }
 
 
@@ -789,7 +789,7 @@ namespace g3
         /// Construct stable frame at triangle centroid, where frame.Z is face normal,
         /// and frame.X is aligned with edge nEdge of triangle.
         /// </summary>
-        public Frame3f GetTriFrame(int tID, int nEdge = 0)
+        public Frame3d GetTriFrame(int tID, int nEdge = 0)
         {
             int ti = 3 * tID;
             int a = 3 * triangles[ti + (nEdge % 3)];
@@ -805,8 +805,8 @@ namespace g3
 
             Vector3d other = normal.Cross(edge1);
 
-            Vector3f center = (Vector3f)(v1 + v2 + v3) / 3;
-            return new Frame3f(center, (Vector3f)edge1, (Vector3f)other, (Vector3f)normal);
+            Vector3d center = (v1 + v2 + v3) / 3;
+            return new Frame3d(center, edge1, other, normal);
         }
 
 

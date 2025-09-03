@@ -53,7 +53,7 @@ namespace gs
         public DMesh3 Mesh;
         public int SeedTriangle = -1;   // you must provide this so that we can efficiently
                                         // find region of mesh to insert into
-        public Frame3f ProjectFrame;    // assumption is that Z is plane normal
+        public Frame3d ProjectFrame;    // assumption is that Z is plane normal
 
         // if true, we call Simply() on the inserted UV-curve, which means the
         // resulting insertion should have as many vertices as Polygon, and
@@ -85,7 +85,7 @@ namespace gs
         /// <summary>
         /// insert polygon in given frame
         /// </summary>
-        public MeshInsertProjectedPolygon(DMesh3 mesh, Polygon2d poly, Frame3f frame, int seedTri)
+        public MeshInsertProjectedPolygon(DMesh3 mesh, Polygon2d poly, Frame3d frame, int seedTri)
         {
             Mesh = mesh;
             Polygon = new Polygon2d(poly);
@@ -96,7 +96,7 @@ namespace gs
         /// <summary>
         /// create Polygon by projecting polygon3 into frame
         /// </summary>
-        public MeshInsertProjectedPolygon(DMesh3 mesh, DCurve3 polygon3, Frame3f frame, int seedTri )
+        public MeshInsertProjectedPolygon(DMesh3 mesh, DCurve3 polygon3, Frame3d frame, int seedTri )
         {
             if (polygon3.Closed == false)
                 throw new Exception("MeshInsertPolyCurve(): only closed polygon3 supported for now");
@@ -107,7 +107,7 @@ namespace gs
 
             Polygon = new Polygon2d();
             foreach (Vector3d v3 in polygon3.Vertices) {
-                Vector2f uv = frame.ToPlaneUV((Vector3f)v3, 2);
+                Vector2d uv = frame.ToPlaneUV(v3, 2);
                 Polygon.AppendVertex(uv);
             }
         }
@@ -126,7 +126,7 @@ namespace gs
         {
             Func<int, bool> is_contained_v = (vid) => {
                 Vector3d v = Mesh.GetVertex(vid);
-                Vector2f vf2 = ProjectFrame.ToPlaneUV((Vector3f)v, 2);
+                Vector2d vf2 = ProjectFrame.ToPlaneUV(v, 2);
                 return Polygon.Contains(vf2);
             };
 
@@ -166,7 +166,7 @@ namespace gs
 
             // map roi mesh to plane
             MeshTransforms.PerVertexTransform(roiMesh, roiMesh.VertexIndices(), (v, vid) => {
-                Vector2f uv = ProjectFrame.ToPlaneUV((Vector3f)v, 2);
+                Vector2d uv = ProjectFrame.ToPlaneUV(v, 2);
                 initialPositions[vid] = v;
                 return new Vector3d(uv.x, uv.y, 0);
             });

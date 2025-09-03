@@ -26,7 +26,7 @@ namespace g3
             PlaneY = axis1;
 			Radius = radius;
 		}
-		public Circle3d(Frame3f frame, double radius, int nNormalAxis = 1)
+		public Circle3d(Frame3d frame, double radius, int nNormalAxis = 1)
 		{
 			IsReversed = false;
 			Center = frame.Origin;

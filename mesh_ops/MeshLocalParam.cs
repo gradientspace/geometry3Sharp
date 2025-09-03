@@ -43,7 +43,7 @@ namespace g3
         Func<int, IEnumerable<int>> NeighboursF;
 
         // maybe should be sparse array?
-        Frame3f SeedFrame;
+        Frame3d SeedFrame;
         float max_graph_distance;
         float max_uv_distance;
 
@@ -79,7 +79,7 @@ namespace g3
         /// Compute distances that are less/equal to fMaxDistance from the seeds
         /// Terminates early, so Queue may not be empty
         /// </summary>
-        public void ComputeToMaxDistance(Frame3f seedFrame, Index3i seedNbrs, float fMaxGraphDistance)
+        public void ComputeToMaxDistance(Frame3d seedFrame, Index3i seedNbrs, float fMaxGraphDistance)
         {
             SeedFrame = seedFrame;
 
@@ -173,40 +173,40 @@ namespace g3
 
 
 
-        Vector2f compute_local_uv(ref Frame3f f, Vector3f pos)
+        Vector2f compute_local_uv(ref Frame3d f, Vector3f pos)
         {
-            pos -= f.Origin;
-            Vector2f uv = new Vector2f(pos.Dot(f.X), pos.Dot(f.Y));
+            pos -= (Vector3f)f.Origin;
+            Vector2f uv = new Vector2f(pos.Dot((Vector3f)f.X), pos.Dot((Vector3f)f.Y));
             return uv;
         }
 
 
 
-        Vector2f propagate_uv(Vector3f pos, Vector2f nbrUV, ref Frame3f fNbr, ref Frame3f fSeed)
+        Vector2f propagate_uv(Vector3f pos, Vector2f nbrUV, ref Frame3d fNbr, ref Frame3d fSeed)
         {
             Vector2f local_uv = compute_local_uv(ref fNbr, pos);
 
-            Frame3f fSeedToLocal = fSeed;
+            Frame3d fSeedToLocal = fSeed;
             fSeedToLocal.AlignAxis(2, fNbr.Z);
 
-            Vector3f vAlignedSeedX = fSeedToLocal.X;
-            Vector3f vLocalX = fNbr.X;
+            Vector3d vAlignedSeedX = fSeedToLocal.X;
+            Vector3d vLocalX = fNbr.X;
 
-            float fCosTheta = vLocalX.Dot(vAlignedSeedX);
+            double fCosTheta = vLocalX.Dot(vAlignedSeedX);
 
             // compute rotated min-dist vector for this particle
-            float fTmp = 1 - fCosTheta * fCosTheta;
+            double fTmp = 1 - fCosTheta * fCosTheta;
             if (fTmp < 0)
                 fTmp = 0;     // need to clamp so that sqrt works...
-            float fSinTheta = (float)Math.Sqrt(fTmp);
-            Vector3f vCross = vLocalX.Cross(vAlignedSeedX);
+            double fSinTheta = (float)Math.Sqrt(fTmp);
+            Vector3d vCross = vLocalX.Cross(vAlignedSeedX);
             if (vCross.Dot(fNbr.Z) < 0)    // get the right sign...
                 fSinTheta = -fSinTheta;
 
 
-            Matrix2f mFrameRotate = new Matrix2f(fCosTheta, fSinTheta, -fSinTheta, fCosTheta);
+            Matrix2d mFrameRotate = new Matrix2d(fCosTheta, fSinTheta, -fSinTheta, fCosTheta);
 
-            return nbrUV + mFrameRotate * local_uv;
+            return (Vector2f)(nbrUV + mFrameRotate * local_uv);
         }
 
 
@@ -217,7 +217,7 @@ namespace g3
             int parent_id = node.parent.id;
 
             Vector3f parentPos = PositionF(parent_id);
-            Frame3f parentFrame = new Frame3f(parentPos, NormalF(parent_id));
+            Frame3d parentFrame = new Frame3d(parentPos, NormalF(parent_id));
             node.uv = propagate_uv(PositionF(vid), node.parent.uv, ref parentFrame, ref SeedFrame);
         }
 
@@ -235,7 +235,7 @@ namespace g3
                 GraphNode nbr_node = get_node(nbr_id, false);
                 if ( nbr_node.frozen ) {
                     Vector3f nbr_pos = PositionF(nbr_id);
-                    Frame3f nbr_frame = new Frame3f(nbr_pos, NormalF(nbr_id));
+                    Frame3d nbr_frame = new Frame3d(nbr_pos, NormalF(nbr_id));
                     Vector2f nbr_uv = propagate_uv(pos, nbr_node.uv, ref nbr_frame, ref SeedFrame);
                     float fWeight = 1.0f / (pos.DistanceSquared(nbr_pos) + MathUtil.ZeroTolerancef);
                     avg_uv += fWeight * nbr_uv;

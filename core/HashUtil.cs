@@ -82,6 +82,18 @@ namespace g3
                 Hash = (Hash * 16777619) ^ f.Rotation.w.GetHashCode();
             }
         }
+        public void Add(Frame3d f)
+        {
+            unchecked {
+                Hash = (Hash * 16777619) ^ f.Origin.x.GetHashCode();
+                Hash = (Hash * 16777619) ^ f.Origin.y.GetHashCode();
+                Hash = (Hash * 16777619) ^ f.Origin.z.GetHashCode();
+                Hash = (Hash * 16777619) ^ f.Rotation.x.GetHashCode();
+                Hash = (Hash * 16777619) ^ f.Rotation.y.GetHashCode();
+                Hash = (Hash * 16777619) ^ f.Rotation.z.GetHashCode();
+                Hash = (Hash * 16777619) ^ f.Rotation.w.GetHashCode();
+            }
+        }
 
         public void Add(Index3i v) {
             unchecked {

@@ -39,14 +39,14 @@ namespace g3
             public Vector3d Scale {
                 get { return data.V0; }
             }
-            public Quaternionf Quaternion {
-                get { return new Quaternionf((float)data.V0.x, (float)data.V0.y, (float)data.V0.z, (float)data.V1.x); }
+            public Quaterniond Quaternion {
+                get { return new Quaterniond(data.V0.x, data.V0.y, data.V0.z, data.V1.x); }
             }
             public Vector3d RotateOrigin {
                 get { return data.V2; }
             }
-            public Frame3f Frame {
-                get { return new Frame3f((Vector3f)RotateOrigin, Quaternion); }
+            public Frame3d Frame {
+                get { return new Frame3d(RotateOrigin, Quaternion); }
             }
         }
 
@@ -87,7 +87,7 @@ namespace g3
             });
         }
 
-        public void AppendRotation(Quaternionf q)
+        public void AppendRotation(Quaterniond q)
         {
             Operations.Add(new XForm() {
                 type = XFormType.QuaterionRotation,
@@ -95,7 +95,7 @@ namespace g3
             });
         }
 
-        public void AppendRotation(Quaternionf q, Vector3d aroundPt)
+        public void AppendRotation(Quaterniond q, Vector3d aroundPt)
         {
             Operations.Add(new XForm() {
                 type = XFormType.QuaternionRotateAroundPoint,
@@ -119,18 +119,18 @@ namespace g3
             });
         }
 
-        public void AppendToFrame(Frame3f frame)
+        public void AppendToFrame(Frame3d frame)
         {
-            Quaternionf q = frame.Rotation; 
+            Quaterniond q = frame.Rotation; 
             Operations.Add(new XForm() {
                 type = XFormType.ToFrame,
                 data = new Vector3dTuple3(new Vector3d(q.x, q.y, q.z), new Vector3d(q.w, 0, 0), frame.Origin)
             });
         }
 
-        public void AppendFromFrame(Frame3f frame)
+        public void AppendFromFrame(Frame3d frame)
         {
-            Quaternionf q = frame.Rotation;
+            Quaterniond q = frame.Rotation;
             Operations.Add(new XForm() {
                 type = XFormType.FromFrame,
                 data = new Vector3dTuple3(new Vector3d(q.x, q.y, q.z), new Vector3d(q.w, 0, 0), frame.Origin)

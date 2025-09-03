@@ -28,7 +28,7 @@ namespace g3
 			Radius = radius;
             Height = height;
 		}
-		public Cylinder3d(Frame3f frame, double radius, double height, int nNormalAxis = 1)
+		public Cylinder3d(Frame3d frame, double radius, double height, int nNormalAxis = 1)
 		{
             Axis = new Line3d(frame.Origin, frame.GetAxis(nNormalAxis));
 			Radius = radius;

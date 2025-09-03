@@ -24,40 +24,12 @@ namespace g3
         }
 
 
-        public static Vector3d Rotate(Vector3d pos, Vector3d origin, Quaternionf rotation)
-        {
-            Vector3d v = pos - origin;
-            v = (Vector3d)(rotation * (Vector3f)v);
-            v += origin;
-            return v;
-        }
-        public static Frame3f Rotate(Frame3f f, Vector3d origin, Quaternionf rotation)
+        public static Frame3d Rotate(Frame3d f, Vector3d origin, Quaterniond rotation)
         {
             f.Rotate(rotation);
-            f.Origin = (Vector3f)Rotate(f.Origin, origin, rotation);
+            f.Origin = Rotate(f.Origin, origin, rotation);
             return f;
         }
-        public static Frame3f Rotate(Frame3f f, Vector3d origin, Quaterniond rotation)
-        {
-            f.Rotate((Quaternionf)rotation);
-            f.Origin = (Vector3f)Rotate(f.Origin, origin, rotation);
-            return f;
-        }
-        public static void Rotate(IDeformableMesh mesh, Vector3d origin, Quaternionf rotation)
-        {
-            int NV = mesh.MaxVertexID;
-            for ( int vid = 0; vid < NV; ++vid ) {
-                if (mesh.IsVertex(vid)) {
-                    Vector3d v = mesh.GetVertex(vid);
-                    v -= origin;
-                    v = (Vector3d)(rotation * (Vector3f)v);
-                    v += origin;
-                    mesh.SetVertex(vid, v);
-                }
-            }
-        }
-
-
         public static Vector3d Rotate(Vector3d pos, Vector3d origin, Quaterniond rotation) {
             return rotation * (pos - origin) + origin;
         }
@@ -99,7 +71,7 @@ namespace g3
         }
 
         ///<summary>Map mesh *into* local coordinates of Frame </summary>
-        public static void ToFrame(IDeformableMesh mesh, Frame3f f)
+        public static void ToFrame(IDeformableMesh mesh, Frame3d f)
         {
             int NV = mesh.MaxVertexID;
             bool bHasNormals = mesh.HasVertexNormals;
@@ -109,8 +81,8 @@ namespace g3
                     Vector3d vf = f.ToFrameP(ref v);
                     mesh.SetVertex(vid, vf);
                     if ( bHasNormals ) {
-                        Vector3f n = mesh.GetVertexNormal(vid);
-                        Vector3f nf = f.ToFrameV(ref n);
+                        Vector3d n = mesh.GetVertexNormal(vid);
+                        Vector3f nf = (Vector3f)f.ToFrameV(ref n);
                         mesh.SetVertexNormal(vid, nf);
                     }
                 }
@@ -118,7 +90,7 @@ namespace g3
         }
 
         /// <summary> Map mesh *from* local frame coordinates into "world" coordinates </summary>
-        public static void FromFrame(IDeformableMesh mesh, Frame3f f)
+        public static void FromFrame(IDeformableMesh mesh, Frame3d f)
         {
             int NV = mesh.MaxVertexID;
             bool bHasNormals = mesh.HasVertexNormals;
@@ -128,8 +100,8 @@ namespace g3
                     Vector3d v = f.FromFrameP(ref vf);
                     mesh.SetVertex(vid, v);
                     if ( bHasNormals ) {
-                        Vector3f n = mesh.GetVertexNormal(vid);
-                        Vector3f nf = f.FromFrameV(ref n);
+                        Vector3d n = mesh.GetVertexNormal(vid);
+                        Vector3f nf = (Vector3f)f.FromFrameV(ref n);
                         mesh.SetVertexNormal(vid, nf);
                     }
                 }
@@ -145,9 +117,9 @@ namespace g3
         {
             return new Vector3f(v.x, v.z, -v.y);
         }
-        public static Frame3f ConvertZUpToYUp(Frame3f f)
+        public static Frame3d ConvertZUpToYUp(Frame3d f)
         {
-            return new Frame3f(
+            return new Frame3d(
                 ConvertZUpToYUp(f.Origin),
                 ConvertZUpToYUp(f.X),
                 ConvertZUpToYUp(f.Y),
@@ -177,9 +149,9 @@ namespace g3
         {
             return new Vector3f(v.x, -v.z, v.y);
         }
-        public static Frame3f ConvertYUpToZUp(Frame3f f)
+        public static Frame3d ConvertYUpToZUp(Frame3d f)
         {
-            return new Frame3f(
+            return new Frame3d(
                 ConvertYUpToZUp(f.Origin),
                 ConvertYUpToZUp(f.X),
                 ConvertYUpToZUp(f.Y),
@@ -210,7 +182,7 @@ namespace g3
         {
             return new Vector3f(v.x, v.y, -v.z);
         }
-        public static Frame3f FlipLeftRightCoordSystems(Frame3f f)
+        public static Frame3d FlipLeftRightCoordSystems(Frame3d f)
         {
             throw new NotImplementedException("this doesn't work...frame becomes broken somehow?");
             //return new Frame3f(

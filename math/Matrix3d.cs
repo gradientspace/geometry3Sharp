@@ -84,7 +84,6 @@ namespace g3
             Row2 = new Vector3d(m20, m21, m22);
         }
 
-
         /// <summary>
         /// Construct outer-product of u*transpose(v) of u and v
         /// result is that Mij = u_i * v_j
@@ -94,6 +93,15 @@ namespace g3
             Row0 = new Vector3d(u.x*v.x, u.x*v.y, u.x*v.z);
             Row1 = new Vector3d(u.y*v.x, u.y*v.y, u.y*v.z);
             Row2 = new Vector3d(u.z*v.x, u.z*v.y, u.z*v.z);
+        }
+
+        public static implicit operator Matrix3d(Matrix3f matrix)
+        {
+            return new Matrix3d(matrix.Row0, matrix.Row1, matrix.Row2, true);
+        }
+        public static explicit operator Matrix3f(Matrix3d matrix)
+        {
+            return new Matrix3f((Vector3f)matrix.Row0, (Vector3f)matrix.Row1, (Vector3f)matrix.Row2, true);
         }
 
 

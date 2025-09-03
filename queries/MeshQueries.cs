@@ -26,14 +26,14 @@ namespace g3
         /// Find point-normal(Z) frame at closest point to queryPoint on mesh.
         /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
-        public static Frame3f NearestPointFrame(DMesh3 mesh, ISpatial spatial, Vector3d queryPoint, bool bForceFaceNormal = false)
+        public static Frame3d NearestPointFrame(DMesh3 mesh, ISpatial spatial, Vector3d queryPoint, bool bForceFaceNormal = false)
         {
             int tid = spatial.FindNearestTriangle(queryPoint);
             Vector3d surfPt = TriangleDistance(mesh, tid, queryPoint).TriangleClosest;
             if (mesh.HasVertexNormals && bForceFaceNormal == false)
                 return SurfaceFrame(mesh, tid, surfPt);
             else
-                return new Frame3f(surfPt, mesh.GetTriNormal(tid));
+                return new Frame3d(surfPt, mesh.GetTriNormal(tid));
         }
 
 
@@ -141,9 +141,9 @@ namespace g3
         /// Find point-normal frame at ray-intersection point on mesh, or return false if no hit.
         /// Returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
-        public static bool RayHitPointFrame(DMesh3 mesh, ISpatial spatial, Ray3d ray, out Frame3f hitPosFrame, bool bForceFaceNormal = false)
+        public static bool RayHitPointFrame(DMesh3 mesh, ISpatial spatial, Ray3d ray, out Frame3d hitPosFrame, bool bForceFaceNormal = false)
         {
-            hitPosFrame = new Frame3f();
+            hitPosFrame = new Frame3d();
             int tid = spatial.FindNearestHitTriangle(ray);
             if (tid == DMesh3.InvalidID)
                 return false;
@@ -154,7 +154,7 @@ namespace g3
             if (mesh.HasVertexNormals && bForceFaceNormal == false)
                 hitPosFrame = SurfaceFrame(mesh, tid, surfPt);      // TODO isect has bary-coords already!!
             else
-                hitPosFrame = new Frame3f(surfPt, mesh.GetTriNormal(tid));
+                hitPosFrame = new Frame3d(surfPt, mesh.GetTriNormal(tid));
             return true;
         }
 
@@ -163,7 +163,7 @@ namespace g3
         /// Get point-normal frame on surface of mesh. Assumption is that point lies in tID.
         /// returns interpolated vertex-normal frame if available, otherwise tri-normal frame.
         /// </summary>
-        public static Frame3f SurfaceFrame(DMesh3 mesh, int tID, Vector3d point, bool bForceFaceNormal = false)
+        public static Frame3d SurfaceFrame(DMesh3 mesh, int tID, Vector3d point, bool bForceFaceNormal = false)
         {
             if (!mesh.IsTriangle(tID))
                 throw new Exception("MeshQueries.SurfaceFrame: triangle " + tID + " does not exist!");
@@ -173,9 +173,9 @@ namespace g3
             point = tri.PointAt(bary);
             if (mesh.HasVertexNormals && bForceFaceNormal == false) {
                 Vector3d normal = mesh.GetTriBaryNormal(tID, bary.x, bary.y, bary.z);
-                return new Frame3f(point, normal);
+                return new Frame3d(point, normal);
             } else
-                return new Frame3f(point, mesh.GetTriNormal(tID));
+                return new Frame3d(point, mesh.GetTriNormal(tID));
         }
 
 

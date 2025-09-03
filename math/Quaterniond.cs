@@ -44,10 +44,10 @@ namespace g3
         }
 
 
-        public double LengthSquared {
+        public readonly double LengthSquared {
             get { return x * x + y * y + z * z + w*w; }
         }
-        public double Length {
+        public readonly double Length {
             get { return (double)Math.Sqrt(x * x + y * y + z * z + w * w); }
         }
 
@@ -65,11 +65,11 @@ namespace g3
             }
             return length;
         }
-        public Quaterniond Normalized {
+        public readonly Quaterniond Normalized {
             get { Quaterniond q = new Quaterniond(this); q.Normalize(); return q; }
         }
 
-        public double Dot(Quaterniond q2) {
+        public readonly double Dot(Quaterniond q2) {
             return x * q2.x + y * q2.y + z * q2.z + w * q2.w;
         }
 
@@ -113,9 +113,30 @@ namespace g3
         }
 
 
+        /// <summary> Inverse() * v </summary>
+        public readonly Vector3d InverseMultiply(ref Vector3d v)
+        {
+            double norm = LengthSquared;
+            if (norm > 0) {
+                double invNorm = 1.0 / norm;
+                double qx = -x * invNorm, qy = -y * invNorm, qz = -z * invNorm, qw = w * invNorm;
+                double twoX = 2 * qx; double twoY = 2 * qy; double twoZ = 2 * qz;
+                double twoWX = twoX * qw; double twoWY = twoY * qw; double twoWZ = twoZ * qw;
+                double twoXX = twoX * qx; double twoXY = twoY * qx; double twoXZ = twoZ * qx;
+                double twoYY = twoY * qy; double twoYZ = twoZ * qy; double twoZZ = twoZ * qz;
+                return new Vector3d(
+                    v.x * (1 - (twoYY + twoZZ)) + v.y * (twoXY - twoWZ) + v.z * (twoXZ + twoWY),
+                    v.x * (twoXY + twoWZ) + v.y * (1 - (twoXX + twoZZ)) + v.z * (twoYZ - twoWX),
+                    v.x * (twoXZ - twoWY) + v.y * (twoYZ + twoWX) + v.z * (1 - (twoXX + twoYY))); ;
+            } else
+                return Vector3d.Zero;
+        }
+
+
+
         // these multiply quaternion by (1,0,0), (0,1,0), (0,0,1), respectively.
         // faster than full multiply, because of all the zeros
-        public Vector3d AxisX {
+        public readonly Vector3d AxisX {
             get {
                 double twoY = 2 * y; double twoZ = 2 * z;
                 double twoWY = twoY * w; double twoWZ = twoZ * w;
@@ -124,7 +145,7 @@ namespace g3
                 return new Vector3d(1 - (twoYY + twoZZ), twoXY + twoWZ, twoXZ - twoWY);
             }
         }
-        public Vector3d AxisY {
+        public readonly Vector3d AxisY {
             get {
                 double twoX = 2 * x; double twoY = 2 * y; double twoZ = 2 * z;
                 double twoWX = twoX * w; double twoWZ = twoZ * w; double twoXX = twoX * x;
@@ -132,7 +153,7 @@ namespace g3
                 return new Vector3d(twoXY - twoWZ, 1 - (twoXX + twoZZ), twoYZ + twoWX);
             }
         }
-        public Vector3d AxisZ {
+        public readonly Vector3d AxisZ {
             get {
                 double twoX = 2 * x; double twoY = 2 * y; double twoZ = 2 * z;
                 double twoWX = twoX * w; double twoWY = twoY * w; double twoXX = twoX * x;
@@ -143,7 +164,7 @@ namespace g3
 
 
 
-        public Quaterniond Inverse() {
+        public readonly Quaterniond Inverse() {
             double norm = LengthSquared;
             if (norm > 0) {
                 double invNorm = 1.0 / norm;
@@ -160,12 +181,12 @@ namespace g3
         /// <summary>
         /// Equivalent to transpose of matrix. similar to inverse, but w/o normalization...
         /// </summary>
-        public Quaterniond Conjugate() {
+        public readonly Quaterniond Conjugate() {
             return new Quaterniond(-x, -y, -z, w);
         }
 
         
-        public Matrix3d ToRotationMatrix()
+        public readonly Matrix3d ToRotationMatrix()
         {
             double twoX = 2 * x; double twoY = 2 * y; double twoZ = 2 * z;
             double twoWX = twoX * w; double twoWY = twoY * w; double twoWZ = twoZ * w;
@@ -312,10 +333,51 @@ namespace g3
         }
 
 
+        public static bool operator ==(Quaterniond a, Quaterniond b)
+        {
+            return (a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w);
+        }
+        public static bool operator !=(Quaterniond a, Quaterniond b)
+        {
+            return (a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Quaterniond)obj;
+        }
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = (int)2166136261;
+                // Suitable nullity checks etc, of course :)
+                hash = (hash * 16777619) ^ x.GetHashCode();
+                hash = (hash * 16777619) ^ y.GetHashCode();
+                hash = (hash * 16777619) ^ z.GetHashCode();
+                hash = (hash * 16777619) ^ w.GetHashCode();
+                return hash;
+            }
+        }
+        public int CompareTo(Quaterniond other)
+        {
+            if (x != other.x)
+                return x < other.x ? -1 : 1;
+            else if (y != other.y)
+                return y < other.y ? -1 : 1;
+            else if (z != other.z)
+                return z < other.z ? -1 : 1;
+            else if (w != other.w)
+                return w < other.w ? -1 : 1;
+            return 0;
+        }
+        public bool Equals(Quaterniond other)
+        {
+            return (x == other.x && y == other.y && z == other.z && w == other.w);
+        }
 
 
 
-        public bool EpsilonEqual(Quaterniond q2, double epsilon) {
+        public readonly bool EpsilonEqual(Quaterniond q2, double epsilon) {
             return Math.Abs(x - q2.x) <= epsilon && 
                    Math.Abs(y - q2.y) <= epsilon &&
                    Math.Abs(z - q2.z) <= epsilon &&
@@ -338,6 +400,7 @@ namespace g3
         public string ToString(string fmt) {
             return string.Format("{0} {1} {2} {3}", x.ToString(fmt), y.ToString(fmt), z.ToString(fmt), w.ToString(fmt));
         }
+
 
 
 #if G3_USING_UNITY

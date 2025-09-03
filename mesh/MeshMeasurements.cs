@@ -319,7 +319,7 @@ namespace g3
         /// <summary>
         /// calculate extents of mesh along axes of frame, with optional transform
         /// </summary>
-        public static AxisAlignedBox3d BoundsInFrame(DMesh3 mesh, Frame3f frame, Func<Vector3d, Vector3d> TransformF = null)
+        public static AxisAlignedBox3d BoundsInFrame(DMesh3 mesh, Frame3d frame, Func<Vector3d, Vector3d> TransformF = null)
         {
             AxisAlignedBox3d bounds = AxisAlignedBox3d.Empty;
             if (TransformF == null) {

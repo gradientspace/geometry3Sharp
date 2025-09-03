@@ -33,8 +33,7 @@ namespace g3
 
         public bool ClosedLoop = false;
 
-        // [TODO] Frame3d ??
-        public Frame3f Frame = Frame3f.Identity;
+        public Frame3d Frame = Frame3d.Identity;
 
         // set to true if you are going to texture this or want sharp edges
         public bool NoSharedVertices = true;
@@ -46,20 +45,20 @@ namespace g3
         {
         }
 
-        public TubeGenerator(Polygon2d tubePath, Frame3f pathPlane, Polygon2d tubeShape, int nPlaneNormal = 2)
+        public TubeGenerator(Polygon2d tubePath, Frame3d pathPlane, Polygon2d tubeShape, int nPlaneNormal = 2)
         {
             Vertices = new List<Vector3d>();
             foreach (Vector2d v in tubePath.Vertices)
-                Vertices.Add(pathPlane.FromPlaneUV((Vector2f)v, nPlaneNormal));
+                Vertices.Add(pathPlane.FromPlaneUV(v, nPlaneNormal));
             Polygon = new Polygon2d(tubeShape);
             ClosedLoop = true;
             Capped = false;
         }
-        public TubeGenerator(PolyLine2d tubePath, Frame3f pathPlane, Polygon2d tubeShape, int nPlaneNormal = 2)
+        public TubeGenerator(PolyLine2d tubePath, Frame3d pathPlane, Polygon2d tubeShape, int nPlaneNormal = 2)
         {
             Vertices = new List<Vector3d>();
             foreach (Vector2d v in tubePath.Vertices)
-                Vertices.Add(pathPlane.FromPlaneUV((Vector2f)v, nPlaneNormal));
+                Vertices.Add(pathPlane.FromPlaneUV(v, nPlaneNormal));
             Polygon = new Polygon2d(tubeShape);
             ClosedLoop = false;
             Capped = true;
@@ -96,11 +95,11 @@ namespace g3
             int nCapTris = (Capped && ClosedLoop == false) ? 2 * Slices : 0;
             triangles = new IndexArray3i(nSpanTris + nCapTris);
 
-            Frame3f fCur = new Frame3f(Frame);
+            Frame3d fCur = new Frame3d(Frame);
             Vector3d dv = CurveUtils.GetTangent(Vertices, 0, ClosedLoop);
-            fCur.Origin = (Vector3f)Vertices[0];
-            fCur.AlignAxis(2, (Vector3f)dv);
-            Frame3f fStart = new Frame3f(fCur);
+            fCur.Origin = Vertices[0];
+            fCur.AlignAxis(2, dv);
+            Frame3d fStart = new Frame3d(fCur);
 
             double circumference = Polygon.ArcLength;
             double pathLength = CurveUtils.ArcLength(Vertices, ClosedLoop);
@@ -112,8 +111,8 @@ namespace g3
 
                 // propagate frame
                 Vector3d tangent = CurveUtils.GetTangent(Vertices, vi, ClosedLoop);
-                fCur.Origin = (Vector3f)Vertices[vi];
-                fCur.AlignAxis(2, (Vector3f)tangent);
+                fCur.Origin = Vertices[vi];
+                fCur.AlignAxis(2, tangent);
 
                 // generate vertices
                 int nStartR = ri * nRingSize;
@@ -165,13 +164,13 @@ namespace g3
                 int nBottomC = nRings * nRingSize;
                 vertices[nBottomC] = fStart.FromPlaneUV((Vector2f)c,2);
                 uv[nBottomC] = new Vector2f(0.5f, 0.5f);
-                normals[nBottomC] = -fStart.Z;
+                normals[nBottomC] = (Vector3f)(-fStart.Z);
                 startCapCenterIndex = nBottomC;
 
                 int nTopC = nBottomC + 1;
                 vertices[nTopC] = fCur.FromPlaneUV((Vector2f)c, 2);
                 uv[nTopC] = new Vector2f(0.5f, 0.5f);
-                normals[nTopC] = fCur.Z;
+                normals[nTopC] = (Vector3f)fCur.Z;
                 endCapCenterIndex = nTopC;
 
                 if (NoSharedVertices) {

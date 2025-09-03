@@ -156,17 +156,17 @@ namespace g3
     /// </summary>
     public struct FrameGridIndexer3 : IGridWorldIndexer3
     {
-        public Frame3f GridFrame;
-        public Vector3f CellSize;
+        public Frame3d GridFrame;
+        public Vector3d CellSize;
 
-        public FrameGridIndexer3(Frame3f frame, Vector3f cellSize)
+        public FrameGridIndexer3(Frame3d frame, Vector3d cellSize)
         {
             GridFrame = frame;
             CellSize = cellSize;
         }
 
         public Vector3i ToGrid(Vector3d point) {
-            Vector3f pointf = (Vector3f)point;
+            Vector3d pointf = point;
             pointf = GridFrame.ToFrameP(ref pointf);
             return (Vector3i)(pointf / CellSize);
         }
@@ -179,14 +179,14 @@ namespace g3
 
         public Vector3d FromGrid(Vector3i gridpoint)
         {
-            Vector3f pointf = CellSize * (Vector3f)gridpoint;
-            return (Vector3d)GridFrame.FromFrameP(ref pointf);
+            Vector3d pointf = CellSize * (Vector3d)gridpoint;
+            return GridFrame.FromFrameP(ref pointf);
         }
 
         public Vector3d FromGrid(Vector3d gridpointf)
         {
             gridpointf *= CellSize;
-            return (Vector3d)GridFrame.FromFrameP(ref gridpointf);
+            return GridFrame.FromFrameP(ref gridpointf);
         }
     }
 

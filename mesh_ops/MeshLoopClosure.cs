@@ -10,7 +10,7 @@ namespace g3
         public EdgeLoop InitialBorderLoop;
 
         // [TODO] auto-mode for this option
-        public Frame3f FlatClosePlane;
+        public Frame3d FlatClosePlane;
 
         public double TargetEdgeLen = 0;
 
@@ -72,12 +72,12 @@ namespace g3
             //} else {
             //    topPt.y = loopbox.Min.y - 0.25 * dims.y;
             //}
-            //Frame3f plane = new Frame3f((Vector3f)topPt);
+            //Frame3d plane = new Frame3d(topPt);
 
             // extrude loop to this plane
             MeshExtrudeLoop extrude = new MeshExtrudeLoop(Mesh, fill_loop);
             extrude.PositionF = (v, n, i) => {
-                return FlatClosePlane.ProjectToPlane((Vector3f)v, 1);
+                return FlatClosePlane.ProjectToPlane(v, 1);
             };
             extrude.Extrude(extrude_group);
             MeshValidation.IsBoundaryLoop(Mesh, extrude.NewLoop);
@@ -87,7 +87,7 @@ namespace g3
             // smooth the extrude loop
             MeshLoopSmooth loop_smooth = new MeshLoopSmooth(Mesh, extrude.NewLoop);
             loop_smooth.ProjectF = (v, i) => {
-                return FlatClosePlane.ProjectToPlane((Vector3f)v, 1);
+                return FlatClosePlane.ProjectToPlane(v, 1);
             };
             loop_smooth.Alpha = 0.5f;
             loop_smooth.Rounds = 100;

@@ -602,7 +602,7 @@ namespace gs
                 Vector3d v0 = mesh.GetVertex(tv.a), v1 = mesh.GetVertex(tv.b), v2 = mesh.GetVertex(tv.c);
 
                 // ugh could probably do this more efficiently...
-                Frame3f triF = new Frame3f(centroid, normal);
+                Frame3d triF = new Frame3d(centroid, normal);
                 v0 = triF.ToFrameP(ref v0); v1 = triF.ToFrameP(ref v1); v2 = triF.ToFrameP(ref v2);
                 triF.AlignAxis(2, (Vector3f)projNormal);
                 triF.Origin = (Vector3f)projPos;

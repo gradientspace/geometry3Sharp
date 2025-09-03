@@ -27,6 +27,8 @@ namespace g3
 
         static public readonly Vector3d Zero = new Vector3d(0.0f, 0.0f, 0.0f);
         static public readonly Vector3d One = new Vector3d(1.0f, 1.0f, 1.0f);
+        static public readonly Vector3d OneNormalized = new Vector3d(1.0f, 1.0f, 1.0f).Normalized;
+        static public readonly Vector3d Invalid = new Vector3d(float.MaxValue, float.MaxValue, float.MaxValue); // use float so that LengthSquared is non-inf
         static public readonly Vector3d AxisX = new Vector3d(1.0f, 0.0f, 0.0f);
         static public readonly Vector3d AxisY = new Vector3d(0.0f, 1.0f, 0.0f);
         static public readonly Vector3d AxisZ = new Vector3d(0.0f, 0.0f, 1.0f);

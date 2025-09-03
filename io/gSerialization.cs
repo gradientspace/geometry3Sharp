@@ -73,6 +73,21 @@ namespace g3
         }
 
 
+        public static void Store(Quaterniond q, BinaryWriter writer)
+        {
+            writer.Write(q.x);
+            writer.Write(q.y);
+            writer.Write(q.z);
+            writer.Write(q.w);
+        }
+        public static void Restore(ref Quaterniond q, BinaryReader reader)
+        {
+            q.x = reader.ReadDouble();
+            q.y = reader.ReadDouble();
+            q.z = reader.ReadDouble();
+            q.w = reader.ReadDouble();
+        }
+
 
         public static void Store(Frame3f vFrame, BinaryWriter writer)
         {
@@ -86,6 +101,21 @@ namespace g3
             Restore(ref origin, reader);
             Restore(ref orientation, reader);
             vFrame = new Frame3f(origin, orientation);
+        }
+
+
+        public static void Store(Frame3d vFrame, BinaryWriter writer)
+        {
+            Store(vFrame.Origin, writer);
+            Store(vFrame.Rotation, writer);
+        }
+        public static void Restore(ref Frame3d vFrame, BinaryReader reader)
+        {
+            Vector3d origin = Vector3d.Zero;
+            Quaterniond orientation = Quaterniond.Identity;
+            Restore(ref origin, reader);
+            Restore(ref orientation, reader);
+            vFrame = new Frame3d(origin, orientation);
         }
 
 

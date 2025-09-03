@@ -41,10 +41,10 @@ namespace g3 {
 		}
 
 
-		public static void ScaleMesh(DMesh3 mesh, Frame3f f, Vector3f vScale) {
+		public static void ScaleMesh(DMesh3 mesh, Frame3d f, Vector3d vScale) {
 			foreach ( int vid in mesh.VertexIndices() ) {
-				Vector3f v = (Vector3f)mesh.GetVertex(vid);
-				Vector3f vScaledInF = f.ToFrameP(ref v) * vScale;
+				Vector3d v = mesh.GetVertex(vid);
+				Vector3d vScaledInF = f.ToFrameP(ref v) * vScale;
 				Vector3d vNew = f.FromFrameP(ref vScaledInF);
 				mesh.SetVertex(vid, vNew);
 

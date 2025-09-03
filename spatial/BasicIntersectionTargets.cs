@@ -71,16 +71,16 @@ namespace g3
     /// </summary>
     public class PlaneIntersectionTarget : IIntersectionTarget
     {
-        public Frame3f PlaneFrame;
+        public Frame3d PlaneFrame;
         public int NormalAxis = 2;
 
         public bool HasNormal { get { return true; } }
         public bool RayIntersect(Ray3d ray, out Vector3d vHit, out Vector3d vHitNormal)
         {
-            Vector3f rayHit = PlaneFrame.RayPlaneIntersection((Vector3f)ray.Origin, (Vector3f)ray.Direction, NormalAxis);
+            Vector3d rayHit = PlaneFrame.RayPlaneIntersection(ray.Origin, ray.Direction, NormalAxis);
             vHit = rayHit;
-            vHitNormal = Vector3f.AxisY;
-            return (rayHit != Vector3f.Invalid);
+            vHitNormal = Vector3d.AxisY;
+            return (rayHit != Vector3d.Invalid);
         }
     }
 

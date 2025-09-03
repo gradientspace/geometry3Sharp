@@ -39,13 +39,13 @@ namespace g3 {
 		}
 		public Box3d(AxisAlignedBox3d aaBox) {
             // [RMS] this should produce Empty for aaBox.Empty...
-            Extent = new Vector3f(aaBox.Width * 0.5, aaBox.Height * 0.5, aaBox.Depth * 0.5);
+            Extent = new Vector3d(aaBox.Width * 0.5, aaBox.Height * 0.5, aaBox.Depth * 0.5);
             Center = aaBox.Center;
             AxisX = Vector3d.AxisX;
 			AxisY = Vector3d.AxisY;
 			AxisZ = Vector3d.AxisZ;
 		}
-        public Box3d(Frame3f frame, Vector3d extent)
+        public Box3d(Frame3d frame, Vector3d extent)
         {
             Center = frame.Origin;
             AxisX = frame.X;

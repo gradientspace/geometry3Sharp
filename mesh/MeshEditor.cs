@@ -25,7 +25,7 @@ namespace g3
 
 
 
-        public virtual int[] AddTriangleStrip(IList<Frame3f> frames, IList<Interval1d> spans, int group_id = -1)
+        public virtual int[] AddTriangleStrip(IList<Frame3d> frames, IList<Interval1d> spans, int group_id = -1)
         {
             int N = frames.Count;
             if (N != spans.Count)
@@ -35,11 +35,11 @@ namespace g3
             int prev_a = -1, prev_b = -1;
             int i = 0, ti = 0;
             for (i = 0; i < N; ++i) {
-                Frame3f f = frames[i];
+                Frame3d f = frames[i];
                 Interval1d span = spans[i];
 
-                Vector3d va = f.Origin + (float)span.a * f.Y;
-                Vector3d vb = f.Origin + (float)span.b * f.Y;
+                Vector3d va = f.Origin + span.a * f.Y;
+                Vector3d vb = f.Origin + span.b * f.Y;
 
                 // [TODO] could compute normals here...
 
@@ -849,15 +849,15 @@ namespace g3
 
 
 
-        public void AppendBox(Frame3f frame, float size)
+        public void AppendBox(Frame3d frame, double size)
         {
-            AppendBox(frame, size * Vector3f.One);
+            AppendBox(frame, size * Vector3d.One);
         }
-        public void AppendBox(Frame3f frame, Vector3f size)
+        public void AppendBox(Frame3d frame, Vector3d size)
         {
             AppendBox(frame, size, Colorf.White);
         }
-        public void AppendBox(Frame3f frame, Vector3f size, Colorf color)
+        public void AppendBox(Frame3d frame, Vector3d size, Colorf color)
         {
             TrivialBox3Generator boxgen = new TrivialBox3Generator() {
                 Box = new Box3d(frame, size),
@@ -870,50 +870,50 @@ namespace g3
                 mesh.EnableVertexColors(color);
             AppendMesh(mesh, Mesh.AllocateTriangleGroup());
         }
-        public void AppendLine(Segment3d seg, float size)
+        public void AppendLine(Segment3d seg, double size)
         {
-            Frame3f f = new Frame3f(seg.Center);
-            f.AlignAxis(2, (Vector3f)seg.Direction);
-            AppendBox(f, new Vector3f(size, size, seg.Extent));
+            Frame3d f = new Frame3d(seg.Center);
+            f.AlignAxis(2, seg.Direction);
+            AppendBox(f, new Vector3d(size, size, seg.Extent));
         }
-        public void AppendLine(Segment3d seg, float size, Colorf color)
+        public void AppendLine(Segment3d seg, double size, Colorf color)
         {
-            Frame3f f = new Frame3f(seg.Center);
-            f.AlignAxis(2, (Vector3f)seg.Direction);
-            AppendBox(f, new Vector3f(size, size, seg.Extent), color);
+            Frame3d f = new Frame3d(seg.Center);
+            f.AlignAxis(2, seg.Direction);
+            AppendBox(f, new Vector3d(size, size, seg.Extent), color);
         }
-        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size)
-        {
-            MeshEditor editor = new MeshEditor(mesh);
-            editor.AppendBox(new Frame3f(pos), size);
-        }
-        public static void AppendBox(DMesh3 mesh, Vector3d pos, float size, Colorf color)
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, double size)
         {
             MeshEditor editor = new MeshEditor(mesh);
-            editor.AppendBox(new Frame3f(pos), size*Vector3f.One, color);
+            editor.AppendBox(new Frame3d(pos), size);
         }
-        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size)
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, double size, Colorf color)
         {
             MeshEditor editor = new MeshEditor(mesh);
-            editor.AppendBox(new Frame3f(pos, normal), size);
+            editor.AppendBox(new Frame3d(pos), size*Vector3d.One, color);
         }
-        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, float size, Colorf color)
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, double size)
         {
             MeshEditor editor = new MeshEditor(mesh);
-            editor.AppendBox(new Frame3f(pos, normal), size*Vector3f.One, color);
+            editor.AppendBox(new Frame3d(pos, normal), size);
         }
-        public static void AppendBox(DMesh3 mesh, Frame3f frame, Vector3f size, Colorf color)
+        public static void AppendBox(DMesh3 mesh, Vector3d pos, Vector3d normal, double size, Colorf color)
+        {
+            MeshEditor editor = new MeshEditor(mesh);
+            editor.AppendBox(new Frame3d(pos, normal), size*Vector3d.One, color);
+        }
+        public static void AppendBox(DMesh3 mesh, Frame3d frame, Vector3d size, Colorf color)
         {
             MeshEditor editor = new MeshEditor(mesh);
             editor.AppendBox(frame, size, color);
         }
 
-        public static void AppendLine(DMesh3 mesh, Segment3d seg, float size)
+        public static void AppendLine(DMesh3 mesh, Segment3d seg, double size)
         {
-            Frame3f f = new Frame3f(seg.Center);
-            f.AlignAxis(2, (Vector3f)seg.Direction);
+            Frame3d f = new Frame3d(seg.Center);
+            f.AlignAxis(2, seg.Direction);
             MeshEditor editor = new MeshEditor(mesh);
-            editor.AppendBox(f, new Vector3f(size, size, seg.Extent));
+            editor.AppendBox(f, new Vector3d(size, size, seg.Extent));
         }
 
 

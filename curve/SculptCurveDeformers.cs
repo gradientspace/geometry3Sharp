@@ -43,10 +43,10 @@ namespace g3
         }
 
 
-        protected Frame3f vPreviousPos;
+        protected Frame3d vPreviousPos;
 
 
-        public virtual void BeginDeformation(Frame3f vStartPos)
+        public virtual void BeginDeformation(Frame3d vStartPos)
         {
             vPreviousPos = vStartPos;
         }
@@ -58,7 +58,7 @@ namespace g3
             public double maxEdgeLenSqr;
             public double minEdgeLenSqr;
         }
-        public virtual DeformInfo UpdateDeformation(Frame3f vNextPos)
+        public virtual DeformInfo UpdateDeformation(Frame3d vNextPos)
         {
             DeformInfo result = Apply(vNextPos);
             vPreviousPos = vNextPos;
@@ -66,7 +66,7 @@ namespace g3
         }
 
 
-        public abstract DeformInfo Apply(Frame3f vNextPos);
+        public abstract DeformInfo Apply(Frame3d vNextPos);
 
 
 
@@ -101,7 +101,7 @@ namespace g3
         }
 
 
-        public override DeformInfo Apply(Frame3f vNextPos)
+        public override DeformInfo Apply(Frame3d vNextPos)
         {
             Interval1d edgeRangeSqr = Interval1d.Empty;
 
@@ -210,7 +210,7 @@ namespace g3
 
 
         // returns max edge length of moved vertices, after deformation
-        public override DeformInfo Apply(Frame3f vNextPos)
+        public override DeformInfo Apply(Frame3d vNextPos)
         {
             // if we did not move brush far enough, don't do anything
             Vector3d vDelta = (vNextPos.Origin - vPreviousPos.Origin);

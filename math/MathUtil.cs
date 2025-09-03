@@ -330,7 +330,7 @@ namespace g3
 
 
 
-        public static int MostParallelAxis(Frame3f f, Vector3f vDir) {
+        public static int MostParallelAxis(Frame3d f, Vector3f vDir) {
             double dot0 = Math.Abs(f.X.Dot(vDir));
             double dot1 = Math.Abs(f.Y.Dot(vDir));
             double dot2 = Math.Abs(f.Z.Dot(vDir));
