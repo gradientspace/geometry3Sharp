@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 #if G3_USING_UNITY
@@ -9,6 +12,7 @@ using UnityEngine;
 
 namespace g3
 {
+    [JsonConverter(typeof(Vector3dJsonConverter))]
     public struct Vector3d : IComparable<Vector3d>, IEquatable<Vector3d>
     {
         public double x;
@@ -125,10 +129,10 @@ namespace g3
             return new Vector3d( Math.Round(x, nDecimals), Math.Round(y, nDecimals), Math.Round(z, nDecimals));
         }
 
-        public double Dot(Vector3d v2) {
+        public readonly double Dot(Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
         }
-        public double Dot(ref Vector3d v2) {
+        public readonly double Dot(ref Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
         }
 
@@ -136,13 +140,13 @@ namespace g3
             return v1.Dot(ref v2);
         }
 
-        public Vector3d Cross(Vector3d v2) {
+        public readonly Vector3d Cross(Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
                 x * v2.y - y * v2.x);
         }
-        public Vector3d Cross(ref Vector3d v2) {
+        public readonly Vector3d Cross(ref Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
@@ -152,7 +156,7 @@ namespace g3
             return v1.Cross(ref v2);
         }
 
-        public Vector3d UnitCross(ref Vector3d v2) {
+        public readonly Vector3d UnitCross(ref Vector3d v2) {
             Vector3d n = new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
@@ -160,12 +164,12 @@ namespace g3
             n.Normalize();
             return n;
         }
-        public Vector3d UnitCross(Vector3d v2) {
+        public readonly Vector3d UnitCross(Vector3d v2) {
             return UnitCross(ref v2);
         }
 
 
-        public double AngleD(Vector3d v2)
+        public readonly double AngleD(Vector3d v2)
         {
             double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return Math.Acos(fDot) * MathUtil.Rad2Deg;
@@ -174,7 +178,7 @@ namespace g3
         {
             return v1.AngleD(v2);
         }
-        public double AngleR(Vector3d v2)
+        public readonly double AngleR(Vector3d v2)
         {
             double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return Math.Acos(fDot);
@@ -184,20 +188,20 @@ namespace g3
             return v1.AngleR(v2);
         }
 
-		public double DistanceSquared(Vector3d v2) {
+		public readonly double DistanceSquared(Vector3d v2) {
 			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return dx*dx + dy*dy + dz*dz;
 		}
-		public double DistanceSquared(ref Vector3d v2) {
+		public readonly double DistanceSquared(ref Vector3d v2) {
 			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return dx*dx + dy*dy + dz*dz;
 		}
 
-        public double Distance(Vector3d v2) {
+        public readonly double Distance(Vector3d v2) {
             double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return Math.Sqrt(dx*dx + dy*dy + dz*dz);
 		}
-        public double Distance(ref Vector3d v2) {
+        public readonly double Distance(ref Vector3d v2) {
             double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
 			return Math.Sqrt(dx*dx + dy*dy + dz*dz);
 		}
@@ -313,7 +317,7 @@ namespace g3
         }
 
 
-        public bool EpsilonEqual(Vector3d v2, double epsilon) {
+        public readonly bool EpsilonEqual(Vector3d v2, double epsilon) {
             return Math.Abs(x - v2.x) <= epsilon && 
                    Math.Abs(y - v2.y) <= epsilon &&
                    Math.Abs(z - v2.z) <= epsilon;
@@ -501,5 +505,56 @@ namespace g3
             }
         }
 
+        //! support x,y,z and x y z
+        public static bool TryParse(string s, out Vector3d result)
+        {
+            result = default;
+            if ( MathUtil.TryParseRealVector(s, 3, out Vector4d result4 ) ) {
+                result = new Vector3d(result4.x, result4.y, result4.z);
+                return true;
+            }
+            return false;
+        }
+
+
     }
+
+
+
+    // json read and write for Vector3d type
+    public class Vector3dJsonConverter : JsonConverter<g3.Vector3d>
+    {
+#nullable enable
+        public override g3.Vector3d Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            JsonNode? node = JsonNode.Parse(ref reader);
+            if (node == null)
+                return Vector3d.Zero;
+
+            string? value = node["Vector3d"]?.GetValue<string>() ?? null;
+            if (value == null)
+                return Vector3d.Zero;
+
+            // todo this could probably be done more efficiently...
+            string[] values = value.Split(' ', StringSplitOptions.TrimEntries);
+            if (values.Length != 3)
+                return Vector3d.Zero;
+
+            double x = 0, y = 0, z = 0;
+            double.TryParse(values[0], out x);
+            double.TryParse(values[1], out y);
+            double.TryParse(values[2], out z);
+            return new Vector3d(x, y, z);
+        }
+
+
+        public override void Write(Utf8JsonWriter writer, g3.Vector3d value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("Vector3d", $"{value.x} {value.y} {value.z}"  );
+            writer.WriteEndObject();
+        }
+#nullable disable
+    }
+
 }

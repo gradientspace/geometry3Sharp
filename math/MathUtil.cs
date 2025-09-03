@@ -664,5 +664,31 @@ namespace g3
         }
 
 
+        private static char[] separator_chars_us = [',', ' '];
+
+        //! support x,y,z,w and x y z w alternatives
+        public static bool TryParseRealVector(string s, int NumElements, out Vector4d result)
+        {
+            // TODO: what about european formatting that uses , as . ?
+
+#nullable enable
+            result = default;
+            string[] tokens = s.Split(separator_chars_us, StringSplitOptions.RemoveEmptyEntries);
+
+            int NumFound = 0;
+            if (tokens != null && tokens.Length == NumElements) {
+                bool bAllOK = true;
+                for ( int i = 0; i < NumElements && bAllOK; ++i ) {
+                    if (double.TryParse(tokens[i], out double v)) {
+                        result[i] = v;
+                        NumFound++;
+                    }
+                }
+            }
+            return (NumFound == NumElements);
+#nullable disable
+        }
+
+
     }
 }
