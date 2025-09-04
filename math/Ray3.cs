@@ -11,8 +11,14 @@ namespace g3
 {
     public struct Ray3d
     {
-        public Vector3d Origin;
-        public Vector3d Direction;
+        public Vector3d Origin = Vector3d.Zero;
+        public Vector3d Direction = Vector3d.AxisX;
+
+        public Ray3d()
+        {
+            Origin = Vector3d.Zero;
+            Direction = Vector3d.AxisX;
+        }
 
         public Ray3d(Vector3d origin, Vector3d direction, bool bIsNormalized = false)
         {
@@ -30,17 +36,17 @@ namespace g3
         }
 
         // parameter is distance along ray
-        public Vector3d PointAt(double d) {
+        public readonly Vector3d PointAt(double d) {
             return Origin + d * Direction;
         }
 
 
-        public double Project(Vector3d p)
+        public readonly double Project(Vector3d p)
         {
             return (p - Origin).Dot(Direction);
         }
 
-        public double DistanceSquared(Vector3d p)
+        public readonly double DistanceSquared(Vector3d p)
         {
             double t = (p - Origin).Dot(Direction);
             if (t < 0) {
@@ -50,8 +56,12 @@ namespace g3
                 return (proj - p).LengthSquared;
             }
         }
+        public readonly double Distance(Vector3d p)
+        {
+            return Math.Sqrt(DistanceSquared(p));
+        }
 
-        public Vector3d ClosestPoint(Vector3d p)
+        public readonly Vector3d ClosestPoint(Vector3d p)
         {
             double t = (p - Origin).Dot(Direction);
             if (t < 0) {

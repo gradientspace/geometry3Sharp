@@ -17,8 +17,9 @@ namespace g3
     {
         public double x;
         public double y;
-        public double z; 
+        public double z;
 
+        public Vector3d() {}
         public Vector3d(double f) { x = y = z = f; }
         public Vector3d(double x, double y, double z) { this.x = x; this.y = y; this.z = z; }
         public Vector3d(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; }
