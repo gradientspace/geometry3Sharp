@@ -31,7 +31,10 @@ namespace g3
         static public readonly Vector3f AxisX = new Vector3f(1.0f, 0.0f, 0.0f);
         static public readonly Vector3f AxisY = new Vector3f(0.0f, 1.0f, 0.0f);
         static public readonly Vector3f AxisZ = new Vector3f(0.0f, 0.0f, 1.0f);
-		static public readonly Vector3f MaxValue = new Vector3f(float.MaxValue,float.MaxValue,float.MaxValue);
+        static public readonly Vector3f UnitX = new Vector3f(1.0f, 0.0f, 0.0f);
+        static public readonly Vector3f UnitY = new Vector3f(0.0f, 1.0f, 0.0f);
+        static public readonly Vector3f UnitZ = new Vector3f(0.0f, 0.0f, 1.0f);
+        static public readonly Vector3f MaxValue = new Vector3f(float.MaxValue,float.MaxValue,float.MaxValue);
 		static public readonly Vector3f MinValue = new Vector3f(float.MinValue,float.MinValue,float.MinValue);
 
         public float this[int key]
