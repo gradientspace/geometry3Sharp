@@ -10,6 +10,7 @@ namespace g3
     {
         T value;
         bool isValid;
+        string[] messages = null;
 
         public T Value { get { return value; } }
         public bool IsValid { get { return isValid; } }
@@ -29,5 +30,11 @@ namespace g3
         {
             isValid = false;
         }
-	}
+
+        public ResultOrFail(bool b, string[] errors)
+        {
+            isValid = false;
+            messages = errors;
+        }
+    }
 }
