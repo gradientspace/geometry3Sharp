@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) Ryan Schmidt (rms@gradientspace.com) - All Rights Reserved
+// Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -58,6 +60,7 @@ namespace g3
                 Readers.Add(new STLFormatReader());
                 Readers.Add(new OFFFormatReader());
                 Readers.Add(new BinaryG3FormatReader());
+                Readers.Add(new GLTFFormatReader());
             }
         }
 
@@ -365,6 +368,38 @@ namespace g3
         public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             OFFReader reader = new OFFReader();
+            reader.warningEvent += messages;
+            var result = reader.Read(new StreamReader(stream), options, builder);
+            return result;
+        }
+    }
+
+
+
+    // MeshFormatReader impl for GLTF
+    public class GLTFFormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions {
+            get {
+                return new List<string>() { "gltf" };
+            }
+        }
+
+
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            try {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                    return ReadFile(stream, builder, options, messages);
+                }
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
+            }
+        }
+
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            GLTFReader reader = new GLTFReader();
             reader.warningEvent += messages;
             var result = reader.Read(new StreamReader(stream), options, builder);
             return result;

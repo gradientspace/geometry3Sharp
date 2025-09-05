@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) Ryan Schmidt (rms@gradientspace.com) - All Rights Reserved
+// Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,6 +37,9 @@ namespace g3
     public class ReadOptions
     {
 		public bool ReadMaterials;
+
+        // allows files to refer to other files with relative paths
+        public string BaseFilePath = "";
 
         // format readers will inevitably have their own settings, we
         // can use this to pass arguments to them
