@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿// Copyright (c) Ryan Schmidt (rms@gradientspace.com) - All Rights Reserved
+// Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
+using System;
 
 namespace g3
 {
@@ -54,7 +53,7 @@ namespace g3
         {
             Row0 = new Vector3d(matF(0,0), matF(0,1), matF(0,2));
             Row1 = new Vector3d(matF(1,0), matF(1,1), matF(1,2));
-            Row2 = new Vector3d(matF(2,0), matF(1,2), matF(2,2));
+            Row2 = new Vector3d(matF(2,0), matF(2,1), matF(2,2));
         }
         public Matrix3d(double m00, double m11, double m22)
         {

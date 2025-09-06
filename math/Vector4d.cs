@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-#if G3_USING_UNITY
-using UnityEngine;
-#endif
+﻿// Copyright (c) Ryan Schmidt (rms@gradientspace.com) - All Rights Reserved
+// Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
+using System;
 
 namespace g3
 {
@@ -20,8 +16,12 @@ namespace g3
         public Vector4d(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; w = v2[3]; }
         public Vector4d(Vector4d copy) { x = copy.x; y = copy.y; z = copy.z; w = copy.w; }
 
-        static public readonly Vector4d Zero = new Vector4d(0.0f, 0.0f, 0.0f, 0.0f);
-        static public readonly Vector4d One = new Vector4d(1.0f, 1.0f, 1.0f, 1.0f);
+        static public readonly Vector4d Zero = new Vector4d(0.0, 0.0, 0.0, 0.0);
+        static public readonly Vector4d One = new Vector4d(1.0, 1.0, 1.0, 1.0);
+        static public readonly Vector4d UnitX = new Vector4d(1.0, 0.0, 0.0, 0.0);
+        static public readonly Vector4d UnitY = new Vector4d(0.0, 1.0, 0.0, 0.0);
+        static public readonly Vector4d UnitZ = new Vector4d(0.0, 0.0, 1.0, 0.0);
+        static public readonly Vector4d UnitW = new Vector4d(0.0, 0.0, 0.0, 1.0);
 
         public double this[int key]
         {
@@ -32,16 +32,16 @@ namespace g3
             }
         }
 
-        public double LengthSquared
+        public readonly double LengthSquared
         {
             get { return x * x + y * y + z * z + w * w; }
         }
-        public double Length
+        public readonly double Length
         {
             get { return Math.Sqrt(LengthSquared); }
         }
 
-        public double LengthL1
+        public readonly double LengthL1
         {
             get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z) + Math.Abs(w); }
         }
@@ -62,7 +62,7 @@ namespace g3
             }
             return length;
         }
-        public Vector4d Normalized {
+        public readonly Vector4d Normalized {
             get {
                 double length = Length;
                 if (length > MathUtil.Epsilon) {
@@ -73,12 +73,12 @@ namespace g3
             }
         }
 
-        public bool IsNormalized {
+        public readonly bool IsNormalized {
             get { return Math.Abs((x * x + y * y + z * z + w * w) - 1) < MathUtil.ZeroTolerance; }
         }
 
 
-        public bool IsFinite
+        public readonly bool IsFinite
         {
             get { double f = x + y + z + w; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
         }
@@ -91,10 +91,10 @@ namespace g3
         }
 
 
-        public double Dot(Vector4d v2) {
+        public readonly double Dot(Vector4d v2) {
             return x * v2.x + y * v2.y + z * v2.z + w * v2.w;
         }
-        public double Dot(ref Vector4d v2) {
+        public readonly double Dot(ref readonly Vector4d v2) {
             return x * v2.x + y * v2.y + z * v2.z + w * v2.w;
         }
 
@@ -103,7 +103,7 @@ namespace g3
         }
 
 
-        public double AngleD(Vector4d v2)
+        public readonly double AngleD(Vector4d v2)
         {
             double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return Math.Acos(fDot) * MathUtil.Rad2Deg;
@@ -112,7 +112,7 @@ namespace g3
         {
             return v1.AngleD(v2);
         }
-        public double AngleR(Vector4d v2)
+        public readonly double AngleR(Vector4d v2)
         {
             double fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return Math.Acos(fDot);
@@ -122,20 +122,20 @@ namespace g3
             return v1.AngleR(v2);
         }
 
-		public double DistanceSquared(Vector4d v2) {
+		public readonly double DistanceSquared(Vector4d v2) {
 			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z, dw = v2.w-w;
 			return dx*dx + dy*dy + dz*dz + dw*dw;
 		}
-		public double DistanceSquared(ref Vector4d v2) {
+		public readonly double DistanceSquared(ref readonly Vector4d v2) {
 			double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z, dw = v2.w-w;
 			return dx*dx + dy*dy + dz*dz + dw*dw;
 		}
 
-        public double Distance(Vector4d v2) {
+        public readonly double Distance(Vector4d v2) {
             double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z, dw = v2.w - w;
 			return Math.Sqrt(dx*dx + dy*dy + dz*dz + dw*dw);
 		}
-        public double Distance(ref Vector4d v2) {
+        public readonly double Distance(ref readonly Vector4d v2) {
             double dx = v2.x-x, dy = v2.y-y, dz = v2.z-z, dw = v2.w - w;
 			return Math.Sqrt(dx*dx + dy*dy + dz*dz + dw*dw);
 		}
@@ -236,7 +236,7 @@ namespace g3
         }
 
 
-        public bool EpsilonEqual(Vector4d v2, double epsilon) {
+        public readonly bool EpsilonEqual(ref readonly Vector4d v2, double epsilon) {
             return Math.Abs(x - v2.x) <= epsilon && 
                    Math.Abs(y - v2.y) <= epsilon &&
                    Math.Abs(z - v2.z) <= epsilon &&
