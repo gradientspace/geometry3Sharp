@@ -104,6 +104,7 @@ namespace g3
     {
         public const int InvalidID = -1;
         public const int NonManifoldID = -2;
+        public const int DegenerateID = -3;
 
 
         public static readonly Vector3d InvalidVertex = new Vector3d(Double.MaxValue, 0, 0);
@@ -1116,12 +1117,10 @@ namespace g3
         }
         public int AppendTriangle(Index3i tv, int gid = -1) {
             if (IsVertex(tv[0]) == false || IsVertex(tv[1]) == false || IsVertex(tv[2]) == false) {
-                Util.gDevAssert(false);
                 return InvalidID;
             }
             if (tv[0] == tv[1] || tv[0] == tv[2] || tv[1] == tv[2]) {
-                Util.gDevAssert(false);
-                return InvalidID;
+                return DegenerateID;
             }
 
             // look up edges. if any already have two triangles, this would 
