@@ -61,6 +61,12 @@ namespace g3
             Row1 = new Vector3d(0, m11, 0);
             Row2 = new Vector3d(0, 0, m22);
         }
+        public Matrix3d(Vector3d diag)
+        {
+            Row0 = new Vector3d(diag.x, 0, 0);
+            Row1 = new Vector3d(0, diag.y, 0);
+            Row2 = new Vector3d(0, 0, diag.z);
+        }
         public Matrix3d(Vector3d v1, Vector3d v2, Vector3d v3, bool bRows)
         {
             if (bRows) {
@@ -178,7 +184,19 @@ namespace g3
                 mat.Row1.x * v.x + mat.Row1.y * v.y + mat.Row1.z * v.z,
                 mat.Row2.x * v.x + mat.Row2.y * v.y + mat.Row2.z * v.z);
         }
+        public static Vector3f operator *(Matrix3d mat, Vector3f v) {
+            return new Vector3f(
+                mat.Row0.x * v.x + mat.Row0.y * v.y + mat.Row0.z * v.z,
+                mat.Row1.x * v.x + mat.Row1.y * v.y + mat.Row1.z * v.z,
+                mat.Row2.x * v.x + mat.Row2.y * v.y + mat.Row2.z * v.z);
+        }
 
+        public Vector3d Multiply(Vector3d v) {
+            return new Vector3d(
+                Row0.x * v.x + Row0.y * v.y + Row0.z * v.z,
+                Row1.x * v.x + Row1.y * v.y + Row1.z * v.z,
+                Row2.x * v.x + Row2.y * v.y + Row2.z * v.z);
+        }
         public Vector3d Multiply(ref Vector3d v) {
             return new Vector3d(
                 Row0.x * v.x + Row0.y * v.y + Row0.z * v.z,
@@ -192,7 +210,7 @@ namespace g3
             vOut.z = Row2.x * v.x + Row2.y * v.y + Row2.z * v.z;
         }
 
-		public static Matrix3d operator *(Matrix3d mat1, Matrix3d mat2)
+        public static Matrix3d operator *(Matrix3d mat1, Matrix3d mat2)
 		{
             double m00 = mat1.Row0.x * mat2.Row0.x + mat1.Row0.y * mat2.Row1.x + mat1.Row0.z * mat2.Row2.x;
             double m01 = mat1.Row0.x * mat2.Row0.y + mat1.Row0.y * mat2.Row1.y + mat1.Row0.z * mat2.Row2.y;

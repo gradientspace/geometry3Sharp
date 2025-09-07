@@ -112,6 +112,13 @@ namespace g3
             Row2 = new Vector4d(mat3x3.Row2.x, mat3x3.Row2.y, mat3x3.Row2.z, 0);
             Row3 = new Vector4d(0, 0, 0, 1);
         }
+        public Matrix4d(ref readonly Matrix3d mat3x3, ref readonly Vector3d Translation)
+        {
+            Row0 = new Vector4d(mat3x3.Row0.x, mat3x3.Row0.y, mat3x3.Row0.z, Translation.x);
+            Row1 = new Vector4d(mat3x3.Row1.x, mat3x3.Row1.y, mat3x3.Row1.z, Translation.y);
+            Row2 = new Vector4d(mat3x3.Row2.x, mat3x3.Row2.y, mat3x3.Row2.z, Translation.z);
+            Row3 = new Vector4d(0, 0, 0, 1);
+        }
 
         /// <summary>
         /// Construct outer-product of u*transpose(v) of u and v
@@ -207,11 +214,11 @@ namespace g3
             return new Vector4d(mat.Row0.Dot(v), mat.Row1.Dot(v), mat.Row2.Dot(v), mat.Row3.Dot(v));
         }
 
-        public readonly Vector4d Multiply(ref readonly Vector4d v) {
+        public readonly Vector4d Multiply(Vector4d v) {
             return new Vector4d(Row0.Dot(v), Row1.Dot(v), Row2.Dot(v), Row3.Dot(v));
         }
 
-        public readonly void Multiply(ref readonly Vector4d v, out Vector4d vOut) {
+        public readonly void Multiply(Vector4d v, out Vector4d vOut) {
             vOut = new Vector4d(
                 Row0.x * v.x + Row0.y * v.y + Row0.z * v.z + Row0.w * v.w,
                 Row1.x * v.x + Row1.y * v.y + Row1.z * v.z + Row1.w * v.w,
@@ -219,14 +226,35 @@ namespace g3
                 Row3.x * v.x + Row3.y * v.y + Row3.z * v.z + Row3.w * v.w );
         }
 
-		public static Matrix4d operator *(Matrix4d mat1, Matrix4d mat2)
+        public readonly Vector3d TransformPointAffine(Vector3d v)
+        {
+            Vector4d vv = new(v.x, v.y, v.z, 1.0);
+            return new Vector3d(Row0.Dot(vv), Row1.Dot(vv), Row2.Dot(vv));
+        }
+        public readonly Vector3f TransformPointAffine(Vector3f v)
+        {
+            Vector4d vv = new(v.x, v.y, v.z, 1.0);
+            return new Vector3f(Row0.Dot(vv), Row1.Dot(vv), Row2.Dot(vv));
+        }
+        public readonly Vector3d TransformVectorAffine(Vector3d v)
+        {
+            Vector4d vv = new(v.x, v.y, v.z, 0.0);
+            return new Vector3d(Row0.Dot(vv), Row1.Dot(vv), Row2.Dot(vv));
+        }
+        public readonly Vector3f TransformVectorAffine(Vector3f v)
+        {
+            Vector4d vv = new(v.x, v.y, v.z, 0.0);
+            return new Vector3f(Row0.Dot(vv), Row1.Dot(vv), Row2.Dot(vv));
+        }
+
+        public static Matrix4d operator *(Matrix4d mat1, Matrix4d mat2)
 		{
             mat2.GetColumns(out Vector4d Col0, out Vector4d Col1, out Vector4d Col2, out Vector4d Col3);
             Vector4d row0 = new Vector4d(mat1.Row0.Dot(Col0), mat1.Row0.Dot(Col1), mat1.Row0.Dot(Col2), mat1.Row0.Dot(Col3));
             Vector4d row1 = new Vector4d(mat1.Row1.Dot(Col0), mat1.Row1.Dot(Col1), mat1.Row1.Dot(Col2), mat1.Row1.Dot(Col3));
             Vector4d row2 = new Vector4d(mat1.Row2.Dot(Col0), mat1.Row2.Dot(Col1), mat1.Row2.Dot(Col2), mat1.Row2.Dot(Col3));
             Vector4d row3 = new Vector4d(mat1.Row3.Dot(Col0), mat1.Row3.Dot(Col1), mat1.Row3.Dot(Col2), mat1.Row3.Dot(Col3));
-            return new Matrix4d(row0, row1, row3, row3, true);
+            return new Matrix4d(row0, row1, row2, row3, true);
 		}
 
 
@@ -269,8 +297,12 @@ namespace g3
             get { return Row3 == Vector4d.UnitW; }
         }
 
+        public readonly bool IsIdentity {
+            get {  return Row0 == Vector4d.UnitX && Row1 == Vector4d.UnitY && Row2 == Vector4d.UnitZ && Row3 == Vector4d.UnitW; }
+        }
 
-		public Matrix4d Inverse() {
+
+        public readonly Matrix4d Inverse() {
             if ( IsAffine ) {
                 // can invert more efficiently
                 // https://stackoverflow.com/questions/2624422/efficient-4x4-matrix-inverse-affine-transform
@@ -285,6 +317,31 @@ namespace g3
         public readonly Matrix4d Transpose()
         {
             return new Matrix4d(in Row0, in Row1, in Row2, in Row3, false);
+        }
+
+
+        public readonly Matrix3d GetAffineTransform() 
+        {
+            return new Matrix3d(
+                Row0.x, Row0.y, Row0.z,
+                Row1.x, Row1.y, Row1.z,
+                Row2.x, Row2.y, Row2.z);
+        }
+        public readonly Vector3d GetAffineTranslation()
+        {
+            return new Vector3d(Row0.w, Row1.w, Row2.w);
+        }
+
+
+        public readonly bool GetAffineNormalTransform(out Matrix3d NormalTransform)
+        {
+            if (IsAffine == false) {
+                NormalTransform = Matrix3d.Identity;
+                return false;
+            }
+            Matrix3d XForm = GetAffineTransform();
+            NormalTransform = XForm.Inverse().Transpose();
+            return true;
         }
 
 
@@ -312,7 +369,10 @@ namespace g3
         {
             return new Matrix4d(Scale.x, Scale.y, Scale.z, 1.0);
         }
-
+        public static Matrix4d Affine(ref readonly Matrix3d AffineTransform)
+        {
+            return new Matrix4d(in AffineTransform);
+        }
 
         public override string ToString() {
             return string.Format("[{0}] [{1}] [{2}] [{3}]", Row0, Row1, Row2, Row3);

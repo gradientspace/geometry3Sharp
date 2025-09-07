@@ -15,6 +15,7 @@ namespace g3
 
         public Quaterniond(double x, double y, double z, double w) { this.x = x; this.y = y; this.z = z; this.w = w; }
         public Quaterniond(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; w = v2[3]; }
+        public Quaterniond(float[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; w = v2[3]; }
         public Quaterniond(Quaterniond q2) { x = q2.x; y = q2.y; z = q2.z; w = q2.w; }
 
         public Quaterniond(Vector3d axis, double AngleDeg) {
