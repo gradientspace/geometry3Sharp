@@ -145,7 +145,7 @@ namespace g3
                     DMesh3? FoundMesh = GetMesh(node.mesh);
                     if (FoundMesh!= null && FoundMesh.TriangleCount > 0) {
                         DMesh3 Copy = new DMesh3(FoundMesh);
-                        MeshTransforms.TransforMesh(Copy, NodeGlobalXForm);
+                        MeshTransforms.TransformMesh(Copy, NodeGlobalXForm);
                         meshBuilder.AppendNewMesh(Copy);
                         new_meshes++;
                         // todo could we append mesh name here somehow??
