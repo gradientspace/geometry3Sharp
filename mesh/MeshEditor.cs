@@ -2,7 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 
 namespace g3
@@ -847,6 +849,88 @@ namespace g3
         }
 
 
+
+#nullable enable
+        public enum AppendGroupPolicy
+        {
+            /// <summary>directly copy GroupIDs from Tource to Target</summary>
+            CopyGroupIDs = 0,
+            /// <summary>Allocate a new Target GroupID for each Source GroupID</summary>
+            RemapGroupIDs = 1,
+            /// <summary>map all GroupIDs on Source to a single GroupID on Target</summary>
+            ConstantGroupID = 2
+        }
+
+        /// <summary>
+        /// Adds geometry of AppendMesh to ToMesh. Vertex map is always returned.
+        /// GroupMap is returned non-null if GroupPolicy is RemapGroupIDs.
+        /// TriMap must be allocated/provided by caller if desired
+        /// If GroupPolicy is ConstantGroupID and SetConstantGroupID == -1, a new group will be allocated from ToMesh
+        /// </summary>
+        public static bool AppendMesh(
+            DMesh3 ToMesh,
+            DMesh3 AppendMesh, 
+            out int[] VertexMap,
+            out int[]? GroupMap,
+            int[]? TriMap = null,
+            AppendGroupPolicy GroupPolicy = AppendGroupPolicy.CopyGroupIDs,
+            int SetConstantGroupID = -1,
+            TransformWrapper Transform = default)
+        {
+            VertexMap = new int[AppendMesh.MaxVertexID];
+            foreach (int vid in AppendMesh.VertexIndices()) {
+                NewVertexInfo vinfo = AppendMesh.GetVertexAll(vid);
+                vinfo.v = Transform.TransformP(vinfo.v);
+                if (vinfo.bHaveN)
+                    vinfo.n = (Vector3f)Transform.TransformN(vinfo.n);
+                int new_vid = ToMesh.AppendVertex(vinfo);
+                VertexMap[vid] = new_vid;
+            }
+
+            GroupMap = null;
+            if (GroupPolicy == AppendGroupPolicy.RemapGroupIDs) {
+                GroupMap = new int[AppendMesh.MaxGroupID];
+                for (int i = 0; i < GroupMap.Length; ++i)
+                    GroupMap[i] = -1;
+            }
+
+            if (SetConstantGroupID < 0 && GroupPolicy == AppendGroupPolicy.ConstantGroupID)
+                SetConstantGroupID = ToMesh.AllocateTriangleGroup();
+
+            foreach (int tid in AppendMesh.TriangleIndices()) {
+                Index3i t = AppendMesh.GetTriangle(tid);
+                t.a = VertexMap[t.a];
+                t.b = VertexMap[t.b];
+                t.c = VertexMap[t.c];
+
+                int gid = (GroupPolicy == AppendGroupPolicy.ConstantGroupID) ? 
+                    SetConstantGroupID : AppendMesh.GetTriangleGroup(tid);
+                if (GroupPolicy == AppendGroupPolicy.RemapGroupIDs) {
+                    if (GroupMap![gid] == -1)
+                        GroupMap[gid] = ToMesh.AllocateTriangleGroup();
+                    gid = GroupMap[gid];
+                }
+
+                int new_tid = ToMesh.AppendTriangle(t, gid);
+                if (TriMap != null && tid < TriMap.Length)
+                    TriMap[tid] = new_tid;
+            }
+
+            return true;
+        }
+        /// <summary>
+        /// Simplified version of full AppendMesh that either sets a constant GroupID, or remaps group IDs
+        /// </summary>
+        public static bool AppendMesh(
+            DMesh3 ToMesh,
+            DMesh3 AppendMesh,
+            int SetGroupID = -1,
+            TransformWrapper Transform = default)
+        {
+            return MeshEditor.AppendMesh(ToMesh, AppendMesh, out int[] mapV, out int[]? mapG, null,
+                (SetGroupID >= 0) ? AppendGroupPolicy.ConstantGroupID : AppendGroupPolicy.RemapGroupIDs, SetGroupID, Transform);
+        }
+#nullable disable
 
 
         public void AppendBox(Frame3d frame, double size)
