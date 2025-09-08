@@ -339,6 +339,68 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Apply Matrix4d transform to a mesh (vertices and normals). 
+        /// Assumes Transform is an Affine transform.
+        /// </summary>
+        public static void TransformMesh(DMesh3 Mesh, Matrix4d Transform)
+        {
+            bool bHasNormals = Mesh.HasVertexNormals;
+            Matrix3d NormalXForm = Matrix3d.Identity;
+            if (bHasNormals) {
+                if (Transform.GetAffineNormalTransform(out NormalXForm) == false)
+                    NormalXForm = Transform.GetAffineTransform();
+            }
 
+            foreach (int vid in Mesh.VertexIndices()) {
+                Vector3d v = Mesh.GetVertex(vid);
+                v = Transform.TransformPointAffine(v);
+                Mesh.SetVertex(vid, v);
+                if (bHasNormals) {
+                    Vector3f n = Mesh.GetVertexNormal(vid);
+                    n = NormalXForm * n;
+                    Mesh.SetVertexNormal(vid, n);
+                }
+            }
+
+        }
     }
+
+
+#nullable enable
+    /// <summary>
+    /// TransformWrapper is a struct-of-Func<>'s that can be used to
+    /// pass around arbitrary, optionally-defined position/normal transforms.
+    /// 
+    /// Use TransformWrapper wrapper = default for no-transform
+    /// 
+    /// Use TransformP() / TransformN() to handle all cases
+    /// </summary>
+    public struct TransformWrapper
+    {
+        public Func<Vector3d, Vector3d>? TransformPosition = null;
+        public Func<Vector3d, Vector3d>? TransformNormal = null;
+        public TransformWrapper() {}
+
+        public readonly Vector3d TransformP(Vector3d p) {
+            return (TransformPosition != null) ? TransformPosition(p) : p;
+        }
+        public readonly Vector3d TransformN(Vector3d n) {
+            return (TransformNormal != null) ? TransformNormal(n) : n;
+        }
+
+
+        public static TransformWrapper MakeFromAffine(Matrix4d Transform)
+        {
+            Matrix3d NormalTransform;
+            if (Transform.GetAffineNormalTransform(out NormalTransform) == false)
+                NormalTransform = Transform.GetAffineTransform();
+            TransformWrapper mt;
+            mt.TransformPosition = Transform.TransformPointAffine;
+            mt.TransformNormal = NormalTransform.Multiply;
+            return mt;
+        }
+    }
+#nullable disable
+
 }
