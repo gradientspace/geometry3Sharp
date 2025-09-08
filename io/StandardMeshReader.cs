@@ -61,6 +61,7 @@ namespace g3
                 Readers.Add(new OFFFormatReader());
                 Readers.Add(new BinaryG3FormatReader());
                 Readers.Add(new GLTFFormatReader());
+                Readers.Add(new GLBFormatReader());
             }
         }
 
@@ -251,11 +252,7 @@ namespace g3
     // MeshFormatReader impl for OBJ
     public class OBJFormatReader : MeshFormatReader
     {
-        public List<string> SupportedExtensions { get {
-                return new List<string>() { "obj" };
-            }
-        }
-
+        public List<string> SupportedExtensions { get; set; } = ["obj"];
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
@@ -288,11 +285,7 @@ namespace g3
     // MeshFormatReader impl for STL
     public class STLFormatReader : MeshFormatReader
     {
-        public List<string> SupportedExtensions { get {
-                return new List<string>() { "stl" };
-            }
-        }
-
+        public List<string> SupportedExtensions { get; set; } = ["stl"];
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
@@ -348,11 +341,7 @@ namespace g3
     // MeshFormatReader impl for OFF
     public class OFFFormatReader : MeshFormatReader
     {
-        public List<string> SupportedExtensions { get {
-                return new List<string>() { "off" };
-            }
-        }
-
+        public List<string> SupportedExtensions { get; set; } = ["off"];
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
@@ -379,12 +368,7 @@ namespace g3
     // MeshFormatReader impl for GLTF
     public class GLTFFormatReader : MeshFormatReader
     {
-        public List<string> SupportedExtensions {
-            get {
-                return new List<string>() { "gltf" };
-            }
-        }
-
+        public List<string> SupportedExtensions { get; set; } = ["gltf"];
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
@@ -401,21 +385,43 @@ namespace g3
         {
             GLTFReader reader = new GLTFReader();
             reader.warningEvent += messages;
-            var result = reader.Read(new StreamReader(stream), options, builder);
+            IOReadResult result = reader.Read(new StreamReader(stream), options, builder);
+            return result;
+        }
+    }
+
+    // MeshFormatReader impl for GLB
+    public class GLBFormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions { get; set; } = ["glb"];
+
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            try {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                    return ReadFile(stream, builder, options, messages);
+                }
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
+            }
+        }
+
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            GLBReader reader = new GLBReader();
+            reader.warningEvent += messages;
+            IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
             return result;
         }
     }
 
 
 
+
     // MeshFormatReader impl for g3mesh
     public class BinaryG3FormatReader : MeshFormatReader
     {
-        public List<string> SupportedExtensions {
-            get {
-                return new List<string>() { "g3mesh" };
-            }
-        }
+        public List<string> SupportedExtensions { get; set; } = ["g3mesh"];
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {

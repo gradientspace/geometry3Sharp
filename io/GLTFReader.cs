@@ -5,20 +5,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Xml.Linq;
 
 namespace g3
 {
 #nullable enable
-    public class GLTFReader : IMeshReader
+    public struct GLTFProcessingOptions
     {
-        // connect to this to get warning messages
-        public event ParsingMessagesHandler? warningEvent;
+        public GLTFProcessingOptions() { }
 
         // if non-null, only meshes with names starting with strings in this list will be included
         public string[]? IncludeMeshNamePrefixes = null;
         //public string[]? IncludeMeshNamePrefixes = [""];
         // invert above filter (ie discard meshes w/ those name prefixes)
-        bool bInvertMeshNameFilter = false;
+        public bool bInvertMeshNameFilter = false;
 
         public enum WeldMode
         {
@@ -28,13 +28,24 @@ namespace g3
         }
         public WeldMode WeldingStrategy = WeldMode.NoWelding;
 
-
         public enum MeshingMode
         {
             SingleCombinedMesh = 0,
             WorldspaceMeshPerNode = 1
         }
         public MeshingMode MeshStrategy = MeshingMode.SingleCombinedMesh;
+    }
+
+
+    public class GLTFReader : IMeshReader
+    {
+        // connect to this to get warning messages
+        public event ParsingMessagesHandler? warningEvent;
+
+        public GLTFProcessingOptions ProcessingOptions = default;
+
+        // set this to chunk1 data when reading from GLB file
+        public byte[]? GLBBinaryBuffer = null;
 
 
         public IOReadResult Read(TextReader reader, ReadOptions options, IMeshBuilder builder)
@@ -60,14 +71,14 @@ namespace g3
 
 			root.RootPath = options.BaseFilePath;
 
-            if (MeshStrategy == MeshingMode.SingleCombinedMesh) 
+            if (ProcessingOptions.MeshStrategy == GLTFProcessingOptions.MeshingMode.SingleCombinedMesh) 
             {
                 DMesh3 combinedMesh = ExtractCombinedMesh(root);
                 if (combinedMesh.TriangleCount == 0)
                     return new IOReadResult(IOCode.GenericReaderError, "GLTF file or scene contains no triangles");
                 builder.AppendNewMesh(combinedMesh);
             } 
-            else if (MeshStrategy == MeshingMode.WorldspaceMeshPerNode)
+            else if (ProcessingOptions.MeshStrategy == GLTFProcessingOptions.MeshingMode.WorldspaceMeshPerNode)
             {
                 int NumMeshes = ExtractPerNodeMeshes(root, builder);
                 if (NumMeshes == 0)
@@ -111,7 +122,7 @@ namespace g3
 
             // recursively append all nodes
             int total_meshes = 0;
-            int use_scene = (root.scene >= 0 && root.scene < root.scenes.Length) ? root.scene : 0;
+            int use_scene = (root.scene != null && (int)root.scene >= 0 && (int)root.scene < root.scenes.Length) ? (int)root.scene : 0;
             GLTFFile.Scene scene = root.scenes[use_scene];
             foreach (int node in (scene.nodes ?? [])) {
                 DescendNode(root, node, Matrix4d.Identity, meshBuilder, out int new_meshes);
@@ -126,23 +137,20 @@ namespace g3
             Matrix4d NodeLocalXForm = node.GetTransformMatrix();
             Matrix4d NodeGlobalXForm = ParentGlobalXForm * NodeLocalXForm;
 
-            if (node.mesh >= 0) {
+            if (node.mesh != null) {
+                int mesh_index = (int)node.mesh;
+
                 bool bIncludeMesh = true;
-                if (node.mesh < 0 || node.mesh > root.meshes!.Length) {
-                    warningEvent?.Invoke($"Node {NodeIndex}:[{node.name}] has out-of-bounds mesh field {node.mesh}", null);
+                if (mesh_index < 0 || mesh_index > root.meshes!.Length) {
+                    warningEvent?.Invoke($"Node {NodeIndex}:[{node.name}] has out-of-bounds mesh field {mesh_index}", null);
                     bIncludeMesh = false;
                 }
 
-                if (bIncludeMesh && IncludeMeshNamePrefixes != null) {
-                    GLTFFile.Mesh meshInfo = root.meshes![node.mesh];
-                    bool bPassesFilters = Array.Exists(IncludeMeshNamePrefixes,
-                        (string filter) => { return meshInfo.name.StartsWith(filter); });
-                    if (bPassesFilters == bInvertMeshNameFilter)
-                        bIncludeMesh = false;
-                }
+                GLTFFile.Mesh meshInfo = root.meshes![mesh_index];
+                bIncludeMesh &= TestShouldIncludeMesh(meshInfo);
 
                 if (bIncludeMesh) {
-                    DMesh3? FoundMesh = GetMesh(node.mesh);
+                    DMesh3? FoundMesh = GetMesh(mesh_index);
                     if (FoundMesh!= null && FoundMesh.TriangleCount > 0) {
                         DMesh3 Copy = new DMesh3(FoundMesh);
                         MeshTransforms.TransformMesh(Copy, NodeGlobalXForm);
@@ -178,8 +186,8 @@ namespace g3
             DMesh3 ResultMesh = new DMesh3(bHaveNormals, false, bHaveUVs, true);
 
             // recursively append all nodes
-			int use_scene = (root.scene >= 0 && root.scene < root.scenes.Length) ? root.scene : 0;
-			GLTFFile.Scene scene = root.scenes[use_scene];
+            int use_scene = (root.scene != null && (int)root.scene >= 0 && (int)root.scene < root.scenes.Length) ? (int)root.scene : 0;
+            GLTFFile.Scene scene = root.scenes[use_scene];
 			foreach(int node in (scene.nodes ?? [])) 
             {
 				AppendNode(root, node, Matrix4d.Identity, ResultMesh);
@@ -193,25 +201,21 @@ namespace g3
 			Matrix4d NodeLocalXForm = node.GetTransformMatrix();
 			Matrix4d NodeGlobalXForm = ParentGlobalXForm * NodeLocalXForm;
 
-			if (node.mesh >= 0) 
+			if (node.mesh != null) 
 			{
+                int mesh_index = (int)node.mesh;
+
                 bool bIncludeMesh = true;
-                if ( node.mesh < 0 || node.mesh > root.meshes!.Length ) {
-                    warningEvent?.Invoke($"Node {NodeIndex}:[{node.name}] has out-of-bounds mesh field {node.mesh}", null);
+                if (mesh_index< 0 || mesh_index > root.meshes!.Length ) {
+                    warningEvent?.Invoke($"Node {NodeIndex}:[{node.name}] has out-of-bounds mesh field {mesh_index}", null);
                     bIncludeMesh = false;
                 }
 
-                if (bIncludeMesh && IncludeMeshNamePrefixes != null) 
-                {
-                    GLTFFile.Mesh meshInfo = root.meshes![node.mesh];
-                    bool bPassesFilters = Array.Exists(IncludeMeshNamePrefixes,
-                        (string filter) => { return meshInfo.name.StartsWith(filter); });
-                    if (bPassesFilters == bInvertMeshNameFilter)
-                        bIncludeMesh = false;
-                }
+                GLTFFile.Mesh meshInfo = root.meshes![mesh_index];
+                bIncludeMesh &= TestShouldIncludeMesh(meshInfo);
 
                 if (bIncludeMesh) {
-                    DMesh3? FoundMesh = GetMesh(node.mesh);
+                    DMesh3? FoundMesh = GetMesh(mesh_index);
                     if (FoundMesh!= null && FoundMesh.TriangleCount > 0)
                         AppendMesh(FoundMesh, NodeGlobalXForm, AppendToMesh);
                 }
@@ -222,6 +226,16 @@ namespace g3
 			}
 
 		}
+
+
+        protected bool TestShouldIncludeMesh(GLTFFile.Mesh meshInfo)
+        {
+            if (ProcessingOptions.IncludeMeshNamePrefixes == null)
+                return true;
+            bool bPassesFilters = Array.Exists(ProcessingOptions.IncludeMeshNamePrefixes,
+                (string filter) => { return meshInfo.name != null && meshInfo.name.StartsWith(filter); });
+            return (bPassesFilters == ProcessingOptions.bInvertMeshNameFilter);
+        }
 
 
 
@@ -257,7 +271,13 @@ namespace g3
                 {
                     GLTFFile.Buffer bufferInfo = root.buffers[bufferidx];
     
-                    if (bufferInfo.uri != null) {
+                    // TODO handle data URI
+
+                    if (bufferInfo.uri != null) 
+                    {
+                        if (bufferInfo.uri.StartsWith("data:"))
+                            throw new NotImplementedException("Data URIs are not supported yet (todo)");
+
                         // can URI be a web link?? ugh
                         string BufferFilePath = Path.Combine(root.RootPath, bufferInfo.uri);
                         if (File.Exists(BufferFilePath) == false) {
@@ -269,6 +289,11 @@ namespace g3
                             warningEvent?.Invoke($"buffer {bufferidx}:{bufferInfo.uri} - file could not be read or contains no data", null);
                             continue;
                         }
+                        BufferSet.AddBuffer(buffer);
+                    } 
+                    else if (bufferidx == 0 && GLBBinaryBuffer != null) 
+                    {
+                        GLTFBuffer buffer = new GLTFBuffer(GLBBinaryBuffer);
                         BufferSet.AddBuffer(buffer);
                     } 
                     else 
@@ -312,7 +337,7 @@ namespace g3
             for ( int i = 0; i < NumPrimitives; ++i )
             {
                 GLTFFile.Primitive primitive = meshInfo.primitives[i];
-                if (WeldingStrategy != WeldMode.NoWelding && NumPrimitives > 1) {
+                if (ProcessingOptions.WeldingStrategy != GLTFProcessingOptions.WeldMode.NoWelding && NumPrimitives > 1) {
                     // even in full-mesh weld strategy, we want to weld each primitive 
                     // separately because it may avoid ambiguity at mesh level
                     DMesh3 primitiveMesh = new DMesh3(false, false, false, true);
@@ -325,7 +350,7 @@ namespace g3
                 groupid++;
             }
 
-			if ( WeldingStrategy == WeldMode.WeldMesh ) {
+			if ( ProcessingOptions.WeldingStrategy == GLTFProcessingOptions.WeldMode.WeldMesh ) {
                 ApplyWelding(CombinedMesh);
             }
 
@@ -389,9 +414,10 @@ namespace g3
                 }
             }
 
-            Util.gDevAssert(primitive.indices >= 0);     // otherwise need to handle this differently...
+            int indices_accessor = (primitive.indices == null) ? -1 : (int)primitive.indices;
+            Util.gDevAssert(indices_accessor >= 0);     // otherwise need to handle this differently...
 
-            GLTFFile.Accessor indicesAccessor = root.accessors![primitive.indices];
+            GLTFFile.Accessor indicesAccessor = root.accessors![indices_accessor];
             GLTFFile.EElementType indicesElemType = indicesAccessor.GetElementType();
             
             // this gross switch avoids converting buffer types...but so much duplicated code :(

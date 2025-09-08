@@ -19,8 +19,8 @@ namespace g3
 
         public struct Asset
         {
-            public string copyright { get; set; } = "";
-            public string generator { get; set; } = "";
+            public string? copyright { get; set; } = null;
+            public string? generator { get; set; } = null;
             public string version { get; set; } = "2.0";
 
             public Asset() { }
@@ -51,7 +51,7 @@ namespace g3
         public readonly static string[] EElementTypeStrings =
             ["SCALAR", "VEC2", "VEC3", "VEC4", "MAT2", "MAT3", "MAT4"];
         public readonly static int[] EElementTypeElemCount = [1, 2, 3, 4, 4, 8, 16];
-
+        public static string GetElementTypeString(EElementType type) { return EElementTypeStrings[(int)type]; }
 
         public enum EMeshAttribute
         {
@@ -97,19 +97,26 @@ namespace g3
 
         public struct Accessor
         {
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int bufferView { get; set; } = 0;
+            
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int byteOffset { get; set; } = 0;
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int componentType { get; set; } = (int)EComponentType.Float;
+            
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int count { get; set; } = 0;
+            
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public string type { get; set; } = "VEC3";
 
             // min/max could be int or float...
-            //public float[]? min { get; set; } = null;
-            //public float[]? max { get; set; } = null;
             public Decimal[]? min { get; set; } = null;
             public Decimal[]? max { get; set; } = null;
 
-            public SparseAccessorInfo sparse { get; set; }
+            public SparseAccessorInfo? sparse { get; set; } = null;
 
             [JsonIgnore]
             public EComponentType ComponentTypeEnum {
@@ -156,13 +163,21 @@ namespace g3
 
         public struct BufferView
         {
-            public string name { get; set; } = "";
+            public string? name { get; set; } = null;
+            
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int buffer { get; set; } = 0;
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int byteLength { get; set; } = 0;
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int byteOffset { get; set; } = 0;
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public int byteStride { get; set; } = 0;
 
-            public int target { get; set; } = 0;
+            public int? target { get; set; } = null;
 
 
             public BufferView() { }
@@ -171,8 +186,10 @@ namespace g3
 
         public struct Buffer
         {
-            public string name { get; set; } = "";
-            public string uri { get; set; } = "";
+            public string? name { get; set; } = null;
+            public string? uri { get; set; } = null;
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int byteLength { get; set; } = 0;
 
             public Buffer() { }
@@ -181,14 +198,14 @@ namespace g3
 
         public struct Image
         {
-            public string name { get; set; } = "";
+            public string? name { get; set; } = null;
 
             // only one of these can be defined
-            public int bufferView { get; set; } = -1;
-            public string uri { get; set; } = "";
+            public int? bufferView { get; set; } = null;
+            public string? uri { get; set; } = null;
 
             // must be defined if bufferView is defined
-            public string mimeType { get; set; } = "";
+            public string? mimeType { get; set; } = null;
 
             public Image() { }
         }
@@ -196,30 +213,104 @@ namespace g3
 
         public struct Texture
         {
-            public string name { get; set; } = "";
-            public int source { get; set; } = -1;
-            public int sampler { get; set; } = -1;      // default undefined
+            public string? name { get; set; } = null;
+            public int? source { get; set; } = null;
+            public int? sampler { get; set; } = null;      // default undefined
 
             public Texture() { }
         }
 
 
-
-
-        public struct PrimitiveAttributes
+        public enum ESamplerMagFilter { NEAREST = 9728, LINEAR = 9729 };
+        public enum ESamplerMinFilter { 
+            NEAREST = 9728, LINEAR = 9729, 
+            NEAREST_MIPMAP_NEAREST = 9984, LINEAR_MIPMAP_NEAREST = 9985,
+            NEAREST_MIPMAP_LINEAR = 9986, LINEAR_MIPMAP_LINEAR = 9987
+        };
+        public enum EWrapMode { CLAMP_TO_EDGE = 33071, MIRRORED_REPEAT = 33648, REPEAT = 10497 };
+        public struct Sampler
         {
-            public PrimitiveAttributes() { }
+            public string? name { get; set; } = null;
+
+            public int? magFilter { get; set; } = null;     // ESamplerMagFilter
+            public int? minFilter { get; set; } = null;     // ESamplerMinFilter
+
+            public int? wrapS { get; set; } = null;     // EWrapMode, REPEAT if undefined
+            public int? wrapT { get; set; } = null;     // EWrapMode, REPEAT if undefined
+
+            public Sampler() { }
+        }
+
+
+
+        public struct TextureInfo
+        {
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+            public int index { get; set; } = -1;        // must be defined
+
+            public int texCoord { get; set; } = 0;      // defaults to 0
+
+            public TextureInfo() { }
+        }
+        public struct NormalTextureInfo
+        {
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+            public int index { get; set; } = -1;        // must be defined
+
+            public int texCoord { get; set; } = 0;      // defaults to 0
+            public Decimal? scale { get; set; } = null; // defaults to 1
+
+            public NormalTextureInfo() { }
+        }
+        public struct OcclusionTextureInfo
+        {
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+            public int index { get; set; } = -1;        // must be defined
+
+            public int texCoord { get; set; } = 0;          // defaults to 0
+            public Decimal? strength { get; set; } = null;  // defaults to 1
+
+            public OcclusionTextureInfo() { }
+        }
+        public struct PBRMetallicRoughness
+        {
+            public Decimal[]? baseColorFactor { get; set; } = null;
+            public TextureInfo? baseColorTexture { get; set; } = null;
+
+            public Decimal? metallicFactor { get; set; } = null;    // default = 1
+            public Decimal? roughnessFactor { get; set; } = null;    // default = 1
+
+            public TextureInfo? metallicRoughnessTexture { get; set; } = null;
+
+            public PBRMetallicRoughness() { }
+        }
+        public struct Material
+        {
+            // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material
+            public string? name { get; set; } = null;
+
+            public PBRMetallicRoughness? pbrMetallicRoughness { get; set; } = null;
+            public NormalTextureInfo? normalTexture { get; set; } = null;
+            public OcclusionTextureInfo? occlusionTexture { get; set; } = null;
+            public Decimal[]? emissiveFactor { get; set; } = null;
+            public string? alphaMode { get; set; } = null;       // valid values are "OPAQUE", "MASK", "BLEND"
+            public Decimal? alphaCutoff { get; set; } = null;    // default = 0.5
+            public bool doubleSided { get; set; } = false;
+
+            public Material() { }
         }
 
 
         public struct Primitive
         {
 
-            public int indices { get; set; } = -1;
-            public int material { get; set; } = -1;
+            public int? indices { get; set; } = null;
+
+            public int? material { get; set; } = null;
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public int mode { get; set; } = 4;
 
-            //public PrimitiveAttributes attributes { get; set; }
             public Dictionary<string, int>? attributes { get; set; } = null;
 
             public Primitive() { }
@@ -228,7 +319,7 @@ namespace g3
 
         public struct Mesh
         {
-            public string name { get; set; } = "";
+            public string? name { get; set; } = null;
             public Primitive[]? primitives { get; set; } = null;
 
             public Mesh() { }
@@ -238,8 +329,9 @@ namespace g3
 
         public struct Node
         {
-            public string name { get; set; } = "";
-            public int mesh { get; set; } = -1;
+            public string? name { get; set; } = null;
+
+            public int? mesh { get; set; } = null;
 
             public float[]? matrix { get; set; } = null;
 
@@ -273,7 +365,7 @@ namespace g3
 
         public struct Scene
         {
-            public string name { get; set; } = "";
+            public string? name { get; set; } = null;
             public int[]? nodes { get; set; } = null;
 
             public Scene() { }
@@ -297,10 +389,12 @@ namespace g3
 
             public Image[]? images { get; set; } = null;
             public Texture[]? textures { get; set; } = null;
+            public Sampler[]? samplers { get; set; } = null;
+            public Material[]? materials { get; set; } = null;
 
             public Node[]? nodes { get; set; } = null;
             public Scene[]? scenes { get; set; } = null;
-            public int scene { get; set; } = -1;          // index of default scene
+            public int? scene { get; set; } = null;          // index of default scene (defaults to 0)
 
             public object? extensions { get; set; } = null;
             public object? extras { get; set; } = null;
@@ -314,6 +408,17 @@ namespace g3
         }
 
 
+        public struct GLBHeader
+        {
+            public uint magic;
+            public uint version;
+            public uint length;
+
+            public const uint MagicNumber = 0x46546C67;      // "glTF" in ASCII
+        }
+        public const uint GLB_ChunkType_JSON = 0x4E4F534A;
+        public const uint GLB_ChunkType_BIN = 0x004E4942;
+
 
         public static ResultOrFail<Root> ParseFile(Stream utf8Stream)
         {
@@ -323,12 +428,13 @@ namespace g3
             return new ResultOrFail<Root>( Result! );
         }
 
+
     }
 
 
     public class GLTFBuffer
     {
-        byte[] data;
+        byte[] data;        // could this be a Span<byte> ?
         
         public GLTFBuffer(string binFileName)
         {
@@ -337,6 +443,10 @@ namespace g3
             } catch (Exception) {
                 data = [];
             }
+        }
+        public GLTFBuffer(byte[] ExternalData)
+        {
+            data = ExternalData;
         }
 
         public bool IsValid {
