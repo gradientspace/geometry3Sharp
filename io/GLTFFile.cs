@@ -12,6 +12,8 @@ namespace g3
 {
 #nullable enable
 
+    // GLTF 2.0 spec: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
+
     public class GLTFFile
     {
 
@@ -237,7 +239,7 @@ namespace g3
         public struct Node
         {
             public string name { get; set; } = "";
-            public int mesh { get; set; } = 0;
+            public int mesh { get; set; } = -1;
 
             public float[]? matrix { get; set; } = null;
 
@@ -249,6 +251,23 @@ namespace g3
             public int[]? children { get; set; } = null;
 
             public Node() { }
+
+            public readonly Matrix4d GetTransformMatrix()
+            {
+                if (matrix != null)
+                    return new Matrix4d(matrix).Transpose();    // gltf is column-major but we use row-major...
+
+                if (translation == null && rotation == null && scale == null)
+                    return Matrix4d.Identity;
+
+                // order is T * R * S ...
+                Vector3d Scale = (scale != null) ? new Vector3d(scale[0], scale[1], scale[2]) : Vector3d.One;
+                Quaterniond Rotation = (rotation != null) ? new Quaterniond(rotation) : Quaterniond.Identity;
+                Matrix3d RS = Rotation.ToRotationMatrix() * new Matrix3d(Scale);
+                Vector3d T = (translation != null) ? new Vector3d(translation[0], translation[1], translation[2]) : Vector3d.Zero;
+                //return Matrix4d.Affine(in RS) * Matrix4d.Translation(T);
+                return new Matrix4d(in RS, in T);
+            }
         }
 
 
@@ -313,13 +332,20 @@ namespace g3
         
         public GLTFBuffer(string binFileName)
         {
-            data = File.ReadAllBytes(binFileName);
+            try {
+                data = File.ReadAllBytes(binFileName);
+            } catch (Exception) {
+                data = [];
+            }
         }
 
+        public bool IsValid {
+            get { return data != null && data.Length > 0; }
+        }
 
-        public Span<byte> GetBytes(GLTFFile.BufferView bufferView, int additionalOffset = 0)
+        public Span<byte> GetBytes(GLTFFile.BufferView bufferView, int BytesPerElem)
         {
-            if (bufferView.byteStride != 0)
+            if (bufferView.byteStride != 0 && bufferView.byteStride != BytesPerElem)
                 throw new NotImplementedException();
 
             int byteLen = bufferView.byteLength;
@@ -331,42 +357,42 @@ namespace g3
         {
             Util.gDevAssert(accessor.ComponentTypeEnum == GLTFFile.EComponentType.UnsignedInt);
             int BytesPerElem = accessor.GetElementByteCount();
-            Span<byte> accessorSpan = GetBytes(bufferView).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
+            Span<byte> accessorSpan = GetBytes(bufferView, BytesPerElem).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
             return MemoryMarshal.Cast<byte, uint>(accessorSpan);
         }
         public Span<ushort> GetUShortBuffer(GLTFFile.Accessor accessor, GLTFFile.BufferView bufferView)
         {
             Util.gDevAssert(accessor.ComponentTypeEnum == GLTFFile.EComponentType.UnsignedShort);
             int BytesPerElem = accessor.GetElementByteCount();
-            Span<byte> accessorSpan = GetBytes(bufferView).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
+            Span<byte> accessorSpan = GetBytes(bufferView, BytesPerElem).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
             return MemoryMarshal.Cast<byte, ushort>(accessorSpan);
         }
         public Span<short> GetShortBuffer(GLTFFile.Accessor accessor, GLTFFile.BufferView bufferView)
         {
             Util.gDevAssert(accessor.ComponentTypeEnum == GLTFFile.EComponentType.SignedShort);
             int BytesPerElem = accessor.GetElementByteCount();
-            Span<byte> accessorSpan = GetBytes(bufferView).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
+            Span<byte> accessorSpan = GetBytes(bufferView, BytesPerElem).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
             return MemoryMarshal.Cast<byte, short>(accessorSpan);
         }
         public Span<byte> GetByteBuffer(GLTFFile.Accessor accessor, GLTFFile.BufferView bufferView)
         {
             Util.gDevAssert(accessor.ComponentTypeEnum == GLTFFile.EComponentType.UnsignedByte);
             int BytesPerElem = accessor.GetElementByteCount();
-            Span<byte> accessorSpan = GetBytes(bufferView).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
+            Span<byte> accessorSpan = GetBytes(bufferView, BytesPerElem).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
             return accessorSpan;
         }
         public Span<sbyte> GetSignedByteBuffer(GLTFFile.Accessor accessor, GLTFFile.BufferView bufferView)
         {
             Util.gDevAssert(accessor.ComponentTypeEnum == GLTFFile.EComponentType.SignedByte);
             int BytesPerElem = accessor.GetElementByteCount();
-            Span<byte> accessorSpan = GetBytes(bufferView).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
+            Span<byte> accessorSpan = GetBytes(bufferView, BytesPerElem).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
             return MemoryMarshal.Cast<byte, sbyte>(accessorSpan);
         }
         public Span<float> GetFloatBuffer(GLTFFile.Accessor accessor, GLTFFile.BufferView bufferView)
         {
             Util.gDevAssert(accessor.ComponentTypeEnum == GLTFFile.EComponentType.Float);
             int BytesPerElem = accessor.GetElementByteCount();
-            Span<byte> accessorSpan = GetBytes(bufferView).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
+            Span<byte> accessorSpan = GetBytes(bufferView, BytesPerElem).Slice(accessor.byteOffset, accessor.count*BytesPerElem);
             return MemoryMarshal.Cast<byte, float>(accessorSpan);
         }
 
