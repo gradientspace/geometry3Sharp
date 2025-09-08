@@ -2,6 +2,7 @@
 [Cleanup]
 - audit for class types that could be structs - distance/, intersection/, etc
 - update implicit API to use double instead of float
+- remove gs namespace
 
 [Serialization]
 - add JsonConverter for various core types (Vector2/Vector3/Vector4, Quat, Frame, Transform, ... ?)
