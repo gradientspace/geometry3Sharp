@@ -1182,11 +1182,9 @@ namespace g3
                 return MeshResult.Failed_TriangleAlreadyExists;
 
             if (IsVertex(tv[0]) == false || IsVertex(tv[1]) == false || IsVertex(tv[2]) == false) {
-                Util.gDevAssert(false);
                 return MeshResult.Failed_NotAVertex;
             }
             if (tv[0] == tv[1] || tv[0] == tv[2] || tv[1] == tv[2]) {
-                Util.gDevAssert(false);
                 return MeshResult.Failed_InvalidNeighbourhood;
             }
 
