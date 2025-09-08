@@ -97,6 +97,9 @@ namespace g3
 
     public struct WriteOptions
     {
+        public string WriteFilename;        // base filename for write (optional)
+        public string WritePath;            // path that base filename is being written to (optional)
+
 		public bool bWriteBinary;        	// write binary format if supported (STL)
 
 		public bool bPerVertexNormals;		// write per-vertex normals (OBJ)

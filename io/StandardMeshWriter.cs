@@ -54,6 +54,15 @@ namespace g3
         }
 
 
+        static void configure_options(string sFilename, ref WriteOptions options)
+        {
+            if (options.WriteFilename == null || options.WriteFilename.Length == 0)
+                options.WriteFilename = Path.GetFileName(sFilename);
+            if (options.WritePath == null || options.WritePath.Length == 0)
+                options.WritePath = Path.GetDirectoryName(sFilename);
+        }
+
+
         static public IOWriteResult WriteMeshes(string sFilename, List<DMesh3> vMeshes, WriteOptions options)
         {
             List<WriteMesh> meshes = new List<g3.WriteMesh>();
@@ -76,6 +85,8 @@ namespace g3
 
         public IOWriteResult Write(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
         {
+            configure_options(sFilename, ref options);
+
             Func<string, List<WriteMesh>, WriteOptions, IOWriteResult> writeFunc = null;
 
             string sExtension = Path.GetExtension(sFilename);
@@ -85,6 +96,8 @@ namespace g3
                 writeFunc = Write_STL;
             else if (sExtension.Equals(".off", StringComparison.OrdinalIgnoreCase))
                 writeFunc = Write_OFF;
+            else if (sExtension.Equals(".gltf", StringComparison.OrdinalIgnoreCase))
+                writeFunc = Write_GLTF;
             else if (sExtension.Equals(".g3mesh", StringComparison.OrdinalIgnoreCase))
                 writeFunc = Write_G3Mesh;
 
@@ -178,6 +191,27 @@ namespace g3
                     w.Flush();
                     return result;
                 }
+            } finally {
+                CloseStreamF(stream);
+            }
+        }
+
+
+        IOWriteResult Write_GLTF(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            Stream stream = OpenStreamF(sFilename);
+            if (stream == null)
+                return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
+
+            try {
+                StreamWriter w = new StreamWriter(stream);
+                GLTFWriter writer = new GLTFWriter() {
+                    //OpenStreamF = this.OpenStreamF,
+                    //CloseStreamF = this.CloseStreamF
+                };
+                var result = writer.Write(w, vMeshes, options);
+                w.Flush();
+                return result;
             } finally {
                 CloseStreamF(stream);
             }
