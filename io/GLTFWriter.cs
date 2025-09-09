@@ -24,6 +24,7 @@ namespace g3
             stream.Dispose();
         };
 
+        public bool bWritingGLB = false;
 
         public IOWriteResult Write(TextWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
         {
@@ -68,11 +69,13 @@ namespace g3
                     Mesh = new DMesh3(Mesh, true);
 
                 float[] vertices = new float[Mesh.VertexCount*3];
-                AxisAlignedBox3d Bounds = AxisAlignedBox3d.Empty;
+                Vector3f Max = Vector3f.MinValue;
+                Vector3f Min = Vector3f.MaxValue;
                 for (int i = 0; i < Mesh.VertexCount; ++i) {
-                    Vector3d v = Mesh.GetVertex(i);
-                    vertices[3*i] = (float)v.x; vertices[3*i+1] = (float)v.y; vertices[3*i+2] = (float)v.z;
-                    Bounds.Contain(v);
+                    Vector3f v = (Vector3f)Mesh.GetVertex(i);
+                    vertices[3*i] = v.x; vertices[3*i+1] = v.y; vertices[3*i+2] = v.z;
+                    Min.x = Math.Min(v.x, Min.x); Min.y = Math.Min(v.y, Min.y); Min.z = Math.Min(v.z, Min.z);
+                    Max.x = Math.Max(v.x, Max.x); Max.y = Math.Max(v.y, Max.y); Max.z = Math.Max(v.z, Max.z);
                 }
 
                 float[]? normals = null;
@@ -93,8 +96,6 @@ namespace g3
                     }
                 }
 
-                // TODO UV/normal
-
                 uint[] triangles = new uint[Mesh.TriangleCount*3];
                 for (int i = 0; i < Mesh.TriangleCount; ++i) {
                     Index3i t = Mesh.GetTriangle(i);
@@ -102,31 +103,34 @@ namespace g3
                 }
 
                 GLTFFile.BufferView verticesView = addbuffer_func(MemoryMarshal.Cast<float, byte>(vertices));
+                verticesView.target = (int)GLTFFile.EBufferViewTarget.ARRAY_BUFFER;
                 int vertsBufferIdx = views.Count; views.Add(verticesView);
                 GLTFFile.Accessor verticesAccessor = new GLTFFile.Accessor();
                 verticesAccessor.bufferView = vertsBufferIdx;
                 verticesAccessor.ComponentTypeEnum = GLTFFile.EComponentType.Float;
                 verticesAccessor.count = vertices.Length/3;
                 verticesAccessor.type = GLTFFile.GetElementTypeString(GLTFFile.EElementType.Vec3);
-                verticesAccessor.min = [(decimal)(float)Bounds.Min.x, (decimal)(float)Bounds.Min.y, (decimal)(float)Bounds.Min.z];
-                verticesAccessor.max = [(decimal)(float)Bounds.Max.x, (decimal)(float)Bounds.Max.y, (decimal)(float)Bounds.Max.z];
+                verticesAccessor.min = [Min.x, Min.y, Min.z];
+                verticesAccessor.max = [Max.x, Max.y, Max.z];
                 int vertsAccessorIdx = accessors.Count; accessors.Add(verticesAccessor);
 
                 int normalsAccessorIdx = -1;
                 if (normals != null) {
                     GLTFFile.BufferView normalsView = addbuffer_func(MemoryMarshal.Cast<float, byte>(normals));
+                    normalsView.target = (int)GLTFFile.EBufferViewTarget.ARRAY_BUFFER;
                     int normalsBufferIdx = views.Count; views.Add(normalsView);
-                    GLTFFile.Accessor normalsAcessor = new GLTFFile.Accessor();
-                    normalsAcessor.bufferView = normalsBufferIdx;
-                    normalsAcessor.ComponentTypeEnum = GLTFFile.EComponentType.Float;
-                    normalsAcessor.count = verticesAccessor.count;
-                    normalsAcessor.type = GLTFFile.GetElementTypeString(GLTFFile.EElementType.Vec3);
-                    normalsAccessorIdx = accessors.Count; accessors.Add(normalsAcessor);
+                    GLTFFile.Accessor normalsAccessor = new GLTFFile.Accessor();
+                    normalsAccessor.bufferView = normalsBufferIdx;
+                    normalsAccessor.ComponentTypeEnum = GLTFFile.EComponentType.Float;
+                    normalsAccessor.count = verticesAccessor.count;
+                    normalsAccessor.type = GLTFFile.GetElementTypeString(GLTFFile.EElementType.Vec3);
+                    normalsAccessorIdx = accessors.Count; accessors.Add(normalsAccessor);
                 }
 
                 int uv0AccessorIdx = -1;
                 if (uvs != null) {
                     GLTFFile.BufferView uv0View = addbuffer_func(MemoryMarshal.Cast<float, byte>(uvs));
+                    uv0View.target = (int)GLTFFile.EBufferViewTarget.ARRAY_BUFFER;
                     int uv0BufferIdx = views.Count; views.Add(uv0View);
                     GLTFFile.Accessor uv0Accessor = new GLTFFile.Accessor();
                     uv0Accessor.bufferView = uv0BufferIdx;
@@ -137,6 +141,7 @@ namespace g3
                 }
 
                 GLTFFile.BufferView trianglesView = addbuffer_func(MemoryMarshal.Cast<uint, byte>(triangles));
+                trianglesView.target = (int)GLTFFile.EBufferViewTarget.ELEMENT_ARRAY_BUFFER;
                 int trisBufferIdx = views.Count; views.Add(trianglesView);
                 GLTFFile.Accessor trianglesAccessor = new GLTFFile.Accessor();
                 trianglesAccessor.bufferView = trisBufferIdx;
@@ -186,7 +191,8 @@ namespace g3
             binWriter.Close();
 
             root.buffers = [new()];
-            root.buffers[0].uri = binFileName;
+            if (bWritingGLB == false)           // in GLB version we don't have a filename here
+                root.buffers[0].uri = binFileName;
             root.buffers[0].byteLength = (int)TotalNumBytes;
 
             JsonSerializerOptions jsonOptions = new JsonSerializerOptions();
