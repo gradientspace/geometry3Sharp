@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -135,6 +134,7 @@ namespace g3
 
         int max_group_id = 0;
 
+        DMesh3Attributes attributes = null;
 
         /// <summary>
         /// Support attaching arbitrary data to mesh. 
@@ -211,6 +211,7 @@ namespace g3
                 return ci;
             }
 
+            DisableAttributes();
             vertices = new DVector<double>();
             vertex_edges = new SmallListSet();
             vertices_refcount = new RefCountVector();
@@ -235,14 +236,24 @@ namespace g3
                 mapV[vid] = AppendVertex(vinfo);
             }
 
-            // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
+            bool bBuildInvMapT = (copy.IsCompactT == false) && (copy.HasAttributes);
+            int[] mapNewToOldT = (bBuildInvMapT) ? new int[this.MaxTriangleID] : null;
 
+
+            // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
             foreach ( int tid in copy.triangles_refcount ) {
                 Index3i t = copy.GetTriangle(tid);
                 t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
                 int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
-                AppendTriangle(t, g);
+                int new_tid = AppendTriangle(t, g);
+                if (mapNewToOldT != null)
+                    mapNewToOldT[new_tid] = tid;
                 max_group_id = Math.Max(max_group_id, g+1);
+            }
+
+            if (copy.HasAttributes) {
+                EnableAttributes(true);
+                attributes.Copy(copy.attributes, null, mapNewToOldT);
             }
 
             return new CompactInfo() {
@@ -272,6 +283,11 @@ namespace g3
 
             edges = new DVector<int>(copy.edges);
             edges_refcount = new RefCountVector(copy.edges_refcount);
+
+            if (copy.HasAttributes) {
+                EnableAttributes(true);
+                attributes!.Copy(copy.attributes!, null, null);
+            }
         }
 
 
@@ -375,6 +391,7 @@ namespace g3
         public bool HasVertexNormals { get { return normals != null; } }
         public bool HasVertexUVs { get { return uv != null; } }
 		public bool HasTriangleGroups { get { return triangle_groups != null; } }
+        public bool HasAttributes { get { return attributes != null; } }
 
         public MeshComponents Components {
             get {
@@ -501,24 +518,9 @@ namespace g3
             return true;
         }
 
-
-        [System.Obsolete("GetVtxEdges will be removed in future, use VtxEdgesItr instead")]
-        public ReadOnlyCollection<int> GetVtxEdges(int vID) {
-            if (vertices_refcount.isValid(vID) == false)
-                return null;
-            return vertex_edges_list(vID).AsReadOnly();
-        }
-
         public int GetVtxEdgeCount(int vID) {
             return vertices_refcount.isValid(vID) ? vertex_edges.Count(vID) : -1;
         }
-
-
-        [System.Obsolete("GetVtxEdgeValence will be removed in future, use GetVtxEdgeCount instead")]
-        public int GetVtxEdgeValence(int vID) {
-            return vertex_edges.Count(vID);
-        }
-
 
         public int GetMaxVtxEdgeCount() {
             int max = 0;
@@ -1144,6 +1146,7 @@ namespace g3
                 triangle_groups.insert(gid, tid);
                 max_group_id = Math.Max(max_group_id, gid+1);
             }
+            on_new_triangle(tid);
 
             // increment ref counts and update/create edges
             vertices_refcount.increment(tv[0]);
@@ -1213,6 +1216,7 @@ namespace g3
                 triangle_groups.insert(gid, tid);
                 max_group_id = Math.Max(max_group_id, gid + 1);
             }
+            on_new_triangle(tid);
 
             // increment ref counts and update/create edges
             vertices_refcount.increment(tv[0]);
@@ -1234,8 +1238,6 @@ namespace g3
         public virtual void EndUnsafeTrianglesInsert() {
             triangles_refcount.rebuild_free_list();
         }
-
-
 
 
 
@@ -1311,7 +1313,25 @@ namespace g3
 
 
 
+        public void EnableAttributes(bool bResetIfExists = false)
+        {
+            if (HasAttributes && bResetIfExists == false)
+                return;
+            attributes = new DMesh3Attributes(this);
+        }
+        public void DisableAttributes()
+        {
+            attributes = null;
+        }
+        public DMesh3Attributes Attribs { get { if (attributes == null) EnableAttributes(); return attributes!; } }
 
+        protected void on_new_triangle(int tid, int ref_tid = -1)
+        {
+            if (HasAttributes == false) return;
+            foreach (IGeoAttribute attrib in attributes.TriAttributes()) {
+                attrib.InsertValue_Copy(tid, ref_tid);
+            }
+        }
 
 
 
@@ -1693,10 +1713,6 @@ namespace g3
         public bool IsBoundaryEdge(int eid) {
             return edges[4 * eid + 3] == InvalidID;
         }
-        [System.Obsolete("edge_is_boundary will be removed in future, use IsBoundaryEdge instead")]
-        public bool edge_is_boundary(int eid) {
-            return edges[4 * eid + 3] == InvalidID;
-        }
 
         public bool edge_has_v(int eid, int vid) {
 			int i = 4*eid;
@@ -1719,10 +1735,6 @@ namespace g3
         }
 
 
-        [System.Obsolete("vertex_is_boundary will be removed in future, use IsBoundaryVertex instead")]
-        public bool vertex_is_boundary(int vID) {
-            return IsBoundaryVertex(vID);
-        }
         public bool IsBoundaryVertex(int vID) {
             foreach (int e in vertex_edges.ValueItr(vID)) {
                 if (edges[4 * e + 3] == InvalidID)
@@ -2369,6 +2381,8 @@ namespace g3
                 if (triangle_groups != null)
                     triangle_groups[iCurT] = triangle_groups[iLastT];
 
+                on_new_triangle(iCurT, iLastT);
+
                 // update edges
                 for ( int j = 0; j < 3; ++j ) {
                     int eid = triangle_edges[kc + j];
@@ -2393,6 +2407,10 @@ namespace g3
             triangle_edges.resize(TriangleCount*3);
             if (triangle_groups != null)
                 triangle_groups.resize(TriangleCount);
+
+            // trim attributes
+            if (HasAttributes)
+                attributes.TrimTo(VertexCount, TriangleCount);
 
             /** shift edges **/
 

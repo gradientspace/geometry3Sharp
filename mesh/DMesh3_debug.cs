@@ -155,7 +155,7 @@ namespace g3
         // This function checks that the mesh is well-formed, ie all internal data
         // structures are consistent
         /// </summary>
-        public bool CheckValidity(bool bAllowNonManifoldVertices = false, FailMode eFailMode = FailMode.Throw ) {
+        public bool CheckValidity(bool bAllowNonManifoldVertices = true, FailMode eFailMode = FailMode.Throw ) {
 
 			int[] triToVtxRefs = new int[this.MaxVertexID];
 
@@ -306,6 +306,9 @@ namespace g3
 				}
 				CheckOrFailF(vRemoveTris.Count == 0);
             }
+
+            if (HasAttributes)
+                attributes.CheckValidity(eFailMode);
 
             return is_ok;
         }

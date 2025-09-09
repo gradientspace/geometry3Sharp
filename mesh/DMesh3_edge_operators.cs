@@ -152,6 +152,9 @@ namespace g3
                 }
             }
 
+            if (HasAttributes)
+                attributes.OnRemoveTriangle(tID);
+
             updateTimeStamp(true);
             return MeshResult.Ok;
         }
@@ -259,6 +262,8 @@ namespace g3
         public struct EdgeSplitInfo {
 			public bool bIsBoundary;
 			public int vNew;
+            public int eOrigT0;
+            public int eOrigT1;
 			public int eNewBN;      // new edge [vNew,vB] (original was AB)
 			public int eNewCN;      // new edge [vNew,vC] (C is "first" other vtx in ring)
 			public int eNewDN;		// new edge [vNew,vD] (D is "second" other, which doesn't exist on bdry)
@@ -350,8 +355,12 @@ namespace g3
 				split.eNewDN = InvalidID;
                 split.eNewT2 = t2;
                 split.eNewT3 = InvalidID;
+                split.eOrigT0 = t0; split.eOrigT1 = InvalidID;
 
-				updateTimeStamp(true);
+                if (attributes != null)
+                    attributes.OnSplitEdge(split);
+
+                updateTimeStamp(true);
 				return MeshResult.Ok;
 
 			} else {		// interior triangle branch
@@ -428,6 +437,10 @@ namespace g3
 				split.eNewDN = edf;
                 split.eNewT2 = t2;
                 split.eNewT3 = t3;
+                split.eOrigT0 = t0; split.eOrigT1 = t1;
+
+                if (attributes != null)
+                    attributes.OnSplitEdge(split);
 
                 updateTimeStamp(true);
 				return MeshResult.Ok;
@@ -524,6 +537,9 @@ namespace g3
 			flip.v0 = a; flip.v1 = b;
 			flip.ov0 = c; flip.ov1 = d;
 			flip.t0 = t0; flip.t1 = t1;
+
+            if (attributes != null)
+                attributes.OnFlipEdge(flip);
 
 			updateTimeStamp(true);
 			return MeshResult.Ok;
@@ -783,6 +799,9 @@ namespace g3
             collapse.eRemoved0 = eac; collapse.eRemoved1 = ead;
             collapse.eKept0 = ebc; collapse.eKept1 = ebd;
 
+            if (attributes != null)
+                attributes.OnCollapseEdge(collapse);
+
 			updateTimeStamp(true);
 			return MeshResult.Ok;
 		}
@@ -993,6 +1012,9 @@ namespace g3
 				}
 			}
 
+            if (attributes != null)
+                attributes.OnMergeEdges(merge_info);
+
             updateTimeStamp(true);
             return MeshResult.Ok;
 		}
@@ -1005,6 +1027,7 @@ namespace g3
 
         public struct PokeTriangleInfo
         {
+            public int orig_t0;
             public int new_vid;
             public int new_t1, new_t2;
             public Index3i new_edges;
@@ -1042,7 +1065,7 @@ namespace g3
             set_triangle_edges(tid, te.a, ebC, eaC);
 
             // add two new triangles
-            int t1 = add_triangle_only(tv.b, tv.c, center, te.b, ecC, ebC );
+            int t1 = add_triangle_only(tv.b, tv.c, center, te.b, ecC, ebC);
             int t2 = add_triangle_only(tv.c, tv.a, center, te.c, eaC, ecC);
 
             // second and third edges of original tri have new neighbours
@@ -1061,10 +1084,14 @@ namespace g3
                 triangle_groups.insert(g, t2);
             }
 
+            result.orig_t0 = tid;
             result.new_vid = center;
             result.new_t1 = t1;
             result.new_t2 = t2;
             result.new_edges = new Index3i(eaC, ebC, ecC);
+
+            if (attributes != null)
+                attributes.OnPokeTriangle(result);
 
             updateTimeStamp(true);
             return MeshResult.Ok;
@@ -1124,7 +1151,7 @@ namespace g3
 			triangles.insert(a, i);
 			triangle_edges.insert(e2, i+2);
 			triangle_edges.insert(e1, i+1);
-			triangle_edges.insert(e0, i+0);	
+			triangle_edges.insert(e0, i+0);
 			return tid;
 		}
 
