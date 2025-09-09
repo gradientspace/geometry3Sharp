@@ -12,10 +12,31 @@ namespace g3
 {
 #nullable enable
 
-    // GLTF 2.0 spec: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
-
+    /// <summary>
+    /// GLTFFile defines a set of C# structs that can be directly serialized to/from GLTF json.
+    /// The structs basically mirror the GLTF 2.0 spec properties/etc.
+    /// 
+    /// Currently the following is not supported:
+    ///   - anything related to Animation, Skin or Camera
+    ///   - sparse Accessors
+    ///   - Extension or Extra fields
+    /// 
+    /// The top-level root struct (glTF in the spec) is GLTFFile.Root
+    /// 
+    /// To deserialize a file you use:
+    ///    Root? FileContents = JsonSerializer.Deserialize<Root>(utf8Stream)
+    /// and to serialize a Root you have constructed:
+    ///    string json = JsonSerializer.Serialize<GLTFFile.Root>(root, jsonOptions)
+    ///    
+    /// (in this case you must set JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault)
+    /// 
+    /// The helper function GLTFFile.ParseFile() can be used for reading 
+    /// (and may conceivably do validation/etc in future)
+    /// 
+    /// </summary>
     public class GLTFFile
     {
+        // GLTF 2.0 spec: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
 
         public struct Asset
         {
@@ -112,10 +133,19 @@ namespace g3
             [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
             public string type { get; set; } = "VEC3";
 
-            // min/max could be int or float...
-            public Decimal[]? min { get; set; } = null;
-            public Decimal[]? max { get; set; } = null;
+            // These fields define min and max value ranges found in the bufferView.
+            // They are strict/"MUST" values - it's an error if the min is not the actual min,
+            // so if any rounding/etc happens in reading/writing, technically the resulting
+            // file is invalid (and some GLTF readers are very strict!! eg microsoft 3D viewer).
+            // Min/Max is optional for all but vertex position values, So we are using float[] here.
+            // Some incoming files may have int values in these ranges, but they should work fine in range [-16m/16m]
+            // Currently we do not support writing int min/max - that would require a custom JSonConverter
+            // docs:
+            // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#accessors-bounds
+            public float[]? min { get; set; } = null;
+            public float[]? max { get; set; } = null;
 
+            // this is not fully supported yet...
             public SparseAccessorInfo? sparse { get; set; } = null;
 
             [JsonIgnore]
@@ -161,6 +191,7 @@ namespace g3
         }
 
 
+        public enum EBufferViewTarget { ARRAY_BUFFER = 34962, ELEMENT_ARRAY_BUFFER = 34963 };
         public struct BufferView
         {
             public string? name { get; set; } = null;
@@ -177,7 +208,7 @@ namespace g3
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public int byteStride { get; set; } = 0;
 
-            public int? target { get; set; } = null;
+            public int? target { get; set; } = null;        // EBufferViewTarget
 
 
             public BufferView() { }
@@ -523,12 +554,18 @@ namespace g3
 
         public Span<uint> GetUIntBuffer(GLTFFile.Root root, GLTFFile.Accessor accessor)
         {
+            if (accessor.sparse != null)
+                throw new NotImplementedException();
+
             GLTFFile.BufferView bufferView = root.bufferViews![accessor.bufferView];
             GLTFBuffer useBuffer = Buffers[bufferView.buffer];
             return useBuffer.GetUIntBuffer(accessor, bufferView);
         }
         public Span<ushort> GetUShortBuffer(GLTFFile.Root root, GLTFFile.Accessor accessor)
         {
+            if (accessor.sparse != null)
+                throw new NotImplementedException();
+
             GLTFFile.BufferView bufferView = root.bufferViews![accessor.bufferView];
             GLTFBuffer useBuffer = Buffers[bufferView.buffer];
             return useBuffer.GetUShortBuffer(accessor, bufferView);
@@ -537,6 +574,9 @@ namespace g3
 
         public Span<float> GetFloatBuffer(GLTFFile.Root root, GLTFFile.Accessor accessor)
         {
+            if (accessor.sparse != null)
+                throw new NotImplementedException();
+
             GLTFFile.BufferView bufferView = root.bufferViews![accessor.bufferView];
             GLTFBuffer useBuffer = Buffers[bufferView.buffer];
             return useBuffer.GetFloatBuffer(accessor, bufferView);
