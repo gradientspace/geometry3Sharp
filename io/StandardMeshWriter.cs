@@ -98,6 +98,8 @@ namespace g3
                 writeFunc = Write_OFF;
             else if (sExtension.Equals(".gltf", StringComparison.OrdinalIgnoreCase))
                 writeFunc = Write_GLTF;
+            else if (sExtension.Equals(".glb", StringComparison.OrdinalIgnoreCase))
+                writeFunc = Write_GLB;
             else if (sExtension.Equals(".g3mesh", StringComparison.OrdinalIgnoreCase))
                 writeFunc = Write_G3Mesh;
 
@@ -206,9 +208,27 @@ namespace g3
             try {
                 StreamWriter w = new StreamWriter(stream);
                 GLTFWriter writer = new GLTFWriter() {
-                    //OpenStreamF = this.OpenStreamF,
-                    //CloseStreamF = this.CloseStreamF
+                    OpenStreamF = this.OpenStreamF,
+                    CloseStreamF = this.CloseStreamF
                 };
+                var result = writer.Write(w, vMeshes, options);
+                w.Flush();
+                return result;
+            } finally {
+                CloseStreamF(stream);
+            }
+        }
+
+
+        IOWriteResult Write_GLB(string sFilename, List<WriteMesh> vMeshes, WriteOptions options)
+        {
+            Stream stream = OpenStreamF(sFilename);
+            if (stream == null)
+                return new IOWriteResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for writing");
+
+            try {
+                BinaryWriter w = new BinaryWriter(stream);
+                GLBWriter writer = new();
                 var result = writer.Write(w, vMeshes, options);
                 w.Flush();
                 return result;
