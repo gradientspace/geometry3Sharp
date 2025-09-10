@@ -1,141 +1,49 @@
-﻿using g3;
+﻿// Copyright (c) Ryan Schmidt (rms@gradientspace.com) - All Rights Reserved
+// Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+using static g3.IGeoAttribute;
+
 
 #nullable enable
 
 namespace g3
 {
-    public class DMesh3Attributes
-    {
-        DMesh3? parentMesh = null;
-        public DMesh3? ParentMesh => parentMesh;
-
-        public DMesh3Attributes(DMesh3 parentMesh)
-        {
-            this.parentMesh = parentMesh;
-        }
-
-        protected IntGeoAttribute? materialID { get; private set; } = null;
-        public bool HasMaterialID => (materialID != null);
-        public void EnableMaterialID() {
-            if (materialID == null)
-                materialID = new_tri_attrib<IntGeoAttribute>();
-        }
-        public IntGeoAttribute MaterialID { get { if (!HasMaterialID) EnableMaterialID(); return materialID!; } }
-
-
-
-
-        public virtual IEnumerable<IGeoAttribute> TriAttributes()
-        {
-            if (materialID != null)
-                yield return materialID;
-        }
-
-
-        public virtual void EnableMatching(DMesh3Attributes Other)
-        {
-            if (Other.HasMaterialID)
-                EnableMaterialID();
-        }
-
-        public virtual void Copy(DMesh3Attributes other, int[]? mapV, int[]? mapT)
-        {
-            Func<int, int>? MapV = (mapV != null) ? (a) => { return mapV[a]; } : null;
-            Func<int, int>? MapT = (mapT != null) ? (a) => { return mapT[a]; } : null;
-
-            if (other.HasMaterialID)
-                this.MaterialID.InitializeToCopy(ParentMesh!.TriangleCount, other.MaterialID, MapT);
-        }
-
-        public virtual void TrimTo(int MaxVertID, int MaxTriID)
-        {
-            foreach (IGeoAttribute TriAttrib in TriAttributes())
-                TriAttrib.TrimTo(MaxTriID);
-        }
-
-        public virtual void OnRemoveTriangle(int tid)
-        {
-            // don't actually have to do anything for remove? just leave value?
-        }
-
-        public virtual void OnSplitEdge(in DMesh3.EdgeSplitInfo splitInfo)
-        {
-            foreach (IGeoAttribute attrib in TriAttributes()) {
-                attrib.InsertValue_Copy(splitInfo.eNewT2, splitInfo.eOrigT0);
-                if (splitInfo.eOrigT1 >= 0)
-                    attrib.InsertValue_Copy(splitInfo.eNewT3, splitInfo.eOrigT1);
-            }
-        }
-
-        public virtual void OnFlipEdge(in DMesh3.EdgeFlipInfo flipInfo)
-        {
-            // ?? could try to update some tri attributes...
-        }
-
-        public virtual void OnCollapseEdge(in DMesh3.EdgeCollapseInfo collapseInfo)
-        {
-            // ?? possibly want to upate some tri attributes...
-        }
-
-        public virtual void OnMergeEdges(in DMesh3.MergeEdgesInfo mergeInfo)
-        {
-            // ??
-        }
-
-        public virtual void OnPokeTriangle(in DMesh3.PokeTriangleInfo pokeInfo)
-        {
-            foreach (IGeoAttribute attrib in TriAttributes()) {
-                attrib.InsertValue_Copy(pokeInfo.new_t1, pokeInfo.orig_t0);
-                attrib.InsertValue_Copy(pokeInfo.new_t2, pokeInfo.orig_t0);
-            }
-        }
-
-        protected T new_tri_attrib<T>() where T : IGeoAttribute, new()
-        {
-            T attrib = new();
-            if (parentMesh != null)
-                attrib.Initialize(parentMesh!.TriangleCount);
-            return attrib;
-        }
-
-        public void CheckValidity(FailMode eFailMode = FailMode.Throw)
-        {
-            bool is_ok = true;
-            Action<bool> CheckOrFailF = (b) => { is_ok = is_ok && b; };
-            if (eFailMode == FailMode.DebugAssert) {
-                CheckOrFailF = (b) => { Debug.Assert(b); is_ok = is_ok && b; };
-            } else if (eFailMode == FailMode.gDevAssert) {
-                CheckOrFailF = (b) => { Util.gDevAssert(b); is_ok = is_ok && b; };
-            } else if (eFailMode == FailMode.Throw) {
-                CheckOrFailF = (b) => { if (b == false) throw new Exception("DMesh3Attributes.CheckValidity: check failed"); };
-            }
-
-            CheckOrFailF(parentMesh != null);
-
-            int TriCount = parentMesh!.MaxTriangleID;
-            if (materialID != null)
-                CheckOrFailF(materialID.NumElements == TriCount);
-        }
-
-    }
-
+    /// <summary>
+    /// base type for fixed-count attributes, eg a per-triangle attribute with one Element per triangle
+    /// </summary>
     public interface IGeoAttribute
     {
+        public enum EAttribType
+        {
+            Unspecified = 0,
+            Triangle = 1,
+            Vertex = 2
+        }
+
+
+        string Name { get; }
+        EAttribType AttribType { get; }
+
         Type ElementType { get; }
         int NumElements { get; }
         
         void Initialize(int Count);
         void InitializeToCopy(int NewCount, IGeoAttribute SourceAttrib, Func<int,int> IndexMapF);
-        void TrimTo(int NewCount);
+        void TrimToLength(int NewCount);
 
         void InsertValue_Copy(int Index, int CopyIndex = -1);
     }
 
+
+    /// <summary>
+    /// typed extensions to IGeoAttribute. Type must be a struct.
+    /// </summary>
     public interface IGeoAttribute<T> : IGeoAttribute where T : struct
     {
+        // todo: T-valued arguments for Initialize/UpdateCount complicate a lot of things...maybe could do without?
+
+        T DefaultValue { get; }
+
         void Initialize(int Count, T InitialValue = default)
         {
             UpdateCount(Count, true, InitialValue);
@@ -145,18 +53,29 @@ namespace g3
         void InsertValue(int Index, T NewValue);
         void SetValue(int Index, T NewValue);
         T GetValue(int Index);
-
-        T DefaultValue { get; }
     }
 
-
-    public class BaseGeoAttribute<T> : IGeoAttribute<T> where T : struct
+    /// <summary>
+    /// base type for a DVector-backed geo attribute
+    /// </summary>
+    public abstract class BaseGeoAttribute<T> : IGeoAttribute<T> where T : struct
     {
         public DVector<T> data = new DVector<T>();
 
         public Type ElementType { get { return typeof(T); } }
         public int NumElements { get { return data.size; } }
         public T DefaultValue { get { return default(T); } }
+
+        public string Name { get; private set; } = "UNNAMED";
+        public EAttribType AttribType { get; private set; } = EAttribType.Unspecified;
+
+        public BaseGeoAttribute(string name, DMesh3? parentMesh = null, EAttribType attribType = EAttribType.Unspecified) 
+        { 
+            Name = name;
+            AttribType = attribType;
+            if (parentMesh != null)
+                Initialize(parentMesh.TriangleCount);
+        }
 
         public void Initialize(int Count)
         {
@@ -188,7 +107,7 @@ namespace g3
                 throw new NotImplementedException();
         }
 
-        public void TrimTo(int NewCount)
+        public void TrimToLength(int NewCount)
         {
             Util.gDevAssert(NewCount <= NumElements);
             data.resize(NewCount);
@@ -229,9 +148,36 @@ namespace g3
 
     public class IntGeoAttribute : BaseGeoAttribute<int>
     {
+        public IntGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
     }
 
+    public class Vector2fGeoAttribute : BaseGeoAttribute<Vector2f>
+    {
+        public Vector2fGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
+    }
 
+    public class Vector3fGeoAttribute : BaseGeoAttribute<Vector3f>
+    {
+        public Vector3fGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
+    }
+
+    public struct TriUVs
+    {
+        public Vector2f A, B, C;
+    }
+    public class TriUVsGeoAttribute : BaseGeoAttribute<TriUVs>
+    {
+        public TriUVsGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
+    }
+
+    public struct TriNormals
+    {
+        public Vector3f A, B, C;
+    }
+    public class TriNormalsGeoAttribute : BaseGeoAttribute<TriNormals>
+    {
+        public TriNormalsGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
+    }
 
 
 
