@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) Ryan Schmidt (rms@gradientspace.com) - All Rights Reserved
+// Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -653,6 +655,13 @@ namespace g3
             v1.x = vertices[bi]; v1.y = vertices[bi + 1]; v1.z = vertices[bi + 2];
             int ci = 3 * triangles[3 * tID + 2];
             v2.x = vertices[ci]; v2.y = vertices[ci + 1]; v2.z = vertices[ci + 2];
+        }
+        public void GetTriVertices(int tID, out Triangle3d Tri)
+        {
+            int ai = 3 * triangles[3 * tID], bi = 3 * triangles[3 * tID + 1], ci = 3 * triangles[3 * tID + 2];
+            Tri = new Triangle3d() { V0 = new(vertices[ai], vertices[ai + 1], vertices[ai + 2]),
+                                     V1 = new(vertices[bi], vertices[bi + 1], vertices[bi + 2]),
+                                     V2 = new(vertices[ci], vertices[ci + 1], vertices[ci + 2]) };
         }
 
         public Vector3d GetTriVertex(int tid, int j) {
