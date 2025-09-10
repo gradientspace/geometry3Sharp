@@ -57,6 +57,31 @@ namespace g3
             a = ii; b = jj; c = kk;
         }
 
+        /// <summary> returns index of value in [a,b,c]. no error handling. </summary>
+        public int IndexOf(int value)
+        {
+            if (a == value) return 0;
+            else if (b == value) return 1;
+            else return 2;
+        }
+
+        /// <summary> assuming value is one of [a,b,c], returns other two values in cycle-order. no error handling. </summary>
+        public (int,int) FindOthers(int value)
+        {
+            if (a == value) return (b, c);
+            else if (b == value) return (c, a);
+            else return (a, b);
+        }
+
+        /// <summary> assuming i0 and i1 are in range [0,1,2], returns third index. no error handling. </summary>
+        public static int OtherIndex(int i0, int i1)
+        {
+            if (i1 < i0) { int tmp = i0; i0 = i1; i1 = tmp; } // swap
+            // cases are 0/1, 0/2, and 1/2
+            if (i0 == 0) { return (i1 == 1) ? 2 : 1; } 
+            else return 0;
+        }
+
 
         public static Index3i operator -(Index3i v)
         {
