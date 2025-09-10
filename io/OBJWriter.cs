@@ -170,7 +170,7 @@ namespace g3
 				    t[2] = mapV[t[2]];
 
                     if (bUVs) {
-						Index3i tuv = (uvSet != null) ? uvSet.TriangleUVs[ti] : t;
+						Index3i tuv = (uvSet != null) ? uvSet.UVTriangles[ti] : t;
                         tuv[0] = mapUV[tuv[0]];
                         tuv[1] = mapUV[tuv[1]];
                         tuv[2] = mapUV[tuv[2]];
@@ -202,7 +202,7 @@ namespace g3
 				t[2] = mapV[t[2]];
 
                 if (bUVs) {
-					Index3i tuv = (uvSet != null) ? uvSet.TriangleUVs[ti] : t;
+					Index3i tuv = (uvSet != null) ? uvSet.UVTriangles[ti] : t;
                     tuv[0] = mapUV[tuv[0]];
                     tuv[1] = mapUV[tuv[1]];
                     tuv[2] = mapUV[tuv[2]];

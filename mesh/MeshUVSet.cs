@@ -10,12 +10,12 @@ namespace g3
     public class IndexedUVMesh
     {
         public DVector<Vector2f> UVs;
-        public DVector<Index3i> TriangleUVs;
+        public DVector<Index3i> UVTriangles;
 
         public IndexedUVMesh()
         {
             UVs = new DVector<Vector2f>();
-            TriangleUVs = new DVector<Index3i>();
+            UVTriangles = new DVector<Index3i>();
         }
 
 
@@ -27,13 +27,13 @@ namespace g3
             Util.gDevAssert(NumTris == NumElements);
 
             UVs = new DVector<Vector2f>();
-            TriangleUVs = new DVector<Index3i>();
+            UVTriangles = new DVector<Index3i>();
 
             for ( int i = 0; i < NumElements; ++i ) {
                 TriUVs tuv = UVLayer.GetValue(i);
                 int k = UVs.size;
                 UVs.Add(tuv.A); UVs.Add(tuv.B); UVs.Add(tuv.C);
-                TriangleUVs.Add(new Index3i(k, k+1, k+2));
+                UVTriangles.Add(new Index3i(k, k+1, k+2));
             }
         }
 
@@ -42,6 +42,17 @@ namespace g3
             int id = UVs.Length;
             UVs.Add(uv);
             return id;
+        }
+
+
+        public DMesh3 ToDMesh3()
+        {
+            DMesh3 mesh = new DMesh3();
+            for (int i = 0; i < UVs.Length; ++i)
+                mesh.AppendVertex(new Vector3d(UVs[i].x, 0, UVs[i].y));
+            for (int i = 0; i < UVTriangles.Length; ++i)
+                mesh.AppendTriangle(UVTriangles[i]);
+            return mesh;
         }
 
     }
