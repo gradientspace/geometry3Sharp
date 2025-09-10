@@ -101,7 +101,7 @@ namespace g3
 
                 // write independent UVs for this mesh, if we have them
 				IIndexMap mapUV = (bVtxUVs) ? new IdentityIndexMap() : null;   
-                DenseUVMesh uvSet = null;
+                IndexedUVMesh uvSet = null;
                 if ( vMeshes[mi].UVs != null ) {
                     uvSet = vMeshes[mi].UVs;
                     int nUV = uvSet.UVs.Length;
@@ -137,7 +137,7 @@ namespace g3
 
 		// write triangles of mesh with re-ordering to minimize group changes
 		// (note: this may mean lots of material changes, depending on mesh...)
-		void write_triangles_bygroup(TextWriter writer, IMesh mesh, int[] mapV, DenseUVMesh uvSet, IIndexMap mapUV, bool bNormals)
+		void write_triangles_bygroup(TextWriter writer, IMesh mesh, int[] mapV, IndexedUVMesh uvSet, IIndexMap mapUV, bool bNormals)
         {
             // This makes N passes over mesh indices, but doesn't use much extra memory.
             // would there be a faster way? could construct integer-pointer-list during initial
@@ -185,7 +185,7 @@ namespace g3
 
 
 		// sequential write of input mesh triangles. preserves triangle IDs up to constant shift.
-		void write_triangles_flat(TextWriter writer, WriteMesh write_mesh, int[] mapV, DenseUVMesh uvSet, IIndexMap mapUV, bool bNormals, bool bMaterials)
+		void write_triangles_flat(TextWriter writer, WriteMesh write_mesh, int[] mapV, IndexedUVMesh uvSet, IIndexMap mapUV, bool bNormals, bool bMaterials)
         {
             bool bUVs = (mapUV != null);
 

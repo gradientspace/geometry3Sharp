@@ -148,7 +148,7 @@ namespace g3
 		public List<GenericMaterial> Materials;		// set of materials (possibly) used in this mesh
 		public IIndexMap TriToMaterialMap;			// triangle index -> Materials list index
 
-		public DenseUVMesh UVs;  // separate UV layer (just one for now)
+		public IndexedUVMesh UVs;  // separate UV layer (just one for now)
 								 // assumption is that # of triangles in this UV mesh is same as in Mesh
 
         public WriteMesh(IMesh mesh, string name = "") {
