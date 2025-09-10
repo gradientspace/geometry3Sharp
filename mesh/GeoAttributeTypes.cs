@@ -35,6 +35,12 @@ namespace g3
     }
 
 
+    public interface ILinearGeoAttribute
+    {
+        void UpdateOnPoke(DMesh3.PokeTriangleInfo pokeInfo);
+    }
+
+
     /// <summary>
     /// typed extensions to IGeoAttribute. Type must be a struct.
     /// </summary>
@@ -161,22 +167,62 @@ namespace g3
         public Vector3fGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
     }
 
+
+    
+    // attributes that have their value interpolated during mesh refinement edits
+
+
+    public class BaseLerpableGeoAttribute<T> : BaseGeoAttribute<T>, ILinearGeoAttribute where T : struct
+    {
+        public BaseLerpableGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
+
+        // could we write generic versions of these functions? 
+        public virtual void UpdateOnPoke(DMesh3.PokeTriangleInfo pokeInfo) { throw new NotImplementedException(); }
+    }
+
+
     public struct TriUVs
     {
         public Vector2f A, B, C;
+        public TriUVs() { }
+        public TriUVs(Vector2f a, Vector2f b, Vector2f c) { A = a; B = b; C = c; }
+        public Vector2f BaryPoint(Vector3d baryCoords) { return (Vector2f)(baryCoords.x * (Vector2d)A + baryCoords.y * (Vector2d)B + baryCoords.z * (Vector2d)C); }
     }
-    public class TriUVsGeoAttribute : BaseGeoAttribute<TriUVs>
+    public class TriUVsGeoAttribute : BaseLerpableGeoAttribute<TriUVs>
     {
         public TriUVsGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
+
+        public override void UpdateOnPoke(DMesh3.PokeTriangleInfo pokeInfo) {
+            TriUVs orig = GetValue(pokeInfo.orig_t0);
+            Vector2f centerUV = orig.BaryPoint(pokeInfo.new_vid_barycoords);
+            TriUVs newt0 = orig; newt0.C = centerUV;
+            SetValue(pokeInfo.orig_t0, new(orig.A, orig.B, centerUV));
+            InsertValue(pokeInfo.new_t1, new(orig.B, orig.C, centerUV));
+            InsertValue(pokeInfo.new_t2, new(orig.C, orig.A, centerUV));
+        }
     }
 
     public struct TriNormals
     {
         public Vector3f A, B, C;
+        public TriNormals() { }
+        public TriNormals(Vector3f a, Vector3f b, Vector3f c) { A = a; B = b; C = c; }
+        public Vector3f BaryPoint(Vector3d baryCoords) { return (Vector3f)(baryCoords.x * (Vector3d)A + baryCoords.y * (Vector3d)B + baryCoords.z * (Vector3d)C); }
+
     }
-    public class TriNormalsGeoAttribute : BaseGeoAttribute<TriNormals>
+    public class TriNormalsGeoAttribute : BaseLerpableGeoAttribute<TriNormals>
     {
         public TriNormalsGeoAttribute(string Name, DMesh3? parentMesh, EAttribType attribType) : base(Name, parentMesh, attribType) { }
+
+        public override void UpdateOnPoke(DMesh3.PokeTriangleInfo pokeInfo)
+        {
+            TriNormals orig = GetValue(pokeInfo.orig_t0);
+            Vector3f centerUV = orig.BaryPoint(pokeInfo.new_vid_barycoords);
+            TriNormals newt0 = orig; newt0.C = centerUV;
+            SetValue(pokeInfo.orig_t0, new(orig.A, orig.B, centerUV));
+            InsertValue(pokeInfo.new_t1, new(orig.B, orig.C, centerUV));
+            InsertValue(pokeInfo.new_t2, new(orig.C, orig.A, centerUV));
+        }
     }
 
 

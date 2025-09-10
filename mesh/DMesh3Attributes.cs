@@ -234,8 +234,12 @@ namespace g3
         public virtual void OnPokeTriangle(in DMesh3.PokeTriangleInfo pokeInfo)
         {
             foreach (IGeoAttribute attrib in TriAttributes()) {
-                attrib.InsertValue_Copy(pokeInfo.new_t1, pokeInfo.orig_t0);
-                attrib.InsertValue_Copy(pokeInfo.new_t2, pokeInfo.orig_t0);
+                if (attrib is ILinearGeoAttribute linearAttrib) {
+                    linearAttrib.UpdateOnPoke(pokeInfo);
+                } else {
+                    attrib.InsertValue_Copy(pokeInfo.new_t1, pokeInfo.orig_t0);
+                    attrib.InsertValue_Copy(pokeInfo.new_t2, pokeInfo.orig_t0);
+                }
             }
         }
 
