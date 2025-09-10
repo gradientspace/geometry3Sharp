@@ -210,9 +210,13 @@ namespace g3
         public virtual void OnSplitEdge(in DMesh3.EdgeSplitInfo splitInfo)
         {
             foreach (IGeoAttribute attrib in TriAttributes()) {
-                attrib.InsertValue_Copy(splitInfo.eNewT2, splitInfo.eOrigT0);
-                if (splitInfo.eOrigT1 >= 0)
-                    attrib.InsertValue_Copy(splitInfo.eNewT3, splitInfo.eOrigT1);
+                if (attrib is ILinearGeoAttribute linearAttrib) {
+                    linearAttrib.UpdateOnSplit(parentMesh!, splitInfo);
+                } else {
+                    attrib.InsertValue_Copy(splitInfo.eNewT2, splitInfo.eOrigT0);
+                    if (splitInfo.eOrigT1 >= 0)
+                        attrib.InsertValue_Copy(splitInfo.eNewT3, splitInfo.eOrigT1);
+                }
             }
         }
 
@@ -223,7 +227,7 @@ namespace g3
 
         public virtual void OnCollapseEdge(in DMesh3.EdgeCollapseInfo collapseInfo)
         {
-            // ?? possibly want to upate some tri attributes...
+            // ?? possibly want to update some tri attributes...
         }
 
         public virtual void OnMergeEdges(in DMesh3.MergeEdgesInfo mergeInfo)

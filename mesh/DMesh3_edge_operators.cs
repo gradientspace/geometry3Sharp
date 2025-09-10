@@ -261,15 +261,17 @@ namespace g3
 
         public struct EdgeSplitInfo {
 			public bool bIsBoundary;
-			public int vNew;
-            public int eOrigT0;
-            public int eOrigT1;
-			public int eNewBN;      // new edge [vNew,vB] (original was AB)
+			public int vNew;        // this is f
+            public double split_t;
+            public int eOrigT0;     // tri a-b-c - becomes a-f-c    (actual tri may be any cyclic permutation)
+            public int eOrigT1;     // tri a-b-d - becomes a-f-d    (or -1 if it was on the boundary)
+            public Index2i eOrigAB; // original edge [a,b]
+            public int eNewBN;      // new edge [vNew,vB] (original was AB)
 			public int eNewCN;      // new edge [vNew,vC] (C is "first" other vtx in ring)
 			public int eNewDN;		// new edge [vNew,vD] (D is "second" other, which doesn't exist on bdry)
-            public int eNewT2;
-            public int eNewT3;
-		}
+            public int eNewT2;      // tri (f,b,c)
+            public int eNewT3;      // tri (f,d,b) or -1 if bIsBoundary
+        }
 		public MeshResult SplitEdge(int vA, int vB, out EdgeSplitInfo split)
 		{
 			int eid = find_edge(vA, vB);
@@ -350,12 +352,14 @@ namespace g3
 
 				split.bIsBoundary = true;
 				split.vNew = f;
+                split.split_t = split_t;
                 split.eNewBN = efb;
 				split.eNewCN = efc;
 				split.eNewDN = InvalidID;
                 split.eNewT2 = t2;
                 split.eNewT3 = InvalidID;
                 split.eOrigT0 = t0; split.eOrigT1 = InvalidID;
+                split.eOrigAB = new Index2i(a, b);
 
                 if (attributes != null)
                     attributes.OnSplitEdge(split);
@@ -432,12 +436,15 @@ namespace g3
 
 				split.bIsBoundary = false;
 				split.vNew = f;
+                split.split_t = split_t;
                 split.eNewBN = efb;
 				split.eNewCN = efc;
 				split.eNewDN = edf;
                 split.eNewT2 = t2;
                 split.eNewT3 = t3;
                 split.eOrigT0 = t0; split.eOrigT1 = t1;
+                split.eOrigAB = new Index2i(a, b);
+
 
                 if (attributes != null)
                     attributes.OnSplitEdge(split);

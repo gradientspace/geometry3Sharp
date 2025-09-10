@@ -38,6 +38,7 @@ namespace g3
     public interface ILinearGeoAttribute
     {
         void UpdateOnPoke(DMesh3.PokeTriangleInfo pokeInfo);
+        void UpdateOnSplit(DMesh3 Mesh, DMesh3.EdgeSplitInfo splitInfo);
     }
 
 
@@ -178,6 +179,7 @@ namespace g3
 
         // could we write generic versions of these functions? 
         public virtual void UpdateOnPoke(DMesh3.PokeTriangleInfo pokeInfo) { throw new NotImplementedException(); }
+        public virtual void UpdateOnSplit(DMesh3 Mesh, DMesh3.EdgeSplitInfo splitInfo) { throw new NotImplementedException(); }
     }
 
 
@@ -186,6 +188,10 @@ namespace g3
         public Vector2f A, B, C;
         public TriUVs() { }
         public TriUVs(Vector2f a, Vector2f b, Vector2f c) { A = a; B = b; C = c; }
+        public Vector2f this[int key] {
+            get { return (key == 0) ? A : (key == 1) ? B : C; }
+            set { if (key == 0) A = value; else if (key == 1) B = value; else C = value; }
+        }
         public Vector2f BaryPoint(Vector3d baryCoords) { return (Vector2f)(baryCoords.x * (Vector2d)A + baryCoords.y * (Vector2d)B + baryCoords.z * (Vector2d)C); }
     }
     public class TriUVsGeoAttribute : BaseLerpableGeoAttribute<TriUVs>
@@ -200,6 +206,42 @@ namespace g3
             InsertValue(pokeInfo.new_t1, new(orig.B, orig.C, centerUV));
             InsertValue(pokeInfo.new_t2, new(orig.C, orig.A, centerUV));
         }
+        public override void UpdateOnSplit(DMesh3 Mesh, DMesh3.EdgeSplitInfo splitInfo) 
+        {
+            int f = splitInfo.vNew;
+
+            TriUVs orig0 = GetValue(splitInfo.eOrigT0);
+            Index3i curT0 = Mesh.GetTriangle(splitInfo.eOrigT0);
+            Index3i newFBC = Mesh.GetTriangle(splitInfo.eNewT2);
+            int fb_Index = curT0.IndexOf(f);
+            int c = newFBC.c; int c_Index = curT0.IndexOf(c);
+            int a_Index = Index3i.OtherIndex(fb_Index, c_Index);
+            // (validate a/b order) // int b = newFBC.b; Util.gDevAssert(b == splitInfo.eOrigAB.b && curT0[a_Index] == splitInfo.eOrigAB.a);
+            Vector2f a_Pos = orig0[a_Index], b_Pos = orig0[fb_Index], c_Pos = orig0[c_Index];
+            Vector2f f_Pos = Vector2f.Lerp(a_Pos, b_Pos, (float)splitInfo.split_t);     // is this always right order?
+            orig0[fb_Index] = f_Pos;
+            SetValue(splitInfo.eOrigT0, orig0);
+            InsertValue(splitInfo.eNewT2, new TriUVs(f_Pos, b_Pos, c_Pos)); // (f,b,c)
+
+            // note this is exactly the same as above, only with T1/T3
+            // have to recompute everything because tris may not be connected in UV!
+            if (splitInfo.eOrigT1 >= 0) {       // tri /a/b/d becomes a/f/d
+                TriUVs orig1 = GetValue(splitInfo.eOrigT1);
+                Index3i curT1 = Mesh.GetTriangle(splitInfo.eOrigT1);
+                Index3i NewFDB = Mesh.GetTriangle(splitInfo.eNewT3);
+                fb_Index = curT1.IndexOf(f);
+                int d = NewFDB.b; int d_index = curT1.IndexOf(d);
+                a_Index = Index3i.OtherIndex(fb_Index, d_index);
+                // (validate a/b order) // b = NewFDB.c; Util.gDevAssert(b == splitInfo.eOrigAB.b && curT1[a_Index] == splitInfo.eOrigAB.a);
+                a_Pos = orig1[a_Index]; b_Pos = orig1[fb_Index]; Vector2f d_Pos = orig1[d_index];
+                f_Pos = Vector2f.Lerp(a_Pos, b_Pos, (float)splitInfo.split_t);
+                orig1[fb_Index] = f_Pos;
+                SetValue(splitInfo.eOrigT1, orig1);
+                InsertValue(splitInfo.eNewT3, new TriUVs(f_Pos, d_Pos, b_Pos)); // (f,d,b)
+            }
+        }
+
+
     }
 
     public struct TriNormals
@@ -223,8 +265,13 @@ namespace g3
             InsertValue(pokeInfo.new_t1, new(orig.B, orig.C, centerUV));
             InsertValue(pokeInfo.new_t2, new(orig.C, orig.A, centerUV));
         }
+        public override void UpdateOnSplit(DMesh3 Mesh, DMesh3.EdgeSplitInfo splitInfo)
+        {
+            InsertValue_Copy(splitInfo.eNewT2, splitInfo.eOrigT0);
+            if (splitInfo.eOrigT1 >= 0)
+                InsertValue_Copy(splitInfo.eNewT3, splitInfo.eOrigT1);
+        }
     }
-
 
 
 #if SOME_SYMBOL
@@ -309,4 +356,4 @@ namespace g3
 
 
 
-}
+    }
