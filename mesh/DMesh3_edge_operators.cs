@@ -1027,10 +1027,12 @@ namespace g3
 
         public struct PokeTriangleInfo
         {
-            public int orig_t0;
+            public int orig_t0;             // this is (a,b,center)
             public int new_vid;
-            public int new_t1, new_t2;
+            public int new_t1;              // (b,c,center)
+            public int new_t2;              // (c,a,center)
             public Index3i new_edges;
+            public Vector3d new_vid_barycoords;
         }
         public virtual MeshResult PokeTriangle(int tid, out PokeTriangleInfo result)
         {
@@ -1089,6 +1091,7 @@ namespace g3
             result.new_t1 = t1;
             result.new_t2 = t2;
             result.new_edges = new Index3i(eaC, ebC, ecC);
+            result.new_vid_barycoords = baryCoordinates;
 
             if (attributes != null)
                 attributes.OnPokeTriangle(result);
