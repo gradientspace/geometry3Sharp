@@ -207,6 +207,14 @@ namespace g3
             // don't actually have to do anything for remove? just leave value?
         }
 
+        public virtual void OnReverseTriOrientation(int tid)
+        {
+            foreach (IGeoAttribute attrib in TriAttributes()) {
+                if (attrib is ILinearGeoAttribute linearAttrib) 
+                    linearAttrib.UpdateOnReverseTriOrientation(tid);
+            }
+        }
+
         public virtual void OnSplitEdge(in DMesh3.EdgeSplitInfo splitInfo)
         {
             foreach (IGeoAttribute attrib in TriAttributes()) {

@@ -22,6 +22,9 @@ namespace g3
             set_triangle(tID, t[1], t[0], t[2]);
             Index3i te = GetTriEdges(tID);
             set_triangle_edges(tID, te[0], te[2], te[1]);
+
+            if (HasAttributes)
+                attributes.OnReverseTriOrientation(tID);
         }
 
 		public void ReverseOrientation(bool bFlipNormals = true) {
@@ -584,6 +587,8 @@ namespace g3
             public int tRemoved0, tRemoved1;    // tris we removed (second may be invalid)
             public int eRemoved0, eRemoved1;    // edges we removed (second may be invalid)
             public int eKept0, eKept1;          // edges we kept (second may be invalid)
+
+            public double collapse_t;
 		}
 		public MeshResult CollapseEdge(int vKeep, int vRemove, out EdgeCollapseInfo collapse)
 		{
@@ -805,6 +810,7 @@ namespace g3
             collapse.tRemoved0 = t0; collapse.tRemoved1 = t1;
             collapse.eRemoved0 = eac; collapse.eRemoved1 = ead;
             collapse.eKept0 = ebc; collapse.eKept1 = ebd;
+            collapse.collapse_t = 1.0;      // seems like this is not currently parameterized...
 
             if (attributes != null)
                 attributes.OnCollapseEdge(collapse);
