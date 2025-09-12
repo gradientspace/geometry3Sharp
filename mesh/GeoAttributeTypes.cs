@@ -76,12 +76,29 @@ namespace g3
         public string Name { get; private set; } = "UNNAMED";
         public IGeoAttribute.EAttribType AttribType { get; private set; } = IGeoAttribute.EAttribType.Unspecified;
 
+        protected virtual int get_element_count(DMesh3 parentMesh)
+        {
+            if (AttribType == IGeoAttribute.EAttribType.Triangle)
+                return parentMesh.MaxTriangleID;
+            else if (AttribType == IGeoAttribute.EAttribType.Vertex)
+                return parentMesh.MaxVertexID;
+            else
+                return 0;
+        }
+
         public BaseGeoAttribute(string name, DMesh3? parentMesh = null, IGeoAttribute.EAttribType attribType = IGeoAttribute.EAttribType.Unspecified) 
         { 
             Name = name;
             AttribType = attribType;
             if (parentMesh != null)
-                Initialize(parentMesh.TriangleCount);
+                Initialize(get_element_count(parentMesh));
+        }
+        public BaseGeoAttribute(string name, T InitialValue, DMesh3? parentMesh = null, IGeoAttribute.EAttribType attribType = IGeoAttribute.EAttribType.Unspecified)
+        {
+            Name = name;
+            AttribType = attribType;
+            if (parentMesh != null)
+                Initialize(get_element_count(parentMesh), InitialValue);
         }
 
         public void Initialize(int Count)
@@ -169,7 +186,75 @@ namespace g3
     }
 
 
-    
+
+
+    public abstract class BaseBaryVertGeoAttribute<T> : BaseGeoAttribute<T>, ILinearGeoAttribute where T : struct
+    {
+        public BaseBaryVertGeoAttribute(string Name, DMesh3? parentMesh, IGeoAttribute.EAttribType attribType) : base(Name, parentMesh, attribType) { }
+        public BaseBaryVertGeoAttribute(string Name, T initialValue, DMesh3? parentMesh, IGeoAttribute.EAttribType attribType) : base(Name, initialValue, parentMesh, attribType) { }
+
+        public virtual void UpdateOnPoke(DMesh3.PokeTriangleInfo pokeInfo) {
+            UpdateOnPoke_Impl(pokeInfo);
+        }
+        public virtual void UpdateOnSplit(DMesh3 Mesh, DMesh3.EdgeSplitInfo splitInfo) {
+            UpdateOnSplit_Impl(Mesh, splitInfo);
+        }
+        public virtual void UpdateOnReverseTriOrientation(int TriangleID) { }
+
+        public abstract T GetBaryValue(ref T A, ref T B, ref T C, Vector3d baryCoords);
+        public abstract T GetInterpValue(ref T A, ref T B, double interp_t);
+
+        public void UpdateOnPoke_Impl(DMesh3.PokeTriangleInfo pokeInfo)
+        {
+            T a = GetValue(pokeInfo.orig_tri.a);
+            T b = GetValue(pokeInfo.orig_tri.b);
+            T c = GetValue(pokeInfo.orig_tri.c);
+            T newValue = GetBaryValue(ref a, ref b, ref c, pokeInfo.new_vid_barycoords);
+            InsertValue(pokeInfo.new_vid, newValue);
+        }
+        public void UpdateOnSplit_Impl(DMesh3 Mesh, DMesh3.EdgeSplitInfo splitInfo)
+        {
+            T a = GetValue(splitInfo.eOrigAB.a);
+            T b = GetValue(splitInfo.eOrigAB.b);
+            T newValue = GetInterpValue(ref a, ref b, splitInfo.split_t);
+            InsertValue(splitInfo.vNew, newValue);
+        }
+    }
+
+
+    public class VertexColorsGeoAttribute : BaseBaryVertGeoAttribute<Vector3f>
+    {
+        public VertexColorsGeoAttribute(string Name, DMesh3? parentMesh, IGeoAttribute.EAttribType attribType) : base(Name, parentMesh, attribType) { }
+        public VertexColorsGeoAttribute(string Name, Vector3f initialValue, DMesh3? parentMesh, IGeoAttribute.EAttribType attribType) : base(Name, initialValue, parentMesh, attribType) { }
+
+        public override Vector3f GetInterpValue(ref Vector3f A, ref Vector3f B, double interp_t) {
+            return (Vector3f)Vector3d.Lerp(A, B, interp_t);
+        }
+        public override Vector3f GetBaryValue(ref Vector3f A, ref Vector3f B, ref Vector3f C, Vector3d baryCoords) {
+            return (Vector3f)(baryCoords.x * (Vector3d)A + baryCoords.y * (Vector3d)B + baryCoords.z * (Vector3d)C); 
+        }
+        public Vector3f GetBaryValue(int ai, int bi, int ci, Vector3d baryCoords) {
+            return (Vector3f)(baryCoords.x * (Vector3d)GetValue(ai) + baryCoords.y * (Vector3d)GetValue(bi) + baryCoords.z * (Vector3d)GetValue(ci));
+        }
+        public DVector<float> ToBuffer()
+        {
+            DVector<float> buffer = new DVector<float>(); buffer.resize(NumElements*3);
+            for ( int i = 0; i < NumElements; ++i ) {
+                Vector3f v = GetValue(i);
+                buffer[3*i] = v.x; buffer[3*i+1] = v.y; buffer[3*i+2] = v.z;
+            }
+            return buffer;
+        }
+        public void SetFromBuffer(DVector<float> buffer)
+        {
+            int N = buffer.Length/3;
+            UpdateCount(N);
+            for (int i = 0; i < N; ++i)
+                SetValue(i, new Vector3f(buffer[3*i], buffer[3*i+1], buffer[3*i+2]));
+        }
+    }
+
+
     // attributes that have their value interpolated during mesh refinement edits
 
     public abstract class BaseBaryTriGeoAttribute<T, T2> : BaseGeoAttribute<T>, ILinearGeoAttribute where T : struct where T2 : struct
@@ -419,4 +504,4 @@ namespace g3
 
 
 
-    }
+}
