@@ -317,8 +317,6 @@ namespace g3
                 int f = AppendVertex(vNew);
                 if (HasVertexNormals)
                     SetVertexNormal(f, Vector3f.Lerp(GetVertexNormal(a), GetVertexNormal(b), (float)split_t).Normalized);
-                if (HasVertexColors)
-                    SetVertexColor(f, Colorf.Lerp(GetVertexColor(a), GetVertexColor(b), (float)split_t));
                 if (HasVertexUVs)
                     SetVertexUV(f, Vector2f.Lerp(GetVertexUV(a), GetVertexUV(b), (float)split_t));
 
@@ -385,8 +383,6 @@ namespace g3
                 int f = AppendVertex(vNew);
                 if (HasVertexNormals)
                     SetVertexNormal(f, Vector3f.Lerp(GetVertexNormal(a), GetVertexNormal(b), (float)split_t).Normalized);
-                if (HasVertexColors)
-                    SetVertexColor(f, Colorf.Lerp(GetVertexColor(a), GetVertexColor(b), (float)split_t));
                 if (HasVertexUVs)
                     SetVertexUV(f, Vector2f.Lerp(GetVertexUV(a), GetVertexUV(b), (float)split_t));
 
@@ -1040,7 +1036,8 @@ namespace g3
 
         public struct PokeTriangleInfo
         {
-            public int orig_t0;             // this is (a,b,center)
+            public int orig_t0;             // this is (a,b,center) after poke
+            public Index3i orig_tri;        // original (a,b,c)
             public int new_vid;
             public int new_t1;              // (b,c,center)
             public int new_t2;              // (c,a,center)
@@ -1062,6 +1059,7 @@ namespace g3
             Index3i te = GetTriEdges(tid);
 
             // create new vertex with interpolated vertex attribs
+            // TODO: for per-vertex attributes in .Attribs, this will duplicate some work...
             NewVertexInfo vinfo;
             GetTriBaryPoint(tid, baryCoordinates.x, baryCoordinates.y, baryCoordinates.z, out vinfo);
             int center = AppendVertex(vinfo);
@@ -1100,6 +1098,7 @@ namespace g3
             }
 
             result.orig_t0 = tid;
+            result.orig_tri = tv;
             result.new_vid = center;
             result.new_t1 = t1;
             result.new_t2 = t2;

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace g3
 {
@@ -116,7 +117,6 @@ namespace g3
         RefCountVector vertices_refcount;
         DVector<double> vertices;
 		DVector<float> normals;
-		DVector<float> colors;
 		DVector<float> uv;
 
         // [TODO] this is optional if we only want to use this class as an iterable mesh-with-nbrs
@@ -150,8 +150,8 @@ namespace g3
             vertices = new DVector<double>();
 			if ( bWantNormals)
 				normals = new DVector<float>();
-			if ( bWantColors )
-				colors = new DVector<float>();
+            if (bWantColors)
+                EnableVertexColors(Vector3f.Zero);
 			if ( bWantUVs )
 				uv = new DVector<float>();
 
@@ -225,22 +225,26 @@ namespace g3
             max_group_id = 0;
 
             normals = (bNormals && copy.normals != null) ? new DVector<float>() : null;
-            colors = (bColors && copy.colors != null) ? new DVector<float>() : null;
             uv = (bUVs && copy.uv != null) ? new DVector<float>() : null;
             triangle_groups = (copy.triangle_groups != null) ? new DVector<int>() : null;
 
             // [TODO] if we knew some of these were dense we could copy directly...
 
+            bool bBuildInvMapV = (copy.IsCompactV == false) && (copy.HasAttributes);
+            int[] mapNewToOldV = (bBuildInvMapV) ? new int[copy.VertexCount] : null;
+
             NewVertexInfo vinfo = new NewVertexInfo();
             int[] mapV = new int[copy.MaxVertexID];
             foreach ( int vid in copy.vertices_refcount ) {
                 copy.GetVertex(vid, ref vinfo, bNormals, bColors, bUVs);
-                mapV[vid] = AppendVertex(vinfo);
+                int new_vid = AppendVertex(vinfo);
+                mapV[vid] = new_vid;
+                if (mapNewToOldV != null)
+                    mapNewToOldV[new_vid] = vid;
             }
 
             bool bBuildInvMapT = (copy.IsCompactT == false) && (copy.HasAttributes);
-            int[] mapNewToOldT = (bBuildInvMapT) ? new int[this.MaxTriangleID] : null;
-
+            int[] mapNewToOldT = (bBuildInvMapT) ? new int[copy.TriangleCount] : null;
 
             // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
             foreach ( int tid in copy.triangles_refcount ) {
@@ -255,7 +259,7 @@ namespace g3
 
             if (copy.HasAttributes) {
                 EnableAttributes(true);
-                attributes.Copy(copy.attributes, null, mapNewToOldT);
+                attributes.Copy(copy.attributes, mapNewToOldV, mapNewToOldT);
             }
 
             return new CompactInfo() {
@@ -269,7 +273,6 @@ namespace g3
             vertices = new DVector<double>(copy.vertices);
 
             normals = (bNormals && copy.normals != null) ? new DVector<float>(copy.normals) : null;
-            colors = (bColors && copy.colors != null) ? new DVector<float>(copy.colors) : null;
             uv = (bUVs && copy.uv != null) ? new DVector<float>(copy.uv) : null;
 
             vertices_refcount = new RefCountVector(copy.vertices_refcount);
@@ -299,6 +302,10 @@ namespace g3
         /// </summary>
         public CompactInfo Copy(IMesh copy, MeshHints hints, bool bNormals = true, bool bColors = true, bool bUVs = true)
         {
+            if (copy is DMesh3 dmesh) {
+                return CompactCopy(dmesh, bNormals, bColors, bUVs);
+            }
+
             vertices = new DVector<double>();
             vertex_edges = new SmallListSet();
             vertices_refcount = new RefCountVector();
@@ -310,10 +317,11 @@ namespace g3
             max_group_id = 0;
 
             normals = (bNormals && copy.HasVertexNormals) ? new DVector<float>() : null;
-            colors = (bColors && copy.HasVertexColors) ? new DVector<float>() : null;
             uv = (bUVs && copy.HasVertexUVs) ? new DVector<float>() : null;
             triangle_groups = (copy.HasTriangleGroups) ? new DVector<int>() : null;
 
+            if (copy.HasVertexColors)
+                EnableVertexColors();
 
             // [TODO] if we knew some of these were dense we could copy directly...
 
@@ -389,7 +397,7 @@ namespace g3
             get { return max_group_id; }
         }
 
-        public bool HasVertexColors { get { return colors != null; } }
+        public bool HasVertexColors { get { return attributes != null && attributes.HasVertexColor; } }
         public bool HasVertexNormals { get { return normals != null; } }
         public bool HasVertexUVs { get { return uv != null; } }
 		public bool HasTriangleGroups { get { return triangle_groups != null; } }
@@ -399,7 +407,7 @@ namespace g3
             get {
                 MeshComponents c = 0;
                 if (normals != null) c |= MeshComponents.VertexNormals;
-                if (colors != null) c |= MeshComponents.VertexColors;
+                if (Attribs.HasVertexColor) c |= MeshComponents.VertexColors;
                 if (uv != null) c |= MeshComponents.VertexUVs;
                 if (triangle_groups != null) c |= MeshComponents.FaceGroups;
                 return c;
@@ -462,20 +470,16 @@ namespace g3
 		}
 
         public Vector3f GetVertexColor(int vID) {
-            if (colors == null) { 
-                return Vector3f.One;
-            } else {
-                debug_check_is_vertex(vID);
-                int i = 3 * vID;
-                return new Vector3f(colors[i], colors[i + 1], colors[i + 2]);
-            }
+            if (attributes != null && attributes.HasVertexColor)
+                return Attribs.VertexColor.GetValue(vID);
+            return Vector3f.One;
 		}
 
 		public void SetVertexColor(int vID, Vector3f vNewColor) {
 			if ( HasVertexColors ) {
                 debug_check_is_vertex(vID);
                 int i = 3*vID;
-				colors[i] = vNewColor.x; colors[i+1] = vNewColor.y; colors[i+2] = vNewColor.z;
+                Attribs.VertexColor.SetValue(vID, vNewColor);
                 updateTimeStamp(false);
 			}
 		}
@@ -511,7 +515,7 @@ namespace g3
             }
             if (HasVertexColors && bWantColors) {
                 vinfo.bHaveC = true;
-                vinfo.c.Set(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]);
+                vinfo.c.Set( Attribs.VertexColor.GetValue(vID) );
             }
             if (HasVertexUVs && bWantUVs) {
                 vinfo.bHaveUV = true;
@@ -761,10 +765,7 @@ namespace g3
             }
             vinfo.bHaveC = HasVertexColors;
             if (vinfo.bHaveC) {
-                vinfo.c = new Vector3f(
-                    (bary0 * colors[ai] + bary1 * colors[bi] + bary2 * colors[ci]),
-                    (bary0 * colors[ai + 1] + bary1 * colors[bi + 1] + bary2 * colors[ci + 1]),
-                    (bary0 * colors[ai + 2] + bary1 * colors[bi + 2] + bary2 * colors[ci + 2]));
+                vinfo.c = Attribs.VertexColor.GetBaryValue(ai, bi, ci, new Vector3d(bary0, bary1, bary2));
             }
             vinfo.bHaveUV = HasVertexUVs;
             if (vinfo.bHaveUV) {
@@ -976,6 +977,7 @@ namespace g3
             vertices.insert(info.v[2], i + 2);
             vertices.insert(info.v[1], i + 1);
             vertices.insert(info.v[0], i);
+            on_new_vertex(vid);
 
 			if ( normals != null ) {
 				Vector3f n = (info.bHaveN) ? info.n : Vector3f.AxisY;
@@ -984,12 +986,8 @@ namespace g3
 				normals.insert(n[0], i);
 			}
 
-			if ( colors != null ) {
-				Vector3f c = (info.bHaveC) ? info.c : Vector3f.One;
-				colors.insert(c[2], i + 2);
-				colors.insert(c[1], i + 1);
-				colors.insert(c[0], i);
-			}
+            if (HasVertexColors && info.bHaveC)
+                Attribs.VertexColor.SetValue(vid, info.c);
 
 			if ( uv != null ) {
 				Vector2f u = (info.bHaveUV) ? info.uv : Vector2f.Zero;
@@ -1019,7 +1017,9 @@ namespace g3
             vertices.insert(from.vertices[bi+2], i + 2);
             vertices.insert(from.vertices[bi+1], i + 1);
             vertices.insert(from.vertices[bi], i);
-			if ( normals != null ) {
+            on_new_vertex(vid);
+
+            if ( normals != null ) {
                 if (from.normals != null) {
                     normals.insert(from.normals[bi + 2], i + 2);
                     normals.insert(from.normals[bi + 1], i + 1);
@@ -1031,17 +1031,10 @@ namespace g3
                 }
 			}
 
-			if ( colors != null ) {
-                if (from.colors != null) {
-                    colors.insert(from.colors[bi + 2], i + 2);
-                    colors.insert(from.colors[bi + 1], i + 1);
-                    colors.insert(from.colors[bi], i);
-                } else {
-                    colors.insert(1, i + 2);
-                    colors.insert(1, i + 1);       // white
-                    colors.insert(1, i);
-                }
-			}
+            if (HasVertexColors && from.HasVertexColors) {
+                Vector3f setColor = from.Attribs.VertexColor.GetValue(fromVID);
+                Attribs.VertexColor.SetValue(vid, setColor);
+            }
 
 			if ( uv != null ) {
 				int j = 2*vid;
@@ -1082,6 +1075,7 @@ namespace g3
             vertices.insert(info.v[2], i + 2);
             vertices.insert(info.v[1], i + 1);
             vertices.insert(info.v[0], i);
+            on_new_vertex(vid);
 
             if (normals != null) {
                 Vector3f n = (info.bHaveN) ? info.n : Vector3f.AxisY;
@@ -1090,12 +1084,8 @@ namespace g3
                 normals.insert(n[0], i);
             }
 
-            if (colors != null) {
-                Vector3f c = (info.bHaveC) ? info.c : Vector3f.One;
-                colors.insert(c[2], i + 2);
-                colors.insert(c[1], i + 1);
-                colors.insert(c[0], i);
-            }
+            if (HasVertexColors && info.bHaveC)
+                Attribs.VertexColor.InsertValue(vid, info.c);
 
             if (uv != null) {
                 Vector2f u = (info.bHaveUV) ? info.uv : Vector2f.Zero;
@@ -1268,22 +1258,14 @@ namespace g3
             normals = null;
         }
 
-        public void EnableVertexColors(Vector3f initial_color)
+        public void EnableVertexColors(Vector3f initial_color = default)
         {
-            if (HasVertexColors)
-                return;
-            colors = new DVector<float>();
-            int NV = MaxVertexID;
-            colors.resize(3*NV);
-            for (int i = 0; i < NV; ++i) {
-                int vi = 3 * i;
-                colors[vi] = initial_color.x;
-                colors[vi + 1] = initial_color.y;
-                colors[vi + 2] = initial_color.z;
-            }
+            if (HasVertexColors == false)
+                Attribs.EnableVertexColor(initial_color);
         }
         public void DiscardVertexColors() {
-            colors= null;
+            if (attributes != null) 
+                attributes.DisableVertexColor();
         }
 
         public void EnableVertexUVs(Vector2f initial_uv)
@@ -1336,13 +1318,19 @@ namespace g3
 
         protected void on_new_triangle(int tid, int ref_tid = -1)
         {
-            if (HasAttributes == false) return;
+            if (attributes == null) return;
             foreach (IGeoAttribute attrib in attributes.TriAttributes()) {
                 attrib.InsertValue_Copy(tid, ref_tid);
             }
         }
 
-
+        protected void on_new_vertex(int vid, int ref_vid = -1)
+        {
+            if (attributes == null) return;
+            foreach (IGeoAttribute attrib in attributes.VertAttributes()) {
+                attrib.InsertValue_Copy(vid, ref_vid);
+            }
+        }
 
 
         // iterators
@@ -2174,13 +2162,14 @@ namespace g3
             get { return normals; }
             set { normals = value; }
         }
-        public DVector<float> ColorsBuffer {
-            get { return colors; }
-            set { colors = value; }
-        }
         public DVector<float> UVBuffer {
             get { return uv; }
             set { uv = value; }
+        }
+
+        public DVector<float> ColorsBuffer {
+            get { return HasVertexColors ? Attribs.VertexColor.ToBuffer() : null; }
+            set { EnableVertexColors(); Attribs.VertexColor.SetFromBuffer(value); }
         }
 
         public DVector<int> TrianglesBuffer {
@@ -2318,9 +2307,6 @@ namespace g3
                 if ( normals != null ) {
                     normals[kc] = normals[kl];  normals[kc+1] = normals[kl+1];  normals[kc+2] = normals[kl+2];
                 }
-                if (colors != null) {
-                    colors[kc] = colors[kl];  colors[kc+1] = colors[kl+1];  colors[kc+2] = colors[kl+2];
-                }
                 if (uv != null) {
                     int ukc = iCurV * 2, ukl = iLastV * 2;
                     uv[ukc] = uv[ukl]; uv[ukc+1] = uv[ukl+1];
@@ -2342,6 +2328,9 @@ namespace g3
                 vref[iCurV] = vref[iLastV];
                 vref[iLastV] = RefCountVector.invalid;
 
+                // update attributes
+                on_new_vertex(iCurV, iLastV);
+
                 // move edge list
                 vertex_edges.Move(iLastV, iCurV);
 
@@ -2361,8 +2350,6 @@ namespace g3
             vertices.resize(VertexCount*3);
             if (normals != null)
                 normals.resize(VertexCount * 3);
-            if (colors != null)
-                colors.resize(VertexCount * 3);
             if (uv != null)
                 uv.resize(VertexCount * 2);
 
@@ -2417,10 +2404,6 @@ namespace g3
             if (triangle_groups != null)
                 triangle_groups.resize(TriangleCount);
 
-            // trim attributes
-            if (HasAttributes)
-                attributes.TrimTo(VertexCount, TriangleCount);
-
             /** shift edges **/
 
             // find first free edge, and last used edge
@@ -2465,6 +2448,10 @@ namespace g3
             // trim edge data structures
             edges_refcount.trim(EdgeCount);
             edges.resize(EdgeCount*4);
+
+            // trim attributes
+            if (HasAttributes)
+                attributes.TrimTo(VertexCount, TriangleCount);
 
             return ci;
         }

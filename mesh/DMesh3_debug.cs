@@ -171,8 +171,6 @@ namespace g3
 
 			if ( normals != null )
 				CheckOrFailF(normals.size == vertices.size);
-			if ( colors != null )
-				CheckOrFailF(colors.size == vertices.size);
 			if ( uv != null )
 				CheckOrFailF(uv.size/2 == vertices.size/3);
 			if ( triangle_groups != null )
