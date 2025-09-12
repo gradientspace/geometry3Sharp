@@ -18,6 +18,28 @@ namespace g3
             UVTriangles = new DVector<Index3i>();
         }
 
+        // initialize DenseUVMesh with a TriangleUVs attribute layer (which stores per-triangle-vertex UVs)
+        public static IndexedUVMesh FromPerVertexUVs(DMesh3 SourceMesh)
+        {
+            if (SourceMesh.HasVertexUVs == false)
+                throw new Exception("SourceMesh has no Vertex UVs");
+
+            int NumTris = SourceMesh.TriangleCount;
+            int NumVerts = SourceMesh.MaxVertexID;
+
+            IndexedUVMesh uvmesh = new IndexedUVMesh();
+            uvmesh.UVs = new DVector<Vector2f>();
+            uvmesh.UVTriangles = new DVector<Index3i>();
+
+            for (int i = 0; i < NumVerts; ++i) {
+                Vector2f uv = SourceMesh.IsVertex(i) ? SourceMesh.GetVertexUV(i) : Vector2f.Zero;
+                uvmesh.UVs.Add(uv);
+            }
+            foreach(int tid in SourceMesh.TriangleIndices())
+                uvmesh.UVTriangles.Add(SourceMesh.GetTriangle(tid));
+            return uvmesh;
+        }
+
 
         // initialize DenseUVMesh with a TriangleUVs attribute layer (which stores per-triangle-vertex UVs)
         public IndexedUVMesh(DMesh3 SourceMesh, TriUVsGeoAttribute UVLayer)
