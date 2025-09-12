@@ -61,6 +61,8 @@ namespace g3
 
     public static class AttributeNames
     {
+        public const string VertexColor = "VertexColor";
+
         public const string MaterialID = "MaterialID";
         public const string TriNormals = "TriNormals;";
 
@@ -78,6 +80,21 @@ namespace g3
         {
             this.parentMesh = parentMesh;
         }
+
+
+        protected VertexColorsGeoAttribute? vertexColor { get; private set; } = null;
+        public bool HasVertexColor => (vertexColor != null);
+        public void EnableVertexColor(Vector3f initialColor = default) {
+            if (vertexColor == null)
+                vertexColor = register_attribute(new VertexColorsGeoAttribute(AttributeNames.VertexColor, initialColor, parentMesh, IGeoAttribute.EAttribType.Vertex));
+        }
+        public void DisableVertexColor() {
+            vertexColor = unregister_attribute(vertexColor);
+        }
+        public VertexColorsGeoAttribute VertexColor { get { if (!HasVertexColor) EnableVertexColor(Vector3f.Zero); return vertexColor!; } }
+
+
+
 
         protected IntGeoAttribute? materialID { get; private set; } = null;
         public bool HasMaterialID => (materialID != null);
@@ -165,6 +182,13 @@ namespace g3
                     yield return geoAttribute;
         }
 
+        public virtual IEnumerable<IGeoAttribute> VertAttributes()
+        {
+            foreach (IGeoAttribute geoAttribute in allAttributes)
+                if (geoAttribute.AttribType == IGeoAttribute.EAttribType.Vertex)
+                    yield return geoAttribute;
+        }
+
         public virtual IGeoAttribute? FindByName(string Name)
         {
             foreach (IGeoAttribute geoAttribute in allAttributes)
@@ -178,12 +202,16 @@ namespace g3
         {
             if (Other.HasMaterialID)
                 EnableMaterialID();
+            throw new NotImplementedException();        // todo
         }
 
         public virtual void Copy(DMesh3Attributes other, int[]? mapV, int[]? mapT)
         {
             Func<int, int>? MapV = (mapV != null) ? (a) => { return mapV[a]; } : null;
             Func<int, int>? MapT = (mapT != null) ? (a) => { return mapT[a]; } : null;
+
+            if (other.HasVertexColor)
+                this.VertexColor.InitializeToCopy(ParentMesh!.VertexCount, other.VertexColor, MapV);
 
             if (other.HasMaterialID)
                 this.MaterialID.InitializeToCopy(ParentMesh!.TriangleCount, other.MaterialID, MapT);
@@ -198,6 +226,9 @@ namespace g3
 
         public virtual void TrimTo(int MaxVertID, int MaxTriID)
         {
+            foreach (IGeoAttribute VertAttrib in VertAttributes())
+                VertAttrib.TrimToLength(MaxVertID);
+
             foreach (IGeoAttribute TriAttrib in TriAttributes())
                 TriAttrib.TrimToLength(MaxTriID);
         }
@@ -217,13 +248,15 @@ namespace g3
 
         public virtual void OnSplitEdge(in DMesh3.EdgeSplitInfo splitInfo)
         {
-            foreach (IGeoAttribute attrib in TriAttributes()) {
+            foreach (IGeoAttribute attrib in Attributes()) {
                 if (attrib is ILinearGeoAttribute linearAttrib) {
                     linearAttrib.UpdateOnSplit(parentMesh!, splitInfo);
-                } else {
+                } else if (attrib.AttribType == IGeoAttribute.EAttribType.Triangle) {
                     attrib.InsertValue_Copy(splitInfo.eNewT2, splitInfo.eOrigT0);
                     if (splitInfo.eOrigT1 >= 0)
                         attrib.InsertValue_Copy(splitInfo.eNewT3, splitInfo.eOrigT1);
+                } else if (attrib.AttribType == IGeoAttribute.EAttribType.Vertex) {
+                    attrib.InsertValue_Copy(splitInfo.vNew, splitInfo.eOrigAB.a);     // arbitrary...
                 }
             }
         }
@@ -245,12 +278,14 @@ namespace g3
 
         public virtual void OnPokeTriangle(in DMesh3.PokeTriangleInfo pokeInfo)
         {
-            foreach (IGeoAttribute attrib in TriAttributes()) {
+            foreach (IGeoAttribute attrib in Attributes()) {
                 if (attrib is ILinearGeoAttribute linearAttrib) {
                     linearAttrib.UpdateOnPoke(pokeInfo);
-                } else {
+                } else if (attrib.AttribType == IGeoAttribute.EAttribType.Triangle) {
                     attrib.InsertValue_Copy(pokeInfo.new_t1, pokeInfo.orig_t0);
                     attrib.InsertValue_Copy(pokeInfo.new_t2, pokeInfo.orig_t0);
+                } else if (attrib.AttribType == IGeoAttribute.EAttribType.Vertex) {
+                    attrib.InsertValue_Copy(pokeInfo.new_vid, pokeInfo.orig_tri.a);     // arbitrary...
                 }
             }
         }
@@ -270,6 +305,14 @@ namespace g3
             CheckOrFailF(parentMesh != null);
 
             int TriCount = parentMesh!.MaxTriangleID;
+            int VertCount = parentMesh!.MaxVertexID;
+
+            if (vertexColor != null) {
+                CheckOrFailF(vertexColor.NumElements == VertCount);
+                CheckOrFailF(FindByName(AttributeNames.VertexColor) == vertexColor);
+            } else
+                CheckOrFailF(FindByName(AttributeNames.VertexColor) == null);
+
             if (materialID != null) {
                 CheckOrFailF(materialID.NumElements == TriCount);
                 CheckOrFailF(FindByName(AttributeNames.MaterialID) == materialID);
