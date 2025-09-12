@@ -299,6 +299,44 @@ namespace g3
 
 
 
+        // Angle > 0 indicates a counterclockwise rotation in the yz-plane (in right-handed coordinates)
+        public static Matrix3d RotateX(double Angle, bool bIsDegrees)
+        {
+            double angle = (bIsDegrees) ? (Angle * MathUtil.Deg2Rad) : Angle;
+            double cs = Math.Cos(angle), sn = Math.Sin(angle);
+            return new Matrix3d(
+                1, 0, 0,
+                0, cs, -sn,
+                0, sn, cs);
+        }
+        // Angle > 0 indicates a counterclockwise rotation in the zx-plane (in right-handed coordinates)
+        public static Matrix3d RotateY(double Angle, bool bIsDegrees)
+        {
+            double angle = (bIsDegrees) ? (Angle * MathUtil.Deg2Rad) : Angle;
+            double cs = Math.Cos(angle), sn = Math.Sin(angle);
+            return new Matrix3d(
+                cs, 0, sn,
+                0, 1, 0,
+                -sn, 0, cs);
+        }
+        // Angle > 0 indicates a counterclockwise rotation in the xy-plane (in right-handed coordinates)
+        public static Matrix3d RotateZ(double Angle, bool bIsDegrees)
+        {
+            double angle = (bIsDegrees) ? (Angle * MathUtil.Deg2Rad) : Angle;
+            double cs = Math.Cos(angle), sn = Math.Sin(angle);
+            return new Matrix3d(
+                cs, -sn, 0,
+                sn, cs, 0,
+                0, 0, 1);
+        }
+
+
+        public static Matrix3d Scale(double UniformScale) {
+            return new Matrix3d(UniformScale, UniformScale, UniformScale);
+        }
+        public static Matrix3d Scale(double ScaleX, double ScaleY, double ScaleZ) {
+            return new Matrix3d(ScaleX, ScaleY, ScaleZ);
+        }
 
         public static Matrix3d AxisAngleD(Vector3d axis, double angleDeg)
         {
