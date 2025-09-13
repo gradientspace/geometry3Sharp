@@ -482,9 +482,9 @@ namespace g3
 
         /// <summary>
         /// Returns two vectors perpendicular to n, as efficiently as possible.
-        /// Duff et all method, from https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+        /// Duff et al method, from https://graphics.pixar.com/library/OrthonormalB/paper.pdf
         /// </summary>
-        public static void MakePerpVectors(ref Vector3d n, out Vector3d b1, out Vector3d b2)
+        public static void MakePerpVectors(Vector3d n, out Vector3d b1, out Vector3d b2)
         {
             if (n.z < 0.0) {
                 double a = 1.0 / (1.0 - n.z);
@@ -509,6 +509,10 @@ namespace g3
                 b2.y = 1.0 - n.y * n.y * a;
                 b2.z = -n.y;
             }
+        }
+        public static void MakePerpVectors(ref Vector3d n, out Vector3d b1, out Vector3d b2)
+        {
+            MakePerpVectors(n, out b1, out b2);
         }
 
         //! support x,y,z and x y z

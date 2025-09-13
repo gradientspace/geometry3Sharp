@@ -78,6 +78,14 @@ namespace g3
             return new Colorf(r, g, b, newAlpha);
         }
 
+        public Colorf ClampAdd(float add_r, float add_g, float add_b)
+        {
+            r = Math.Clamp(r+add_r, 0.0f, 1.0f);
+            g = Math.Clamp(g+add_g, 0.0f, 1.0f);
+            b = Math.Clamp(b+add_b, 0.0f, 1.0f);
+            return this;
+        }
+
 
         public static Colorf operator -(Colorf v)
         {
