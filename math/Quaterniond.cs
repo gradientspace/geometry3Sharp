@@ -115,7 +115,7 @@ namespace g3
 
 
         /// <summary> Inverse() * v </summary>
-        public readonly Vector3d InverseMultiply(ref Vector3d v)
+        public readonly Vector3d InverseMultiply(ref readonly Vector3d v)
         {
             double norm = LengthSquared;
             if (norm > 0) {
@@ -132,7 +132,10 @@ namespace g3
             } else
                 return Vector3d.Zero;
         }
-
+        public readonly Vector3d InverseMultiply(Vector3d v)
+        {
+            return InverseMultiply(in v);
+        }
 
 
         // these multiply quaternion by (1,0,0), (0,1,0), (0,0,1), respectively.
