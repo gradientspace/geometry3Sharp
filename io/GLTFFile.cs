@@ -389,7 +389,7 @@ namespace g3
                 Matrix3d RS = Rotation.ToRotationMatrix() * new Matrix3d(Scale);
                 Vector3d T = (translation != null) ? new Vector3d(translation[0], translation[1], translation[2]) : Vector3d.Zero;
                 //return Matrix4d.Affine(in RS) * Matrix4d.Translation(T);
-                return new Matrix4d(in RS, in T);
+                return new Matrix4d(RS, T);
             }
         }
 
