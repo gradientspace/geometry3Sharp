@@ -53,6 +53,14 @@ namespace g3
             get { return (double)Math.Sqrt(LengthSquared); }
         }
 
+
+        public readonly double Max() { return Math.Max(x, y); }
+        public readonly double Min() { return Math.Min(x, y); }
+        public readonly double MaxAbs() { return Math.Max(Math.Abs(x), Math.Abs(y)); }
+        public readonly double MinAbs() { return Math.Min(Math.Abs(x), Math.Abs(y)); }
+        public readonly Vector2d Abs() { return new Vector2d(Math.Abs(x), Math.Abs(y)); }
+
+
         public double Normalize(double epsilon = MathUtil.Epsilon)
         {
             double length = Length;
@@ -90,6 +98,9 @@ namespace g3
         public void Round(int nDecimals) {
             x = Math.Round(x, nDecimals);
             y = Math.Round(y, nDecimals);
+        }
+        public readonly Vector2d RoundFrac(int nDecimals) {
+            return new Vector2d(Math.Round(x, nDecimals), Math.Round(y, nDecimals));
         }
 
 

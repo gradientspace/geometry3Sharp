@@ -166,6 +166,11 @@ namespace g3
             }
         }
 
+        public readonly void GetXYZ(out Vector3d X, out Vector3d Y, out Vector3d Z)
+        {
+            // todo can optimize this somewhat
+            X = AxisX; Y = AxisY; Z = AxisZ;
+        }
 
 
         public readonly Quaterniond Inverse() {
