@@ -39,6 +39,9 @@ namespace g3
 		public bool ReadMaterials;
 
         // allows files to refer to other files with relative paths
+        public string BaseFileName = "";
+
+        // allows files to refer to other files with relative paths
         public string BaseFilePath = "";
 
         // format readers will inevitably have their own settings, we
@@ -67,8 +70,14 @@ namespace g3
                 message = "(no message)";
         }
 
-		public static readonly IOReadResult Ok = new IOReadResult(IOCode.Ok, "");	
-	}
+		public static readonly IOReadResult Ok = new IOReadResult(IOCode.Ok, "");
+        public static IOReadResult Error(IOCode code, string message) {
+            return new IOReadResult(code, message);
+        }
+        public static IOReadResult ParseError(string message) {
+            return new IOReadResult(IOCode.FileParsingError, message);
+        }
+    }
 
 
 
