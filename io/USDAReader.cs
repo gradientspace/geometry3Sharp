@@ -92,9 +92,9 @@ namespace g3
                 USDField? normals = def.ContentFields.Find((USDField f) => { return f.Name == "normals"; });
 
                 bool bHaveRequiredFields = true;
-                if (points == null) { warningEvent?.Invoke($"mesh {def.DefIdentifier} is missing points field", null); bHaveRequiredFields = false; }
-                if (faceVertexCounts == null) { warningEvent?.Invoke($"mesh {def.DefIdentifier} is missing faceVertexCounts field", null); bHaveRequiredFields = false; }
-                if (faceVertexIndices == null) { warningEvent?.Invoke($"mesh {def.DefIdentifier} is missing faceVertexIndices field", null); bHaveRequiredFields = false; }
+                if (points == null) { warningEvent?.Invoke($"Mesh {def.DefIdentifier} is missing points field", null); bHaveRequiredFields = false; }
+                if (faceVertexCounts == null) { warningEvent?.Invoke($"Mesh {def.DefIdentifier} is missing faceVertexCounts field", null); bHaveRequiredFields = false; }
+                if (faceVertexIndices == null) { warningEvent?.Invoke($"Mesh {def.DefIdentifier} is missing faceVertexIndices field", null); bHaveRequiredFields = false; }
 
                 if (bHaveRequiredFields) {
                     DMesh3 Mesh = new DMesh3();
@@ -117,7 +117,7 @@ namespace g3
         protected bool AppendAsVertices(DMesh3 mesh, USDDef def, USDField points, Matrix4d Transform)
         {
             if (points.TypeInfo.USDType != EUSDType.Point3f || points.TypeInfo.bIsArray == false ) {
-                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.points has incorrect type {points.TypeInfo.USDType}", null);
+                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.points has incorrect type {points.TypeInfo.USDType}", null);
                 return false;
             }
             if ( points.Value.data is vec3f[] vectorList && vectorList.Length > 0) {
@@ -128,7 +128,7 @@ namespace g3
                 }
                 return true;
             } else {
-                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.points data is invalid or 0-length", null);
+                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.points data is invalid or 0-length", null);
                 return false;
             }
         }
@@ -138,11 +138,11 @@ namespace g3
             USDField? normals, USDField? uvs, Matrix4d Transform)
         {
             if (vertexCounts.TypeInfo.USDType != EUSDType.Int || vertexCounts.TypeInfo.bIsArray == false ) {
-                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.faceVertexCounts has incorrect type {vertexCounts.TypeInfo.USDType}", null);
+                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.faceVertexCounts has incorrect type {vertexCounts.TypeInfo.USDType}", null);
                 return false;
             }
             if (vertexIndices.TypeInfo.USDType != EUSDType.Int || vertexIndices.TypeInfo.bIsArray == false) {
-                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.faceVertexIndices has incorrect type {vertexIndices.TypeInfo.USDType}", null);
+                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.faceVertexIndices has incorrect type {vertexIndices.TypeInfo.USDType}", null);
                 return false;
             }
 
@@ -151,7 +151,7 @@ namespace g3
             if (countsList == null || countsList.Length == 0 ||
                 indexList == null || indexList.Length == 0) 
             {
-                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.faceVertexCounts or .faceVertexIndices data is invalid or 0-length", null);
+                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.faceVertexCounts or .faceVertexIndices data is invalid or 0-length", null);
                 return false;
             }
 
@@ -183,7 +183,7 @@ namespace g3
                 }
 
                 Vector2f uva = Vector2f.Zero, uvb = Vector2f.Zero, uvc = Vector2f.Zero;
-                if (bHaveNormals) {
+                if (bHaveUVs) {
                     uva = ToVector2f(uvList![cur_idx]);
                     uvb = ToVector2f(uvList[cur_idx+1]);
                 }
@@ -687,56 +687,89 @@ namespace g3
 
             if (field.TypeInfo.bIsArray) 
             {
-                if ( field.TypeInfo.USDType == EUSDType.Float3 
-                    || field.TypeInfo.USDType == EUSDType.Color3f
-                    || field.TypeInfo.USDType == EUSDType.Point3f
-                    || field.TypeInfo.USDType == EUSDType.Vector3f
-                    || field.TypeInfo.USDType == EUSDType.Normal3f
-                    || field.TypeInfo.USDType == EUSDType.Half3 ) 
-                {
-                    field.Value.data = parse_array_vec3f(field.block);
+                switch (field.TypeInfo.USDType) {
+                    case EUSDType.Float3:
+                    case EUSDType.Half3:
+                    case EUSDType.Point3f:
+                    case EUSDType.Point3h:
+                    case EUSDType.Color3f:
+                    case EUSDType.Color3h:
+                    case EUSDType.Vector3f:
+                    case EUSDType.Vector3h:
+                    case EUSDType.Normal3f:
+                    case EUSDType.Normal3h:
+                    case EUSDType.TexCoord3f:
+                    case EUSDType.TexCoord3h:
+                        field.Value.data = parse_array_vec3f(field.block);
+                        break;
+                    case EUSDType.Float2:
+                    case EUSDType.Half2:
+                    case EUSDType.TexCoord2f:
+                    case EUSDType.TexCoord2h:
+                        field.Value.data = parse_array_vec2f(field.block);
+                        break;
+                    case EUSDType.Float4:
+                    case EUSDType.Half4:
+                    case EUSDType.Color4f:
+                    case EUSDType.Color4h:
+                        field.Value.data = parse_array_vec4f(field.block);
+                        break;
+                    case EUSDType.Double3:
+                    case EUSDType.Vector3d:
+                    case EUSDType.Normal3d:
+                    case EUSDType.Point3d:
+                    case EUSDType.Color3d:
+                    case EUSDType.TexCoord3d:
+                        field.Value.data = parse_array_vec3d(field.block);
+                        break;
+                    case EUSDType.Double2:
+                    case EUSDType.TexCoord2d:
+                        field.Value.data = parse_array_vec2d(field.block);
+                        break;
+                    case EUSDType.Double4:
+                    case EUSDType.Color4d:
+                        field.Value.data = parse_array_vec4d(field.block);
+                        break;
+                    case EUSDType.Quatf:
+                    case EUSDType.Quath:
+                        field.Value.data = parse_array_quat4f(field.block);
+                        break;
+                    case EUSDType.Quatd:
+                        field.Value.data = parse_array_quat4d(field.block);
+                        break;
+                    case EUSDType.Float:
+                    case EUSDType.Half:
+                        field.Value.data = parse_array_float(field.block);
+                        break;
+                    case EUSDType.Double:
+                        field.Value.data = parse_array_double(field.block);
+                        break;
+                    case EUSDType.Bool:
+                        field.Value.data = parse_array_bool(field.block);
+                        break;
+                    case EUSDType.UChar:
+                        field.Value.data = parse_array_byte(field.block);
+                        break;
+                    case EUSDType.Int:
+                        field.Value.data = parse_array_int(field.block);
+                        break;
+                    case EUSDType.UInt:
+                        field.Value.data = parse_array_uint(field.block);
+                        break;
+                    case EUSDType.Int64:
+                        field.Value.data = parse_array_int64(field.block);
+                        break;
+                    case EUSDType.UInt64:
+                        field.Value.data = parse_array_uint64(field.block);
+                        break;
+                    case EUSDType.String:
+                    case EUSDType.Token:
+                    case EUSDType.Asset:
+                        field.Value.data = parse_array_string(field.block);
+                        break;
                 }
-                else if ( field.TypeInfo.USDType == EUSDType.Float2 ||
-                          field.TypeInfo.USDType == EUSDType.TexCoord2f ) 
-                {
-                    field.Value.data = parse_array_vec2f(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Float4 ) 
-                {
-                    field.Value.data = parse_array_vec4f(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Double3
-                    || field.TypeInfo.USDType == EUSDType.Vector3d ) 
-                {
-                    field.Value.data = parse_array_vec3d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Quatf ) 
-                {
-                    field.Value.data = parse_array_quat4f(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Float
-                    || field.TypeInfo.USDType == EUSDType.Half) 
-                {
-                    field.Value.data = parse_array_float(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Double ) 
-                {
-                    field.Value.data = parse_array_double(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Int ) 
-                {
-                    field.Value.data = parse_array_int(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Bool ) 
-                {
-                    field.Value.data = parse_array_bool(field.block);
-                } 
-                else if ( field.TypeInfo.USDType == EUSDType.String
-                    || field.TypeInfo.USDType == EUSDType.Token
-                    || field.TypeInfo.USDType == EUSDType.Asset) 
-                {
-                    field.Value.data = parse_array_string(field.block);
-                }
+
+
             } 
             else 
             {
@@ -753,52 +786,95 @@ namespace g3
                 else if ( field.TypeInfo.USDType == EUSDType.Float
                     || field.TypeInfo.USDType == EUSDType.Half ) 
                 {
-                    bool bOK = float.TryParse(field.block, out float f);
-                    field.Value.data = (bOK) ? f : null;
+                    field.Value.data = float.TryParse(field.block, out float f) ? f : null;
                 }
                 else if ( field.TypeInfo.USDType == EUSDType.Double ) 
                 {
-                    bool bOK = double.TryParse(field.block, out double f);
-                    field.Value.data = (bOK) ? f : null;
+                    field.Value.data = double.TryParse(field.block, out double f) ? f : null;
                 }
                 else if ( field.TypeInfo.USDType == EUSDType.Int ) 
                 {
-                    bool bOK = int.TryParse(field.block, out int i);
-                    field.Value.data = (bOK) ? i : null;
+                    field.Value.data = int.TryParse(field.block, out int i) ? i : null;
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.UInt ) 
+                {
+                    field.Value.data = uint.TryParse(field.block, out uint i) ? i : null;
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.Int64 ) 
+                {
+                    field.Value.data = int.TryParse(field.block, out int i) ? i : null;
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.UInt64 ) 
+                {
+                    field.Value.data = uint.TryParse(field.block, out uint i) ? i : null;
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.UChar ) 
+                {
+                    field.Value.data = byte.TryParse(field.block, out byte i) ? i : null;
                 }
                 else if ( field.TypeInfo.USDType == EUSDType.Bool ) 
                 {
-                    bool bOK = int.TryParse(field.block, out int i);
-                    field.Value.data = (bOK) ? ( (i==0) ? false : true ) : null;
+                    field.Value.data = int.TryParse(field.block, out int i) ? (bool)(i!=0) : null;
                 } 
-                if ( field.TypeInfo.USDType == EUSDType.Float3 
-                    || field.TypeInfo.USDType == EUSDType.Color3f
+                else if ( field.TypeInfo.USDType == EUSDType.Float3 
+                    || field.TypeInfo.USDType == EUSDType.Half3
                     || field.TypeInfo.USDType == EUSDType.Point3f
+                    || field.TypeInfo.USDType == EUSDType.Point3h
+                    || field.TypeInfo.USDType == EUSDType.Color3f
+                    || field.TypeInfo.USDType == EUSDType.Color3h
                     || field.TypeInfo.USDType == EUSDType.Vector3f
-                    || field.TypeInfo.USDType == EUSDType.Normal3f ) 
+                    || field.TypeInfo.USDType == EUSDType.Vector3h
+                    || field.TypeInfo.USDType == EUSDType.Normal3f
+                    || field.TypeInfo.USDType == EUSDType.Normal3h
+                    || field.TypeInfo.USDType == EUSDType.TexCoord3f
+                    || field.TypeInfo.USDType == EUSDType.TexCoord3h ) 
                 {
                     field.Value.data = parse_vec3f(field.block);
                 }
-                else if ( field.TypeInfo.USDType == EUSDType.Float2 ||
-                          field.TypeInfo.USDType == EUSDType.TexCoord2f ) 
+                else if ( field.TypeInfo.USDType == EUSDType.Float2
+                    || field.TypeInfo.USDType == EUSDType.Half2
+                    || field.TypeInfo.USDType == EUSDType.TexCoord2f
+                    || field.TypeInfo.USDType == EUSDType.TexCoord2h ) 
                 {
                     field.Value.data = parse_vec2f(field.block);
                 }
-                else if ( field.TypeInfo.USDType == EUSDType.Float4 ) 
+                else if ( field.TypeInfo.USDType == EUSDType.Float4
+                    || field.TypeInfo.USDType == EUSDType.Half4
+                    || field.TypeInfo.USDType == EUSDType.Color4f 
+                    || field.TypeInfo.USDType == EUSDType.Color4h ) 
                 {
                     field.Value.data = parse_vec4f(field.block);
                 }
                 else if ( field.TypeInfo.USDType == EUSDType.Double3
-                    || field.TypeInfo.USDType == EUSDType.Vector3d ) 
+                    || field.TypeInfo.USDType == EUSDType.Vector3d
+                    || field.TypeInfo.USDType == EUSDType.Normal3d
+                    || field.TypeInfo.USDType == EUSDType.Point3d
+                    || field.TypeInfo.USDType == EUSDType.Color3d
+                    || field.TypeInfo.USDType == EUSDType.TexCoord3d ) 
                 {
                     field.Value.data = parse_vec3d(field.block);
                 }
-                else if ( field.TypeInfo.USDType == EUSDType.Quatf ) 
+                else if ( field.TypeInfo.USDType == EUSDType.Double2
+                    || field.TypeInfo.USDType == EUSDType.TexCoord2d ) 
                 {
-                    vec4f v = parse_vec4f(field.block);
-                    field.Value.data = new quat4f() { w = v.x, x = v.y, y = v.z, z = v.w };
+                    field.Value.data = parse_vec2d(field.block);
                 }
-                else if ( field.TypeInfo.USDType == EUSDType.Matrix4d ) 
+                else if ( field.TypeInfo.USDType == EUSDType.Double4
+                    || field.TypeInfo.USDType == EUSDType.Color4d ) 
+                {
+                    field.Value.data = parse_vec4d(field.block);
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.Quatf
+                    || field.TypeInfo.USDType == EUSDType.Quath) 
+                {
+                    field.Value.data = parse_quat4f(field.block);
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.Quatd) 
+                {
+                    field.Value.data = parse_quat4d(field.block);
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.Matrix4d
+                    || field.TypeInfo.USDType == EUSDType.Frame4d ) 
                 {
                     field.Value.data = parse_matrix4d(field.block);
                 }
@@ -808,6 +884,8 @@ namespace g3
         }
 
 
+
+        // these are inefficient and could be done with FindNext and Span into stackalloc arrays...
         protected static vec2f parse_vec2f(string value)
         {
             string tokensString = value.Substring(1, value.Length-2);       // strip off () brackets
@@ -819,6 +897,18 @@ namespace g3
             if (bx == false || by == false)
                 throw new Exception($"parse_vec2f: failed parsing {tokensString}");
             return new vec2f() { u = fx, v = fy };
+        }
+        protected static vec2d parse_vec2d(string value)
+        {
+            string tokensString = value.Substring(1, value.Length-2);       // strip off () brackets
+            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (numberStrings.Length != 2)
+                throw new Exception($"parse_vec2d: incorrect number of elements {numberStrings.Length} in parsing vec2d string {tokensString}");
+            bool bx = double.TryParse(numberStrings[0], out double fx);
+            bool by = double.TryParse(numberStrings[1], out double fy);
+            if (bx == false || by == false)
+                throw new Exception($"parse_vec2d: failed parsing {tokensString}");
+            return new vec2d() { u = fx, v = fy };
         }
         protected static vec3f parse_vec3f(string value)
         {
@@ -853,7 +943,7 @@ namespace g3
                 tokensString = tokensString.Substring(1, tokensString.Length-2);       // strip off () brackets
             string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (numberStrings.Length != 4)
-                throw new Exception($"parse_vec4f: incorrect number of elements {numberStrings.Length} in parsing vec3f string {tokensString}");
+                throw new Exception($"parse_vec4f: incorrect number of elements {numberStrings.Length} in parsing vec4f string {tokensString}");
             bool bx = float.TryParse(numberStrings[0], out float fx);
             bool by = float.TryParse(numberStrings[1], out float fy);
             bool bz = float.TryParse(numberStrings[2], out float fz);
@@ -861,6 +951,32 @@ namespace g3
             if (bx == false || by == false || bz == false || bw == false)
                 throw new Exception($"parse_vec4f: failed parsing {tokensString}");
             return new vec4f() { x = fx, y = fy, z = fz, w = fw };
+        }
+        protected static vec4d parse_vec4d(string value)
+        {
+            string tokensString = value;
+            if (tokensString.StartsWith('('))
+                tokensString = tokensString.Substring(1, tokensString.Length-2);       // strip off () brackets
+            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (numberStrings.Length != 4)
+                throw new Exception($"parse_vec4d: incorrect number of elements {numberStrings.Length} in parsing vec4d string {tokensString}");
+            bool bx = double.TryParse(numberStrings[0], out double fx);
+            bool by = double.TryParse(numberStrings[1], out double fy);
+            bool bz = double.TryParse(numberStrings[2], out double fz);
+            bool bw = double.TryParse(numberStrings[3], out double fw);
+            if (bx == false || by == false || bz == false || bw == false)
+                throw new Exception($"parse_vec4d: failed parsing {tokensString}");
+            return new vec4d() { x = fx, y = fy, z = fz, w = fw };
+        }
+        protected static quat4f parse_quat4f(string value)
+        {
+            vec4f v = parse_vec4f(value);
+            return new quat4f() { w = v.x, x = v.y, y = v.z, z = v.w };
+        }
+        protected static quat4d parse_quat4d(string value)
+        {
+            vec4d v = parse_vec4d(value);
+            return new quat4d() { w = v.x, x = v.y, y = v.z, z = v.w };
         }
         protected static matrix4d parse_matrix4d(string value)
         {
@@ -900,6 +1016,14 @@ namespace g3
             }, true);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
+        protected static vec2d[]? parse_array_vec2d(string value)
+        {
+            List<vec2d> values = new List<vec2d>();
+            bool bOK = parse_array_realN(value, 2, (double[] val) => {
+                values.Add(new vec2d() { u = val[0], v = val[1] });
+            }, true);
+            return (bOK && values.Count > 0) ? values.ToArray() : null;
+        }
         protected static vec3d[]? parse_array_vec3d(string value)
         {
             List<vec3d> values = new List<vec3d>();
@@ -908,11 +1032,27 @@ namespace g3
             });
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
+        protected static vec4d[]? parse_array_vec4d(string value)
+        {
+            List<vec4d> values = new List<vec4d>();
+            bool bOK = parse_array_realN(value, 4, (double[] val) => {
+                values.Add(new vec4d() { x = val[0], y = val[1], z = val[2], w = val[3] });
+            }, true);
+            return (bOK && values.Count > 0) ? values.ToArray() : null;
+        }
         protected static quat4f[]? parse_array_quat4f(string value)
         {
             List<quat4f> values = new List<quat4f>();
             bool bOK = parse_array_realN(value, 4, (double[] val) => {
                 values.Add(new quat4f() { w = (float)val[0], x = (float)val[1], y = (float)val[2], z = (float)val[3] });
+            }, true);
+            return (bOK && values.Count > 0) ? values.ToArray() : null;
+        }
+        protected static quat4d[]? parse_array_quat4d(string value)
+        {
+            List<quat4d> values = new List<quat4d>();
+            bool bOK = parse_array_realN(value, 4, (double[] val) => {
+                values.Add(new quat4d() { w = val[0], x = val[1], y = val[2], z = val[3] });
             }, true);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
@@ -993,7 +1133,7 @@ namespace g3
             bool bOK = parse_array_real(valueString, (double val) => {
                 values.Add((float)val);
             }, true);
-            return (bOK && values.Count > 0) ? values.ToArray() : null;
+            return (bOK) ? values.ToArray() : null;
         }
         protected static double[]? parse_array_double(string valueString)
         {
@@ -1001,23 +1141,45 @@ namespace g3
             bool bOK = parse_array_real(valueString, (double val) => {
                 values.Add(val);
             });
-            return (bOK && values.Count > 0) ? values.ToArray() : null;
+            return (bOK) ? values.ToArray() : null;
         }
         protected static int[]? parse_array_int(string valueString)
-        {   // kinda cheating to use float here...but will work in range we should ever see in 3D geometry...
+        {
             List<int> values = new List<int>();
-            bool bOK = parse_array_real(valueString, (double val) => {
-                values.Add((int)val);
-            });
-            return (bOK && values.Count > 0) ? values.ToArray() : null;
+            bool bOK = parse_array_integer(valueString, (long val) => { values.Add((int)val); });
+            return (bOK) ? values.ToArray() : null;
+        }
+        protected static uint[]? parse_array_uint(string valueString)
+        {
+            List<uint> values = new List<uint>();
+            bool bOK = parse_array_integer(valueString, (long val) => { values.Add((uint)val); });
+            return (bOK) ? values.ToArray() : null;
+        }
+        protected static long[]? parse_array_int64(string valueString)
+        {
+            List<long> values = new List<long>();
+            bool bOK = parse_array_integer(valueString, (long val) => { values.Add(val); });
+            return (bOK) ? values.ToArray() : null;
+        }
+        protected static ulong[]? parse_array_uint64(string valueString)
+        {
+            List<ulong> values = new List<ulong>();
+            bool bOK = parse_array_integer(valueString, (long val) => { values.Add((ulong)val); });
+            return (bOK) ? values.ToArray() : null;
+        }
+        protected static byte[]? parse_array_byte(string valueString)
+        {
+            List<byte> values = new List<byte>();
+            bool bOK = parse_array_integer(valueString, (long val) => { values.Add((byte)val); });
+            return (bOK) ? values.ToArray() : null;
         }
         protected static bool[]? parse_array_bool(string valueString)
         {   
             List<bool> values = new List<bool>();
-            bool bOK = parse_array_real(valueString, (double val) => {
+            bool bOK = parse_array_integer(valueString, (long val) => {
                 values.Add( (val == 1) ? true : false );
             });
-            return (bOK && values.Count > 0) ? values.ToArray() : null;
+            return (bOK) ? values.ToArray() : null;
         }
         protected static bool parse_array_real(string valueString, Action<double> onElementF, bool bReadAs32bit = false)
         {
@@ -1046,6 +1208,31 @@ namespace g3
                 }
                 if (bOK == false)
                     throw new NotImplementedException($"failed parsing float from '{tokenString}'...??");
+                onElementF(parsedValue);
+            }
+            return true;
+        }
+        protected static bool parse_array_integer(string valueString, Action<long> onElementF)
+        {
+            if (valueString.StartsWith("[") == false || valueString.EndsWith("]") == false)
+                return false;
+            int start_idx = 1;
+
+            int cur_idx = start_idx;
+            bool bDone = false;
+            while (!bDone) {
+                int next_comma_idx = valueString.IndexOf(',', cur_idx);
+                if (next_comma_idx == -1) {
+                    next_comma_idx = valueString.Length-1;      // end-of-string
+                    bDone = true;
+                }
+                string tokenString = valueString.Substring(cur_idx, next_comma_idx-cur_idx).Trim();
+                if (tokenString.Length == 0)        // handle string ending in  ',]'
+                    continue;
+                cur_idx = next_comma_idx+1;
+                bool bOK = long.TryParse(tokenString, out long parsedValue);
+                if (bOK == false)
+                    throw new NotImplementedException($"failed parsing long from '{tokenString}'...??");
                 onElementF(parsedValue);
             }
             return true;
