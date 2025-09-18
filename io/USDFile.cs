@@ -96,64 +96,64 @@ namespace g3
             // https://openusd.org/dev/api/_usd__page__datatypes.html#Usd_Basic_Datatypes
 
             Bool,
-            UChar,      // -8 bit unsigned integer
-            Int,        // -32 bit signed integer
-            UInt,       // -32 bit unsigned integer
-            Int64,      // -64 bit signed integer
-            UInt64,     // -64 bit unsigned integer
-            Half,       // -16 bit floating point
-            Float,      // -32 bit floating point
-            Double,     // -64 bit floating point
+            UChar,      // 8 bit unsigned integer
+            Int,        // 32 bit signed integer
+            UInt,       // 32 bit unsigned integer
+            Int64,      // 64 bit signed integer
+            UInt64,     // 64 bit unsigned integer
+            Half,       // 16 bit floating point
+            Float,      // 32 bit floating point
+            Double,     // 64 bit floating point
             Timecode,   // double representing a resolvable time
-            String,     // -string
-            Token,      // -interned string with fast comparison and hashing
-            Asset,      // -represents a resolvable path to another asset
+            String,     // string
+            Token,      // interned string with fast comparison and hashing
+            Asset,      // represents a resolvable path to another asset
             Opaque,     // represents a value that can't be serialized
             Matrix2d,   // 2x2 matrix of doubles
             Matrix3d,   // 3x3 matrix of doubles
             Matrix4d,   // 4x4 matrix of doubles
-            Quatd,      // -double-precision quaternion
-            Quatf,      // -single-precision quaternion
-            Quath,      // -half-precision quaternion
-            Double2,    // -vector of 2 doubles
-            Float2,     // -vector of 2 floats
-            Half2,      // -vector of 2 half's
+            Quatd,      // double-precision quaternion
+            Quatf,      // single-precision quaternion
+            Quath,      // half-precision quaternion
+            Double2,    // vector of 2 doubles
+            Float2,     // vector of 2 floats
+            Half2,      // vector of 2 half's
             Int2,       // vector of 2 ints
-            Double3,    // -vector of 3 doubles
-            Float3,     // -vector of 3 floats
-            Half3,      // -vector of 3 half's
+            Double3,    // vector of 3 doubles
+            Float3,     // vector of 3 floats
+            Half3,      // vector of 3 half's
             Int3,       // vector of 3 ints
-            Double4,    // -vector of 4 doubles
-            Float4,     // -vector of 4 floats
-            Half4,      // -vector of 4 half's
+            Double4,    // vector of 4 doubles
+            Float4,     // vector of 4 floats
+            Half4,      // vector of 4 half's
             Int4,       // vector of 4 ints
 
 
             // role data types
             // https://openusd.org/dev/api/_usd__page__datatypes.html#Usd_Roles
 
-            Point3d,    // -double3 Point   transform as a position
-            Point3f,    // -float3  Point   transform as a position
-            Point3h,    // -half3   Point   transform as a position
-            Normal3d,   // -double Normal  transform as a normal
-            Normal3f,   // -float3  Normal transform as a normal
-            Normal3h,   // -half3   Normal transform as a normal
-            Vector3d,   // -double3 Vector transform as a direction
-            Vector3f,   // -float3  Vector transform as a direction
-            Vector3h,   // -half3   Vector transform as a direction
-            Color3d,    // -double3 Color energy-linear RGB
-            Color3f,    // -float3  Color energy-linear RGB
-            Color3h,    // -half3   Color energy-linear RGB
-            Color4d,    // -double4 Color energy-linear RGBA, not pre-alpha multiplied
-            Color4f,    // -float4  Color energy-linear RGBA, not pre-alpha multiplied
-            Color4h,    // -half4   Color energy-linear RGBA, not pre-alpha multiplied
+            Point3d,    // double3 Point   transform as a position
+            Point3f,    // float3  Point   transform as a position
+            Point3h,    // half3   Point   transform as a position
+            Normal3d,   // double Normal  transform as a normal
+            Normal3f,   // float3  Normal transform as a normal
+            Normal3h,   // half3   Normal transform as a normal
+            Vector3d,   // double3 Vector transform as a direction
+            Vector3f,   // float3  Vector transform as a direction
+            Vector3h,   // half3   Vector transform as a direction
+            Color3d,    // double3 Color energy-linear RGB
+            Color3f,    // float3  Color energy-linear RGB
+            Color3h,    // half3   Color energy-linear RGB
+            Color4d,    // double4 Color energy-linear RGBA, not pre-alpha multiplied
+            Color4f,    // float4  Color energy-linear RGBA, not pre-alpha multiplied
+            Color4h,    // half4   Color energy-linear RGBA, not pre-alpha multiplied
             Frame4d,    // matrix4d    Frame defines a coordinate frame
-            TexCoord2d, // -double2 TextureCoordinate	2D uv texture coordinate
-            TexCoord2f, // -float2 TextureCoordinate	2D uv texture coordinate
-            TexCoord2h, // -half2 TextureCoordinate	2D uv texture coordinate
-            TexCoord3d, // -double3 TextureCoordinate	3D uvw texture coordinate
-            TexCoord3f, // -float3 TextureCoordinate	3D uvw texture coordinate
-            TexCoord3h, // -half3 TextureCoordinate	3D uvw texture coordinate
+            TexCoord2d, // double2 TextureCoordinate	2D uv texture coordinate
+            TexCoord2f, // float2 TextureCoordinate	2D uv texture coordinate
+            TexCoord2h, // half2 TextureCoordinate	2D uv texture coordinate
+            TexCoord3d, // double3 TextureCoordinate	3D uvw texture coordinate
+            TexCoord3f, // float3 TextureCoordinate	3D uvw texture coordinate
+            TexCoord3h, // half3 TextureCoordinate	3D uvw texture coordinate
             Group       // opaque Group   used as a grouping mechanism for namespaced properties
         };
         // string tokens for above type enum - order must stay the same!
@@ -264,52 +264,95 @@ namespace g3
             }
         }
 
+        [System.Runtime.CompilerServices.InlineArray(16)]
+        public struct real_list16 {
+            private double _element0;
+        }
+        [System.Runtime.CompilerServices.InlineArray(8)]
+        public struct int64_list8 {
+            private long _element0;
+        }
+
+        public struct vec2i
+        {
+            public int x, y;
+            public vec2i() { }
+            public vec2i(in int64_list8 l) { x = (int)l[0]; y = (int)l[1]; }
+            public override string ToString() { return $"({x},{y})"; }
+        }
+        public struct vec3i
+        {
+            public int x, y, z;
+            public vec3i() { }
+            public vec3i(in int64_list8 l) { x = (int)l[0]; y = (int)l[1]; z = (int)l[2]; }
+            public override string ToString() { return $"({x},{y},{z})"; }
+        }
+        public struct vec4i
+        {
+            public int x, y, z, w;
+            public vec4i() { }
+            public vec4i(in int64_list8 l) { x = (int)l[0]; y = (int)l[1]; z = (int)l[2]; w = (int)l[3]; }
+            public override string ToString() { return $"({x},{y},{z},{w})"; }
+        }
 
         public struct vec2f
         {
-            public float u;
-            public float v;
+            public float u, v;
+            public vec2f() { }
+            public vec2f(in real_list16 l) { u = (float)l[0]; v = (float)l[1]; }
             public override string ToString() { return $"({u},{v})"; }
         }
         public struct vec2d
         {
-            public double u;
-            public double v;
+            public double u, v;
+            public vec2d() { }
+            public vec2d(in real_list16 l) { u = l[0]; v = l[1]; }
             public override string ToString() { return $"({u},{v})"; }
         }
 
         public struct vec3f
         {
-            public float x;
-            public float y;
-            public float z;
+            public float x, y, z;
+            public vec3f() { }
+            public vec3f(in real_list16 l) { x = (float)l[0]; y = (float)l[1]; z = (float)l[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
         }
         public struct vec3d
         {
-            public double x;
-            public double y;
-            public double z;
+            public double x, y, z;
+            public vec3d() { }
+            public vec3d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
         }
 
         public struct vec4f
         {
-            public float x;
-            public float y;
-            public float z;
-            public float w;
+            public float x, y, z, w;
+            public vec4f() { }
+            public vec4f(in real_list16 l) { x = (float)l[0]; y = (float)l[1]; z = (float)l[2]; w = (float)l[3]; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
         }
         public struct vec4d
         {
-            public double x;
-            public double y;
-            public double z;
-            public double w;
+            public double x, y, z, w;
+            public vec4d() { }
+            public vec4d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; w = l[3]; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
         }
 
+        public struct matrix2d
+        {
+            public vec2f row0;
+            public vec2f row1;
+            public override string ToString() { return $"({row0},{row1})"; }
+        }
+        public struct matrix3d
+        {
+            public vec3f row0;
+            public vec3f row1;
+            public vec3f row2;
+            public override string ToString() { return $"({row0},{row1},{row2})"; }
+        }
         public struct matrix4d
         {
             public vec4f row0;
@@ -321,18 +364,16 @@ namespace g3
 
         public struct quat4f
         {
-            public float w;
-            public float x;
-            public float y;
-            public float z;
+            public float w, x, y, z;
+            public quat4f() { }
+            public quat4f(in real_list16 l) { w = (float)l[0]; x = (float)l[1]; y = (float)l[2]; z = (float)l[3]; }
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
         public struct quat4d
         {
-            public double w;
-            public double x;
-            public double y;
-            public double z;
+            public double w, x, y, z;
+            public quat4d() { }
+            public quat4d(in real_list16 l) { w = l[0]; x = l[1]; y = l[2]; z = l[3]; }
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
     }

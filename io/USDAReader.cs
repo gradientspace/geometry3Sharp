@@ -737,11 +737,22 @@ namespace g3
                     case EUSDType.Quatd:
                         field.Value.data = parse_array_quat4d(field.block);
                         break;
+                    case EUSDType.Matrix2d:
+                        field.Value.data = parse_array_matrix<matrix2d>(field.block, parse_matrix2d);
+                        break;
+                    case EUSDType.Matrix3d:
+                        field.Value.data = parse_array_matrix<matrix3d>(field.block, parse_matrix3d);
+                        break;
+                    case EUSDType.Matrix4d:
+                    case EUSDType.Frame4d:
+                        field.Value.data = parse_array_matrix<matrix4d>(field.block, parse_matrix4d);
+                        break;
                     case EUSDType.Float:
                     case EUSDType.Half:
                         field.Value.data = parse_array_float(field.block);
                         break;
                     case EUSDType.Double:
+                    case EUSDType.Timecode:
                         field.Value.data = parse_array_double(field.block);
                         break;
                     case EUSDType.Bool:
@@ -761,6 +772,15 @@ namespace g3
                         break;
                     case EUSDType.UInt64:
                         field.Value.data = parse_array_uint64(field.block);
+                        break;
+                    case EUSDType.Int2:
+                        field.Value.data = parse_array_vec2i(field.block);
+                        break;
+                    case EUSDType.Int3:
+                        field.Value.data = parse_array_vec3i(field.block);
+                        break;
+                    case EUSDType.Int4:
+                        field.Value.data = parse_array_vec4i(field.block);
                         break;
                     case EUSDType.String:
                     case EUSDType.Token:
@@ -788,7 +808,8 @@ namespace g3
                 {
                     field.Value.data = float.TryParse(field.block, out float f) ? f : null;
                 }
-                else if ( field.TypeInfo.USDType == EUSDType.Double ) 
+                else if ( field.TypeInfo.USDType == EUSDType.Double
+                    || field.TypeInfo.USDType == EUSDType.Timecode) 
                 {
                     field.Value.data = double.TryParse(field.block, out double f) ? f : null;
                 }
@@ -873,10 +894,25 @@ namespace g3
                 {
                     field.Value.data = parse_quat4d(field.block);
                 }
+                else if ( field.TypeInfo.USDType == EUSDType.Matrix2d ) 
+                {
+                    field.Value.data = parse_matrix2d(field.block);
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.Matrix3d ) 
+                {
+                    field.Value.data = parse_matrix3d(field.block);
+                }
                 else if ( field.TypeInfo.USDType == EUSDType.Matrix4d
                     || field.TypeInfo.USDType == EUSDType.Frame4d ) 
                 {
                     field.Value.data = parse_matrix4d(field.block);
+                }
+                else if ( field.TypeInfo.USDType == EUSDType.Int2) {
+                    field.Value.data = parse_vec2i(field.block);
+                } else if (field.TypeInfo.USDType == EUSDType.Int3) {
+                    field.Value.data = parse_vec3i(field.block);
+                } else if (field.TypeInfo.USDType == EUSDType.Int4) {
+                    field.Value.data = parse_vec4i(field.block);
                 }
             }
 
@@ -884,99 +920,73 @@ namespace g3
         }
 
 
+        protected static real_list16 parse_real_vec(string value, int count, bool bParseAs32Bit)
+        {
+            real_list16 result = new();
+            string tokensString = value.StartsWith('(') ? value.Substring(1, value.Length-2) : value;       // strip off () brackets
+            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (numberStrings.Length != count)
+                throw new Exception($"parse_real_vec: incorrect number of elements {numberStrings.Length} in parsing {count}-element string {tokensString}");
+            bool bAllOK = true;
+            for (int i = 0; i < count; ++i) {
+                if (bParseAs32Bit) {
+                    bAllOK &= float.TryParse(numberStrings[i], out float f);
+                    if (bAllOK ) result[i] = f;
+                } else 
+                    bAllOK &= double.TryParse(numberStrings[i], out result[i]);
+            }
+            if (!bAllOK)
+                throw new Exception($"parse_real_vec: failed parsing {tokensString}");
+            return result;
+        }
 
         // these are inefficient and could be done with FindNext and Span into stackalloc arrays...
-        protected static vec2f parse_vec2f(string value)
+        protected static vec2f parse_vec2f(string value) {
+            return new vec2f(parse_real_vec(value, 2, true));
+        }
+        protected static vec2d parse_vec2d(string value) {
+            return new vec2d(parse_real_vec(value, 2, false));
+        }
+        protected static vec3f parse_vec3f(string value) {
+            return new vec3f(parse_real_vec(value, 3, true));
+        }
+        protected static vec3d parse_vec3d(string value) {
+            return new vec3d(parse_real_vec(value, 3, false));
+        }
+        protected static vec4f parse_vec4f(string value) {
+            return new vec4f(parse_real_vec(value, 4, true));
+        }
+        protected static vec4d parse_vec4d(string value) {
+            return new vec4d(parse_real_vec(value, 4, false));
+        }
+        protected static quat4f parse_quat4f(string value) {
+            return new quat4f(parse_real_vec(value, 4, true));
+        }
+        protected static quat4d parse_quat4d(string value) {
+            return new quat4d(parse_real_vec(value, 4, false));
+        }
+        protected static matrix2d parse_matrix2d(string value)
         {
-            string tokensString = value.Substring(1, value.Length-2);       // strip off () brackets
-            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            string tokensString = value.Substring(1, value.Length-2);       // strip off outermost () brackets
+            tokensString = tokensString.Replace(" ", string.Empty);         // remove any whitespace, so that inner values are ),(
+            string[] numberStrings = tokensString.Split("),(", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (numberStrings.Length != 2)
-                throw new Exception($"parse_vec2f: incorrect number of elements {numberStrings.Length} in parsing vec2f string {tokensString}");
-            bool bx = float.TryParse(numberStrings[0], out float fx);
-            bool by = float.TryParse(numberStrings[1], out float fy);
-            if (bx == false || by == false)
-                throw new Exception($"parse_vec2f: failed parsing {tokensString}");
-            return new vec2f() { u = fx, v = fy };
+                throw new Exception($"parse_matrix2d: incorrect number of elements {numberStrings.Length} in parsing matrix2d string {tokensString}");
+            vec2f r0 = parse_vec2f(numberStrings[0].Substring(1));
+            vec2f r1 = parse_vec2f(numberStrings[1].Substring(0, numberStrings[1].Length-1));
+            return new matrix2d() { row0 = r0, row1 = r1 };
         }
-        protected static vec2d parse_vec2d(string value)
+        protected static matrix3d parse_matrix3d(string value)
         {
-            string tokensString = value.Substring(1, value.Length-2);       // strip off () brackets
-            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (numberStrings.Length != 2)
-                throw new Exception($"parse_vec2d: incorrect number of elements {numberStrings.Length} in parsing vec2d string {tokensString}");
-            bool bx = double.TryParse(numberStrings[0], out double fx);
-            bool by = double.TryParse(numberStrings[1], out double fy);
-            if (bx == false || by == false)
-                throw new Exception($"parse_vec2d: failed parsing {tokensString}");
-            return new vec2d() { u = fx, v = fy };
-        }
-        protected static vec3f parse_vec3f(string value)
-        {
-            string tokensString = value.Substring(1, value.Length-2);       // strip off () brackets
-            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            string tokensString = value.Substring(1, value.Length-2);       // strip off outermost () brackets
+            tokensString = tokensString.Replace(" ", string.Empty);         // remove any whitespace, so that inner values are ),(
+            string[] numberStrings = tokensString.Split("),(", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (numberStrings.Length != 3)
-                throw new Exception($"parse_vec3f: incorrect number of elements {numberStrings.Length} in parsing vec3f string {tokensString}");
-            bool bx = float.TryParse(numberStrings[0], out float fx);
-            bool by = float.TryParse(numberStrings[1], out float fy);
-            bool bz = float.TryParse(numberStrings[2], out float fz);
-            if (bx == false || by == false || bz == false)
-                throw new Exception($"parse_vec3f: failed parsing {tokensString}");
-            return new vec3f() { x = fx, y = fy, z = fz };
-        }
-        protected static vec3d parse_vec3d(string value)
-        {
-            string tokensString = value.Substring(1, value.Length-2);       // strip off () brackets
-            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (numberStrings.Length != 3)
-                throw new Exception($"parse_vec3f: incorrect number of elements {numberStrings.Length} in parsing vec3f string {tokensString}");
-            bool bx = double.TryParse(numberStrings[0], out double fx);
-            bool by = double.TryParse(numberStrings[1], out double fy);
-            bool bz = double.TryParse(numberStrings[2], out double fz);
-            if (bx == false || by == false || bz == false)
-                throw new Exception($"parse_vec3d: failed parsing {tokensString}");
-            return new vec3d() { x = fx, y = fy, z = fz };
-        }
-        protected static vec4f parse_vec4f(string value)
-        {
-            string tokensString = value;
-            if ( tokensString.StartsWith('('))
-                tokensString = tokensString.Substring(1, tokensString.Length-2);       // strip off () brackets
-            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (numberStrings.Length != 4)
-                throw new Exception($"parse_vec4f: incorrect number of elements {numberStrings.Length} in parsing vec4f string {tokensString}");
-            bool bx = float.TryParse(numberStrings[0], out float fx);
-            bool by = float.TryParse(numberStrings[1], out float fy);
-            bool bz = float.TryParse(numberStrings[2], out float fz);
-            bool bw = float.TryParse(numberStrings[3], out float fw);
-            if (bx == false || by == false || bz == false || bw == false)
-                throw new Exception($"parse_vec4f: failed parsing {tokensString}");
-            return new vec4f() { x = fx, y = fy, z = fz, w = fw };
-        }
-        protected static vec4d parse_vec4d(string value)
-        {
-            string tokensString = value;
-            if (tokensString.StartsWith('('))
-                tokensString = tokensString.Substring(1, tokensString.Length-2);       // strip off () brackets
-            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (numberStrings.Length != 4)
-                throw new Exception($"parse_vec4d: incorrect number of elements {numberStrings.Length} in parsing vec4d string {tokensString}");
-            bool bx = double.TryParse(numberStrings[0], out double fx);
-            bool by = double.TryParse(numberStrings[1], out double fy);
-            bool bz = double.TryParse(numberStrings[2], out double fz);
-            bool bw = double.TryParse(numberStrings[3], out double fw);
-            if (bx == false || by == false || bz == false || bw == false)
-                throw new Exception($"parse_vec4d: failed parsing {tokensString}");
-            return new vec4d() { x = fx, y = fy, z = fz, w = fw };
-        }
-        protected static quat4f parse_quat4f(string value)
-        {
-            vec4f v = parse_vec4f(value);
-            return new quat4f() { w = v.x, x = v.y, y = v.z, z = v.w };
-        }
-        protected static quat4d parse_quat4d(string value)
-        {
-            vec4d v = parse_vec4d(value);
-            return new quat4d() { w = v.x, x = v.y, y = v.z, z = v.w };
+                throw new Exception($"parse_matrix4d: incorrect number of elements {numberStrings.Length} in parsing matrix3d string {tokensString}");
+            vec3f r0 = parse_vec3f(numberStrings[0].Substring(1));
+            vec3f r1 = parse_vec3f(numberStrings[1]);
+            vec3f r2 = parse_vec3f(numberStrings[2].Substring(0, numberStrings[2].Length-1));
+            return new matrix3d() { row0 = r0, row1 = r1, row2 = r2 };
         }
         protected static matrix4d parse_matrix4d(string value)
         {
@@ -992,75 +1002,87 @@ namespace g3
             return new matrix4d() { row0 = r0, row1 = r1, row2 = r2, row3 = r3 };
         }
 
+
+        protected static int64_list8 parse_int_vec(string value, int count)
+        {
+            int64_list8 result = new();
+            string tokensString = value.Substring(1, value.Length-2);       // strip off () brackets
+            string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (numberStrings.Length != count)
+                throw new Exception($"parse_int_vec: incorrect number of elements {numberStrings.Length} in parsing {count}-element string {tokensString}");
+            bool bAllOK = true;
+            for (int i = 0; i < count; ++i) {
+                bAllOK &= long.TryParse(numberStrings[i], out result[i]);
+            }
+            if (!bAllOK)
+                throw new Exception($"parse_int_vec: failed parsing {tokensString}");
+            return result;
+        }
+        protected static vec2i parse_vec2i(string value) {
+            return new vec2i(parse_int_vec(value, 2));
+        }
+        protected static vec3i parse_vec3i(string value)
+        {
+            return new vec3i(parse_int_vec(value, 3));
+        }
+        protected static vec4i parse_vec4i(string value)
+        {
+            return new vec4i(parse_int_vec(value,4));
+        }
+
         protected static vec2f[]? parse_array_vec2f(string value)
         {
             List<vec2f> values = new List<vec2f>();
-            bool bOK = parse_array_realN(value, 2, (double[] val) => {
-                values.Add(new vec2f() { u = (float)val[0], v = (float)val[1] });
-            }, true);
+            bool bOK = parse_array_realN(value, 2, (real_list16 val) => { values.Add(new vec2f(val)); }, true);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
         protected static vec3f[]? parse_array_vec3f(string value)
         {
             List<vec3f> values = new List<vec3f>();
-            bool bOK = parse_array_realN(value, 3, (double[] val) => {
-                values.Add(new vec3f() { x = (float)val[0], y = (float)val[1], z = (float)val[2] });
-            }, true);
+            bool bOK = parse_array_realN(value, 3, (real_list16 val) => { values.Add(new vec3f(val)); }, true);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
         protected static vec4f[]? parse_array_vec4f(string value)
         {
             List<vec4f> values = new List<vec4f>();
-            bool bOK = parse_array_realN(value, 4, (double[] val) => {
-                values.Add(new vec4f() { x = (float)val[0], y = (float)val[1], z = (float)val[2], w = (float)val[3] });
-            }, true);
+            bool bOK = parse_array_realN(value, 4, (real_list16 val) => { values.Add(new vec4f(val)); }, true);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
         protected static vec2d[]? parse_array_vec2d(string value)
         {
             List<vec2d> values = new List<vec2d>();
-            bool bOK = parse_array_realN(value, 2, (double[] val) => {
-                values.Add(new vec2d() { u = val[0], v = val[1] });
-            }, true);
+            bool bOK = parse_array_realN(value, 2, (real_list16 val) => { values.Add(new vec2d(val)); }, false);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
         protected static vec3d[]? parse_array_vec3d(string value)
         {
             List<vec3d> values = new List<vec3d>();
-            bool bOK = parse_array_realN(value, 3, (double[] val) => {
-                values.Add(new vec3d() { x = val[0], y = val[1], z = val[2] });
-            });
+            bool bOK = parse_array_realN(value, 3, (real_list16 val) => { values.Add(new vec3d(val)); }, false);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
         protected static vec4d[]? parse_array_vec4d(string value)
         {
             List<vec4d> values = new List<vec4d>();
-            bool bOK = parse_array_realN(value, 4, (double[] val) => {
-                values.Add(new vec4d() { x = val[0], y = val[1], z = val[2], w = val[3] });
-            }, true);
+            bool bOK = parse_array_realN(value, 4, (real_list16 val) => { values.Add(new vec4d(val)); }, false);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
         protected static quat4f[]? parse_array_quat4f(string value)
         {
             List<quat4f> values = new List<quat4f>();
-            bool bOK = parse_array_realN(value, 4, (double[] val) => {
-                values.Add(new quat4f() { w = (float)val[0], x = (float)val[1], y = (float)val[2], z = (float)val[3] });
-            }, true);
+            bool bOK = parse_array_realN(value, 4, (real_list16 val) => { values.Add(new quat4f(val)); }, true);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
         protected static quat4d[]? parse_array_quat4d(string value)
         {
             List<quat4d> values = new List<quat4d>();
-            bool bOK = parse_array_realN(value, 4, (double[] val) => {
-                values.Add(new quat4d() { w = val[0], x = val[1], y = val[2], z = val[3] });
-            }, true);
+            bool bOK = parse_array_realN(value, 4, (real_list16 val) => { values.Add(new quat4d(val)); }, false);
             return (bOK && values.Count > 0) ? values.ToArray() : null;
         }
-        protected static bool parse_array_realN(string value, int numFloatsPerElement, Action<double[]> onElementF, bool bParseAs32Bit = false)
+        protected static bool parse_array_realN(string value, int numFloatsPerElement, Action<real_list16> onElementF, bool bParseAs32Bit = false)
         {
             if (value.StartsWith("[") == false || value.EndsWith("]") == false)
                 return false;
-            double[] parsedFloats = new double[numFloatsPerElement];
+            real_list16 parsedFloats = new();
             int start_idx = 1;
 
             int cur_idx = start_idx;
@@ -1075,9 +1097,9 @@ namespace g3
                 string tokensString = value.Substring(start_bracket_idx, end_bracket_idx-start_bracket_idx);
                 string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 if (numberStrings.Length != numFloatsPerElement)
-                    throw new NotImplementedException($"parse_array_float: incorrect number of elements {numberStrings.Length} in parsing vec{numFloatsPerElement}...??");
+                    throw new NotImplementedException($"parse_array_realN: incorrect number of elements {numberStrings.Length} in parsing vec{numFloatsPerElement}...??");
                 bool bOK = true; 
-                for ( int i = 0; i <  numFloatsPerElement && bOK; i++ ) {
+                for ( int i = 0; i < numFloatsPerElement && bOK; i++ ) {
                     if ( bParseAs32Bit ) {
                         bOK &= float.TryParse(numberStrings[i], out float parsedFloat);
                         parsedFloats[i] = (double)parsedFloat;
@@ -1091,6 +1113,74 @@ namespace g3
             return true;
         }
 
+        protected static vec2i[]? parse_array_vec2i(string value)
+        {
+            List<vec2i> values = new List<vec2i>();
+            bool bOK = parse_array_integerN(value, 2, (int64_list8 val) => { values.Add(new vec2i(val)); });
+            return (bOK && values.Count > 0) ? values.ToArray() : null;
+        }
+        protected static vec3i[]? parse_array_vec3i(string value)
+        {
+            List<vec3i> values = new List<vec3i>();
+            bool bOK = parse_array_integerN(value, 3, (int64_list8 val) => { values.Add(new vec3i(val)); });
+            return (bOK && values.Count > 0) ? values.ToArray() : null;
+        }
+        protected static vec4i[]? parse_array_vec4i(string value)
+        {
+            List<vec4i> values = new List<vec4i>();
+            bool bOK = parse_array_integerN(value, 4, (int64_list8 val) => { values.Add(new vec4i(val)); });
+            return (bOK && values.Count > 0) ? values.ToArray() : null;
+        }
+        protected static bool parse_array_integerN(string value, int numIntsPerElem, Action<int64_list8> onElementF)
+        {
+            if (value.StartsWith("[") == false || value.EndsWith("]") == false)
+                return false;
+            int64_list8 parsedInts = new();
+            int start_idx = 1;
+
+            int cur_idx = start_idx;
+            bool bDone = false;
+            while (!bDone) {
+                int start_bracket_idx = value.IndexOf('(', cur_idx);
+                if (start_bracket_idx < 0)
+                    break;
+                int end_bracket_idx = value.IndexOf(')', start_bracket_idx+1);
+                cur_idx = end_bracket_idx+1;
+                start_bracket_idx++;
+                string tokensString = value.Substring(start_bracket_idx, end_bracket_idx-start_bracket_idx);
+                string[] numberStrings = tokensString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (numberStrings.Length != numIntsPerElem)
+                    throw new NotImplementedException($"parse_array_integerN: incorrect number of elements {numberStrings.Length} in parsing vec{numIntsPerElem}i...??");
+                bool bOK = true;
+                for (int i = 0; i < numIntsPerElem && bOK; i++) {
+                    bOK &= long.TryParse(numberStrings[i], out parsedInts[i]);
+                }
+                if (bOK == false)
+                    throw new NotImplementedException($"failed parsing vec{numIntsPerElem} elements...??");
+                onElementF(parsedInts);
+            }
+            return true;
+        }
+
+
+        protected static T[]? parse_array_matrix<T>(string value, Func<string, T> parse_matrix_func) where T : struct
+        {
+            if (value.StartsWith("[") == false || value.EndsWith("]") == false)
+                return null;
+            int start_index = 1;
+
+            List<T> values = new List<T>();
+            start_index = value.IndexOf('(', start_index);
+
+            while (start_index > 0) {
+                int end_index = find_end_of_scope(value, start_index, '(', ')');
+                string substr = value.Substring(start_index, end_index-start_index);
+                T mat = parse_matrix_func(substr);
+                values.Add(mat);
+                start_index = value.IndexOf('(', end_index);
+            }
+            return (values.Count > 0) ? values.ToArray() : null;
+        }
 
 
 
@@ -1111,7 +1201,7 @@ namespace g3
             int cur_idx = start_idx;
             bool bDone = false;
             while (!bDone) {
-                // todo: do we need to handle quoting inside string??
+                // todo: do we need to handle quoting inside string??   (yes!!)
                 int start_quote_idx = valueString.IndexOf('"', cur_idx);
                 if (start_quote_idx < 0)
                     break;
@@ -1130,17 +1220,13 @@ namespace g3
         protected static float[]? parse_array_float(string valueString)
         {
             List<float> values = new List<float>();
-            bool bOK = parse_array_real(valueString, (double val) => {
-                values.Add((float)val);
-            }, true);
+            bool bOK = parse_array_real(valueString, (double val) => { values.Add((float)val); }, true);
             return (bOK) ? values.ToArray() : null;
         }
         protected static double[]? parse_array_double(string valueString)
         {
             List<double> values = new List<double>();
-            bool bOK = parse_array_real(valueString, (double val) => {
-                values.Add(val);
-            });
+            bool bOK = parse_array_real(valueString, (double val) => { values.Add(val); });
             return (bOK) ? values.ToArray() : null;
         }
         protected static int[]? parse_array_int(string valueString)
