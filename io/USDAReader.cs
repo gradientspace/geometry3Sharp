@@ -68,10 +68,152 @@ namespace g3
                 debug_print("", cur_def);
             }
 
+            Matrix4d BaseTransform = Matrix4d.Identity;
+            foreach (USDDef def in topLevelDefs)
+                build_meshes(def, options, builder, BaseTransform);
+
             return IOReadResult.Ok;
 
         }
 
+
+        protected void build_meshes(USDDef def, ReadOptions options, IMeshBuilder builder, Matrix4d ParentTransform)
+        {
+            Matrix4d CurTransform = ParentTransform;
+            if (def.DefType == EDefType.Mesh && def.ContentFields != null) 
+            {
+                // find vertices
+                USDField? points = def.ContentFields.Find((USDField f) => { return f.Name == "points"; });
+
+                USDField? faceVertexCounts = def.ContentFields.Find((USDField f) => { return f.Name == "faceVertexCounts"; });
+                USDField? faceVertexIndices = def.ContentFields.Find((USDField f) => { return f.Name == "faceVertexIndices"; });
+
+                USDField? uvs = def.ContentFields.Find((USDField f) => { return f.Name == "primvars:st"; });
+                USDField? normals = def.ContentFields.Find((USDField f) => { return f.Name == "normals"; });
+
+                bool bHaveRequiredFields = true;
+                if (points == null) { warningEvent?.Invoke($"mesh {def.DefIdentifier} is missing points field", null); bHaveRequiredFields = false; }
+                if (faceVertexCounts == null) { warningEvent?.Invoke($"mesh {def.DefIdentifier} is missing faceVertexCounts field", null); bHaveRequiredFields = false; }
+                if (faceVertexIndices == null) { warningEvent?.Invoke($"mesh {def.DefIdentifier} is missing faceVertexIndices field", null); bHaveRequiredFields = false; }
+
+                if (bHaveRequiredFields) {
+                    DMesh3 Mesh = new DMesh3();
+                    AppendAsVertices(Mesh, def, points!, CurTransform);
+                    AppendAsTriangles(Mesh, def, faceVertexCounts!, faceVertexIndices!, normals, uvs, CurTransform);
+                    Mesh.CheckValidity();
+                    builder.AppendNewMesh(Mesh);
+                }
+            }
+
+            foreach (USDDef childDef in def.ChildDefs ?? [])
+                build_meshes(childDef, options, builder, CurTransform);
+        }
+
+        protected static Vector3d ToVector3d(vec3f v) { return new Vector3d(v.x, v.y, v.z); }
+        protected static Vector3f ToVector3f(vec3f v) { return new Vector3f(v.x, v.y, v.z); }
+        protected static Vector2f ToVector2f(vec2f v) { return new Vector2f(v.u, v.v); }
+
+
+        protected bool AppendAsVertices(DMesh3 mesh, USDDef def, USDField points, Matrix4d Transform)
+        {
+            if (points.TypeInfo.USDType != EUSDType.Point3f || points.TypeInfo.bIsArray == false ) {
+                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.points has incorrect type {points.TypeInfo.USDType}", null);
+                return false;
+            }
+            if ( points.Value.data is vec3f[] vectorList && vectorList.Length > 0) {
+                for (int i = 0; i < vectorList.Length; ++i) {
+                    Vector3d v = ToVector3d(vectorList[i]);
+                    v = Transform.TransformPointAffine(v);
+                    mesh.AppendVertex(v);
+                }
+                return true;
+            } else {
+                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.points data is invalid or 0-length", null);
+                return false;
+            }
+        }
+
+
+        protected bool AppendAsTriangles(DMesh3 mesh, USDDef def, USDField vertexCounts, USDField vertexIndices,
+            USDField? normals, USDField? uvs, Matrix4d Transform)
+        {
+            if (vertexCounts.TypeInfo.USDType != EUSDType.Int || vertexCounts.TypeInfo.bIsArray == false ) {
+                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.faceVertexCounts has incorrect type {vertexCounts.TypeInfo.USDType}", null);
+                return false;
+            }
+            if (vertexIndices.TypeInfo.USDType != EUSDType.Int || vertexIndices.TypeInfo.bIsArray == false) {
+                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.faceVertexIndices has incorrect type {vertexIndices.TypeInfo.USDType}", null);
+                return false;
+            }
+
+            int[]? countsList = vertexCounts.Value.data as int[];
+            int[]? indexList = vertexIndices.Value.data as int[];
+            if (countsList == null || countsList.Length == 0 ||
+                indexList == null || indexList.Length == 0) 
+            {
+                warningEvent?.Invoke($"mesh field {def.DefIdentifier}.faceVertexCounts or .faceVertexIndices data is invalid or 0-length", null);
+                return false;
+            }
+
+            Transform.GetAffineNormalTransform(out Matrix3d NormalTransform);
+            vec3f[]? normalsList = normals?.Value.data as vec3f[] ?? null;
+            bool bHaveNormals = (normalsList != null && normalsList.Length > 0 && normalsList.Length == indexList.Length);
+            if (bHaveNormals)
+                mesh.Attribs.EnableTriNormals();
+            TriNormalsGeoAttribute? NormalsAttrib = (bHaveNormals) ? mesh.Attribs.TriNormals : null;
+
+            vec2f[]? uvList = uvs?.Value.data as vec2f[] ?? null;
+            bool bHaveUVs = (uvList != null && uvList.Length > 0 && uvList.Length == indexList.Length);
+            if (bHaveUVs)
+                mesh.Attribs.EnableTriUVs(1);
+            TriUVsGeoAttribute? UVsAttrib = (bHaveUVs) ? mesh.Attribs.TriUVChannel(0) : null;
+
+            int cur_idx = 0;
+            for (int i = 0; i < countsList.Length; ++i) {
+                int count = countsList[i];
+
+                int start_idx = cur_idx;
+                int a = indexList[cur_idx];
+                int b = indexList[cur_idx + 1];
+
+                Vector3f na = Vector3f.UnitZ, nb = Vector3f.UnitZ, nc = Vector3f.UnitZ;
+                if ( bHaveNormals ) {
+                    na = NormalTransform * ToVector3f(normalsList![cur_idx]);
+                    nb = NormalTransform * ToVector3f(normalsList[cur_idx+1]);
+                }
+
+                Vector2f uva = Vector2f.Zero, uvb = Vector2f.Zero, uvc = Vector2f.Zero;
+                if (bHaveNormals) {
+                    uva = ToVector2f(uvList![cur_idx]);
+                    uvb = ToVector2f(uvList[cur_idx+1]);
+                }
+
+                for (int k = 2; k < count; ++k) {
+                    int c = indexList[cur_idx + k];
+                    int tid = mesh.AppendTriangle(new Index3i(a, b, c), i);
+                    if (tid < 0) {
+                        string errType = (tid == DMesh3.NonManifoldID) ? "nonmanifold" : "invalid";
+                        warningEvent?.Invoke($"triangle ({a},{b},{c}) is {errType} - skipping", null);
+                    }
+                    b = c;
+
+                    if (tid >= 0 && bHaveNormals) {
+                        nc = NormalTransform * ToVector3f(normalsList![cur_idx+k]);
+                        NormalsAttrib!.SetValue(tid, new TriNormals(na, nb, nc));
+                        nb = nc;
+                    }
+                    if (tid >= 0 && bHaveUVs) {
+                        uvc = ToVector2f(uvList![cur_idx+k]);
+                        UVsAttrib!.SetValue(tid, new TriUVs(uva, uvb, uvc));
+                        uvb = uvc;
+                    }
+                }
+
+                cur_idx += count;
+            }
+
+            return true;
+        }
 
         protected void debug_print(string indent, USDDef def)
         {
@@ -128,6 +270,11 @@ namespace g3
                 }
 
                 def.DefIdentifier = prefix_tokens[2].Trim('\"');
+            }
+
+
+            if (def.header_block.Length > 0 ) {
+                extract_fields(def.header_block, out def.HeaderFields);
             }
 
             // todo parse header...

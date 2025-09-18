@@ -57,11 +57,11 @@ namespace g3
             "Scope",
 
             "Xform",
-            "Mesh",
             "Sphere",
             "Cube",
             "Cylinder",
             "Cone",
+            "Mesh",
             "GeomSubset",
 
             "Points",
