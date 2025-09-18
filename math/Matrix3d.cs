@@ -162,8 +162,6 @@ namespace g3
         }
 
 
-
-
         public static Matrix3d operator *(Matrix3d mat, double f) {
             return new Matrix3d(
                 mat.Row0.x * f, mat.Row0.y * f, mat.Row0.z * f,
@@ -228,7 +226,9 @@ namespace g3
 		}
 
 
-
+        public static Matrix3d operator -(Matrix3d v) {
+            return new Matrix3d(-v.Row0, -v.Row1, -v.Row2, true);
+        }
         public static Matrix3d operator +(Matrix3d mat1, Matrix3d mat2) {
             return new Matrix3d(mat1.Row0 + mat2.Row0, mat1.Row1 + mat2.Row1, mat1.Row2 + mat2.Row2, true);
         }

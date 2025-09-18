@@ -306,7 +306,11 @@ namespace g3
             if ( IsAffine ) {
                 // can invert more efficiently
                 // https://stackoverflow.com/questions/2624422/efficient-4x4-matrix-inverse-affine-transform
-                throw new NotImplementedException();
+                Matrix3d M = GetAffineTransform();
+                Vector3d b = GetAffineTranslation();
+                M = M.Inverse();
+                b = -M * b;
+                return new Matrix4d(in M, in b);
             } 
             else 
             {
