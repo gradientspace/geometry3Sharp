@@ -685,236 +685,124 @@ namespace g3
                 return true;
             }
 
-            if (field.TypeInfo.bIsArray) 
+            bool bIsArray = field.TypeInfo.bIsArray;
+            switch (field.TypeInfo.USDType) 
             {
-                switch (field.TypeInfo.USDType) {
-                    case EUSDType.Float3:
-                    case EUSDType.Half3:
-                    case EUSDType.Point3f:
-                    case EUSDType.Point3h:
-                    case EUSDType.Color3f:
-                    case EUSDType.Color3h:
-                    case EUSDType.Vector3f:
-                    case EUSDType.Vector3h:
-                    case EUSDType.Normal3f:
-                    case EUSDType.Normal3h:
-                    case EUSDType.TexCoord3f:
-                    case EUSDType.TexCoord3h:
-                        field.Value.data = parse_array_vec3f(field.block);
-                        break;
-                    case EUSDType.Float2:
-                    case EUSDType.Half2:
-                    case EUSDType.TexCoord2f:
-                    case EUSDType.TexCoord2h:
-                        field.Value.data = parse_array_vec2f(field.block);
-                        break;
-                    case EUSDType.Float4:
-                    case EUSDType.Half4:
-                    case EUSDType.Color4f:
-                    case EUSDType.Color4h:
-                        field.Value.data = parse_array_vec4f(field.block);
-                        break;
-                    case EUSDType.Double3:
-                    case EUSDType.Vector3d:
-                    case EUSDType.Normal3d:
-                    case EUSDType.Point3d:
-                    case EUSDType.Color3d:
-                    case EUSDType.TexCoord3d:
-                        field.Value.data = parse_array_vec3d(field.block);
-                        break;
-                    case EUSDType.Double2:
-                    case EUSDType.TexCoord2d:
-                        field.Value.data = parse_array_vec2d(field.block);
-                        break;
-                    case EUSDType.Double4:
-                    case EUSDType.Color4d:
-                        field.Value.data = parse_array_vec4d(field.block);
-                        break;
-                    case EUSDType.Quatf:
-                    case EUSDType.Quath:
-                        field.Value.data = parse_array_quat4f(field.block);
-                        break;
-                    case EUSDType.Quatd:
-                        field.Value.data = parse_array_quat4d(field.block);
-                        break;
-                    case EUSDType.Matrix2d:
-                        field.Value.data = parse_array_matrix<matrix2d>(field.block, parse_matrix2d);
-                        break;
-                    case EUSDType.Matrix3d:
-                        field.Value.data = parse_array_matrix<matrix3d>(field.block, parse_matrix3d);
-                        break;
-                    case EUSDType.Matrix4d:
-                    case EUSDType.Frame4d:
-                        field.Value.data = parse_array_matrix<matrix4d>(field.block, parse_matrix4d);
-                        break;
-                    case EUSDType.Float:
-                    case EUSDType.Half:
-                        field.Value.data = parse_array_float(field.block);
-                        break;
-                    case EUSDType.Double:
-                    case EUSDType.Timecode:
-                        field.Value.data = parse_array_double(field.block);
-                        break;
-                    case EUSDType.Bool:
-                        field.Value.data = parse_array_bool(field.block);
-                        break;
-                    case EUSDType.UChar:
-                        field.Value.data = parse_array_byte(field.block);
-                        break;
-                    case EUSDType.Int:
-                        field.Value.data = parse_array_int(field.block);
-                        break;
-                    case EUSDType.UInt:
-                        field.Value.data = parse_array_uint(field.block);
-                        break;
-                    case EUSDType.Int64:
-                        field.Value.data = parse_array_int64(field.block);
-                        break;
-                    case EUSDType.UInt64:
-                        field.Value.data = parse_array_uint64(field.block);
-                        break;
-                    case EUSDType.Int2:
-                        field.Value.data = parse_array_vec2i(field.block);
-                        break;
-                    case EUSDType.Int3:
-                        field.Value.data = parse_array_vec3i(field.block);
-                        break;
-                    case EUSDType.Int4:
-                        field.Value.data = parse_array_vec4i(field.block);
-                        break;
-                    case EUSDType.String:
-                    case EUSDType.Token:
-                    case EUSDType.Asset:
-                        field.Value.data = parse_array_string(field.block);
-                        break;
-                }
+                case EUSDType.Unknown:
+                case EUSDType.Opaque:
+                    field.Value.data = field.block;   // just leave as string
+                    break;
 
+                case EUSDType.Asset:
+                case EUSDType.Rel:
+                    field.Value.data = field.block;     // do we need array handling here? is it possible?
+                    break;
 
-            } 
-            else 
-            {
-                if (field.TypeInfo.USDType == EUSDType.Rel
-                    || field.TypeInfo.USDType == EUSDType.Asset ) 
-                {
-                    field.Value.data = field.block;
-                }
-                if (field.TypeInfo.USDType == EUSDType.String
-                    || field.TypeInfo.USDType == EUSDType.Token)
-                {
-                    field.Value.data = field.block.Substring(1, field.block.Length-2);  // strip off quotes
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Float
-                    || field.TypeInfo.USDType == EUSDType.Half ) 
-                {
-                    field.Value.data = float.TryParse(field.block, out float f) ? f : null;
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Double
-                    || field.TypeInfo.USDType == EUSDType.Timecode) 
-                {
-                    field.Value.data = double.TryParse(field.block, out double f) ? f : null;
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Int ) 
-                {
-                    field.Value.data = int.TryParse(field.block, out int i) ? i : null;
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.UInt ) 
-                {
-                    field.Value.data = uint.TryParse(field.block, out uint i) ? i : null;
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Int64 ) 
-                {
-                    field.Value.data = int.TryParse(field.block, out int i) ? i : null;
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.UInt64 ) 
-                {
-                    field.Value.data = uint.TryParse(field.block, out uint i) ? i : null;
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.UChar ) 
-                {
-                    field.Value.data = byte.TryParse(field.block, out byte i) ? i : null;
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Bool ) 
-                {
-                    field.Value.data = int.TryParse(field.block, out int i) ? (bool)(i!=0) : null;
-                } 
-                else if ( field.TypeInfo.USDType == EUSDType.Float3 
-                    || field.TypeInfo.USDType == EUSDType.Half3
-                    || field.TypeInfo.USDType == EUSDType.Point3f
-                    || field.TypeInfo.USDType == EUSDType.Point3h
-                    || field.TypeInfo.USDType == EUSDType.Color3f
-                    || field.TypeInfo.USDType == EUSDType.Color3h
-                    || field.TypeInfo.USDType == EUSDType.Vector3f
-                    || field.TypeInfo.USDType == EUSDType.Vector3h
-                    || field.TypeInfo.USDType == EUSDType.Normal3f
-                    || field.TypeInfo.USDType == EUSDType.Normal3h
-                    || field.TypeInfo.USDType == EUSDType.TexCoord3f
-                    || field.TypeInfo.USDType == EUSDType.TexCoord3h ) 
-                {
-                    field.Value.data = parse_vec3f(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Float2
-                    || field.TypeInfo.USDType == EUSDType.Half2
-                    || field.TypeInfo.USDType == EUSDType.TexCoord2f
-                    || field.TypeInfo.USDType == EUSDType.TexCoord2h ) 
-                {
-                    field.Value.data = parse_vec2f(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Float4
-                    || field.TypeInfo.USDType == EUSDType.Half4
-                    || field.TypeInfo.USDType == EUSDType.Color4f 
-                    || field.TypeInfo.USDType == EUSDType.Color4h ) 
-                {
-                    field.Value.data = parse_vec4f(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Double3
-                    || field.TypeInfo.USDType == EUSDType.Vector3d
-                    || field.TypeInfo.USDType == EUSDType.Normal3d
-                    || field.TypeInfo.USDType == EUSDType.Point3d
-                    || field.TypeInfo.USDType == EUSDType.Color3d
-                    || field.TypeInfo.USDType == EUSDType.TexCoord3d ) 
-                {
-                    field.Value.data = parse_vec3d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Double2
-                    || field.TypeInfo.USDType == EUSDType.TexCoord2d ) 
-                {
-                    field.Value.data = parse_vec2d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Double4
-                    || field.TypeInfo.USDType == EUSDType.Color4d ) 
-                {
-                    field.Value.data = parse_vec4d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Quatf
-                    || field.TypeInfo.USDType == EUSDType.Quath) 
-                {
-                    field.Value.data = parse_quat4f(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Quatd) 
-                {
-                    field.Value.data = parse_quat4d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Matrix2d ) 
-                {
-                    field.Value.data = parse_matrix2d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Matrix3d ) 
-                {
-                    field.Value.data = parse_matrix3d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Matrix4d
-                    || field.TypeInfo.USDType == EUSDType.Frame4d ) 
-                {
-                    field.Value.data = parse_matrix4d(field.block);
-                }
-                else if ( field.TypeInfo.USDType == EUSDType.Int2) {
-                    field.Value.data = parse_vec2i(field.block);
-                } else if (field.TypeInfo.USDType == EUSDType.Int3) {
-                    field.Value.data = parse_vec3i(field.block);
-                } else if (field.TypeInfo.USDType == EUSDType.Int4) {
-                    field.Value.data = parse_vec4i(field.block);
-                }
+                case EUSDType.String:
+                case EUSDType.Token:
+                    field.Value.data = (bIsArray) ? parse_array_string(field.block) : field.block.Substring(1, field.block.Length-2);  // strip off quotes
+                    break;
+
+                case EUSDType.Float3:
+                case EUSDType.Half3:
+                case EUSDType.Point3f:
+                case EUSDType.Point3h:
+                case EUSDType.Color3f:
+                case EUSDType.Color3h:
+                case EUSDType.Vector3f:
+                case EUSDType.Vector3h:
+                case EUSDType.Normal3f:
+                case EUSDType.Normal3h:
+                case EUSDType.TexCoord3f:
+                case EUSDType.TexCoord3h:
+                    field.Value.data = (bIsArray) ? parse_array_vec3f(field.block) : parse_vec3f(field.block);
+                    break;
+                case EUSDType.Float2:
+                case EUSDType.Half2:
+                case EUSDType.TexCoord2f:
+                case EUSDType.TexCoord2h:
+                    field.Value.data = (bIsArray) ? parse_array_vec2f(field.block) : parse_vec2f(field.block);
+                    break;
+                case EUSDType.Float4:
+                case EUSDType.Half4:
+                case EUSDType.Color4f:
+                case EUSDType.Color4h:
+                    field.Value.data = (bIsArray) ? parse_array_vec4f(field.block) : parse_vec4f(field.block);
+                    break;
+                case EUSDType.Double3:
+                case EUSDType.Vector3d:
+                case EUSDType.Normal3d:
+                case EUSDType.Point3d:
+                case EUSDType.Color3d:
+                case EUSDType.TexCoord3d:
+                    field.Value.data = (bIsArray) ? parse_array_vec3d(field.block) : parse_vec3d(field.block);
+                    break;
+                case EUSDType.Double2:
+                case EUSDType.TexCoord2d:
+                    field.Value.data = (bIsArray) ? parse_array_vec2d(field.block) : parse_vec2d(field.block);
+                    break;
+                case EUSDType.Double4:
+                case EUSDType.Color4d:
+                    field.Value.data = (bIsArray) ? parse_array_vec4d(field.block) : parse_vec4d(field.block);
+                    break;
+                case EUSDType.Quatf:
+                case EUSDType.Quath:
+                    field.Value.data = (bIsArray) ? parse_array_quat4f(field.block) : parse_quat4f(field.block);
+                    break;
+                case EUSDType.Quatd:
+                    field.Value.data = (bIsArray) ? parse_array_quat4d(field.block) : parse_quat4d(field.block);
+                    break;
+                case EUSDType.Matrix2d:
+                    field.Value.data = (bIsArray) ? parse_array_matrix<matrix2d>(field.block, parse_matrix2d) : parse_matrix2d(field.block);
+                    break;
+                case EUSDType.Matrix3d:
+                    field.Value.data = (bIsArray) ? parse_array_matrix<matrix3d>(field.block, parse_matrix3d) : parse_matrix3d(field.block);
+                    break;
+                case EUSDType.Matrix4d:
+                case EUSDType.Frame4d:
+                    field.Value.data = (bIsArray) ? parse_array_matrix<matrix4d>(field.block, parse_matrix4d) : parse_matrix4d(field.block);
+                    break;
+                case EUSDType.Float:
+                case EUSDType.Half:
+                    field.Value.data = (bIsArray) ? parse_array_float(field.block) : (float.TryParse(field.block, out float floatval) ? floatval : null);
+                    break;
+                case EUSDType.Double:
+                case EUSDType.Timecode:
+                    field.Value.data = (bIsArray) ? parse_array_double(field.block) : (double.TryParse(field.block, out double dblval) ? dblval : null);
+                    break;
+                case EUSDType.Bool:
+                    field.Value.data = (bIsArray) ? parse_array_bool(field.block) : (int.TryParse(field.block, out int boolval) ? (bool)(boolval!=0) : null);
+                    break;
+                case EUSDType.UChar:
+                    field.Value.data = (bIsArray) ? parse_array_byte(field.block) : (byte.TryParse(field.block, out byte ucharval) ? ucharval : null);
+                    break;
+                case EUSDType.Int:
+                    field.Value.data = (bIsArray) ? parse_array_int(field.block) : (int.TryParse(field.block, out int intval) ? intval : null);
+                    break;
+                case EUSDType.UInt:
+                    field.Value.data = (bIsArray) ? parse_array_uint(field.block) : (uint.TryParse(field.block, out uint uintval) ? uintval : null);
+                    break;
+                case EUSDType.Int64:
+                    field.Value.data = (bIsArray) ? parse_array_int64(field.block) : (long.TryParse(field.block, out long int64val) ? int64val : null);
+                    break;
+                case EUSDType.UInt64:
+                    field.Value.data = (bIsArray) ? parse_array_uint64(field.block) : (ulong.TryParse(field.block, out ulong uint64val) ? uint64val  : null);
+                    break;
+                case EUSDType.Int2:
+                    field.Value.data = (bIsArray) ? parse_array_vec2i(field.block) : parse_vec2i(field.block);
+                    break;
+                case EUSDType.Int3:
+                    field.Value.data = (bIsArray) ? parse_array_vec3i(field.block) : parse_vec3i(field.block);
+                    break;
+                case EUSDType.Int4:
+                    field.Value.data = (bIsArray) ? parse_array_vec4i(field.block) : parse_vec4i(field.block);
+                    break;
+
+                default:
+                    warningEvent?.Invoke("cannot parse field value for USDType {field.TypeInfo.USDType}", null);
+                    break;
             }
+
 
             return true;
         }
