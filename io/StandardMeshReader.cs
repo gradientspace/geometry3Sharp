@@ -463,7 +463,7 @@ namespace g3
         public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             USDCReader reader = new USDCReader();
-            //reader.warningEvent += messages;
+            reader.warningEvent += messages;
             IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
             return result;
         }

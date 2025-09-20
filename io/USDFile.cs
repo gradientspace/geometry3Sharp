@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
 using System;
 using System.Text;
+using System.Diagnostics;
 
 
 #nullable enable
@@ -376,5 +377,55 @@ namespace g3
             public quat4d(in real_list16 l) { w = l[0]; x = l[1]; y = l[2]; z = l[3]; }
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
+
+
+
+        public class USDPath
+        {
+            public string prim = "";
+            public string prop = "";
+            public string local = "";
+            public bool bValid = false;
+
+            public USDPath() { bValid = false; }
+            public USDPath(string prim)
+            {
+                this.prim = prim;
+                this.local = prim;
+                bValid = true;
+            }
+
+            public bool IsValid => bValid;
+            public bool IsEmpty => string.IsNullOrEmpty(prim) && string.IsNullOrEmpty(prop);
+
+            public string FullPath => $"{valid_prefix}{prim}{prop_suffix}";
+            public override string ToString() { return FullPath; }
+            private string valid_prefix => (bValid ? "" : "INVALID#");
+            private string prop_suffix => (string.IsNullOrEmpty(prop) ? "" : "." + prop);
+
+
+            public static USDPath MakeInvalid(USDPath srcPath)
+            {
+                Debugger.Break();
+                return new USDPath() { prim = srcPath.prim, prop = srcPath.prop, local = srcPath.local, bValid = false };
+            }
+            public static USDPath CombineProperty(USDPath srcPath, string prop)
+            {
+                if (string.IsNullOrEmpty(prop) || prop[0] == '{' || prop[0] == '[' || prop[0] == '.')
+                    return MakeInvalid(srcPath);
+                return new USDPath() { prim = srcPath.prim, prop = prop, local = prop, bValid = srcPath.bValid };
+            }
+            public static USDPath CombineElement(USDPath srcPath, string elem)
+            {
+                if (string.IsNullOrEmpty(elem) || elem[0] == '{' || elem[0] == '[' || elem[0] == '.')
+                    return MakeInvalid(srcPath);
+
+                string new_path = srcPath.prim;
+                new_path += ((new_path.Length == 1) && (new_path[0] == '/')) ? elem : ('/' + elem);
+
+                return new USDPath() { prim = new_path, prop = srcPath.prop, local = elem, bValid = srcPath.bValid };
+            }
+        }
+
     }
 }
