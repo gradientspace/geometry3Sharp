@@ -140,7 +140,7 @@ namespace g3
                     field.Value.data = (bIsArray) ? parse_array_float(field.block) : (float.TryParse(field.block, out float floatval) ? floatval : null);
                     break;
                 case EUSDType.Double:
-                case EUSDType.Timecode:
+                case EUSDType.TimeCode:
                     field.Value.data = (bIsArray) ? parse_array_double(field.block) : (double.TryParse(field.block, out double dblval) ? dblval : null);
                     break;
                 case EUSDType.Bool:
@@ -232,8 +232,8 @@ namespace g3
             string[] numberStrings = tokensString.Split("),(", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (numberStrings.Length != 2)
                 throw new Exception($"parse_matrix2d: incorrect number of elements {numberStrings.Length} in parsing matrix2d string {tokensString}");
-            vec2f r0 = parse_vec2f(numberStrings[0].Substring(1));
-            vec2f r1 = parse_vec2f(numberStrings[1].Substring(0, numberStrings[1].Length-1));
+            vec2d r0 = parse_vec2d(numberStrings[0].Substring(1));
+            vec2d r1 = parse_vec2d(numberStrings[1].Substring(0, numberStrings[1].Length-1));
             return new matrix2d() { row0 = r0, row1 = r1 };
         }
         protected static matrix3d parse_matrix3d(string value)
@@ -243,9 +243,9 @@ namespace g3
             string[] numberStrings = tokensString.Split("),(", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (numberStrings.Length != 3)
                 throw new Exception($"parse_matrix4d: incorrect number of elements {numberStrings.Length} in parsing matrix3d string {tokensString}");
-            vec3f r0 = parse_vec3f(numberStrings[0].Substring(1));
-            vec3f r1 = parse_vec3f(numberStrings[1]);
-            vec3f r2 = parse_vec3f(numberStrings[2].Substring(0, numberStrings[2].Length-1));
+            vec3d r0 = parse_vec3d(numberStrings[0].Substring(1));
+            vec3d r1 = parse_vec3d(numberStrings[1]);
+            vec3d r2 = parse_vec3d(numberStrings[2].Substring(0, numberStrings[2].Length-1));
             return new matrix3d() { row0 = r0, row1 = r1, row2 = r2 };
         }
         protected static matrix4d parse_matrix4d(string value)
@@ -255,10 +255,10 @@ namespace g3
             string[] numberStrings = tokensString.Split("),(", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (numberStrings.Length != 4)
                 throw new Exception($"parse_matrix4d: incorrect number of elements {numberStrings.Length} in parsing matrix4d string {tokensString}");
-            vec4f r0 = parse_vec4f(numberStrings[0].Substring(1));
-            vec4f r1 = parse_vec4f(numberStrings[1]);
-            vec4f r2 = parse_vec4f(numberStrings[2]);
-            vec4f r3 = parse_vec4f(numberStrings[3].Substring(0, numberStrings[3].Length-1));
+            vec4d r0 = parse_vec4d(numberStrings[0].Substring(1));
+            vec4d r1 = parse_vec4d(numberStrings[1]);
+            vec4d r2 = parse_vec4d(numberStrings[2]);
+            vec4d r3 = parse_vec4d(numberStrings[3].Substring(0, numberStrings[3].Length-1));
             return new matrix4d() { row0 = r0, row1 = r1, row2 = r2, row3 = r3 };
         }
 

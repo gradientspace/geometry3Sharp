@@ -9,8 +9,51 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class USDFile
+    public static class USDFile
     {
+
+
+        // this is basically a USD Stage
+        public class USDScene
+        {
+            required public USDPrim Root;
+        }
+
+
+
+        public class USDPrim
+        {
+            public USDPath Path = USDPath.Root;
+
+            public EDefType PrimType;
+            public string? CustomPrimTypeName = null;
+
+            public USDAttrib[] Attribs = Array.Empty<USDAttrib>();
+
+            public USDPrim[] Children = Array.Empty<USDPrim>();
+
+            // todo
+
+            public override string ToString() {
+                string useName = (PrimType != EDefType.Unknown) ?
+                    DefTypeTokens[(int)PrimType] : (CustomPrimTypeName??"(null)");
+                return  $"[{useName}] {Path.FullPath}";
+            }
+        }
+
+
+        public class USDAttrib
+        {
+            public string Name = "";
+            public USDValue Value;
+            public override string ToString() {
+                string typeString = FieldTypeTokens[(int)Value.TypeInfo.USDType];
+                return $"{typeString} {Name} = {Value}";
+            }
+        }
+
+
+
 
         // to support:
         // 
@@ -19,6 +62,7 @@ namespace g3
         {
             Unknown, 
             NoType,
+            PsuedoRoot,
             Scope,
 
             XForm,
@@ -51,8 +95,9 @@ namespace g3
 
         }
         public static readonly string[] DefTypeTokens = [
-            "Unkown",
+            "Unknown",
             "NoType",
+            "PsuedoRoot",
             "Scope",
 
             "Xform",
@@ -90,8 +135,7 @@ namespace g3
         // https://openusd.org/dev/api/_usd__page__datatypes.html
         public enum EUSDType
         {
-            Unknown,
-            Rel,
+            Unknown = 0,
 
             // basic data types
             // https://openusd.org/dev/api/_usd__page__datatypes.html#Usd_Basic_Datatypes
@@ -105,11 +149,9 @@ namespace g3
             Half,       // 16 bit floating point
             Float,      // 32 bit floating point
             Double,     // 64 bit floating point
-            Timecode,   // double representing a resolvable time
             String,     // string
             Token,      // interned string with fast comparison and hashing
             Asset,      // represents a resolvable path to another asset
-            Opaque,     // represents a value that can't be serialized
             Matrix2d,   // 2x2 matrix of doubles
             Matrix3d,   // 3x3 matrix of doubles
             Matrix4d,   // 4x4 matrix of doubles
@@ -128,6 +170,47 @@ namespace g3
             Float4,     // vector of 4 floats
             Half4,      // vector of 4 half's
             Int4,       // vector of 4 ints
+
+
+            Dictionary = 31,
+
+            TokenListOp = 32,
+            StringListOp = 33,
+            PathListOp = 34,
+            ReferenceListOp = 35,
+            IntListOp = 36,
+            Int64ListOp = 37,
+            UIntListOp = 38,
+            UInt64ListOp = 39,
+
+            PathVector = 40,
+            TokenVector = 41,
+
+            Specifier = 42,
+            Permission = 43,
+            Variability = 44,
+
+            VariantSelectionMap = 45,
+            TimeSamples = 46,
+            Payload = 47,
+
+            DoubleVector = 48,
+            LayerOffsetVector = 49,
+            StringVector = 50,
+
+            ValueBlock = 51,
+            Value = 52,
+
+            UnregisteredValue = 53,
+            UnregisteredValueListOp = 54,
+            PayloadListOp = 55,
+
+            TimeCode = 56,
+            PathExpression = 57,
+
+            Relocates = 58,
+            Spline = 59,
+            AnimationBlock = 60,
 
 
             // role data types
@@ -155,12 +238,16 @@ namespace g3
             TexCoord3d, // double3 TextureCoordinate	3D uvw texture coordinate
             TexCoord3f, // float3 TextureCoordinate	3D uvw texture coordinate
             TexCoord3h, // half3 TextureCoordinate	3D uvw texture coordinate
-            Group       // opaque Group   used as a grouping mechanism for namespaced properties
+
+            Group,      // opaque Group   used as a grouping mechanism for namespaced properties
+            Rel,
+            Opaque,     // represents a value that can't be serialized
+
+            LastType
         };
         // string tokens for above type enum - order must stay the same!
         public static readonly string[] FieldTypeTokens = [
             "unknown",
-            "rel",
 
             "bool",
             "uchar",
@@ -171,11 +258,9 @@ namespace g3
             "half",
             "float",
             "double",
-            "timecode",
             "string",
             "token",
             "asset",
-            "opaque",
             "matrix2d",
             "matrix3d",
             "matrix4d",
@@ -194,6 +279,39 @@ namespace g3
             "float4",
             "half4",
             "int4",
+
+            // not sure about the strings in this next block...
+            "dict",
+            "tokenListOp",
+            "stringListOp",
+            "pathListOp",
+            "referenceListOp",
+            "intListOp",
+            "int64ListOp",
+            "uintListOp",
+            "uint64ListOp",
+            "pathVector",
+            "tokenVector",
+            "specifier",
+            "permission",
+            "variability",
+            "variantSelectionMap",
+            "timeSamples",
+            "payload",
+            "doubleVector",
+            "layerOffsetVector",
+            "stringVector",
+            "valueBlock",
+            "value",
+            "unregisteredValue",
+            "unregisteredValueListOp",
+            "payloadListOp",
+            "timecode",
+            "pathExpression",
+            "relocates",
+            "spline",
+            "animationBlock",
+
 
             "point3d",
             "point3f",
@@ -217,7 +335,12 @@ namespace g3
             "texCoord3d",
             "texCoord3f",
             "texCoord3h",
-            "group"
+
+            "group",
+            "rel",
+            "opaque",
+
+
             ];
 
         public struct USDTypeInfo
@@ -254,13 +377,24 @@ namespace g3
 
             public override string ToString()
             {
-                string typeString = FieldTypeTokens[(int)TypeInfo.USDType];
                 if (data == null) return "null";
                 else if (TypeInfo.bIsArray) {
-                    int NumElems = (data as Array)!.Length;
-                    return $"{typeString}[{NumElems}]";
+                    if (data is string[] stringList) {
+                        StringBuilder result = new StringBuilder();
+                        result.Append('[');
+                        for (int i = 0; i < stringList.Length; ++i) {
+                            result.Append($"\"{stringList[i]}\"");
+                            if (i < stringList.Length-1) result.Append(", ");
+                        }
+                        result.Append(']');
+                        return result.ToString();
+                    } else {
+                        string typeString = FieldTypeTokens[(int)TypeInfo.USDType];
+                        int NumElems = (data as Array)!.Length;
+                        return $"{typeString}[{NumElems}]";
+                    }
                 } else {
-                    return data.ToString() ?? "(unknown)";
+                    return (data.ToString() ?? "(unknown)");
                 }
             }
         }
@@ -299,14 +433,15 @@ namespace g3
         public struct vec2f
         {
             public float u, v;
-            public vec2f() { }
+            public vec2f(float uu = 0, float vv = 0) { u = uu; v = vv; }
             public vec2f(in real_list16 l) { u = (float)l[0]; v = (float)l[1]; }
+            public vec2f(ReadOnlySpan<float> vv) { u = vv[0]; v = vv[1]; }
             public override string ToString() { return $"({u},{v})"; }
         }
         public struct vec2d
         {
             public double u, v;
-            public vec2d() { }
+            public vec2d() { u = 0; v = 0; }
             public vec2d(in real_list16 l) { u = l[0]; v = l[1]; }
             public override string ToString() { return $"({u},{v})"; }
         }
@@ -314,14 +449,15 @@ namespace g3
         public struct vec3f
         {
             public float x, y, z;
-            public vec3f() { }
+            public vec3f(float xx = 0, float yy = 0, float zz = 0) { x = xx; y = yy; z = zz; }
             public vec3f(in real_list16 l) { x = (float)l[0]; y = (float)l[1]; z = (float)l[2]; }
+            public vec3f(ReadOnlySpan<float> v) { x = v[0]; y = v[1]; z = v[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
         }
         public struct vec3d
         {
             public double x, y, z;
-            public vec3d() { }
+            public vec3d() { x = 0; y = 0; z = 0; }
             public vec3d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
         }
@@ -329,51 +465,59 @@ namespace g3
         public struct vec4f
         {
             public float x, y, z, w;
-            public vec4f() { }
+            public vec4f() { x = 0; y = 0; z = 0; w = 0; }
             public vec4f(in real_list16 l) { x = (float)l[0]; y = (float)l[1]; z = (float)l[2]; w = (float)l[3]; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
         }
         public struct vec4d
         {
             public double x, y, z, w;
-            public vec4d() { }
+            public vec4d() { x = 0; y = 0; z = 0; w = 0; }
             public vec4d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; w = l[3]; }
+            public vec4d( double xx, double yy, double zz, double ww ) { x = xx; y = yy; z = zz; w = ww; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
         }
 
         public struct matrix2d
         {
-            public vec2f row0;
-            public vec2f row1;
+            public vec2d row0;
+            public vec2d row1;
             public override string ToString() { return $"({row0},{row1})"; }
         }
         public struct matrix3d
         {
-            public vec3f row0;
-            public vec3f row1;
-            public vec3f row2;
+            public vec3d row0;
+            public vec3d row1;
+            public vec3d row2;
             public override string ToString() { return $"({row0},{row1},{row2})"; }
         }
         public struct matrix4d
         {
-            public vec4f row0;
-            public vec4f row1;
-            public vec4f row2;
-            public vec4f row3;
+            public vec4d row0;
+            public vec4d row1;
+            public vec4d row2;
+            public vec4d row3;
+            public matrix4d() { }
+            public matrix4d(ReadOnlySpan<double> m) {
+                row0 = new vec4d(m[0], m[1], m[2], m[3]);
+                row1 = new vec4d(m[4], m[5], m[6], m[7]);
+                row2 = new vec4d(m[8], m[9], m[10], m[11]);
+                row3 = new vec4d(m[12], m[13], m[14], m[15]);
+            }
             public override string ToString() { return $"({row0},{row1},{row2},{row3})"; }
         }
 
         public struct quat4f
         {
             public float w, x, y, z;
-            public quat4f() { }
+            public quat4f() { x = 0; y = 0; z = 0; w = 0; }
             public quat4f(in real_list16 l) { w = (float)l[0]; x = (float)l[1]; y = (float)l[2]; z = (float)l[3]; }
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
         public struct quat4d
         {
             public double w, x, y, z;
-            public quat4d() { }
+            public quat4d() { x = 0; y = 0; z = 0; w = 0; }
             public quat4d(in real_list16 l) { w = l[0]; x = l[1]; y = l[2]; z = l[3]; }
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
@@ -382,10 +526,16 @@ namespace g3
 
         public class USDPath
         {
+            // todo as we build paths we want to keep track of parent/child relationship,
+            // this will make it easier to build the scene...
+
             public string prim = "";
             public string prop = "";
             public string local = "";
             public bool bValid = false;
+
+            public int index = -1;
+            public int parent_index = -1;
 
             public USDPath() { bValid = false; }
             public USDPath(string prim)
@@ -404,6 +554,8 @@ namespace g3
             private string prop_suffix => (string.IsNullOrEmpty(prop) ? "" : "." + prop);
 
 
+            public static USDPath Root = new USDPath("/");
+
             public static USDPath MakeInvalid(USDPath srcPath)
             {
                 Debugger.Break();
@@ -413,7 +565,7 @@ namespace g3
             {
                 if (string.IsNullOrEmpty(prop) || prop[0] == '{' || prop[0] == '[' || prop[0] == '.')
                     return MakeInvalid(srcPath);
-                return new USDPath() { prim = srcPath.prim, prop = prop, local = prop, bValid = srcPath.bValid };
+                return new USDPath() { prim = srcPath.prim, prop = prop, local = prop, bValid = srcPath.bValid, parent_index = srcPath.index };
             }
             public static USDPath CombineElement(USDPath srcPath, string elem)
             {
@@ -423,9 +575,17 @@ namespace g3
                 string new_path = srcPath.prim;
                 new_path += ((new_path.Length == 1) && (new_path[0] == '/')) ? elem : ('/' + elem);
 
-                return new USDPath() { prim = new_path, prop = srcPath.prop, local = elem, bValid = srcPath.bValid };
+                return new USDPath() { prim = new_path, prop = srcPath.prop, local = elem, bValid = srcPath.bValid, parent_index = srcPath.index };
             }
         }
+
+
+
+
+
+
+
+
 
     }
 }

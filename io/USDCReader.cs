@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using static g3.USDFile;
+using static System.Net.Mime.MediaTypeNames;
 
 #nullable enable
 
@@ -58,6 +62,8 @@ namespace g3
                 TableOfContents.Sections.Add(section);
             }
 
+            // read sections
+
             foreach (USDC_Section section in TableOfContents.Sections) {
                 if (section.TokenString == "TOKENS") {
                     Tokens = ReadSection_Tokens(reader, section);
@@ -69,8 +75,13 @@ namespace g3
                     FieldSets = ReadSection_FieldSets(reader, section);
                 } else if (section.TokenString == "PATHS") {
                     Paths = ReadSection_Paths(reader, section);
+                } else if (section.TokenString == "SPECS") {
+                    Specs = ReadSection_Specs(reader, section);
                 }
             }
+
+            USDScene scene = BuildScene();
+            debug_print("", scene.Root);
 
             return new IOReadResult(IOCode.FileParsingError, $"boo");
 
@@ -83,9 +94,217 @@ namespace g3
         protected List<USDCField>? Fields = null;
         protected List<int>? FieldSets = null;
         protected USDPath[] Paths = [];
-
+        protected USDCSpec[] Specs = [];
 
         protected string USDC_Header = "PXR-USDC";
+
+        protected static Dictionary<string, EUSDType> typeNameToType = build_typeName_dictionary();
+        static Dictionary<string, EUSDType> build_typeName_dictionary()
+        {
+            Dictionary<string, EUSDType> dict = new();
+            for (int i = (int)EUSDType.Unknown; i < (int)EUSDType.LastType; ++i)
+                dict.Add(FieldTypeTokens[i], (EUSDType)i);
+            return dict;
+        }
+        EUSDType find_type_from_string(string typeString)
+        {
+            if ( typeNameToType.TryGetValue(typeString, out EUSDType type))
+                return type;
+            return EUSDType.Unknown;
+        }
+
+
+        USDCSpec? find_spec_by_path(string Path)
+        {
+            return Array.Find(Specs, (spec) => { return spec.Path.FullPath == Path; });
+        }
+        IEnumerable<USDCSpec> enumerate_children(USDCSpec parent)
+        {
+            foreach (USDCSpec spec in Specs) {
+                if ( spec.Path.parent_index == parent.Path.index) 
+                    yield return spec;
+            }
+        }
+
+
+        protected void debug_print(string indent, USDPrim prim)
+        {
+            Debug.WriteLine(indent + "PRIM " + prim.ToString());
+            string child_indent = indent + " ";
+
+            foreach (USDAttrib attrib in prim.Attribs) {
+                Debug.WriteLine(child_indent + attrib.ToString());
+            }
+            Debug.WriteLine(" ");
+            child_indent += "  ";
+
+            foreach (USDPrim childPrim in prim.Children)
+                debug_print(child_indent, childPrim);
+        }
+
+
+        USDScene BuildScene()
+        {
+
+
+            USDCSpec? Root = find_spec_by_path("/");
+            USDPrim RootPrim = new USDPrim() {
+                Path = Root!.Path,
+                PrimType = EDefType.PsuedoRoot
+            };
+
+            USDScene scene = new USDScene() { Root = RootPrim };
+            build_prim(Root, RootPrim, scene);
+
+            return scene;
+        }
+        void build_prim(USDCSpec parent, USDPrim parentPrim, USDScene scene)
+        {
+            List<USDAttrib> attribs = new();
+
+            ESpecifierType specType = ESpecifierType.Def;
+            foreach (USDCField field in parent.Fields) {
+
+                if (field.FieldType == USDCDataType.Specifier) {
+                    specType = (ESpecifierType)field.data!;
+                } else if ( field.Name == "typeName") {
+                    string defname = (field.data as string) ?? "(no name)";
+                    int idx = Array.FindIndex(USDFile.DefTypeTokens, (str) => { return str == defname; });
+                    if ( idx >= 0) {
+                        parentPrim.PrimType = (EDefType)idx;
+                    } else {
+                        parentPrim.PrimType = EDefType.Unknown;
+                        parentPrim.CustomPrimTypeName = defname;
+                    }
+                } else {
+                    attribs.Add(make_field(parentPrim, field));
+                }
+            }
+
+            List<USDCSpec> childSpecs = new();
+            foreach (USDCSpec child in enumerate_children(parent)) 
+            {
+                if (child.SpecType == ESpecType.Attribute) {
+                    attribs.Add(make_attribute(parentPrim, child));
+                }
+                else if (child.SpecType == ESpecType.Prim) 
+                {
+                    childSpecs.Add(child);
+                }
+                else { 
+                    warningEvent?.Invoke($"unhandled spec type {child.SpecType} in build_scene_children", null);
+                    break;
+                }
+            }
+
+            parentPrim.Attribs = attribs.ToArray();  
+
+            parentPrim.Children = new USDPrim[childSpecs.Count];
+            for ( int i = 0; i < childSpecs.Count; ++i ) { 
+                USDCSpec child = childSpecs[i];
+                USDPrim childPrim = new USDPrim() {
+                    Path = child.Path
+                };
+                parentPrim.Children[i] = childPrim;
+
+                build_prim(child, childPrim, scene);
+            }
+        }
+
+        USDAttrib make_field(USDPrim prim, USDCField field)
+        {
+            USDAttrib attrib = new();
+            attrib.Name = field.Name;
+            if (field.FieldType == USDCDataType.TokenVector) {
+                attrib.Value.TypeInfo.bIsArray = true;
+                attrib.Value.TypeInfo.USDType = EUSDType.Token;
+            } else {
+                attrib.Value.TypeInfo.USDType = usdc_to_usdtype(field.FieldType);
+            }
+            attrib.Value.data = field.data;
+            return attrib;
+        }
+
+
+        EUSDType GetGenericType(EUSDType specificType)
+        {
+            switch (specificType) {
+                case EUSDType.TexCoord2f:
+                    return EUSDType.Float2;
+                case EUSDType.TexCoord2h:
+                    return EUSDType.Half2;
+                case EUSDType.TexCoord2d:
+                    return EUSDType.Double2;
+                case EUSDType.Point3f:
+                case EUSDType.Color3f:
+                case EUSDType.Vector3f:
+                case EUSDType.Normal3f:
+                case EUSDType.TexCoord3f:
+                    return EUSDType.Float3;
+                case EUSDType.Point3h:
+                case EUSDType.Color3h:
+                case EUSDType.Vector3h:
+                case EUSDType.Normal3h:
+                case EUSDType.TexCoord3h:
+                    return EUSDType.Half3;
+                case EUSDType.Vector3d:
+                case EUSDType.Normal3d:
+                case EUSDType.Point3d:
+                case EUSDType.Color3d:
+                case EUSDType.TexCoord3d:
+                    return EUSDType.Double3;
+                case EUSDType.Color4f:
+                    return EUSDType.Float4;
+                case EUSDType.Color4h:
+                    return EUSDType.Half4;
+                case EUSDType.Color4d:
+                    return EUSDType.Double4;
+                case EUSDType.Frame4d:
+                    return EUSDType.Matrix4d;
+            }
+            return specificType;
+        }
+        bool is_type_compatible(EUSDType genericType, EUSDType specificType)
+        {
+            if (genericType == specificType) return true;
+            return GetGenericType(specificType) == genericType;
+        }
+
+
+        USDAttrib make_attribute(USDPrim prim, USDCSpec attribSpec)
+        {
+            USDAttrib attrib = new();
+            attrib.Name = attribSpec.Path.prop;
+
+            USDCField[] fields = attribSpec.Fields;
+            foreach (USDCField field in fields) {
+                
+                if (field.Name == "typeName" && field.FieldType == USDCDataType.Token ) 
+                {
+                    string typeString = field.data as string ?? "";
+                    if (typeString.EndsWith("[]")) {
+                        attrib.Value.TypeInfo.bIsArray = true;
+                        typeString = typeString.Substring(0, typeString.Length-2);
+                    }
+                    EUSDType type = find_type_from_string(typeString);
+                    attrib.Value.TypeInfo.USDType = type;
+                } 
+                else if (field.Name == "default") 
+                {
+                    EUSDType type = usdc_to_usdtype(field.FieldType);
+                    Util.gDevAssert(is_type_compatible(type,attrib.Value.TypeInfo.USDType));
+                    attrib.Value.data = field.data;
+                } 
+                else 
+                {
+                    warningEvent?.Invoke($"unhandled attribute field {field.Name}", null);
+                }
+            }   
+
+
+            return attrib;
+        }
+
 
 
         // struct _TableOfContents in pxr\usd\sdf\crateFile.h
@@ -154,7 +373,7 @@ namespace g3
             Int = 3,
             UInt = 4,
             Int64 = 5,
-            Uint64 = 6,
+            UInt64 = 6,
             Half = 7,
             Float = 8,
             Double = 9,
@@ -225,6 +444,10 @@ namespace g3
             Spline = 59,
             AnimationBlock = 60
         }
+        protected EUSDType usdc_to_usdtype(USDCDataType dataType) {
+            return (EUSDType)(int)dataType;
+        }
+
 
 
 
@@ -262,6 +485,10 @@ namespace g3
 
             public object? data = null;
             public bool IsValid => data != null;
+
+            public override string ToString() {
+                return Name + " " + FieldType + (IsArray ? "[]" : "") + " = " + (data != null ? data.ToString() : "null");
+            }
         }
 
 
@@ -332,16 +559,6 @@ namespace g3
                 warningEvent?.Invoke("error decompressing FIELDS index section", null);
                 return new();
             }
-            //ulong indices_bytes = reader.ReadUInt64();
-            //byte[] compressed_indices = reader.ReadBytes((int)indices_bytes);
-            ////ulong max_uncompressed_size = (field_count > 0) ? (sizeof(int)) + ((field_count * 2 + 7) / 8) + (field_count * sizeof(int)) : 0;
-            //byte[]? indices_buffer = try_decompress_data(compressed_indices, /* verify buffersize calc? */0);
-            //if (indices_buffer == null) {
-            //    warningEvent?.Invoke("error decompressing FIELDS index section", null);
-            //    return Fields;
-            //}
-            //List<int> indices = decode_packed_integers(indices_buffer, field_count);
-            //Util.gDevAssert(indices.Count == (int)field_count);
 
             // 8-byte element for each field, corresponds to struct ValueRep in crateFile.h
             ulong values_bytes = reader.ReadUInt64();
@@ -436,6 +653,7 @@ namespace g3
                 if (ParentPath.IsEmpty) {
                     ParentPath = new USDPath("/");
                     PathSet[pathset_index] = ParentPath;
+                    PathSet[pathset_index].index = pathset_index;
                 } else {
                     int token_index = token_indices[cur_index];
                     string token = Tokens![Math.Abs(token_index)];
@@ -444,15 +662,19 @@ namespace g3
                     } else {
                         PathSet[pathset_index] = USDPath.CombineElement(ParentPath, token);
                     }
+                    PathSet[pathset_index].index = pathset_index;
                 }
 
                 bool bHasChild = (jump_indices[cur_index] > 0) || (jump_indices[cur_index] == -1);
                 bool bHasSibling = (jump_indices[cur_index] >= 0);
                 bContinue = (bHasChild || bHasSibling);
 
+                // if there is a child and a sibling, this code recurses into the sibling and then continues down the child.
+                // if there is a only child, it descends to the child
+                // if there is only a sibling, it continues to the sibling
+                // (the logic is that the trees tend to be wider than deep, and the sibling recursion can be done in parallel...)
                 if (bHasChild) {
                     if (bHasSibling) {
-                        // recurse down sibling path
                         int sibling_index = cur_index + jump_indices[cur_index];
                         AssembleChildPaths(sibling_index, ParentPath, path_indices, token_indices, jump_indices, PathSet);
                     }
@@ -464,6 +686,92 @@ namespace g3
         }
 
 
+
+        public enum ESpecifierType
+        {
+            Def = 0,
+            Over = 1,
+            Class = 2
+        };
+
+        public enum ESpecType
+        {
+            Unknown = 0,
+
+            Attribute = 1,
+            Connection = 2,
+            Expression = 3,
+            Mapper = 4,
+            Arg = 5,
+            Prim = 6,
+            PsuedoRoot = 7,
+            Relationship = 8,
+            RelationshipTarget = 9,
+            Variant = 10,
+            VariantSet = 11
+        }
+
+        protected class USDCSpec
+        {
+            public ESpecType SpecType;
+            public USDPath Path;
+            public USDCField[] Fields;
+
+            public USDCSpec(ESpecType specType, USDPath path, USDCField[] fields)
+            {
+                SpecType=specType;
+                Path=path;
+                Fields=fields;
+            }
+        }
+
+
+        protected USDCSpec[] ReadSection_Specs(BinaryReader reader, USDC_Section section)
+        {
+            reader.BaseStream.Position = (long)section.Offset;
+            ulong spec_count = reader.ReadUInt64();
+
+            List<int>? path_indices = read_compressed_indices(reader, spec_count);
+            if (path_indices == null || path_indices.Count != (int)spec_count) {
+                warningEvent?.Invoke("error decompressing SPECS path_indices section", null);
+                return Array.Empty<USDCSpec>();
+            }
+
+            List<int>? field_set_indices = read_compressed_indices(reader, spec_count);
+            if (field_set_indices == null || field_set_indices.Count != (int)spec_count) {
+                warningEvent?.Invoke("error decompressing SPECS field_set_indices section", null);
+                return Array.Empty<USDCSpec>();
+            }
+
+            List<int>? spec_types = read_compressed_indices(reader, spec_count);
+            if (spec_types == null || spec_types.Count != (int)spec_count) {
+                warningEvent?.Invoke("error decompressing SPECS spec_types section", null);
+                return Array.Empty<USDCSpec>();
+            }
+
+            USDCSpec[] Specs = new USDCSpec[spec_count];
+            for (int i = 0; i < (int)spec_count; ++i) {
+
+                USDPath path = Paths[path_indices[i]];
+
+                int fieldset_idx = field_set_indices[i];
+                int field_count = 0;
+                while (FieldSets![fieldset_idx++] != -1)
+                    field_count++;
+                USDCField[] fields = new USDCField[field_count];
+                fieldset_idx = field_set_indices[i];
+                for (int k = 0; k < field_count; ++k) {
+                    int field_idx = FieldSets![fieldset_idx + k];
+                    fields[k] = Fields![field_idx];
+                }
+
+                ESpecType specType = (ESpecType)spec_types[i];
+
+                Specs[i] = new USDCSpec(specType, path, fields);
+            }
+
+            return Specs;
+        }
 
 
 
@@ -478,12 +786,18 @@ namespace g3
             }
 
             switch (field.FieldType) {
+                case USDCDataType.Specifier:
+                    field.data = (ESpecifierType)field.ValueRep.PayloadData;
+                    break;
+
                 case USDCDataType.String: {
                         Util.gDevAssert(field.IsArray == false);
                         int str_idx = (int)field.ValueRep.PayloadData;
-                        field.data = StringIndices![str_idx];
+                        int token_idx = StringIndices![str_idx];
+                        field.data = Tokens![token_idx];
                     } break;
                 case USDCDataType.Token:
+                case USDCDataType.TokenVector:
                     parse_field_token(reader, field);
                     break;
 
@@ -493,6 +807,16 @@ namespace g3
 
                 case USDCDataType.Float:
                     parse_field_float(reader, field);
+                    break;
+
+                case USDCDataType.Vec2f:
+                    parse_field_vec2f(reader, field);
+                    break;
+                case USDCDataType.Vec3f:
+                    parse_field_vec3f(reader, field);
+                    break;
+                case USDCDataType.Matrix4d:
+                    parse_field_matrix4d(reader, field);
                     break;
 
                 default:
@@ -532,7 +856,7 @@ namespace g3
 
         private void parse_field_token(BinaryReader reader, USDCField field)
         {
-            if (field.IsArray) {
+            if (field.IsArray || field.FieldType == USDCDataType.TokenVector) {
                 // if it's compressed we need to figure out if the indices are also compressed...
                 Util.gDevAssert(field.ValueRep.IsCompressed == false);
 
@@ -544,21 +868,37 @@ namespace g3
             }
         }
 
+        private T[] read_array_value<T>(BinaryReader reader, USDCField field) where T : struct
+        {
+            ulong offset = field.ValueRep.PayloadData;
+            T[] values = Array.Empty<T>();
+            if (field.ValueRep.IsCompressed) {
+                reader.BaseStream.Position = (long)offset;
+                ulong num_values = reader.ReadUInt64();
+                ulong compressed_bytes = reader.ReadUInt64();
+                byte[] compressed = reader.ReadBytes((int)compressed_bytes);
+                byte[]? uncompressed = try_decompress_data(compressed, /*todo est size from num_values*/0);
+                values = MemoryMarshal.Cast<byte, T>(uncompressed!).ToArray();
+            } else
+                values = read_uncompressed_array<T>(reader, field);
+            return values;
+        }
 
         private void parse_field_float(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                ulong offset = field.ValueRep.PayloadData;
-                if (field.ValueRep.IsCompressed) {
-                    reader.BaseStream.Position = (long)offset;
-                    ulong num_floats = reader.ReadUInt64();
-                    ulong compressed_bytes = reader.ReadUInt64();
-                    byte[] compressed = reader.ReadBytes((int)compressed_bytes);
-                    byte[]? uncompressed = try_decompress_data(compressed);
-                    float[] values = MemoryMarshal.Cast<byte, float>(uncompressed!).ToArray();
-                    field.data = values;
-                } else
-                    field.data = read_uncompressed_array<float>(reader, field);
+                field.data = read_array_value<float>(reader, field);
+                //ulong offset = field.ValueRep.PayloadData;
+                //if (field.ValueRep.IsCompressed) {
+                //    reader.BaseStream.Position = (long)offset;
+                //    ulong num_floats = reader.ReadUInt64();
+                //    ulong compressed_bytes = reader.ReadUInt64();
+                //    byte[] compressed = reader.ReadBytes((int)compressed_bytes);
+                //    byte[]? uncompressed = try_decompress_data(compressed);
+                //    float[] values = MemoryMarshal.Cast<byte, float>(uncompressed!).ToArray();
+                //    field.data = values;
+                //} else
+                //    field.data = read_uncompressed_array<float>(reader, field);
             } else {
                 // todo this can maybe become a generic function...
                 if (field.ValueRep.IsInlined) {
@@ -599,7 +939,86 @@ namespace g3
             }
         }
 
+        private Span<T> read_N_values<T>(BinaryReader reader, int N, int elemsize) where T : struct
+        {
+            Span<byte> data = reader.ReadBytes(N * elemsize).AsSpan();
+            return MemoryMarshal.Cast<byte, T>(data);
+        }
 
+        private vec4i extract_packed_values(ulong payload)
+        {
+            sbyte a = unchecked((sbyte)(payload & 0xFF));
+            sbyte b = unchecked((sbyte)((payload >> 8) & 0xFF));
+            sbyte c = unchecked((sbyte)((payload >> 16) & 0xFF));
+            sbyte d = unchecked((sbyte)((payload >> 24) & 0xFF));
+            return new vec4i() {x = a, y = b, z = c, w = d};
+        }
+
+
+        private void parse_field_vec2f(BinaryReader reader, USDCField field)
+        {
+            if (field.IsArray) {
+                float[] values = read_array_value<float>(reader, field);
+                vec2f[] vectors = new vec2f[values.Length / 2];
+                for (int i = 0; i < vectors.Length; ++i)
+                    vectors[i] = new vec2f(values.AsSpan(2*i));
+                field.data = vectors;
+            } else {
+                if (field.ValueRep.IsInlined) {
+                    vec4i vec = extract_packed_values(field.ValueRep.PayloadData);
+                    field.data = new vec2f((float)vec.x, (float)vec.y);
+                } else {
+                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
+                    field.data = new vec2f(reader.ReadSingle(), reader.ReadSingle());
+                }
+            }
+        }
+
+        private void parse_field_vec3f(BinaryReader reader, USDCField field)
+        {
+            if (field.IsArray) {
+                float[] values = read_array_value<float>(reader, field);
+                vec3f[] vectors = new vec3f[values.Length / 3];
+                for (int i = 0; i < vectors.Length; ++i)
+                    vectors[i] = new vec3f(values.AsSpan(3*i));
+                field.data = vectors;
+            } else {
+                if (field.ValueRep.IsInlined) {
+                    vec4i vec = extract_packed_values(field.ValueRep.PayloadData);
+                    field.data = new vec3f((float)vec.x, (float)vec.y, (float)vec.z);
+                } else {
+                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
+                    field.data = new vec3f(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                }
+            }
+        }
+
+
+
+        private void parse_field_matrix4d(BinaryReader reader, USDCField field)
+        {
+            if (field.IsArray) {
+                double[] values = read_array_value<double>(reader, field);
+                int count = values.Length / 16;
+                matrix4d[] matrices = new matrix4d[count];
+                for (int i = 0; i < count; ++i)
+                    matrices[i] = new matrix4d(values.AsSpan(16*i));
+                field.data = matrices;
+            } else {
+                if (field.ValueRep.IsInlined) {
+                    vec4i diag = extract_packed_values(field.ValueRep.PayloadData);
+                    field.data = new matrix4d() { row0 = new vec4d() { x = diag.x },
+                                                 row1 = new vec4d() { y = diag.y },
+                                                 row2 = new vec4d() { z = diag.z },
+                                                 row3 = new vec4d() { w = diag.w } };
+                } else {
+                    ulong offset = field.ValueRep.PayloadData;
+                    reader.BaseStream.Position = (long)offset;
+                    double[] values = read_N_values<double>(reader, 16, sizeof(double)).ToArray();
+                    field.data = new matrix4d( values );
+                }
+            }
+        }
 
 
         // decode block of integers with an encoding specialized for indices.
