@@ -108,10 +108,6 @@ namespace g3
                 build_meshes(childDef, options, builder, CurTransform);
         }
 
-        protected static Vector3d ToVector3d(vec3f v) { return new Vector3d(v.x, v.y, v.z); }
-        protected static Vector3f ToVector3f(vec3f v) { return new Vector3f(v.x, v.y, v.z); }
-        protected static Vector2f ToVector2f(vec2f v) { return new Vector2f(v.u, v.v); }
-
 
         protected bool AppendAsVertices(DMesh3 mesh, USDADef def, USDAField points, Matrix4d Transform)
         {
@@ -121,7 +117,7 @@ namespace g3
             }
             if ( points.Value.data is vec3f[] vectorList && vectorList.Length > 0) {
                 for (int i = 0; i < vectorList.Length; ++i) {
-                    Vector3d v = ToVector3d(vectorList[i]);
+                    Vector3d v = vectorList[i];
                     v = Transform.TransformPointAffine(v);
                     mesh.AppendVertex(v);
                 }
@@ -177,14 +173,14 @@ namespace g3
 
                 Vector3f na = Vector3f.UnitZ, nb = Vector3f.UnitZ, nc = Vector3f.UnitZ;
                 if ( bHaveNormals ) {
-                    na = NormalTransform * ToVector3f(normalsList![cur_idx]);
-                    nb = NormalTransform * ToVector3f(normalsList[cur_idx+1]);
+                    na = NormalTransform * normalsList![cur_idx];
+                    nb = NormalTransform * normalsList[cur_idx+1];
                 }
 
                 Vector2f uva = Vector2f.Zero, uvb = Vector2f.Zero, uvc = Vector2f.Zero;
                 if (bHaveUVs) {
-                    uva = ToVector2f(uvList![cur_idx]);
-                    uvb = ToVector2f(uvList[cur_idx+1]);
+                    uva = uvList![cur_idx];
+                    uvb = uvList[cur_idx+1];
                 }
 
                 for (int k = 2; k < count; ++k) {
@@ -197,12 +193,12 @@ namespace g3
                     b = c;
 
                     if (tid >= 0 && bHaveNormals) {
-                        nc = NormalTransform * ToVector3f(normalsList![cur_idx+k]);
+                        nc = NormalTransform * normalsList![cur_idx+k];
                         NormalsAttrib!.SetValue(tid, new TriNormals(na, nb, nc));
                         nb = nc;
                     }
                     if (tid >= 0 && bHaveUVs) {
-                        uvc = ToVector2f(uvList![cur_idx+k]);
+                        uvc = uvList![cur_idx+k];
                         UVsAttrib!.SetValue(tid, new TriUVs(uva, uvb, uvc));
                         uvb = uvc;
                     }

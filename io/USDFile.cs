@@ -32,12 +32,20 @@ namespace g3
 
             public USDPrim[] Children = Array.Empty<USDPrim>();
 
+            public string ShortName => Path.ShortName;
+            public string FullPath => Path.FullPath;
+
             // todo
 
             public override string ToString() {
                 string useName = (PrimType != EDefType.Unknown) ?
                     DefTypeTokens[(int)PrimType] : (CustomPrimTypeName??"(null)");
                 return  $"[{useName}] {Path.FullPath}";
+            }
+
+            public USDAttrib? FindAttribByName(string name)
+            {
+                return Array.Find(Attribs, (attrib) => { return attrib.Name == name; });
             }
         }
 
@@ -46,6 +54,10 @@ namespace g3
         {
             public string Name = "";
             public USDValue Value;
+
+            public EUSDType USDType => Value.TypeInfo.USDType;
+            public bool IsArray => Value.TypeInfo.bIsArray;
+
             public override string ToString() {
                 string typeString = FieldTypeTokens[(int)Value.TypeInfo.USDType];
                 return $"{typeString} {Name} = {Value}";
@@ -485,6 +497,8 @@ namespace g3
             public vec2f(in real_list16 l) { u = (float)l[0]; v = (float)l[1]; }
             public vec2f(ReadOnlySpan<float> vv) { u = vv[0]; v = vv[1]; }
             public override string ToString() { return $"({u},{v})"; }
+            public static implicit operator Vector2f(vec2f v) { return new Vector2f(v.u, v.v); }
+            public static implicit operator Vector2d(vec2f v) { return new Vector2d(v.u, v.v); }
         }
         public struct vec2d
         {
@@ -494,6 +508,7 @@ namespace g3
             public vec2d(in real_list16 l) { u = l[0]; v = l[1]; }
             public vec2d(ReadOnlySpan<double> vv) { u = vv[0]; v = vv[1]; }
             public override string ToString() { return $"({u},{v})"; }
+            public static implicit operator Vector2d(vec2d v) { return new Vector2d(v.u, v.v); }
         }
 
         public struct vec3f
@@ -503,6 +518,8 @@ namespace g3
             public vec3f(in real_list16 l) { x = (float)l[0]; y = (float)l[1]; z = (float)l[2]; }
             public vec3f(ReadOnlySpan<float> v) { x = v[0]; y = v[1]; z = v[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
+            public static implicit operator Vector3f(vec3f v) { return new Vector3f(v.x, v.y, v.z); }
+            public static implicit operator Vector3d(vec3f v) { return new Vector3d(v.x, v.y, v.z); }
         }
         public struct vec3d
         {
@@ -511,6 +528,7 @@ namespace g3
             public vec3d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; }
             public vec3d(ReadOnlySpan<double> v) { x = v[0]; y = v[1]; z = v[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
+            public static implicit operator Vector3d(vec3d v) { return new Vector3d(v.x, v.y, v.z); }
         }
 
         public struct vec4f
@@ -589,7 +607,6 @@ namespace g3
         }
 
 
-
         public class USDPath
         {
             // todo as we build paths we want to keep track of parent/child relationship,
@@ -615,6 +632,7 @@ namespace g3
             public bool IsEmpty => string.IsNullOrEmpty(prim) && string.IsNullOrEmpty(prop);
 
             public string FullPath => $"{valid_prefix}{prim}{prop_suffix}";
+            public string ShortName => local;
             public override string ToString() { return FullPath; }
             private string valid_prefix => (bValid ? "" : "INVALID#");
             private string prop_suffix => (string.IsNullOrEmpty(prop) ? "" : "." + prop);
