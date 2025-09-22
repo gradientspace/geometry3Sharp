@@ -491,10 +491,11 @@ namespace g3
         public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
             bool bIsBinary = false;
-            using (BinaryReader tmpReader = new BinaryReader(stream)) {
+            using (BinaryReader tmpReader = new BinaryReader(stream, Encoding.Default, true)) {
                 byte[] header = tmpReader.ReadBytes(8);
                 bIsBinary = (Encoding.ASCII.GetString(header) == "PXR-USDC");
             }
+            stream.Position = 0;
 
             if (bIsBinary) { 
                 USDCReader reader = new USDCReader();

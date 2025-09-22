@@ -377,26 +377,38 @@ namespace g3
             attrib.Name = attribSpec.Path.prop;
 
             USDCField[] fields = attribSpec.Fields;
+
+            // TODO: unclear how we should interpret fields...in many cases there
+            // is 'typeName' and 'default' field that are the main type/data. And then
+            // there might be other fields - do these correspond to stuff in the postfix brackets () section
+            // in usda? 
+
+            // find typename field first, if it exists
+            USDCField? typeNameField = Array.Find(fields, (f) => { return f.Name == "typeName"; });
+            if (typeNameField != null) {
+                Util.gDevAssert(typeNameField.FieldType == USDCDataType.Token);
+                string typeString = typeNameField.data as string ?? "";
+                if (typeString.EndsWith("[]")) {
+                    attrib.Value.TypeInfo.bIsArray = true;
+                    typeString = typeString.Substring(0, typeString.Length-2);
+                }
+                EUSDType type = find_type_from_string(typeString);
+                attrib.Value.TypeInfo.USDType = type;
+            }
+
+            // then find default field if it exists, as it contains the data?
+            USDCField? defaultField = Array.Find(fields, (f) => { return f.Name == "default"; });
+            if (defaultField != null) {
+                EUSDType type = usdc_to_usdtype(defaultField.FieldType);
+                Util.gDevAssert(IsTypeCompatible(type, attrib.Value.TypeInfo.USDType));
+                attrib.Value.data = defaultField.data;
+            }
+
+            // process rest of fields.... ??
             foreach (USDCField field in fields) {
-                
-                if (field.Name == "typeName" && field.FieldType == USDCDataType.Token ) 
-                {
-                    string typeString = field.data as string ?? "";
-                    if (typeString.EndsWith("[]")) {
-                        attrib.Value.TypeInfo.bIsArray = true;
-                        typeString = typeString.Substring(0, typeString.Length-2);
-                    }
-                    EUSDType type = find_type_from_string(typeString);
-                    attrib.Value.TypeInfo.USDType = type;
-                } 
-                else if (field.Name == "default") 
-                {
-                    EUSDType type = usdc_to_usdtype(field.FieldType);
-                    Util.gDevAssert(IsTypeCompatible(type,attrib.Value.TypeInfo.USDType));
-                    attrib.Value.data = field.data;
-                } 
-                else 
-                {
+                if (field.Name == "typeName" || field.Name == "default")  {
+                    continue;
+                } else {
                     warningEvent?.Invoke($"unhandled attribute field {field.Name}", null);
                 }
             }   
