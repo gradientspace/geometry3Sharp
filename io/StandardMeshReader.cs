@@ -2,9 +2,10 @@
 // Distributed under the Boost Software License, Version 1.0. http://www.boost.org/LICENSE_1_0.txt
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using System.Globalization;
+using System.IO;
+using System.Text;
+using System.Threading;
 
 namespace g3
 {
@@ -64,6 +65,7 @@ namespace g3
                 Readers.Add(new GLBFormatReader());
                 Readers.Add(new USDAFormatReader());
                 Readers.Add(new USDCFormatReader());
+                Readers.Add(new USDFormatReader());
             }
         }
 
@@ -469,6 +471,44 @@ namespace g3
         }
     }
 
+
+    // MeshFormatReader impl for USD - forwards to USDA or USDC
+    public class USDFormatReader : MeshFormatReader
+    {
+        public List<string> SupportedExtensions { get; set; } = ["usd"];
+
+        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            try {
+                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                    return ReadFile(stream, builder, options, messages);
+                }
+            } catch (Exception e) {
+                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
+            }
+        }
+
+        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
+        {
+            bool bIsBinary = false;
+            using (BinaryReader tmpReader = new BinaryReader(stream)) {
+                byte[] header = tmpReader.ReadBytes(8);
+                bIsBinary = (Encoding.ASCII.GetString(header) == "PXR-USDC");
+            }
+
+            if (bIsBinary) { 
+                USDCReader reader = new USDCReader();
+                reader.warningEvent += messages;
+                IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
+                return result;
+            } else {
+                USDAReader reader = new USDAReader();
+                reader.warningEvent += messages;
+                IOReadResult result = reader.Read(new StreamReader(stream), options, builder);
+                return result;
+            }
+        }
+    }
 
 
     // MeshFormatReader impl for g3mesh
