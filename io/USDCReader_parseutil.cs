@@ -123,12 +123,12 @@ namespace g3
         }
 
 
-        protected static T[] read_uncompressed_array<T>(BinaryReader reader, USDCField field, int bytesPerElem) where T : struct
+        protected static T[] read_uncompressed_array<T>(BinaryReader reader, USDCField field, int bytesPerElem, int numElemsPerValue) where T : struct
         {
             ulong offset = field.ValueRep.PayloadData;
             reader.BaseStream.Position = (long)offset;
             ulong num_values = reader.ReadUInt64();
-            byte[] bytes = reader.ReadBytes((int)num_values * bytesPerElem);
+            byte[] bytes = reader.ReadBytes((int)num_values * bytesPerElem * numElemsPerValue);
             T[] values = MemoryMarshal.Cast<byte, T>(bytes).ToArray();
             return values;
         }
@@ -147,7 +147,7 @@ namespace g3
                 // if it's compressed we need to figure out if the indices are also compressed...
                 Util.gDevAssert(field.ValueRep.IsCompressed == false);
 
-                int[] indices = read_uncompressed_array<int>(reader, field, sizeof(int));
+                int[] indices = read_uncompressed_array<int>(reader, field, sizeof(int), 1);
                 field.data = map_indices(indices, Tokens!);
             } else {
                 int token_idx = (int)field.ValueRep.PayloadData;
@@ -155,7 +155,7 @@ namespace g3
             }
         }
 
-        protected static T[] read_array_value<T>(BinaryReader reader, USDCField field, int bytesPerElem) where T : struct
+        protected static T[] read_array_value<T>(BinaryReader reader, USDCField field, int bytesPerElem, int numElemsPerValue) where T : struct
         {
             ulong offset = field.ValueRep.PayloadData;
             T[] values = Array.Empty<T>();
@@ -167,14 +167,14 @@ namespace g3
                 byte[]? uncompressed = try_decompress_data(compressed, /*todo est size from num_values*/0);
                 values = MemoryMarshal.Cast<byte, T>(uncompressed!).ToArray();
             } else
-                values = read_uncompressed_array<T>(reader, field, bytesPerElem);
+                values = read_uncompressed_array<T>(reader, field, bytesPerElem, numElemsPerValue);
             return values;
         }
 
         protected static void parse_field_float(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                field.data = read_array_value<float>(reader, field, sizeof(float));
+                field.data = read_array_value<float>(reader, field, sizeof(float), 1);
             } else {
                 if (field.ValueRep.IsInlined) {
                     ulong value = field.ValueRep.PayloadData;
@@ -189,7 +189,7 @@ namespace g3
         protected static void parse_field_double(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                field.data = read_array_value<double>(reader, field, sizeof(double));
+                field.data = read_array_value<double>(reader, field, sizeof(double), 1);
             } else {
                 if (field.ValueRep.IsInlined) {
                     ulong value = field.ValueRep.PayloadData;
@@ -227,7 +227,7 @@ namespace g3
                     int[] values = decode_packed_integers(uncompressed!, num_integers).ToArray();
                     field.data = values;
                 } else 
-                    field.data = read_uncompressed_array<int>(reader, field, sizeof(int));
+                    field.data = read_uncompressed_array<int>(reader, field, sizeof(int), 1);
             } else {
                 if (field.ValueRep.IsInlined) {
                     field.data = (int)field.ValueRep.PayloadData;
@@ -257,7 +257,7 @@ namespace g3
         protected static void parse_field_vec2f(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                float[] values = read_array_value<float>(reader, field, sizeof(float));
+                float[] values = read_array_value<float>(reader, field, sizeof(float), 2);
                 vec2f[] vectors = new vec2f[values.Length / 2];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new vec2f(values.AsSpan(2*i));
@@ -275,7 +275,7 @@ namespace g3
         protected static void parse_field_vec2d(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field, sizeof(double));
+                double[] values = read_array_value<double>(reader, field, sizeof(double), 2);
                 vec2d[] vectors = new vec2d[values.Length / 2];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new vec2d(values.AsSpan(2*i));
@@ -294,7 +294,7 @@ namespace g3
         protected static void parse_field_vec3f(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                float[] values = read_array_value<float>(reader, field, sizeof(float));
+                float[] values = read_array_value<float>(reader, field, sizeof(float), 3);
                 vec3f[] vectors = new vec3f[values.Length / 3];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new vec3f(values.AsSpan(3*i));
@@ -312,7 +312,7 @@ namespace g3
         protected static void parse_field_vec3d(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field, sizeof(double));
+                double[] values = read_array_value<double>(reader, field, sizeof(double), 3);
                 vec3d[] vectors = new vec3d[values.Length / 3];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new vec3d(values.AsSpan(3*i));
@@ -332,7 +332,7 @@ namespace g3
         protected static void parse_field_vec4f(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                float[] values = read_array_value<float>(reader, field, sizeof(float));
+                float[] values = read_array_value<float>(reader, field, sizeof(float), 4);
                 vec4f[] vectors = new vec4f[values.Length / 4];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new vec4f(values.AsSpan(4*i));
@@ -350,7 +350,7 @@ namespace g3
         protected static void parse_field_vec4d(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field, sizeof(double));
+                double[] values = read_array_value<double>(reader, field, sizeof(double), 4);
                 vec4d[] vectors = new vec4d[values.Length / 4];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new vec4d(values.AsSpan(4*i));
@@ -370,7 +370,7 @@ namespace g3
         protected static void parse_field_quatf(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                float[] values = read_array_value<float>(reader, field, sizeof(float));
+                float[] values = read_array_value<float>(reader, field, sizeof(float), 4);
                 quat4f[] vectors = new quat4f[values.Length / 4];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new quat4f(values.AsSpan(4*i));
@@ -389,7 +389,7 @@ namespace g3
         protected static void parse_field_quatd(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field, sizeof(double));
+                double[] values = read_array_value<double>(reader, field, sizeof(double), 4);
                 quat4d[] vectors = new quat4d[values.Length / 4];
                 for (int i = 0; i < vectors.Length; ++i)
                     vectors[i] = new quat4d(values.AsSpan(4*i));
@@ -410,7 +410,7 @@ namespace g3
         protected static void parse_field_matrix2d(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field, sizeof(double));
+                double[] values = read_array_value<double>(reader, field, sizeof(double), 4);
                 matrix2d[] matrices = new matrix2d[values.Length / 4];
                 for (int i = 0; i < matrices.Length; ++i)
                     matrices[i] = new matrix2d(values.AsSpan(4*i));
@@ -432,7 +432,7 @@ namespace g3
         protected static void parse_field_matrix3d(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field, sizeof(double));
+                double[] values = read_array_value<double>(reader, field, sizeof(double), 9);
                 matrix3d[] matrices = new matrix3d[values.Length / 9];
                 for (int i = 0; i < matrices.Length; ++i)
                     matrices[i] = new matrix3d(values.AsSpan(9*i));
@@ -455,7 +455,7 @@ namespace g3
         protected static void parse_field_matrix4d(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field, sizeof(double));
+                double[] values = read_array_value<double>(reader, field, sizeof(double), 16);
                 matrix4d[] matrices = new matrix4d[values.Length / 16];
                 for (int i = 0; i < matrices.Length; ++i)
                     matrices[i] = new matrix4d(values.AsSpan(16*i));

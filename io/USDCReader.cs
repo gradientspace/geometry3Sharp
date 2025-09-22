@@ -24,8 +24,6 @@ namespace g3
 
 
 
-
-
         public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
         {
             // CrateFile::_ReadStructuralSections
