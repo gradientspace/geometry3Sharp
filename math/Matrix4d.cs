@@ -105,18 +105,28 @@ namespace g3
                 Row3 = new Vector4d(v0.w, v1.w, v2.w, v3.w);
             }
         }
-        public Matrix4d(ref readonly Matrix3d mat3x3)
+        public Matrix4d(Matrix3d mat3x3)
         {
-            Row0 = new Vector4d(mat3x3.Row0.x, mat3x3.Row0.y, mat3x3.Row0.z, 0);
-            Row1 = new Vector4d(mat3x3.Row1.x, mat3x3.Row1.y, mat3x3.Row1.z, 0);
-            Row2 = new Vector4d(mat3x3.Row2.x, mat3x3.Row2.y, mat3x3.Row2.z, 0);
-            Row3 = new Vector4d(0, 0, 0, 1);
+            set_mat_vec(mat3x3, Vector3d.Zero);
         }
-        public Matrix4d(ref readonly Matrix3d mat3x3, ref readonly Vector3d Translation)
+        public Matrix4d(Matrix3d mat3x3, Vector3d Translation)
         {
-            Row0 = new Vector4d(mat3x3.Row0.x, mat3x3.Row0.y, mat3x3.Row0.z, Translation.x);
-            Row1 = new Vector4d(mat3x3.Row1.x, mat3x3.Row1.y, mat3x3.Row1.z, Translation.y);
-            Row2 = new Vector4d(mat3x3.Row2.x, mat3x3.Row2.y, mat3x3.Row2.z, Translation.z);
+            set_mat_vec(mat3x3, Translation);
+        }
+
+        public Matrix4d(Quaterniond Rotation, Vector3d Translation)
+        {
+            set_mat_vec(Rotation.ToRotationMatrix(), Translation);
+        }
+        public Matrix4d(Frame3d Frame)
+        {
+            set_mat_vec(Frame.Rotation.ToRotationMatrix(), Frame.Origin);
+        }
+        internal void set_mat_vec(Matrix3d mat3x3, Vector3d translation)
+        {
+            Row0 = new Vector4d(mat3x3.Row0.x, mat3x3.Row0.y, mat3x3.Row0.z, translation.x);
+            Row1 = new Vector4d(mat3x3.Row1.x, mat3x3.Row1.y, mat3x3.Row1.z, translation.y);
+            Row2 = new Vector4d(mat3x3.Row2.x, mat3x3.Row2.y, mat3x3.Row2.z, translation.z);
             Row3 = new Vector4d(0, 0, 0, 1);
         }
 
@@ -358,11 +368,10 @@ namespace g3
         }
 
 
-
         public static Matrix4d AxisAngleDeg(Vector3d axis, double angleDeg)
         {
             Matrix3d rot = Matrix3d.AxisAngleD(axis, angleDeg);
-            return new Matrix4d(ref rot);
+            return new Matrix4d(rot);
         }
         public static Matrix4d Translation(Vector3d Translation)
         {
@@ -375,7 +384,7 @@ namespace g3
         }
         public static Matrix4d Affine(ref readonly Matrix3d AffineTransform)
         {
-            return new Matrix4d(in AffineTransform);
+            return new Matrix4d(AffineTransform);
         }
 
         public override string ToString() {

@@ -109,6 +109,10 @@ namespace g3
             else
                 throw new ArgumentOutOfRangeException("nAxis");
         }
+        public readonly void GetXYZ(out Vector3d X, out Vector3d Y, out Vector3d Z)
+        {
+            rotation.GetXYZ(out X, out Y, out Z);
+        }
 
 
         public void Translate(Vector3d v)
@@ -149,9 +153,9 @@ namespace g3
         {
             return new Frame3d(this.origin, q * this.rotation);
         }
-        public readonly Frame3d Rotated(double Angle, int nAxis)
+        public readonly Frame3d Rotated(double AngleDeg, int nAxis)
         {
-            return this.Rotated(new Quaterniond(GetAxis(nAxis), Angle));
+            return this.Rotated(new Quaterniond(GetAxis(nAxis), AngleDeg));
         }
 
         /// <summary>
@@ -181,12 +185,24 @@ namespace g3
             Quaterniond rot = Quaterniond.FromTo(GetAxis(nAxis), vTo);
             Rotate(rot);
         }
+        public readonly Frame3d GetAlignAxis(int nAxis, Vector3d vTo)
+        {
+            Quaterniond rot = Quaterniond.FromTo(GetAxis(nAxis), vTo);
+            return Rotated(rot);
+        }
         public void ConstrainedAlignAxis(int nAxis, Vector3d vTo, Vector3d vAround)
         {
             Vector3d axis = GetAxis(nAxis);
             double fAngle = MathUtil.PlaneAngleSignedD(axis, vTo, vAround);
             Quaterniond rot = Quaterniond.AxisAngleD(vAround, fAngle);
             Rotate(rot);
+        }
+        public readonly Frame3d GetAlignAxisConstrained(int nAxis, Vector3d vTo, Vector3d vAround)
+        {
+            Vector3d axis = GetAxis(nAxis);
+            double fAngle = MathUtil.PlaneAngleSignedD(axis, vTo, vAround);
+            Quaterniond rot = Quaterniond.AxisAngleD(vAround, fAngle);
+            return Rotated(rot);
         }
 
         /// <summary>
@@ -252,10 +268,10 @@ namespace g3
             return rotation.InverseMultiply(ref v);
         }
         ///<summary> Map point *into* local coordinates of Frame </summary>
-		public readonly Vector3d ToFrameP(ref Vector3d v)
+		public readonly Vector3d ToFrameP(ref readonly Vector3d v)
         {
             Vector3d x = new Vector3d(v.x-origin.x, v.y-origin.y, v.z-origin.z);
-            return rotation.InverseMultiply(ref x);
+            return rotation.InverseMultiply(in x);
         }
         /// <summary> Map point *from* local frame coordinates into "world" coordinates </summary>
         public readonly Vector3d FromFrameP(Vector3d v)
@@ -263,7 +279,7 @@ namespace g3
             return this.rotation * v + this.origin;
         }
         /// <summary> Map point *from* local frame coordinates into "world" coordinates </summary>
-        public readonly Vector3d FromFrameP(ref Vector3d v)
+        public readonly Vector3d FromFrameP(ref readonly Vector3d v)
         {
             return this.rotation * v + this.origin;
         }
@@ -275,9 +291,9 @@ namespace g3
             return rotation.InverseMultiply(ref v);
         }
         ///<summary> Map vector *into* local coordinates of Frame </summary>
-        public readonly Vector3d ToFrameV(ref Vector3d v)
+        public readonly Vector3d ToFrameV(ref readonly Vector3d v)
         {
-            return rotation.InverseMultiply(ref v);
+            return rotation.InverseMultiply(in v);
         }
         /// <summary> Map vector *from* local frame coordinates into "world" coordinates </summary>
         public readonly Vector3d FromFrameV(Vector3d v)
@@ -285,7 +301,7 @@ namespace g3
             return this.rotation * v;
         }
         /// <summary> Map vector *from* local frame coordinates into "world" coordinates </summary>
-        public readonly Vector3d FromFrameV(ref Vector3d v)
+        public readonly Vector3d FromFrameV(ref readonly Vector3d v)
         {
             return this.rotation * v;
         }
@@ -298,7 +314,7 @@ namespace g3
             return Quaterniond.Inverse(this.rotation) * q;
         }
         ///<summary> Map quaternion *into* local coordinates of Frame </summary>
-        public readonly Quaterniond ToFrame(ref Quaterniond q)
+        public readonly Quaterniond ToFrame(ref readonly Quaterniond q)
         {
             return Quaterniond.Inverse(this.rotation) * q;
         }
@@ -308,7 +324,7 @@ namespace g3
             return this.rotation * q;
         }
         /// <summary> Map quaternion *from* local frame coordinates into "world" coordinates </summary>
-        public readonly Quaterniond FromFrame(ref Quaterniond q)
+        public readonly Quaterniond FromFrame(ref readonly Quaterniond q)
         {
             return this.rotation * q;
         }
@@ -320,9 +336,9 @@ namespace g3
             return new Ray3d(ToFrameP(ref r.Origin), ToFrameV(ref r.Direction));
         }
         ///<summary> Map ray *into* local coordinates of Frame </summary>
-        public readonly Ray3d ToFrame(ref Ray3d r)
+        public readonly Ray3d ToFrame(ref readonly Ray3d r)
         {
-            return new Ray3d(ToFrameP(ref r.Origin), ToFrameV(ref r.Direction));
+            return new Ray3d(ToFrameP(in r.Origin), ToFrameV(in r.Direction));
         }
         /// <summary> Map ray *from* local frame coordinates into "world" coordinates </summary>
         public readonly Ray3d FromFrame(Ray3d r)
@@ -330,9 +346,9 @@ namespace g3
             return new Ray3d(FromFrameP(ref r.Origin), FromFrameV(ref r.Direction));
         }
         /// <summary> Map ray *from* local frame coordinates into "world" coordinates </summary>
-        public readonly Ray3d FromFrame(ref Ray3d r)
+        public readonly Ray3d FromFrame(ref readonly Ray3d r)
         {
-            return new Ray3d(FromFrameP(ref r.Origin), FromFrameV(ref r.Direction));
+            return new Ray3d(FromFrameP(in r.Origin), FromFrameV(in r.Direction));
         }
 
 
@@ -342,9 +358,9 @@ namespace g3
             return new Frame3d(ToFrameP(ref f.origin), ToFrame(ref f.rotation));
         }
         ///<summary> Map frame *into* local coordinates of Frame </summary>
-        public readonly Frame3d ToFrame(ref Frame3d f)
+        public readonly Frame3d ToFrame(ref readonly Frame3d f)
         {
-            return new Frame3d(ToFrameP(ref f.origin), ToFrame(ref f.rotation));
+            return new Frame3d(ToFrameP(in f.origin), ToFrame(in f.rotation));
         }
         /// <summary> Map frame *from* local frame coordinates into "world" coordinates </summary>
         public readonly Frame3d FromFrame(Frame3d f)
@@ -352,31 +368,24 @@ namespace g3
             return new Frame3d(FromFrameP(ref f.origin), FromFrame(ref f.rotation));
         }
         /// <summary> Map frame *from* local frame coordinates into "world" coordinates </summary>
-        public readonly Frame3d FromFrame(ref Frame3d f)
+        public readonly Frame3d FromFrame(ref readonly Frame3d f)
         {
-            return new Frame3d(FromFrameP(ref f.origin), FromFrame(ref f.rotation));
+            return new Frame3d(FromFrameP(in f.origin), FromFrame(in f.rotation));
         }
 
 
         ///<summary> Map box *into* local coordinates of Frame </summary>
-        public readonly Box3d ToFrame(ref Box3d box)
+        public readonly Box3d ToFrame(ref readonly Box3d box)
         {
-            box.Center = ToFrameP(ref box.Center);
-            box.AxisX = ToFrameV(ref box.AxisX);
-            box.AxisY = ToFrameV(ref box.AxisY);
-            box.AxisZ = ToFrameV(ref box.AxisZ);
-            return box;
+            return new Box3d(
+                ToFrameP(in box.Center), ToFrameV(in box.AxisX), ToFrameV(in box.AxisY), ToFrameV(in box.AxisZ), box.Extent);
         }
         /// <summary> Map box *from* local frame coordinates into "world" coordinates </summary>
-        public readonly Box3d FromFrame(ref Box3d box)
+        public readonly Box3d FromFrame(ref readonly Box3d box)
         {
-            box.Center = FromFrameP(ref box.Center);
-            box.AxisX = FromFrameV(ref box.AxisX);
-            box.AxisY = FromFrameV(ref box.AxisY);
-            box.AxisZ = FromFrameV(ref box.AxisZ);
-            return box;
+            return new Box3d(
+                FromFrameP(in box.Center), FromFrameV(in box.AxisX), FromFrameV(in box.AxisY), FromFrameV(in box.AxisZ), box.Extent);
         }
-
 
         /// <summary>
         /// Compute intersection of ray with plane passing through frame origin, normal
