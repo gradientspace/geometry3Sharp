@@ -320,7 +320,7 @@ namespace g3
                 Vector3d b = GetAffineTranslation();
                 M = M.Inverse();
                 b = -M * b;
-                return new Matrix4d(in M, in b);
+                return new Matrix4d(M, b);
             } 
             else 
             {
