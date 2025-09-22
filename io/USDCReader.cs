@@ -3,19 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using static g3.USDFile;
-using static System.Net.Mime.MediaTypeNames;
 
 #nullable enable
 
 namespace g3
 {
-    public class USDCReader : IMeshReader
+    public partial class USDCReader : IMeshReader
     {
         // connect to this to get warning messages
         public event ParsingMessagesHandler? warningEvent;
@@ -121,7 +118,7 @@ namespace g3
         IEnumerable<USDCSpec> enumerate_children(USDCSpec parent)
         {
             foreach (USDCSpec spec in Specs) {
-                if ( spec.Path.parent_index == parent.Path.index) 
+                if (spec.Path.parent_index == parent.Path.index)
                     yield return spec;
             }
         }
@@ -193,7 +190,6 @@ namespace g3
                 }
                 else { 
                     warningEvent?.Invoke($"unhandled spec type {child.SpecType} in build_scene_children", null);
-                    break;
                 }
             }
 
@@ -226,49 +222,7 @@ namespace g3
         }
 
 
-        EUSDType GetGenericType(EUSDType specificType)
-        {
-            switch (specificType) {
-                case EUSDType.TexCoord2f:
-                    return EUSDType.Float2;
-                case EUSDType.TexCoord2h:
-                    return EUSDType.Half2;
-                case EUSDType.TexCoord2d:
-                    return EUSDType.Double2;
-                case EUSDType.Point3f:
-                case EUSDType.Color3f:
-                case EUSDType.Vector3f:
-                case EUSDType.Normal3f:
-                case EUSDType.TexCoord3f:
-                    return EUSDType.Float3;
-                case EUSDType.Point3h:
-                case EUSDType.Color3h:
-                case EUSDType.Vector3h:
-                case EUSDType.Normal3h:
-                case EUSDType.TexCoord3h:
-                    return EUSDType.Half3;
-                case EUSDType.Vector3d:
-                case EUSDType.Normal3d:
-                case EUSDType.Point3d:
-                case EUSDType.Color3d:
-                case EUSDType.TexCoord3d:
-                    return EUSDType.Double3;
-                case EUSDType.Color4f:
-                    return EUSDType.Float4;
-                case EUSDType.Color4h:
-                    return EUSDType.Half4;
-                case EUSDType.Color4d:
-                    return EUSDType.Double4;
-                case EUSDType.Frame4d:
-                    return EUSDType.Matrix4d;
-            }
-            return specificType;
-        }
-        bool is_type_compatible(EUSDType genericType, EUSDType specificType)
-        {
-            if (genericType == specificType) return true;
-            return GetGenericType(specificType) == genericType;
-        }
+
 
 
         USDAttrib make_attribute(USDPrim prim, USDCSpec attribSpec)
@@ -292,7 +246,7 @@ namespace g3
                 else if (field.Name == "default") 
                 {
                     EUSDType type = usdc_to_usdtype(field.FieldType);
-                    Util.gDevAssert(is_type_compatible(type,attrib.Value.TypeInfo.USDType));
+                    Util.gDevAssert(IsTypeCompatible(type,attrib.Value.TypeInfo.USDType));
                     attrib.Value.data = field.data;
                 } 
                 else 
@@ -723,6 +677,10 @@ namespace g3
                 Path=path;
                 Fields=fields;
             }
+
+            public override string ToString() {
+                return Path.ToString();
+            }
         }
 
 
@@ -801,19 +759,54 @@ namespace g3
                     parse_field_token(reader, field);
                     break;
 
+                // missing int cases - uchar, uint32, int64, uint64
+                // missing 16-bit float cases:
+                // Half, Vec2h, Vec3h, Vec4h, Quath
+
+                case USDCDataType.Bool:
+                    parse_field_bool(reader, field);
+                    break;
                 case USDCDataType.Int:
                     parse_field_int(reader, field);
                     break;
-
                 case USDCDataType.Float:
+                    parse_field_float(reader, field);
+                    break;
+                case USDCDataType.Double:
                     parse_field_float(reader, field);
                     break;
 
                 case USDCDataType.Vec2f:
                     parse_field_vec2f(reader, field);
                     break;
+                case USDCDataType.Vec2d:
+                    parse_field_vec2d(reader, field);
+                    break;
                 case USDCDataType.Vec3f:
                     parse_field_vec3f(reader, field);
+                    break;
+                case USDCDataType.Vec3d:
+                    parse_field_vec3d(reader, field);
+                    break;
+                case USDCDataType.Vec4f:
+                    parse_field_vec4f(reader, field);
+                    break;
+                case USDCDataType.Vec4d:
+                    parse_field_vec4d(reader, field);
+                    break;
+
+                case USDCDataType.Quatf:
+                    parse_field_quatf(reader, field);
+                    break;
+                case USDCDataType.Quatd:
+                    parse_field_quatd(reader, field);
+                    break;
+
+                case USDCDataType.Matrix2d:
+                    parse_field_matrix2d(reader, field);
+                    break;
+                case USDCDataType.Matrix3d:
+                    parse_field_matrix3d(reader, field);
                     break;
                 case USDCDataType.Matrix4d:
                     parse_field_matrix4d(reader, field);
@@ -822,298 +815,6 @@ namespace g3
                 default:
                     warningEvent?.Invoke($"unhandled field type {field.FieldType} in parse_field", null);
                     break;
-            }
-        }
-
-
-        private List<int>? read_compressed_indices(BinaryReader reader, ulong index_count)
-        {
-            ulong indices_bytes = reader.ReadUInt64();
-            byte[] compressed_indices = reader.ReadBytes((int)indices_bytes);
-            byte[]? indices_buffer = try_decompress_data(compressed_indices, /* verify buffersize calc? */0);
-            if (indices_buffer == null)
-                return null;
-            return decode_packed_integers(indices_buffer, index_count);
-        }
-
-
-        private T[] read_uncompressed_array<T>(BinaryReader reader, USDCField field) where T : struct
-        {
-            ulong offset = field.ValueRep.PayloadData;
-            reader.BaseStream.Position = (long)offset;
-            ulong num_values = reader.ReadUInt64();
-            byte[] bytes = reader.ReadBytes((int)num_values * 4);
-            T[] values = MemoryMarshal.Cast<byte, T>(bytes).ToArray();
-            return values;
-        }
-        private string[] map_indices(int[] indices, List<string> strings)
-        {
-            string[] values = new string[indices.Length];
-            for (int i = 0; i < indices.Length; ++i)
-                values[i] = strings[indices[i]];
-            return values;
-        }
-
-        private void parse_field_token(BinaryReader reader, USDCField field)
-        {
-            if (field.IsArray || field.FieldType == USDCDataType.TokenVector) {
-                // if it's compressed we need to figure out if the indices are also compressed...
-                Util.gDevAssert(field.ValueRep.IsCompressed == false);
-
-                int[] indices = read_uncompressed_array<int>(reader, field);
-                field.data = map_indices(indices, Tokens!);
-            } else {
-                int token_idx = (int)field.ValueRep.PayloadData;
-                field.data = Tokens![token_idx];
-            }
-        }
-
-        private T[] read_array_value<T>(BinaryReader reader, USDCField field) where T : struct
-        {
-            ulong offset = field.ValueRep.PayloadData;
-            T[] values = Array.Empty<T>();
-            if (field.ValueRep.IsCompressed) {
-                reader.BaseStream.Position = (long)offset;
-                ulong num_values = reader.ReadUInt64();
-                ulong compressed_bytes = reader.ReadUInt64();
-                byte[] compressed = reader.ReadBytes((int)compressed_bytes);
-                byte[]? uncompressed = try_decompress_data(compressed, /*todo est size from num_values*/0);
-                values = MemoryMarshal.Cast<byte, T>(uncompressed!).ToArray();
-            } else
-                values = read_uncompressed_array<T>(reader, field);
-            return values;
-        }
-
-        private void parse_field_float(BinaryReader reader, USDCField field)
-        {
-            if (field.IsArray) {
-                field.data = read_array_value<float>(reader, field);
-                //ulong offset = field.ValueRep.PayloadData;
-                //if (field.ValueRep.IsCompressed) {
-                //    reader.BaseStream.Position = (long)offset;
-                //    ulong num_floats = reader.ReadUInt64();
-                //    ulong compressed_bytes = reader.ReadUInt64();
-                //    byte[] compressed = reader.ReadBytes((int)compressed_bytes);
-                //    byte[]? uncompressed = try_decompress_data(compressed);
-                //    float[] values = MemoryMarshal.Cast<byte, float>(uncompressed!).ToArray();
-                //    field.data = values;
-                //} else
-                //    field.data = read_uncompressed_array<float>(reader, field);
-            } else {
-                // todo this can maybe become a generic function...
-                if (field.ValueRep.IsInlined) {
-                    ulong value = field.ValueRep.PayloadData;
-                    field.data = MemoryMarshal.AsRef<float>(
-                        MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref value, 1)) );
-                } else {
-                    ulong offset = field.ValueRep.PayloadData;
-                    reader.BaseStream.Position = (long)offset;
-                    field.data = reader.ReadSingle();
-                }
-            }
-        }
-
-
-        private void parse_field_int(BinaryReader reader, USDCField field)
-        {
-            if (field.IsArray) {
-                ulong offset = field.ValueRep.PayloadData;
-                if (field.ValueRep.IsCompressed) {
-                    reader.BaseStream.Position = (long)offset;
-                    ulong num_integers = reader.ReadUInt64();
-                    ulong compressed_bytes = reader.ReadUInt64();
-                    byte[] compressed = reader.ReadBytes((int)compressed_bytes);
-                    byte[]? uncompressed = try_decompress_data(compressed);
-                    int[] values = decode_packed_integers(uncompressed!, num_integers).ToArray();
-                    field.data = values;
-                } else 
-                    field.data = read_uncompressed_array<int>(reader, field);
-            } else {
-                if (field.ValueRep.IsInlined) {
-                    field.data = (int)field.ValueRep.PayloadData;
-                } else {
-                    ulong offset = field.ValueRep.PayloadData;
-                    reader.BaseStream.Position = (long)offset;
-                    field.data = reader.ReadInt32();
-                }
-            }
-        }
-
-        private Span<T> read_N_values<T>(BinaryReader reader, int N, int elemsize) where T : struct
-        {
-            Span<byte> data = reader.ReadBytes(N * elemsize).AsSpan();
-            return MemoryMarshal.Cast<byte, T>(data);
-        }
-
-        private vec4i extract_packed_values(ulong payload)
-        {
-            sbyte a = unchecked((sbyte)(payload & 0xFF));
-            sbyte b = unchecked((sbyte)((payload >> 8) & 0xFF));
-            sbyte c = unchecked((sbyte)((payload >> 16) & 0xFF));
-            sbyte d = unchecked((sbyte)((payload >> 24) & 0xFF));
-            return new vec4i() {x = a, y = b, z = c, w = d};
-        }
-
-
-        private void parse_field_vec2f(BinaryReader reader, USDCField field)
-        {
-            if (field.IsArray) {
-                float[] values = read_array_value<float>(reader, field);
-                vec2f[] vectors = new vec2f[values.Length / 2];
-                for (int i = 0; i < vectors.Length; ++i)
-                    vectors[i] = new vec2f(values.AsSpan(2*i));
-                field.data = vectors;
-            } else {
-                if (field.ValueRep.IsInlined) {
-                    vec4i vec = extract_packed_values(field.ValueRep.PayloadData);
-                    field.data = new vec2f((float)vec.x, (float)vec.y);
-                } else {
-                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
-                    field.data = new vec2f(reader.ReadSingle(), reader.ReadSingle());
-                }
-            }
-        }
-
-        private void parse_field_vec3f(BinaryReader reader, USDCField field)
-        {
-            if (field.IsArray) {
-                float[] values = read_array_value<float>(reader, field);
-                vec3f[] vectors = new vec3f[values.Length / 3];
-                for (int i = 0; i < vectors.Length; ++i)
-                    vectors[i] = new vec3f(values.AsSpan(3*i));
-                field.data = vectors;
-            } else {
-                if (field.ValueRep.IsInlined) {
-                    vec4i vec = extract_packed_values(field.ValueRep.PayloadData);
-                    field.data = new vec3f((float)vec.x, (float)vec.y, (float)vec.z);
-                } else {
-                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
-                    field.data = new vec3f(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-                }
-            }
-        }
-
-
-
-        private void parse_field_matrix4d(BinaryReader reader, USDCField field)
-        {
-            if (field.IsArray) {
-                double[] values = read_array_value<double>(reader, field);
-                int count = values.Length / 16;
-                matrix4d[] matrices = new matrix4d[count];
-                for (int i = 0; i < count; ++i)
-                    matrices[i] = new matrix4d(values.AsSpan(16*i));
-                field.data = matrices;
-            } else {
-                if (field.ValueRep.IsInlined) {
-                    vec4i diag = extract_packed_values(field.ValueRep.PayloadData);
-                    field.data = new matrix4d() { row0 = new vec4d() { x = diag.x },
-                                                 row1 = new vec4d() { y = diag.y },
-                                                 row2 = new vec4d() { z = diag.z },
-                                                 row3 = new vec4d() { w = diag.w } };
-                } else {
-                    ulong offset = field.ValueRep.PayloadData;
-                    reader.BaseStream.Position = (long)offset;
-                    double[] values = read_N_values<double>(reader, 16, sizeof(double)).ToArray();
-                    field.data = new matrix4d( values );
-                }
-            }
-        }
-
-
-        // decode block of integers with an encoding specialized for indices.
-        // scheme is variable-bit-length delta-encoding, where a 2-byte 'code' is
-        // stored for each integer. The code specifies how many bytes used to store the delta (1/2/4).
-        // code = 0 means use the special 'common' value. So eg if the list was
-        // sequential numbers, the common value could be 1 and all the codes would be 0.
-        // (in practice it seems like the common value is usually 0...)
-        // (see _DecodeIntegers() in integerCoding.cpp)
-        // todo since we have num_integers we could do array here instead of list??
-        public static List<int> decode_packed_integers(byte[] buffer, ulong num_integers)
-        {
-            int commonValue = BitConverter.ToInt32(buffer, 0);
-            int offset = 4;
-            int code_bytes = (int)((2*num_integers + 7) / 8);  // 2 bits per integer
-
-            ReadOnlySpan<byte> codes_buffer = buffer.AsSpan(offset, code_bytes); 
-            offset += code_bytes;
-            ReadOnlySpan<byte> deltas_buffer = buffer.AsSpan(offset, buffer.Length-offset);
-
-            List<int> results = new List<int>();
-
-            int deltas_idx = 0, codes_idx = 0;
-            int cur_value = 0;
-            int remaining = (int)num_integers;
-            while (remaining > 0) {
-                int count = Math.Min(remaining, 4);      // bytecount codes are packed into groups of 4, except last
-                byte code_byte = codes_buffer[codes_idx++];
-                for (int i = 0; i < count; i++) {
-                    int shift = 2*i;
-                    //int x = (code_byte & (0b11 << shift)) >> shift;     // extract i'th packed 2-bit integer
-                    int x = (code_byte >> shift) & 0b11;
-                    if (x == 0) {
-                        cur_value += commonValue;
-                    } else if (x == 1) {
-                        //cur_value += unchecked((sbyte)deltas_buffer[deltas_idx]);
-                        cur_value += MemoryMarshal.AsRef<sbyte>(deltas_buffer.Slice(deltas_idx, 1));
-                        deltas_idx += 1;
-                    } else if (x == 2) {
-                        cur_value += MemoryMarshal.AsRef<short>(deltas_buffer.Slice(deltas_idx, 2));
-                        deltas_idx += 2;
-                    } else if (x == 3) {
-                        cur_value += MemoryMarshal.AsRef<int>(deltas_buffer.Slice(deltas_idx, 4));
-                        deltas_idx += 4;
-                    }
-                    results.Add(cur_value);
-                }
-                remaining -= count;
-            }
-
-            return results;
-        }
-
-
-
-
-
-
-        protected static string read_usd_string(BinaryReader reader, int length)
-        {
-            byte[] bytes = reader.ReadBytes(length);
-            return Encoding.ASCII.GetString(bytes).TrimEnd('\0');
-        }
-        protected static string read_usd_string(ReadOnlySpan<byte> bytes)
-        {
-            return Encoding.ASCII.GetString(bytes).TrimEnd('\0');
-        }
-
-
-        protected byte[]? try_decompress_data(byte[] compressedData, ulong uncompressedBytes = 0)
-        {
-            try {
-                byte numBlocks = compressedData[0];
-                int cur_offset = 1;
-                if (numBlocks == 0) {
-                    Span<byte> block_data = compressedData.AsSpan(cur_offset, compressedData.Length - 1);
-                    if (uncompressedBytes == 0)
-                        return LZ4Compression.DecompressLZ4BlockFormat(block_data);
-                    else
-                        return LZ4Compression.DecompressLZ4BlockFormat(block_data, (uint)uncompressedBytes);
-                } else {
-                    throw new NotImplementedException();        // TODO (maybe?)
-                    //for (int k = 0; k < numBlocks; ++k) {
-                    //    int next_block_size = MemoryMarshal.AsRef<int>(compressedData.AsSpan(cur_offset, 4));
-                    //    cur_offset += 4;
-                    //    Span<byte> compressed_block_data = compressedData.AsSpan(cur_offset, next_block_size);
-                    //    byte[] block_data = LZ4Compression.DecompressLZ4BlockFormat(compressed_block_data, (uint)uncompressedBytes);
-
-                    //    cur_offset += next_block_size;
-                    //}
-                }
-            } catch (Exception ex) {
-                System.Diagnostics.Debug.WriteLine("error decompressing data: " + ex.Message);
-                Debugger.Break();
-                return null;
             }
         }
 

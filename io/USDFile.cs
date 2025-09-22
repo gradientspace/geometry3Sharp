@@ -343,6 +343,51 @@ namespace g3
 
             ];
 
+        public static EUSDType GetGenericType(EUSDType specificType)
+        {
+            switch (specificType) {
+                case EUSDType.TexCoord2f:
+                    return EUSDType.Float2;
+                case EUSDType.TexCoord2h:
+                    return EUSDType.Half2;
+                case EUSDType.TexCoord2d:
+                    return EUSDType.Double2;
+                case EUSDType.Point3f:
+                case EUSDType.Color3f:
+                case EUSDType.Vector3f:
+                case EUSDType.Normal3f:
+                case EUSDType.TexCoord3f:
+                    return EUSDType.Float3;
+                case EUSDType.Point3h:
+                case EUSDType.Color3h:
+                case EUSDType.Vector3h:
+                case EUSDType.Normal3h:
+                case EUSDType.TexCoord3h:
+                    return EUSDType.Half3;
+                case EUSDType.Vector3d:
+                case EUSDType.Normal3d:
+                case EUSDType.Point3d:
+                case EUSDType.Color3d:
+                case EUSDType.TexCoord3d:
+                    return EUSDType.Double3;
+                case EUSDType.Color4f:
+                    return EUSDType.Float4;
+                case EUSDType.Color4h:
+                    return EUSDType.Half4;
+                case EUSDType.Color4d:
+                    return EUSDType.Double4;
+                case EUSDType.Frame4d:
+                    return EUSDType.Matrix4d;
+            }
+            return specificType;
+        }
+        public static bool IsTypeCompatible(EUSDType genericType, EUSDType specificType)
+        {
+            if (genericType == specificType) return true;
+            return GetGenericType(specificType) == genericType;
+        }
+
+
         public struct USDTypeInfo
         {
             public EUSDType USDType = EUSDType.Unknown;
@@ -411,22 +456,25 @@ namespace g3
         public struct vec2i
         {
             public int x, y;
-            public vec2i() { }
+            public vec2i(int xx = 0, int yy = 0) { x = xx; y = yy; }
             public vec2i(in int64_list8 l) { x = (int)l[0]; y = (int)l[1]; }
+            public vec2i(ReadOnlySpan<int> vv) { x = vv[0]; y = vv[1]; }
             public override string ToString() { return $"({x},{y})"; }
         }
         public struct vec3i
         {
             public int x, y, z;
-            public vec3i() { }
+            public vec3i(int xx = 0, int yy = 0, int zz = 0) { x = xx; y = yy; z = zz; }
             public vec3i(in int64_list8 l) { x = (int)l[0]; y = (int)l[1]; z = (int)l[2]; }
+            public vec3i(ReadOnlySpan<int> v) { x = v[0]; y = v[1]; z = v[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
         }
         public struct vec4i
         {
             public int x, y, z, w;
-            public vec4i() { }
+            public vec4i(int xx = 0, int yy = 0, int zz = 0, int ww = 0) { x = xx; y = yy; z = zz; w = ww; }
             public vec4i(in int64_list8 l) { x = (int)l[0]; y = (int)l[1]; z = (int)l[2]; w = (int)l[3]; }
+            public vec4i(ReadOnlySpan<int> v) { x = v[0]; y = v[1]; z = v[2]; w = v[3]; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
         }
 
@@ -441,8 +489,10 @@ namespace g3
         public struct vec2d
         {
             public double u, v;
+            public vec2d(double uu = 0, double vv = 0) { u = uu; v = vv; }
             public vec2d() { u = 0; v = 0; }
             public vec2d(in real_list16 l) { u = l[0]; v = l[1]; }
+            public vec2d(ReadOnlySpan<double> vv) { u = vv[0]; v = vv[1]; }
             public override string ToString() { return $"({u},{v})"; }
         }
 
@@ -457,24 +507,26 @@ namespace g3
         public struct vec3d
         {
             public double x, y, z;
-            public vec3d() { x = 0; y = 0; z = 0; }
+            public vec3d(double xx = 0, double yy = 0, double zz = 0) { x = xx; y = yy; z = zz; }
             public vec3d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; }
+            public vec3d(ReadOnlySpan<double> v) { x = v[0]; y = v[1]; z = v[2]; }
             public override string ToString() { return $"({x},{y},{z})"; }
         }
 
         public struct vec4f
         {
             public float x, y, z, w;
-            public vec4f() { x = 0; y = 0; z = 0; w = 0; }
+            public vec4f(float xx = 0, float yy = 0, float zz = 0, float ww = 0) { x = xx; y = yy; z = zz; w = ww; }
             public vec4f(in real_list16 l) { x = (float)l[0]; y = (float)l[1]; z = (float)l[2]; w = (float)l[3]; }
+            public vec4f(ReadOnlySpan<float> v) { x = v[0]; y = v[1]; z = v[2]; w = v[3]; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
         }
         public struct vec4d
         {
             public double x, y, z, w;
-            public vec4d() { x = 0; y = 0; z = 0; w = 0; }
+            public vec4d(double xx = 0, double yy = 0, double zz = 0, double ww = 0) { x = xx; y = yy; z = zz; w = ww; }
             public vec4d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; w = l[3]; }
-            public vec4d( double xx, double yy, double zz, double ww ) { x = xx; y = yy; z = zz; w = ww; }
+            public vec4d(ReadOnlySpan<double> v) { x = v[0]; y = v[1]; z = v[2]; w = v[3]; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
         }
 
@@ -482,6 +534,12 @@ namespace g3
         {
             public vec2d row0;
             public vec2d row1;
+            public matrix2d() { }
+            public matrix2d(ReadOnlySpan<double> m)
+            {
+                row0 = new vec2d(m[0], m[1]);
+                row1 = new vec2d(m[2], m[3]);
+            }
             public override string ToString() { return $"({row0},{row1})"; }
         }
         public struct matrix3d
@@ -489,6 +547,12 @@ namespace g3
             public vec3d row0;
             public vec3d row1;
             public vec3d row2;
+            public matrix3d() { }
+            public matrix3d(ReadOnlySpan<double> m) {
+                row0 = new vec3d(m[0], m[1], m[2]);
+                row1 = new vec3d(m[3], m[4], m[5]);
+                row2 = new vec3d(m[6], m[7], m[8]);
+            }
             public override string ToString() { return $"({row0},{row1},{row2})"; }
         }
         public struct matrix4d
@@ -510,15 +574,17 @@ namespace g3
         public struct quat4f
         {
             public float w, x, y, z;
-            public quat4f() { x = 0; y = 0; z = 0; w = 0; }
+            public quat4f(float ww = 0, float xx = 0, float yy = 0, float zz = 0) { w = ww; x = xx; y = yy; z = zz; }
             public quat4f(in real_list16 l) { w = (float)l[0]; x = (float)l[1]; y = (float)l[2]; z = (float)l[3]; }
+            public quat4f(ReadOnlySpan<float> v) { w = v[0]; x = v[1]; y = v[2]; z = v[3]; }
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
         public struct quat4d
         {
             public double w, x, y, z;
-            public quat4d() { x = 0; y = 0; z = 0; w = 0; }
+            public quat4d(double ww = 0, double xx = 0, double yy = 0, double zz = 0) { w = ww; x = xx; y = yy; z = zz; }
             public quat4d(in real_list16 l) { w = l[0]; x = l[1]; y = l[2]; z = l[3]; }
+            public quat4d(ReadOnlySpan<double> v) { w = v[0]; x = v[1]; y = v[2]; z = v[3]; }
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
 
