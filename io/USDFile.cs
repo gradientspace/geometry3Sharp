@@ -13,17 +13,22 @@ namespace g3
     {
 
 
-        // this is basically a USD Stage
+        /// <summary>
+        /// USDScene is what results from parsing a USD file. 
+        /// Conceivably this is analogous to a USD Stage.
+        /// </summary>
         public class USDScene
         {
             required public USDPrim Root;
         }
 
 
-
+        /// <summary>
+        /// A USDPrim is a node in the USD scene hierarchy.
+        /// </summary>
         public class USDPrim
         {
-            public USDPath Path = USDPath.Root;
+            public USDPath Path = USDPath.MakeRoot();
 
             public EDefType PrimType;
             public string? CustomPrimTypeName = null;
@@ -35,12 +40,11 @@ namespace g3
             public string ShortName => Path.ShortName;
             public string FullPath => Path.FullPath;
 
-            // todo
 
             public override string ToString() {
                 string useName = (PrimType != EDefType.Unknown) ?
                     DefTypeTokens[(int)PrimType] : (CustomPrimTypeName??"(null)");
-                return  $"[{useName}] {Path.FullPath}";
+                return  $"[{useName}] {FullPath}";
             }
 
             public USDAttrib? FindAttribByName(string name)
@@ -50,6 +54,10 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// A USDAttrib is a typed name/value pair on a Prim.
+        /// The .Data is stored as an object?, use the .USDType and .IsArray to determine/cast as necessary
+        /// </summary>
         public class USDAttrib
         {
             public string Name = "";
@@ -57,12 +65,77 @@ namespace g3
 
             public EUSDType USDType => Value.TypeInfo.USDType;
             public bool IsArray => Value.TypeInfo.bIsArray;
+            public object? Data => Value.data;
 
             public override string ToString() {
                 string typeString = FieldTypeTokens[(int)Value.TypeInfo.USDType];
                 return $"{typeString} {Name} = {Value}";
             }
         }
+
+
+        /// <summary>
+        /// USDPath stores a path in the USD file. All Prims and Attribs have unique paths,
+        /// and the Prim hierarchy is 1-1 with the path structure.
+        /// </summary>
+        public class USDPath
+        {
+            // todo as we build paths we want to keep track of parent/child relationship,
+            // this will make it easier to build the scene...
+
+            protected string prim = "";
+            protected string prop = "";
+            protected string local = "";
+            protected bool bValid = false;
+
+            // todo these are only used by USDCReader to build hierarchy and should be internal there
+            public int index = -1;
+            public int parent_index = -1;
+
+            public USDPath() { bValid = false; }
+            public USDPath(string prim)
+            {
+                this.prim = prim;
+                this.local = prim;
+                bValid = true;
+            }
+
+            public bool IsValid => bValid;
+            public bool IsEmpty => string.IsNullOrEmpty(prim) && string.IsNullOrEmpty(prop);
+
+            public string FullPath => $"{valid_prefix}{prim}{prop_suffix}";
+            public string ShortName => local;
+            public override string ToString() { return FullPath; }
+            private string valid_prefix => (bValid ? "" : "INVALID#");
+            private string prop_suffix => (string.IsNullOrEmpty(prop) ? "" : "." + prop);
+
+
+            public static USDPath MakeRoot() { return new USDPath("/"); }
+
+            public static USDPath MakeInvalid(USDPath srcPath)
+            {
+                Debugger.Break();
+                return new USDPath() { prim = srcPath.prim, prop = srcPath.prop, local = srcPath.local, bValid = false };
+            }
+            public static USDPath CombineProperty(USDPath srcPath, string prop)
+            {
+                if (string.IsNullOrEmpty(prop) || prop[0] == '{' || prop[0] == '[' || prop[0] == '.')
+                    return MakeInvalid(srcPath);
+                return new USDPath() { prim = srcPath.prim, prop = prop, local = prop, bValid = srcPath.bValid, parent_index = srcPath.index };
+            }
+            public static USDPath CombineElement(USDPath srcPath, string elem)
+            {
+                if (string.IsNullOrEmpty(elem) || elem[0] == '{' || elem[0] == '[' || elem[0] == '.')
+                    return MakeInvalid(srcPath);
+
+                string new_path = srcPath.prim;
+                new_path += ((new_path.Length == 1) && (new_path[0] == '/')) ? elem : ('/' + elem);
+
+                return new USDPath() { prim = new_path, prop = srcPath.prop, local = elem, bValid = srcPath.bValid, parent_index = srcPath.index };
+            }
+        }
+
+
 
 
 
@@ -456,6 +529,8 @@ namespace g3
             }
         }
 
+
+        // these should probably be promoted to general g3sharp utility types
         [System.Runtime.CompilerServices.InlineArray(16)]
         public struct real_list16 {
             private double _element0;
@@ -464,6 +539,7 @@ namespace g3
         public struct int64_list8 {
             private long _element0;
         }
+
 
         public struct vec2i
         {
@@ -606,62 +682,6 @@ namespace g3
             public override string ToString() { return $"({w},{x},{y},{z})"; }
         }
 
-
-        public class USDPath
-        {
-            // todo as we build paths we want to keep track of parent/child relationship,
-            // this will make it easier to build the scene...
-
-            public string prim = "";
-            public string prop = "";
-            public string local = "";
-            public bool bValid = false;
-
-            public int index = -1;
-            public int parent_index = -1;
-
-            public USDPath() { bValid = false; }
-            public USDPath(string prim)
-            {
-                this.prim = prim;
-                this.local = prim;
-                bValid = true;
-            }
-
-            public bool IsValid => bValid;
-            public bool IsEmpty => string.IsNullOrEmpty(prim) && string.IsNullOrEmpty(prop);
-
-            public string FullPath => $"{valid_prefix}{prim}{prop_suffix}";
-            public string ShortName => local;
-            public override string ToString() { return FullPath; }
-            private string valid_prefix => (bValid ? "" : "INVALID#");
-            private string prop_suffix => (string.IsNullOrEmpty(prop) ? "" : "." + prop);
-
-
-            public static USDPath Root = new USDPath("/");
-
-            public static USDPath MakeInvalid(USDPath srcPath)
-            {
-                Debugger.Break();
-                return new USDPath() { prim = srcPath.prim, prop = srcPath.prop, local = srcPath.local, bValid = false };
-            }
-            public static USDPath CombineProperty(USDPath srcPath, string prop)
-            {
-                if (string.IsNullOrEmpty(prop) || prop[0] == '{' || prop[0] == '[' || prop[0] == '.')
-                    return MakeInvalid(srcPath);
-                return new USDPath() { prim = srcPath.prim, prop = prop, local = prop, bValid = srcPath.bValid, parent_index = srcPath.index };
-            }
-            public static USDPath CombineElement(USDPath srcPath, string elem)
-            {
-                if (string.IsNullOrEmpty(elem) || elem[0] == '{' || elem[0] == '[' || elem[0] == '.')
-                    return MakeInvalid(srcPath);
-
-                string new_path = srcPath.prim;
-                new_path += ((new_path.Length == 1) && (new_path[0] == '/')) ? elem : ('/' + elem);
-
-                return new USDPath() { prim = new_path, prop = srcPath.prop, local = elem, bValid = srcPath.bValid, parent_index = srcPath.index };
-            }
-        }
 
 
 

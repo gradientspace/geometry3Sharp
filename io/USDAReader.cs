@@ -15,23 +15,20 @@ using static g3.USDFile;
 
 namespace g3
 {
-    public partial class USDAReader : IMeshReader
+    public partial class USDAReader
     {
         // connect to this to get warning messages
         public event ParsingMessagesHandler? warningEvent;
 
-        public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder) {
-            throw new NotImplementedException();
-        }
-
-        public IOReadResult Read(TextReader reader, ReadOptions options, IMeshBuilder builder)
+        public IOReadResult Read(TextReader reader, ReadOptions options, out USDScene Scene)
         {
-            Debug.WriteLine("[FILENAME]" + options.BaseFileName);
+            // default empty scene in case we get an error
+            Scene = new USDScene() { Root = new USDPrim() { PrimType = EDefType.PsuedoRoot } };
 
             // note: possible that USDA is guaranteed to be line-based? this could change some things...
 
             string? firstline = reader.ReadLine();
-            if (firstline == null || firstline.StartsWith("#usda",StringComparison.OrdinalIgnoreCase) == false)
+            if (firstline == null || firstline.StartsWith("#usda", StringComparison.OrdinalIgnoreCase) == false)
                 return IOReadResult.Error(IOCode.UnknownFormatError, "file does not start with #usda");
 
             // todo do we need to care about version? 
@@ -63,151 +60,58 @@ namespace g3
             for (int i = 0; i < topLevelDefs.Count; ++i) {
                 USDADef cur_def = topLevelDefs[i];
                 parse_def(cur_def);
-
-                debug_print("", cur_def);
             }
 
-            Matrix4d BaseTransform = Matrix4d.Identity;
-            foreach (USDADef def in topLevelDefs)
-                build_meshes(def, options, builder, BaseTransform);
+            USDPrim Root = new USDPrim() { PrimType = EDefType.PsuedoRoot };
+            append_fields(Root, HeaderFields ?? []);
+
+            Root.Children = new USDPrim[topLevelDefs.Count];
+            for ( int i = 0; i < topLevelDefs.Count; ++i ) {
+                Root.Children[i] = build_child_prim(topLevelDefs[i], Root.Path);
+            }
+
+            Scene = new USDScene() { Root = Root };
+
+            // could clear internal data structures here to save memory
 
             return IOReadResult.Ok;
-
         }
 
 
-        protected void build_meshes(USDADef def, ReadOptions options, IMeshBuilder builder, Matrix4d ParentTransform)
+        USDPrim build_child_prim(USDADef def, USDPath parentPath)
         {
-            Matrix4d CurTransform = ParentTransform;
-            if (def.DefType == EDefType.Mesh && def.ContentFields != null) 
-            {
-                // find vertices
-                USDAField? points = def.ContentFields.Find((USDAField f) => { return f.Name == "points"; });
+            USDPrim prim = new USDPrim();
+            prim.Path = USDPath.CombineElement(parentPath, def.DefIdentifier);
+            prim.PrimType = def.DefType;
+            append_fields(prim, enumerate_fields(def));
+            
+            int NumChildren = (def.ChildDefs != null) ? def.ChildDefs.Count : 0;
+            prim.Children = (NumChildren > 0) ? new USDPrim[NumChildren] : [];  
+            for ( int i = 0; i < NumChildren; ++i )
+                prim.Children[i] = build_child_prim(def.ChildDefs![i], prim.Path);
 
-                USDAField? faceVertexCounts = def.ContentFields.Find((USDAField f) => { return f.Name == "faceVertexCounts"; });
-                USDAField? faceVertexIndices = def.ContentFields.Find((USDAField f) => { return f.Name == "faceVertexIndices"; });
-
-                USDAField? uvs = def.ContentFields.Find((USDAField f) => { return f.Name == "primvars:st"; });
-                USDAField? normals = def.ContentFields.Find((USDAField f) => { return f.Name == "normals"; });
-
-                bool bHaveRequiredFields = true;
-                if (points == null) { warningEvent?.Invoke($"Mesh {def.DefIdentifier} is missing points field", null); bHaveRequiredFields = false; }
-                if (faceVertexCounts == null) { warningEvent?.Invoke($"Mesh {def.DefIdentifier} is missing faceVertexCounts field", null); bHaveRequiredFields = false; }
-                if (faceVertexIndices == null) { warningEvent?.Invoke($"Mesh {def.DefIdentifier} is missing faceVertexIndices field", null); bHaveRequiredFields = false; }
-
-                if (bHaveRequiredFields) {
-                    DMesh3 Mesh = new DMesh3();
-                    AppendAsVertices(Mesh, def, points!, CurTransform);
-                    AppendAsTriangles(Mesh, def, faceVertexCounts!, faceVertexIndices!, normals, uvs, CurTransform);
-                    Mesh.CheckValidity();
-                    builder.AppendNewMesh(Mesh);
-                }
-            }
-
-            foreach (USDADef childDef in def.ChildDefs ?? [])
-                build_meshes(childDef, options, builder, CurTransform);
+            return prim;
         }
 
-
-        protected bool AppendAsVertices(DMesh3 mesh, USDADef def, USDAField points, Matrix4d Transform)
+        void append_fields(USDPrim prim, IEnumerable<USDAField> fields)
         {
-            if (points.TypeInfo.USDType != EUSDType.Point3f || points.TypeInfo.bIsArray == false ) {
-                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.points has incorrect type {points.TypeInfo.USDType}", null);
-                return false;
-            }
-            if ( points.Value.data is vec3f[] vectorList && vectorList.Length > 0) {
-                for (int i = 0; i < vectorList.Length; ++i) {
-                    Vector3d v = vectorList[i];
-                    v = Transform.TransformPointAffine(v);
-                    mesh.AppendVertex(v);
-                }
-                return true;
-            } else {
-                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.points data is invalid or 0-length", null);
-                return false;
+            int Count = fields.Count();
+            prim.Attribs = new USDAttrib[Count];
+            int idx = 0;
+            foreach (USDAField field in fields) {
+                USDAttrib attrib = new USDAttrib();
+                attrib.Name = field.Name;
+                attrib.Value = field.Value;
+                prim.Attribs[idx++] = attrib;
             }
         }
 
-
-        protected bool AppendAsTriangles(DMesh3 mesh, USDADef def, USDAField vertexCounts, USDAField vertexIndices,
-            USDAField? normals, USDAField? uvs, Matrix4d Transform)
+        IEnumerable<USDAField> enumerate_fields(USDADef def)
         {
-            if (vertexCounts.TypeInfo.USDType != EUSDType.Int || vertexCounts.TypeInfo.bIsArray == false ) {
-                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.faceVertexCounts has incorrect type {vertexCounts.TypeInfo.USDType}", null);
-                return false;
-            }
-            if (vertexIndices.TypeInfo.USDType != EUSDType.Int || vertexIndices.TypeInfo.bIsArray == false) {
-                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.faceVertexIndices has incorrect type {vertexIndices.TypeInfo.USDType}", null);
-                return false;
-            }
-
-            int[]? countsList = vertexCounts.Value.data as int[];
-            int[]? indexList = vertexIndices.Value.data as int[];
-            if (countsList == null || countsList.Length == 0 ||
-                indexList == null || indexList.Length == 0) 
-            {
-                warningEvent?.Invoke($"Mesh field {def.DefIdentifier}.faceVertexCounts or .faceVertexIndices data is invalid or 0-length", null);
-                return false;
-            }
-
-            Transform.GetAffineNormalTransform(out Matrix3d NormalTransform);
-            vec3f[]? normalsList = normals?.Value.data as vec3f[] ?? null;
-            bool bHaveNormals = (normalsList != null && normalsList.Length > 0 && normalsList.Length == indexList.Length);
-            if (bHaveNormals)
-                mesh.Attribs.EnableTriNormals();
-            TriNormalsGeoAttribute? NormalsAttrib = (bHaveNormals) ? mesh.Attribs.TriNormals : null;
-
-            vec2f[]? uvList = uvs?.Value.data as vec2f[] ?? null;
-            bool bHaveUVs = (uvList != null && uvList.Length > 0 && uvList.Length == indexList.Length);
-            if (bHaveUVs)
-                mesh.Attribs.EnableTriUVs(1);
-            TriUVsGeoAttribute? UVsAttrib = (bHaveUVs) ? mesh.Attribs.TriUVChannel(0) : null;
-
-            int cur_idx = 0;
-            for (int i = 0; i < countsList.Length; ++i) {
-                int count = countsList[i];
-
-                int start_idx = cur_idx;
-                int a = indexList[cur_idx];
-                int b = indexList[cur_idx + 1];
-
-                Vector3f na = Vector3f.UnitZ, nb = Vector3f.UnitZ, nc = Vector3f.UnitZ;
-                if ( bHaveNormals ) {
-                    na = NormalTransform * normalsList![cur_idx];
-                    nb = NormalTransform * normalsList[cur_idx+1];
-                }
-
-                Vector2f uva = Vector2f.Zero, uvb = Vector2f.Zero, uvc = Vector2f.Zero;
-                if (bHaveUVs) {
-                    uva = uvList![cur_idx];
-                    uvb = uvList[cur_idx+1];
-                }
-
-                for (int k = 2; k < count; ++k) {
-                    int c = indexList[cur_idx + k];
-                    int tid = mesh.AppendTriangle(new Index3i(a, b, c), i);
-                    if (tid < 0) {
-                        string errType = (tid == DMesh3.NonManifoldID) ? "nonmanifold" : "invalid";
-                        warningEvent?.Invoke($"triangle ({a},{b},{c}) is {errType} - skipping", null);
-                    }
-                    b = c;
-
-                    if (tid >= 0 && bHaveNormals) {
-                        nc = NormalTransform * normalsList![cur_idx+k];
-                        NormalsAttrib!.SetValue(tid, new TriNormals(na, nb, nc));
-                        nb = nc;
-                    }
-                    if (tid >= 0 && bHaveUVs) {
-                        uvc = uvList![cur_idx+k];
-                        UVsAttrib!.SetValue(tid, new TriUVs(uva, uvb, uvc));
-                        uvb = uvc;
-                    }
-                }
-
-                cur_idx += count;
-            }
-
-            return true;
+            foreach (USDAField field in def.ContentFields ?? [])
+                yield return field;
+            foreach (USDAField field in def.HeaderFields ?? [])
+                yield return field;
         }
 
         protected void debug_print(string indent, USDADef def)

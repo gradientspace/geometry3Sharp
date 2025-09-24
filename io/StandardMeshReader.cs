@@ -438,7 +438,7 @@ namespace g3
 
         public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
-            USDAReader reader = new USDAReader();
+            USDMeshReader reader = new USDMeshReader();
             reader.warningEvent += messages;
             IOReadResult result = reader.Read(new StreamReader(stream), options, builder);
             return result;
@@ -464,7 +464,7 @@ namespace g3
 
         public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
-            USDCReader reader = new USDCReader();
+            USDMeshReader reader = new USDMeshReader();
             reader.warningEvent += messages;
             IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
             return result;
@@ -497,14 +497,12 @@ namespace g3
             }
             stream.Position = 0;
 
+            USDMeshReader reader = new USDMeshReader();
+            reader.warningEvent += messages;
             if (bIsBinary) { 
-                USDCReader reader = new USDCReader();
-                reader.warningEvent += messages;
                 IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
                 return result;
             } else {
-                USDAReader reader = new USDAReader();
-                reader.warningEvent += messages;
                 IOReadResult result = reader.Read(new StreamReader(stream), options, builder);
                 return result;
             }

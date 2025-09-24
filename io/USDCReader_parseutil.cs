@@ -14,7 +14,7 @@ using static g3.USDFile;
 
 namespace g3
 {
-    public partial class USDCReader : IMeshReader
+    public partial class USDCReader
     {
 
         protected static string read_usd_string(BinaryReader reader, int length)

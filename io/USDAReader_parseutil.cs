@@ -11,7 +11,7 @@ using static g3.USDFile;
 
 namespace g3
 {
-    public partial class USDAReader : IMeshReader
+    public partial class USDAReader
     {
         // parsing utilities
         //   find_end_of_scope() / find_start_of_scope() - search through buffer from

@@ -70,6 +70,8 @@ namespace g3
                 message = "(no message)";
         }
 
+        public readonly bool IsOk => code == IOCode.Ok;
+
 		public static readonly IOReadResult Ok = new IOReadResult(IOCode.Ok, "");
         public static IOReadResult Error(IOCode code, string message) {
             return new IOReadResult(code, message);
