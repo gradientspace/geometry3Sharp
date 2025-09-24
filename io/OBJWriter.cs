@@ -134,51 +134,50 @@ namespace g3
         }
 
 
+        struct sorted_tri
+        {
+            public int triangleID;
+            public int groupID;
+        }
 
 		// write triangles of mesh with re-ordering to minimize group changes
 		// (note: this may mean lots of material changes, depending on mesh...)
 		void write_triangles_bygroup(TextWriter writer, IMesh mesh, int[] mapV, IndexedUVMesh uvSet, IIndexMap mapUV, bool bNormals)
         {
-            // This makes N passes over mesh indices, but doesn't use much extra memory.
-            // would there be a faster way? could construct integer-pointer-list during initial
-            // scan, this would need O(N) memory but then write is effectively O(N) instead of O(N*k)
-
             bool bUVs = (mapUV != null);
 
-            HashSet<int> vGroups = new HashSet<int>();
+            sorted_tri[] sorted_tris = new sorted_tri[mesh.TriangleCount];
+            int idx = 0;
             foreach (int ti in mesh.TriangleIndices())
-                vGroups.Add(mesh.GetTriangleGroup(ti));
+                sorted_tris[idx++] = new() { triangleID = ti, groupID = mesh.GetTriangleGroup(ti) };
+            Array.Sort(sorted_tris, (a, b) => a.groupID.CompareTo(b.groupID));
 
-            List<int> sortedGroups = new List<int>(vGroups);
-            sortedGroups.Sort();
-            foreach ( int g in sortedGroups ) {
-                string group_name = GroupNamePrefix;
-                if (GroupNameF != null) {
-                    group_name = GroupNameF(g);
-                } else {
-                    group_name = string.Format("{0}{1}", GroupNamePrefix, g);
-                }
-                writer.WriteLine("g " + group_name);
-
-                foreach (int ti in mesh.TriangleIndices() ) {
-                    if (mesh.GetTriangleGroup(ti) != g)
-                        continue;
-
-                    Index3i t = mesh.GetTriangle(ti);
-				    t[0] = mapV[t[0]];
-				    t[1] = mapV[t[1]];
-				    t[2] = mapV[t[2]];
-
-                    if (bUVs) {
-						Index3i tuv = (uvSet != null) ? uvSet.UVTriangles[ti] : t;
-                        tuv[0] = mapUV[tuv[0]];
-                        tuv[1] = mapUV[tuv[1]];
-                        tuv[2] = mapUV[tuv[2]];
-                        write_tri(writer, ref t, bNormals, true, ref tuv);
+            int cur_group = sorted_tris[0].groupID-1;
+            for (int k = 0; k < sorted_tris.Length; ++k) {
+                int g = sorted_tris[k].groupID;
+                if (g != cur_group) {
+                    cur_group = g;
+                    string group_name = GroupNamePrefix;
+                    if (GroupNameF != null) {
+                        group_name = GroupNameF(g);
                     } else {
-                        write_tri(writer, ref t, bNormals, false, ref t);
+                        group_name = $"{GroupNamePrefix}{g}";
                     }
-
+                    writer.WriteLine("g " + group_name);
+                }
+                int ti = sorted_tris[k].triangleID;
+                Index3i t = mesh.GetTriangle(ti);
+                t[0] = mapV[t[0]];
+                t[1] = mapV[t[1]];
+                t[2] = mapV[t[2]];
+                if (bUVs) {
+                    Index3i tuv = (uvSet != null) ? uvSet.UVTriangles[ti] : t;
+                    tuv[0] = mapUV[tuv[0]];
+                    tuv[1] = mapUV[tuv[1]];
+                    tuv[2] = mapUV[tuv[2]];
+                    write_tri(writer, ref t, bNormals, true, ref tuv);
+                } else {
+                    write_tri(writer, ref t, bNormals, false, ref t);
                 }
             }
         }
