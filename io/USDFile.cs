@@ -11,6 +11,8 @@ namespace g3
 {
     public static class USDFile
     {
+        // notes on USD transform order, matrix storage, and coordinate systems:
+        // https://openusd.org/dev/api/usd_geom_page_front.html#UsdGeom_LinAlgBasics
 
 
         /// <summary>
@@ -622,6 +624,7 @@ namespace g3
             public vec4d(in real_list16 l) { x = l[0]; y = l[1]; z = l[2]; w = l[3]; }
             public vec4d(ReadOnlySpan<double> v) { x = v[0]; y = v[1]; z = v[2]; w = v[3]; }
             public override string ToString() { return $"({x},{y},{z},{w})"; }
+            public static implicit operator Vector4d(vec4d v) { return new Vector4d(v.x, v.y, v.z, v.w); }
         }
 
         public struct matrix2d

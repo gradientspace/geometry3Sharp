@@ -207,10 +207,17 @@ namespace g3
             if (field.FieldType == USDCDataType.TokenVector) {
                 attrib.Value.TypeInfo.bIsArray = true;
                 attrib.Value.TypeInfo.USDType = EUSDType.Token;
+                attrib.Value.data = field.data;
+            } else if (field.FieldType == USDCDataType.ReferenceListOp) {
+                // super hacky for now...
+                int[] values = field.data as int[] ?? [];
+                string reference_path = Tokens![StringIndices![values[0]]];
+                USDCSpec spec = Specs[values[1]];
+                attrib.Value.data = reference_path;
             } else {
                 attrib.Value.TypeInfo.USDType = usdc_to_usdtype(field.FieldType);
+                attrib.Value.data = field.data;
             }
-            attrib.Value.data = field.data;
             return attrib;
         }
 
@@ -412,7 +419,7 @@ namespace g3
 
 
 
-        protected struct USDCValue
+        protected struct USDCValueRep
         {
             const ulong IsArrayMask = (ulong)1 << 63;
             const ulong IsInlinedMask = (ulong)1 << 62;
@@ -421,7 +428,7 @@ namespace g3
             const ulong PayloadMask = (((ulong)1 << 48) - (ulong)1);
 
             public ulong Value = 0;
-            public USDCValue() { }
+            public USDCValueRep() { }
 
             public bool IsArray => (Value & IsArrayMask) != 0;
             public bool IsInlined => (Value & IsInlinedMask) != 0;
@@ -437,7 +444,7 @@ namespace g3
         protected class USDCField
         {
             public string Name = "";
-            public USDCValue ValueRep;
+            public USDCValueRep ValueRep;
 
             public bool IsArray => ValueRep.IsArray;
             public USDCDataType FieldType => ValueRep.FieldType;
@@ -532,7 +539,7 @@ namespace g3
             int cur_idx = 0;
             for (int i = 0; i < (int)field_count; i++) 
             {
-                USDCValue value = MemoryMarshal.AsRef<USDCValue>(values_buffer.AsSpan().Slice(cur_idx, 8));
+                USDCValueRep value = MemoryMarshal.AsRef<USDCValueRep>(values_buffer.AsSpan().Slice(cur_idx, 8));
                 cur_idx += 8;
 
                 string Name = Tokens![indices[i]];
@@ -565,9 +572,9 @@ namespace g3
         protected USDPath[] ReadSection_Paths(BinaryReader reader, USDC_Section section)
         {
             reader.BaseStream.Position = (long)section.Offset;
+            ulong initial_path_count = reader.ReadUInt64();
             ulong path_count = reader.ReadUInt64();
-            ulong path_count_2 = reader.ReadUInt64();
-            Util.gDevAssert(path_count == path_count_2);   // ???
+            //Util.gDevAssert(path_count == initial_path_count);   // actually not always the same...
 
             List<int>? path_indices = read_compressed_indices(reader, path_count);
             if (path_indices == null || path_indices.Count != (int)path_count) {
@@ -587,7 +594,7 @@ namespace g3
                 return Array.Empty<USDPath>();
             }
 
-            USDPath[] PathSet = new USDPath[path_count];
+            USDPath[] PathSet = new USDPath[initial_path_count];
             USDPath RootPath = new USDPath("");
             AssembleChildPaths(0, RootPath, path_indices, element_token_indices, jump_indices, PathSet);
             return PathSet;
@@ -753,30 +760,51 @@ namespace g3
                     field.data = (ESpecifierType)field.ValueRep.PayloadData;
                     break;
 
+                case USDCDataType.StringVector:
+                    throw new NotImplementedException();
                 case USDCDataType.String: {
                         Util.gDevAssert(field.IsArray == false);
                         int str_idx = (int)field.ValueRep.PayloadData;
                         int token_idx = StringIndices![str_idx];
                         field.data = Tokens![token_idx];
                     } break;
+                case USDCDataType.PathVector:
+                case USDCDataType.AssetPath:
                 case USDCDataType.Token:
                 case USDCDataType.TokenVector:
                     parse_field_token(reader, field);
                     break;
 
-                // missing int cases - uchar, uint32, int64, uint64
-                // missing 16-bit float cases:
-                // Half, Vec2h, Vec3h, Vec4h, Quath
+                case USDCDataType.Half:
+                case USDCDataType.Vec2h:
+                case USDCDataType.Vec3h:
+                case USDCDataType.Vec4h:
+                case USDCDataType.Quath:
+                    // todo need half-float implementation
+                    throw new NotImplementedException();
 
                 case USDCDataType.Bool:
                     parse_field_bool(reader, field);
                     break;
+                case USDCDataType.UChar:
+                    parse_field_uchar(reader, field);
+                    break;
                 case USDCDataType.Int:
                     parse_field_int(reader, field);
+                    break;
+                case USDCDataType.UInt:
+                    parse_field_uint(reader, field);
+                    break;
+                case USDCDataType.Int64:
+                    parse_field_long(reader, field);
+                    break;
+                case USDCDataType.UInt64:
+                    parse_field_ulong(reader, field);
                     break;
                 case USDCDataType.Float:
                     parse_field_float(reader, field);
                     break;
+                case USDCDataType.DoubleVector:
                 case USDCDataType.Double:
                     parse_field_float(reader, field);
                     break;
@@ -817,12 +845,50 @@ namespace g3
                     parse_field_matrix4d(reader, field);
                     break;
 
+
+                case USDCDataType.Dictionary: 
+                    parse_field_dictionary(reader, field);
+                    break;
+
+
+                // haven't cracked this yet...
+                // search crateFile.cpp for  Write(SdfReference const &ref)
+                // seems like we have
+                //   string-index
+                //   prim-index
+                //   (double,double) layer-offset
+                //   dictionary customData (??)    -> see void Write(VtDictionary
+                case USDCDataType.ReferenceListOp: {
+                    ulong offset = field.ValueRep.PayloadData;
+                    reader.BaseStream.Position = (long)offset;
+                    list_op_header header = new() { data = reader.ReadByte() };
+                    ulong sz = reader.ReadUInt64();
+                    Util.gDevAssert(sz == 1);
+                    int pathStringIdx = reader.ReadInt32();
+                    int primPathIdx = reader.ReadInt32();
+                    field.data = new int[2] { pathStringIdx, primPathIdx };
+                    }
+                    break;
+
                 default:
                     warningEvent?.Invoke($"unhandled field type {field.FieldType} in parse_field", null);
                     break;
             }
         }
-
-
     }
+
+
+    struct list_op_header
+    {
+        public byte data;
+
+        public bool IsExplicit =>        (data & 0b00000001) != 0;
+        public bool HasExplicitItems =>  (data & 0b00000010) != 0;
+        public bool HasAddedItems =>     (data & 0b00000100) != 0;
+        public bool HasDeletedItems =>   (data & 0b00001000) != 0;
+        public bool HasOrderedItems =>   (data & 0b00010000) != 0;
+        public bool HasPrependedItems => (data & 0b00100000) != 0;
+        public bool HasAppendedItems =>  (data & 0b01000000) != 0;
+    }
+
 }

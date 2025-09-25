@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using static g3.USDFile;
@@ -168,13 +167,46 @@ namespace g3
                 byte[] compressed = reader.ReadBytes((int)compressed_bytes);
                 byte[]? uncompressed = try_decompress_data(compressed, /*todo est size from num_values*/0);
                 values = MemoryMarshal.Cast<byte, T>(uncompressed!).ToArray();
+                Util.gDevAssert(values.Length == (int)num_values);
             } else
                 values = read_uncompressed_array<T>(reader, field, bytesPerElem, numElemsPerValue);
             return values;
         }
 
+
+        protected static T[] read_int_array_value<T>(BinaryReader reader, USDCField field, int bytesPerElem, int numElemsPerValue) where T : struct
+        {
+            ulong offset = field.ValueRep.PayloadData;
+            T[] values = Array.Empty<T>();
+            if (field.ValueRep.IsCompressed) {
+                reader.BaseStream.Position = (long)offset;
+                ulong num_integers = reader.ReadUInt64();
+                ulong compressed_bytes = reader.ReadUInt64();
+                byte[] compressed = reader.ReadBytes((int)compressed_bytes);
+                byte[]? uncompressed = try_decompress_data(compressed);
+                int[] intValues = decode_packed_integers(uncompressed!, num_integers).ToArray();
+                T[] finalValues = new T[num_integers];
+                if (typeof(T) != typeof(int)) {
+                    // this is probably expensive and maybe should be done some other way...
+                    for (int i = 0; i < intValues.Length; ++i)
+                        finalValues[i] = (T)Convert.ChangeType(intValues[i], typeof(T));
+                    values = finalValues;
+                } else
+                    values = (intValues as T[])!;
+                Util.gDevAssert(values.Length == (int)num_integers);
+            } else
+                values = read_uncompressed_array<T>(reader, field, bytesPerElem, numElemsPerValue);
+            return values;
+        }
+
+
         protected static void parse_field_float(BinaryReader reader, USDCField field)
         {
+            // THIS IS INCOMPLETE
+            // Look at crateFile.cpp::_WritePossiblyCompressedArray() and _ReadPossiblyCompressedArray()
+            // float array may be stored as encoded integers, or as a lookup table
+            // depends on USD version and compressed size :(
+
             if (field.IsArray) {
                 field.data = read_array_value<float>(reader, field, sizeof(float), 1);
             } else {
@@ -190,6 +222,8 @@ namespace g3
         }
         protected static void parse_field_double(BinaryReader reader, USDCField field)
         {
+            // same issue as parse_field_float above
+
             if (field.IsArray) {
                 field.data = read_array_value<double>(reader, field, sizeof(double), 1);
             } else {
@@ -208,11 +242,28 @@ namespace g3
         protected static void parse_field_bool(BinaryReader reader, USDCField field)
         {
             if (field.IsArray) {
-                // todo need to figure out how this would be stored
-                throw new NotImplementedException("array of bool not implemented");
+                Util.gDevAssert(field.ValueRep.IsCompressed == false);
+                // surprisingly bool arrays are stored as a bool per byte...
+                field.data = read_array_value<bool>(reader, field, sizeof(byte), 1);
             } else {
                 Util.gDevAssert(field.ValueRep.IsInlined == true);
                 field.data = (field.ValueRep.PayloadData != 0) ? true : false;
+            }
+        }
+
+        protected static void parse_field_uchar(BinaryReader reader, USDCField field)
+        {
+            if (field.IsArray) {
+                Util.gDevAssert(field.ValueRep.IsCompressed == false);
+                // uchar cannot be packed-integer-coded because of no negative numbers?
+                field.data = read_array_value<byte>(reader, field, sizeof(byte), 1);
+            } else {
+                if (field.ValueRep.IsInlined) {
+                    field.data = (byte)field.ValueRep.PayloadData;
+                } else {
+                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
+                    field.data = reader.ReadByte();
+                }
             }
         }
 
@@ -236,6 +287,51 @@ namespace g3
                 } else {
                     reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
                     field.data = reader.ReadInt32();
+                }
+            }
+        }
+
+        protected static void parse_field_uint(BinaryReader reader, USDCField field)
+        {
+            if (field.IsArray) {
+                field.data = read_int_array_value<uint>(reader, field, sizeof(uint), 1);
+            } else {
+                if (field.ValueRep.IsInlined) {
+                    field.data = (uint)field.ValueRep.PayloadData;
+                } else {
+                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
+                    field.data = reader.ReadUInt32();
+                }
+            }
+        }
+
+        protected static void parse_field_long(BinaryReader reader, USDCField field)
+        {
+            if (field.IsArray) {
+                field.data = read_int_array_value<long>(reader, field, sizeof(long), 1);
+                //field.data = read_array_value<long>(reader, field, sizeof(long), 1);
+            } else {
+                if (field.ValueRep.IsInlined) {
+                    field.data = (long)field.ValueRep.PayloadData;
+                } else {
+                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
+                    field.data = reader.ReadInt64();
+                }
+            }
+        }
+
+        protected static void parse_field_ulong(BinaryReader reader, USDCField field)
+        {
+            if (field.IsArray) {
+                Util.gDevAssert(field.ValueRep.IsCompressed == false);
+                // TODO this is probably wrong
+                field.data = read_array_value<ulong>(reader, field, sizeof(ulong), 1);
+            } else {
+                if (field.ValueRep.IsInlined) {
+                    field.data = (ulong)field.ValueRep.PayloadData;
+                } else {
+                    reader.BaseStream.Position = (long)field.ValueRep.PayloadData;
+                    field.data = reader.ReadUInt64();
                 }
             }
         }
@@ -478,6 +574,64 @@ namespace g3
             }
         }
 
+        protected void parse_field_dictionary(BinaryReader reader, USDCField field)
+        {
+            // dictionary is inlined if it's empty
+            if (field.ValueRep.IsInlined) {
+                field.data = null;
+                return;
+            }
+            ulong offset = field.ValueRep.PayloadData;
+            reader.BaseStream.Position = (long)offset;
+            // these functions possibly could be combined...
+            Dictionary<int, USDCValueRep> extractDict = parse_dictionary(reader);
+            Dictionary<string, USDCField> builtDict = build_dictionary(extractDict, reader);
+            field.data = builtDict;
+        }
+        protected Dictionary<int,USDCValueRep> parse_dictionary(BinaryReader reader)
+        {
+            // in this function we build a set of (StringIndices_index, USDCValueRep) pairs
+            Dictionary<int, USDCValueRep> dict = new();
+
+            ulong num_elements = reader.ReadUInt64();
+            for (int i = 0; i < (int)num_elements; ++i) {
+
+                // dictionary key is a StringIndices index
+                int string_index = reader.ReadInt32();
+                //string debug_test_name2 = Tokens![StringIndices![string_index]];
+
+                // dictionary value is a VtValue written using crateFile.cpp:::Write(VtValue), 
+                // which does _RecursiveWrite() of the value data and then Write(ValueRep)
+                // value is written using crateFile.cpp:_RecursiveWrite
+                // So it ends up as [uint64 num_bytes](data)[ValueRep]
+                // where num_bytes = sizeof(uint64) + sizeof(data).
+                // So after we read the num_bytes, we need to skip num_bytes-8 to get to the ValueRep.
+                // Note that the data will be read later in parse_field()
+                // note sizeof(data) will be 0 if ValueRep.IsInlined)
+                ulong data_block_bytes = reader.ReadUInt64();
+                ulong data_bytes = data_block_bytes - sizeof(ulong);
+                reader.BaseStream.Seek((long)data_bytes, SeekOrigin.Current);
+                Span<byte> valueRepBytes = reader.ReadBytes(8);
+                USDCValueRep value = MemoryMarshal.AsRef<USDCValueRep>(valueRepBytes);
+
+                dict.Add(string_index, value);
+            }
+
+            return dict;
+        }
+        protected Dictionary<string, USDCField> build_dictionary(Dictionary<int, USDCValueRep> dict, BinaryReader reader)
+        {
+            // in this function we take the (StringIndices_index, USDCValueRep) pairs and convert to (token, USDCField)
+            Dictionary<string, USDCField> new_dict = new();
+            foreach (var element in dict) {
+                USDCField tmpField = new USDCField();
+                tmpField.Name = Tokens![StringIndices![element.Key]];
+                tmpField.ValueRep = element.Value;
+                parse_field(reader, tmpField);
+                new_dict.Add(tmpField.Name, tmpField);
+            }
+            return new_dict;
+        }
 
     }
 }

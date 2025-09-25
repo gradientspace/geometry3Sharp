@@ -46,10 +46,41 @@ namespace g3
             return IOReadResult.Ok;
         }
 
+        static readonly string[] defaultTransformOrder = ["xformOp:transform"];
+
         protected void build_meshes(USDPrim prim, ReadOptions options, IMeshBuilder builder, Matrix4d ParentTransform)
         {
             Matrix4d CurTransform = ParentTransform;
-            if (prim.PrimType == EDefType.Mesh) {
+
+            // look for uniform token[] xformOpOrder = ["xformOp:transform", ...]
+            // (default to exactly ["xformOp:transform"])
+            ReadOnlySpan<string> transformOps = defaultTransformOrder;
+            USDAttrib? xformOpOrder = prim.FindAttribByName("xformOpOrder");
+            if (xformOpOrder != null && xformOpOrder.USDType == EUSDType.Token && xformOpOrder.IsArray) {
+                if ( xformOpOrder.Data is string[] order ) 
+                    transformOps = order;
+            }
+
+            // now find the referenced transforms and accumulate them
+            foreach (string op in transformOps) {
+                USDAttrib? xformOp = prim.FindAttribByName(op);
+                if (xformOp != null && xformOp.USDType == EUSDType.Matrix4d && xformOp.IsArray == false) {
+                    if (xformOp.Value.data is matrix4d m) {
+
+                        // note: USD has a very bizarre definition of "row-order", because they assume
+                        // vector pre-multiplication v*M instead of M*v, so the "rows" are actually columns
+                        // https://openusd.org/dev/api/usd_geom_page_front.html#UsdGeom_LinAlgBasics
+                        Matrix4d mat = new Matrix4d(
+                            m.row0, m.row1, m.row2, m.row3, false);
+                        // because of the above, this is possibly backwards, need a test case...
+                        CurTransform = ParentTransform * mat;
+                    }
+                }
+            }
+
+
+            if (prim.PrimType == EDefType.Mesh) 
+            {
                 USDAttrib? points = prim.FindAttribByName("points");
                 USDAttrib? faceVertexCounts = prim.FindAttribByName("faceVertexCounts");
                 USDAttrib? faceVertexIndices = prim.FindAttribByName("faceVertexIndices");
