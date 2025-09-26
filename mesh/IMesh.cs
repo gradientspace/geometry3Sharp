@@ -93,6 +93,7 @@ namespace g3
         int AppendNewMesh(bool bHaveVtxNormals, bool bHaveVtxColors, bool bHaveVtxUVs, bool bHaveFaceGroups);
         int AppendNewMesh(DMesh3 existingMesh);
 
+        int NumMeshes { get; }
         void SetActiveMesh(int id);
 
         int AppendVertex(double x, double y, double z);

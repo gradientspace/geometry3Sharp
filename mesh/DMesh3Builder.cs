@@ -57,6 +57,8 @@ namespace g3
             return index;
         }
 
+        public int NumMeshes => Meshes.Count;
+
         public int AppendNewMesh(DMesh3 existingMesh)
         {
             int index = Meshes.Count;

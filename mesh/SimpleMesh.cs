@@ -553,6 +553,8 @@ namespace g3
             return index;
         }
 
+        public int NumMeshes => Meshes.Count;
+
         public void SetActiveMesh(int id)
         {
             if (id >= 0 && id < Meshes.Count)
