@@ -33,10 +33,26 @@ namespace g3
     }
 
 
+    public enum EBuildMeshGroupMode
+    {
+        Constant = 0,
+        GroupPerMesh = 1,
+        GroupPerPart = 2,
+        GroupPerPolygon = 3
+    }
+
+    public struct BuildMeshGroupConfig
+    {
+        public EBuildMeshGroupMode Mode = EBuildMeshGroupMode.GroupPerMesh;
+        public int ConstantGroupID = 0;
+
+        public BuildMeshGroupConfig() { }
+        public BuildMeshGroupConfig(EBuildMeshGroupMode mode, int constant) { Mode = mode; ConstantGroupID = constant; }
+    }
 
     public class ReadOptions
     {
-		public bool ReadMaterials;
+		public bool ReadMaterials = false;
 
         // allows files to refer to other files with relative paths
         public string BaseFileName = "";
@@ -44,13 +60,14 @@ namespace g3
         // allows files to refer to other files with relative paths
         public string BaseFilePath = "";
 
+        public EBuildMeshGroupMode GroupMode = EBuildMeshGroupMode.GroupPerPart;
+
         // format readers will inevitably have their own settings, we
         // can use this to pass arguments to them
         public CommandArgumentSet CustomFlags = new CommandArgumentSet();
 
         public ReadOptions()
         {
-			ReadMaterials = false;
         }
 
         public static readonly ReadOptions Defaults = new ReadOptions() {
