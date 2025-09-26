@@ -98,7 +98,8 @@ namespace g3
                     DMesh3 Mesh = new DMesh3();
                     Mesh.EnableTriangleGroups();
                     AppendAsVertices(Mesh, prim, points!, CurTransform);
-                    AppendAsTriangles(Mesh, prim, faceVertexCounts!, faceVertexIndices!, normals, uvs, CurTransform);
+                    BuildMeshGroupConfig groupConfig = new BuildMeshGroupConfig(options.GroupMode, builder.NumMeshes);
+                    AppendAsTriangles(Mesh, prim, faceVertexCounts!, faceVertexIndices!, normals, uvs, CurTransform, groupConfig);
                     Mesh.CheckValidity();
                     builder.AppendNewMesh(Mesh);
                 }
@@ -130,7 +131,8 @@ namespace g3
 
 
         protected bool AppendAsTriangles(DMesh3 mesh, USDPrim prim, USDAttrib vertexCounts, USDAttrib vertexIndices,
-            USDAttrib? normals, USDAttrib? uvs, Matrix4d Transform)
+            USDAttrib? normals, USDAttrib? uvs, Matrix4d Transform,
+            BuildMeshGroupConfig groupConfig)
         {
             if (vertexCounts.USDType != EUSDType.Int || vertexCounts.IsArray == false) {
                 warningEvent?.Invoke($"Mesh field {prim.FullPath}.faceVertexCounts has incorrect type {vertexCounts.USDType}", null);
@@ -165,6 +167,7 @@ namespace g3
             int cur_idx = 0;
             for (int i = 0; i < countsList.Length; ++i) {
                 int count = countsList[i];
+                int UseGroupID = (groupConfig.Mode == EBuildMeshGroupMode.GroupPerPolygon) ? i : groupConfig.ConstantGroupID;
 
                 int start_idx = cur_idx;
                 int a = indexList[cur_idx];
@@ -184,7 +187,7 @@ namespace g3
 
                 for (int k = 2; k < count; ++k) {
                     int c = indexList[cur_idx + k];
-                    int tid = mesh.AppendTriangle(new Index3i(a, b, c), i);
+                    int tid = mesh.AppendTriangle(new Index3i(a, b, c), UseGroupID);
                     if (tid < 0) {
                         string errType = (tid == DMesh3.NonManifoldID) ? "nonmanifold" : "invalid";
                         warningEvent?.Invoke($"triangle ({a},{b},{c}) is {errType} - skipping", null);

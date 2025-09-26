@@ -19,6 +19,14 @@ namespace g3
         // connect to this to get warning messages
         public event ParsingMessagesHandler? warningEvent;
 
+        public IOReadResult Read(string filename, ReadOptions options, out USDScene Scene)
+        {
+            using (FileStream stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                using (BinaryReader reader = new BinaryReader(stream)) {
+                    return Read(reader, options, out Scene);
+                }
+            }
+        }
 
         public IOReadResult Read(BinaryReader reader, ReadOptions options, out USDScene Scene)
         {
@@ -73,6 +81,8 @@ namespace g3
 
             Scene = BuildScene();
             //debug_print("", scene.Root);
+
+            ExpandReferences(Scene, options);
 
             return IOReadResult.Ok;
         }
@@ -167,7 +177,7 @@ namespace g3
                         parentPrim.CustomPrimTypeName = defname;
                     }
                 } else {
-                    attribs.Add(make_field(parentPrim, field));
+                    attribs.Add(field_to_attrib(field));
                 }
             }
 
@@ -188,32 +198,52 @@ namespace g3
 
             parentPrim.Attribs = attribs.ToArray();  
 
-            parentPrim.Children = new USDPrim[childSpecs.Count];
             for ( int i = 0; i < childSpecs.Count; ++i ) { 
                 USDCSpec child = childSpecs[i];
                 USDPrim childPrim = new USDPrim() {
                     Path = child.Path
                 };
-                parentPrim.Children[i] = childPrim;
-
                 build_prim(child, childPrim, scene);
+
+                parentPrim.Children.Add(childPrim);
             }
         }
 
-        USDAttrib make_field(USDPrim prim, USDCField field)
+        // convert internal USDCField to general USDAttrib
+        USDAttrib field_to_attrib(USDCField field)
         {
             USDAttrib attrib = new();
             attrib.Name = field.Name;
-            if (field.FieldType == USDCDataType.TokenVector) {
+            if (field.FieldType == USDCDataType.TokenVector) 
+            {
                 attrib.Value.TypeInfo.bIsArray = true;
                 attrib.Value.TypeInfo.USDType = EUSDType.Token;
                 attrib.Value.data = field.data;
-            } else if (field.FieldType == USDCDataType.ReferenceListOp) {
-                // super hacky for now...
-                int[] values = field.data as int[] ?? [];
-                string reference_path = Tokens![StringIndices![values[0]]];
-                USDCSpec spec = Specs[values[1]];
-                attrib.Value.data = reference_path;
+            } 
+            else if (field.FieldType == USDCDataType.ReferenceListOp) 
+            {
+                attrib.Value.TypeInfo.USDType = usdc_to_usdtype(field.FieldType);
+
+                if (field.data is ValueTuple<USDListOpHeader, USDCReference[]> ) {
+                    (USDListOpHeader header, USDCReference[] references) = (ValueTuple<USDListOpHeader, USDCReference[]>)field.data;
+                    USDReferenceListOp refListOp = new USDReferenceListOp();
+                    refListOp.header = header;
+                    refListOp.references = new USDReference[references.Length];
+                    for (int i = 0; i < references.Length; ++i) {
+                        USDCReference reference = references[i];
+                        refListOp.references[i] = new USDReference();
+                        refListOp.references[i].assetPath = Tokens![StringIndices![reference.assetPathStringIndex]];
+                        refListOp.references[i].primPath = Specs[reference.primPathIndex].Path.Duplicate();
+                        refListOp.references[i].layerOffset = reference.layerOffset;
+                        refListOp.references[i].customData = dictionary_field_to_attrib(reference.customData);
+                    }
+                    attrib.Value.data = refListOp;
+                }
+
+            } else if (field.FieldType == USDCDataType.Dictionary) {
+                attrib.Value.TypeInfo.USDType = EUSDType.Dictionary;
+                attrib.Value.data = dictionary_field_to_attrib(field.data);
+
             } else {
                 attrib.Value.TypeInfo.USDType = usdc_to_usdtype(field.FieldType);
                 attrib.Value.data = field.data;
@@ -221,6 +251,17 @@ namespace g3
             return attrib;
         }
 
+        Dictionary<string, USDAttrib> dictionary_field_to_attrib(object? dictionaryObj)
+        {
+            Dictionary<string, USDAttrib> attribDict = new();
+            if (dictionaryObj is Dictionary<string, USDCField> dict) {
+                foreach (var pair in dict) {
+                    USDAttrib attrib = field_to_attrib(pair.Value);
+                    attribDict.Add(pair.Key, attrib);   
+                }
+            }
+            return attribDict;
+        }
 
 
 
@@ -458,7 +499,13 @@ namespace g3
         }
 
 
-
+        protected struct USDCReference
+        {
+            public int assetPathStringIndex;
+            public int primPathIndex;
+            public USDLayerOffset layerOffset;
+            public object? customData;
+        }
 
 
 
@@ -851,23 +898,8 @@ namespace g3
                     break;
 
 
-                // haven't cracked this yet...
-                // search crateFile.cpp for  Write(SdfReference const &ref)
-                // seems like we have
-                //   string-index
-                //   prim-index
-                //   (double,double) layer-offset
-                //   dictionary customData (??)    -> see void Write(VtDictionary
-                case USDCDataType.ReferenceListOp: {
-                    ulong offset = field.ValueRep.PayloadData;
-                    reader.BaseStream.Position = (long)offset;
-                    list_op_header header = new() { data = reader.ReadByte() };
-                    ulong sz = reader.ReadUInt64();
-                    Util.gDevAssert(sz == 1);
-                    int pathStringIdx = reader.ReadInt32();
-                    int primPathIdx = reader.ReadInt32();
-                    field.data = new int[2] { pathStringIdx, primPathIdx };
-                    }
+                case USDCDataType.ReferenceListOp:
+                    parse_field_referenceListOp(reader, field);
                     break;
 
                 default:
@@ -878,17 +910,5 @@ namespace g3
     }
 
 
-    struct list_op_header
-    {
-        public byte data;
-
-        public bool IsExplicit =>        (data & 0b00000001) != 0;
-        public bool HasExplicitItems =>  (data & 0b00000010) != 0;
-        public bool HasAddedItems =>     (data & 0b00000100) != 0;
-        public bool HasDeletedItems =>   (data & 0b00001000) != 0;
-        public bool HasOrderedItems =>   (data & 0b00010000) != 0;
-        public bool HasPrependedItems => (data & 0b00100000) != 0;
-        public bool HasAppendedItems =>  (data & 0b01000000) != 0;
-    }
 
 }

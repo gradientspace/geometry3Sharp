@@ -65,9 +65,9 @@ namespace g3
             USDPrim Root = new USDPrim() { PrimType = EDefType.PsuedoRoot };
             append_fields(Root, HeaderFields ?? []);
 
-            Root.Children = new USDPrim[topLevelDefs.Count];
             for ( int i = 0; i < topLevelDefs.Count; ++i ) {
-                Root.Children[i] = build_child_prim(topLevelDefs[i], Root.Path);
+                USDPrim newChild = build_child_prim(topLevelDefs[i], Root.Path);
+                Root.Children.Add(newChild);
             }
 
             Scene = new USDScene() { Root = Root };
@@ -86,9 +86,10 @@ namespace g3
             append_fields(prim, enumerate_fields(def));
             
             int NumChildren = (def.ChildDefs != null) ? def.ChildDefs.Count : 0;
-            prim.Children = (NumChildren > 0) ? new USDPrim[NumChildren] : [];  
-            for ( int i = 0; i < NumChildren; ++i )
-                prim.Children[i] = build_child_prim(def.ChildDefs![i], prim.Path);
+            for ( int i = 0; i < NumChildren; ++i ) {
+                USDPrim newChild = build_child_prim(def.ChildDefs![i], prim.Path);
+                prim.Children.Add(newChild);
+            }
 
             return prim;
         }

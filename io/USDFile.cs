@@ -3,6 +3,8 @@
 using System;
 using System.Text;
 using System.Diagnostics;
+using System.Linq;
+using System.Collections.Generic;
 
 
 #nullable enable
@@ -37,7 +39,7 @@ namespace g3
 
             public USDAttrib[] Attribs = Array.Empty<USDAttrib>();
 
-            public USDPrim[] Children = Array.Empty<USDPrim>();
+            public List<USDPrim> Children = new List<USDPrim>();
 
             public string ShortName => Path.ShortName;
             public string FullPath => Path.FullPath;
@@ -111,6 +113,9 @@ namespace g3
             private string valid_prefix => (bValid ? "" : "INVALID#");
             private string prop_suffix => (string.IsNullOrEmpty(prop) ? "" : "." + prop);
 
+            public USDPath Duplicate() {
+                return new USDPath() { prim = this.prim, prop = this.prop, local = this.local, bValid = this.bValid };
+            }
 
             public static USDPath MakeRoot() { return new USDPath("/"); }
 
@@ -686,13 +691,78 @@ namespace g3
         }
 
 
+        public struct USDLayerOffset
+        {
+            public double offset;
+            public double scale;
+        }
+
+
+        public struct USDListOpHeader
+        {
+            public byte data = 0;
+
+            public bool IsExplicit => (data & 0b00000001) != 0;
+            public bool HasExplicitItems => (data & 0b00000010) != 0;
+            public bool HasAddedItems => (data & 0b00000100) != 0;
+            public bool HasDeletedItems => (data & 0b00001000) != 0;
+            public bool HasOrderedItems => (data & 0b00010000) != 0;
+            public bool HasPrependedItems => (data & 0b00100000) != 0;
+            public bool HasAppendedItems => (data & 0b01000000) != 0;
+            public USDListOpHeader() {}
+        }
+
+
+        public struct USDReference
+        {
+            public string assetPath;
+            public USDPath primPath;
+            public USDLayerOffset layerOffset;
+            public object? customData;      // this is a dictionary, if it is non-null
+        }
+
+        public class USDReferenceListOp
+        {
+            public USDListOpHeader header;
+            public USDReference[] references = [];
+        }
 
 
 
 
 
+        public static void ExpandReferences(USDScene scene, ReadOptions options)
+        {
+            expand_references(scene.Root, options);
+        }
+        static void expand_references(USDPrim prim, ReadOptions options)
+        {
+            foreach (USDAttrib attrib in prim.Attribs) {
+                if (attrib.USDType != EUSDType.ReferenceListOp || !(attrib.Data is USDReferenceListOp))
+                    continue;
+                USDReferenceListOp listOp = (USDReferenceListOp)attrib.Data;
+                Util.gDevAssert(listOp.header.HasDeletedItems == false);
+                // what to do w/ other list ops??
+                Util.gDevAssert(listOp.references.Length == 1);
+                USDReference reference = listOp.references[0];
 
+                // TODO should cache this somehow, dumb to read multiple times...
+                // can be async
+                // should be done in a way that handles usda too
+                // ideally want to forward warningEvent
 
+                string filePath = System.IO.Path.Combine(options.BaseFilePath, reference.assetPath);
+                if (System.IO.File.Exists(filePath)) {
+                    USDCReader reader = new USDCReader();
+                    IOReadResult result = reader.Read(filePath, options, out USDScene childScene);
+                    if (result.code == IOCode.Ok) {
+                        prim.Children.Add(childScene.Root);
+                    }
+                }
+            }
 
+            foreach (USDPrim child in prim.Children)
+                expand_references(child, options);
+        }
     }
 }

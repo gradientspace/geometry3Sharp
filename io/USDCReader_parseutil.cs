@@ -633,5 +633,33 @@ namespace g3
             return new_dict;
         }
 
+
+        protected void parse_field_referenceListOp(BinaryReader reader, USDCField field)
+        {
+            Util.gDevAssert(field.ValueRep.IsInlined == false);
+
+            ulong offset = field.ValueRep.PayloadData;
+            reader.BaseStream.Position = (long)offset;
+            USDListOpHeader header = new() { data = reader.ReadByte() };
+            ulong listSize = reader.ReadUInt64();
+            if (listSize == 0)
+                return;
+
+            USDCReference[] result = new USDCReference[listSize];
+            for ( int i = 0; i < (int)listSize; ++i ) {
+                USDCReference reference;
+                reference.assetPathStringIndex = reader.ReadInt32();
+                reference.primPathIndex = reader.ReadInt32();
+                reference.layerOffset.offset = reader.ReadDouble();
+                reference.layerOffset.scale = reader.ReadDouble();
+                reference.customData = null;
+                Dictionary<int, USDCValueRep> dictInfo = parse_dictionary(reader);
+                if (dictInfo.Count > 0) 
+                    reference.customData = build_dictionary(dictInfo, reader);
+                result[i] = reference;
+            }
+            field.data = (header, result);
+        }
+
     }
 }
