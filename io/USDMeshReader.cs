@@ -46,14 +46,13 @@ namespace g3
             return IOReadResult.Ok;
         }
 
-        static readonly string[] defaultTransformOrder = ["xformOp:transform"];
+        static readonly string[] defaultTransformOrder = [];
 
         protected void build_meshes(USDPrim prim, ReadOptions options, IMeshBuilder builder, Matrix4d ParentTransform)
         {
             Matrix4d CurTransform = ParentTransform;
 
             // look for uniform token[] xformOpOrder = ["xformOp:transform", ...]
-            // (default to exactly ["xformOp:transform"])
             ReadOnlySpan<string> transformOps = defaultTransformOrder;
             USDAttrib? xformOpOrder = prim.FindAttribByName("xformOpOrder");
             if (xformOpOrder != null && xformOpOrder.USDType == EUSDType.Token && xformOpOrder.IsArray) {
@@ -61,21 +60,23 @@ namespace g3
                     transformOps = order;
             }
 
+            //if (prim.Path.FullPath.Contains("Crate"))
+            //    Debugger.Break();
+
             // now find the referenced transforms and accumulate them
             foreach (string op in transformOps) {
-                USDAttrib? xformOp = prim.FindAttribByName(op);
-                if (xformOp != null && xformOp.USDType == EUSDType.Matrix4d && xformOp.IsArray == false) {
-                    if (xformOp.Value.data is matrix4d m) {
-
-                        // note: USD has a very bizarre definition of "row-order", because they assume
-                        // vector pre-multiplication v*M instead of M*v, so the "rows" are actually columns
-                        // https://openusd.org/dev/api/usd_geom_page_front.html#UsdGeom_LinAlgBasics
-                        Matrix4d mat = new Matrix4d(
-                            m.row0, m.row1, m.row2, m.row3, false);
-                        // because of the above, this is possibly backwards, need a test case...
-                        CurTransform = ParentTransform * mat;
-                    }
-                }
+                USDAttrib? xformOp = null;
+                bool bInvert = false;
+                if (op.StartsWith("!invert!")) {
+                    bInvert = true;
+                    xformOp = prim.FindAttribByName(op.Substring(8));
+                } else
+                    xformOp = prim.FindAttribByName(op);
+                if (xformOp != null) {
+                    Matrix4d xform = ExtractTransform(xformOp, bInvert);
+                    CurTransform = CurTransform * xform;
+                } else
+                    warningEvent?.Invoke($"Could not find xformOp {op} in {prim}", null);
             }
 
 
@@ -97,9 +98,11 @@ namespace g3
                 if (bHaveRequiredFields) {
                     DMesh3 Mesh = new DMesh3();
                     Mesh.EnableTriangleGroups();
-                    AppendAsVertices(Mesh, prim, points!, CurTransform);
+                    Matrix4d MeshTransform = CurTransform;
+                    //Matrix4d MeshTransform = Matrix4d.Identity;
+                    AppendAsVertices(Mesh, prim, points!, MeshTransform);
                     BuildMeshGroupConfig groupConfig = new BuildMeshGroupConfig(options.GroupMode, builder.NumMeshes);
-                    AppendAsTriangles(Mesh, prim, faceVertexCounts!, faceVertexIndices!, normals, uvs, CurTransform, groupConfig);
+                    AppendAsTriangles(Mesh, prim, faceVertexCounts!, faceVertexIndices!, normals, uvs, MeshTransform, groupConfig);
                     Mesh.CheckValidity();
                     builder.AppendNewMesh(Mesh);
                 }
@@ -107,6 +110,54 @@ namespace g3
 
             foreach (USDPrim childPrim in prim.Children)
                 build_meshes(childPrim, options, builder, CurTransform);
+        }
+
+
+        protected Matrix4d ExtractTransform(USDAttrib xformOp, bool bInvert)
+        {
+            if (xformOp.USDType == EUSDType.Matrix4d && xformOp.IsArray == false) {
+                if (xformOp.Value.data is matrix4d m) {
+                    // note: USD has a very bizarre definition of "row-order", because they assume
+                    // vector pre-multiplication v*M instead of M*v, so the "rows" are actually columns
+                    // https://openusd.org/dev/api/usd_geom_page_front.html#UsdGeom_LinAlgBasics
+                    Matrix4d mat = new Matrix4d(m.row0, m.row1, m.row2, m.row3, false);
+                    if (bInvert)
+                        mat = mat.Inverse();
+                    return mat;
+                } else
+                    warningEvent?.Invoke($"Invalid Matrix4d transform data in {xformOp}", null);
+            }
+            else if (xformOp.Value.data is vec3d || xformOp.Value.data is vec3f) 
+            {
+                Vector3d xyz = Vector3d.Zero;
+                if (xformOp.Value.data is vec3d)
+                    xyz = ((vec3d)xformOp.Value.data);
+                else if (xformOp.Value.data is vec3f)
+                    xyz = ((vec3f)xformOp.Value.data);
+                else
+                    warningEvent?.Invoke($"Invalid Vector3d/f transform data in {xformOp}", null);
+
+                if (xformOp.Name == "xformOp:translate") {
+                    return Matrix4d.Translation((bInvert) ? -xyz : xyz);
+                } else if (xformOp.Name == "xformOp:translate:pivot") {
+                    // what to do here?? is it just a translation? do we need to track a pivot-point ?
+                    return Matrix4d.Translation((bInvert) ? -xyz : xyz);
+                } else if (xformOp.Name == "xformOp:scale") {
+                    if (xyz.LengthSquared == 0)
+                        xyz = Vector3d.One;
+                    if (bInvert)
+                        xyz = new Vector3d(1.0 / xyz.x, 1.0 / xyz.y, 1.0 / xyz.z);  // todo safe inverse scale!
+                    return Matrix4d.Scale(xyz);
+                } else if (xformOp.Name == "xformOp:rotateXYZ") {
+                    Matrix3d rot = Matrix3d.RotateX(xyz.x, true) * Matrix3d.RotateY(xyz.y, true) * Matrix3d.RotateZ(xyz.z, true);
+                    rot = rot.Transpose();
+                    return new Matrix4d(rot, Vector3d.Zero);
+                } else {
+                    warningEvent?.Invoke($"Unsupported xformOp type {xformOp}", null);
+                }
+            }
+
+            return Matrix4d.Identity;
         }
 
 

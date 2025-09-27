@@ -97,13 +97,11 @@ namespace g3
         void append_fields(USDPrim prim, IEnumerable<USDAField> fields)
         {
             int Count = fields.Count();
-            prim.Attribs = new USDAttrib[Count];
-            int idx = 0;
             foreach (USDAField field in fields) {
                 USDAttrib attrib = new USDAttrib();
                 attrib.Name = field.Name;
                 attrib.Value = field.Value;
-                prim.Attribs[idx++] = attrib;
+                prim.AddAttrib(attrib);
             }
         }
 

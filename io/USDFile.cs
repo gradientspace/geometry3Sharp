@@ -5,6 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 
 
 #nullable enable
@@ -33,11 +34,14 @@ namespace g3
         public class USDPrim
         {
             public USDPath Path = USDPath.MakeRoot();
+            public EUSDSpecifierType SpecifierType = EUSDSpecifierType.Def;
 
+            // EDefType is our invention...basically the token after a 'def', eg Xform, Mesh, etc...
+            // If we don't recognize it, PrimType will be Unknown and CustomPrimTypeName will be set
             public EDefType PrimType;
             public string? CustomPrimTypeName = null;
 
-            public USDAttrib[] Attribs = Array.Empty<USDAttrib>();
+            public List<USDAttrib> Attribs = new List<USDAttrib>();
 
             public List<USDPrim> Children = new List<USDPrim>();
 
@@ -51,9 +55,49 @@ namespace g3
                 return  $"[{useName}] {FullPath}";
             }
 
+            /// <summary>
+            /// Creates duplicate instance of this Prim.
+            /// Attribute and Children *arrays* are cloned, but array contents are shallow-copied references
+            /// This is intended for situations where we want to add/remove attributes or children from the lists, not modify them
+            /// </summary>
+            public USDPrim CreateInstance()
+            {
+                USDPrim newPrim = new USDPrim();
+                newPrim.Path = this.Path;
+                newPrim.SpecifierType = this.SpecifierType;
+                newPrim.PrimType = this.PrimType;
+                newPrim.CustomPrimTypeName = this.CustomPrimTypeName;
+                newPrim.Attribs = new List<USDAttrib>(this.Attribs);
+                newPrim.Children = new List<USDPrim>(this.Children);
+                return newPrim;
+            }
+
+
             public USDAttrib? FindAttribByName(string name)
             {
-                return Array.Find(Attribs, (attrib) => { return attrib.Name == name; });
+                return Attribs.Find((attrib) => { return attrib.Name == name; });
+            }
+
+            public USDPrim? InstanceChild(USDPrim child)
+            {
+                int idx = Children.IndexOf(child);
+                if ( idx < 0 )
+                    return null;
+                Children[idx] = child.CreateInstance();
+                return Children[idx];
+            }
+
+            public bool ReplaceAttrib(USDAttrib attrib, USDAttrib replaceWith)
+            {
+                int idx = Attribs.IndexOf(attrib);
+                if (idx < 0)
+                    return false;
+                Attribs[idx] = replaceWith;
+                return true;
+            }
+
+            public void AddAttrib(USDAttrib attirb) {
+                Attribs.Add(attirb);
             }
         }
 
@@ -144,7 +188,12 @@ namespace g3
 
 
 
-
+        public enum EUSDSpecifierType
+        {
+            Def = 0,
+            Over = 1,
+            Class = 2
+        };
 
 
         // to support:
@@ -742,27 +791,140 @@ namespace g3
                     continue;
                 USDReferenceListOp listOp = (USDReferenceListOp)attrib.Data;
                 Util.gDevAssert(listOp.header.HasDeletedItems == false);
-                // what to do w/ other list ops??
-                Util.gDevAssert(listOp.references.Length == 1);
-                USDReference reference = listOp.references[0];
 
-                // TODO should cache this somehow, dumb to read multiple times...
-                // can be async
-                // should be done in a way that handles usda too
-                // ideally want to forward warningEvent
+                foreach (USDReference reference in listOp.references) 
+                {
+                    // TODO should cache this somehow, dumb to read multiple times...
+                    // can be async
+                    // should be done in a way that handles usda too
+                    // ideally want to forward warningEvent
 
-                string filePath = System.IO.Path.Combine(options.BaseFilePath, reference.assetPath);
-                if (System.IO.File.Exists(filePath)) {
-                    USDCReader reader = new USDCReader();
-                    IOReadResult result = reader.Read(filePath, options, out USDScene childScene);
-                    if (result.code == IOCode.Ok) {
-                        prim.Children.Add(childScene.Root);
+                    string filePath = System.IO.Path.Combine(options.BaseFilePath, reference.assetPath);
+                    if (System.IO.File.Exists(filePath)) {
+                        USDCReader reader = new USDCReader();
+                        IOReadResult result = reader.Read(filePath, options, out USDScene childScene);
+                        if (result.code == IOCode.Ok) {
+                            prim.Children.Add(childScene.Root);
+                        }
+                    } else {
+                        // print error
                     }
                 }
             }
 
+            // recurse - maybe limit depth?
             foreach (USDPrim child in prim.Children)
                 expand_references(child, options);
         }
+
+
+        /// <summary>
+        /// Process the Scene to apply "Over" prims, which contain new field/attrib data
+        /// for existing Def prims. Currently we assume attribs are immutable, and so 
+        /// the way it is done is (1) for an Over we find the target Def prim, 
+        /// (2) we instance that Def prim, ie we get a new object but w/ the same 
+        /// referenced children/attribs, and then (3) we swap in the Over'd attribs.
+        /// This is all done via recursive tree-walking and it's a bit tricky (see comments).
+        /// 
+        /// No idea if this is all "correct" in the USD sense, but it seems to work...
+        /// </summary>
+        public static void ApplyOvers(USDScene scene)
+        {
+            bake_def_overs(scene.Root);
+        }
+        static void bake_def_overs(USDPrim defPrim, string parentOverPath = "")
+        {
+            // process child defs first, as they might internally contain overs
+            foreach (USDPrim childPrim in defPrim.Children) {
+                if (childPrim.SpecifierType == EUSDSpecifierType.Def)
+                    bake_def_overs(childPrim);
+            }
+            // now process overs
+            // todo maybe should use primChildren list here...?
+            foreach (USDPrim childPrim in defPrim.Children) {
+                if (childPrim.SpecifierType == EUSDSpecifierType.Over)
+                    apply_overs(childPrim, defPrim);
+            }
+        }
+        static void apply_overs(USDPrim overPrim, USDPrim rootDefForOvers)
+        {
+            // recurse to allow child overs to be applied first.
+            // We do this because to apply overs we dynamically instance the over'd prims,
+            // and that needs to happen bottom-up so that when we instance a parent def-prim
+            // it already contains the necessary instanced-child-defs
+            foreach (USDPrim childPrim in overPrim.Children) {
+                if (childPrim.SpecifierType != EUSDSpecifierType.Over)
+                    Util.gDevAssert(false);         // want to know if this can happen...
+                if (childPrim.SpecifierType == EUSDSpecifierType.Over)
+                    apply_overs(childPrim, rootDefForOvers);
+            }
+
+            // figure out path to child prim that we want to apply over.
+            // Something is not quite right here, but I don't have many examples to go on.
+            // The problem is, does the path in the parent have anything to do w/ the path in the reference?
+            // Basically assuming that if we had /World/def(references-A)/overA/overB, that 
+            // we can find the right thing in A by searching for the path in A that ends with "/overA/overB".
+            // That path in A might be /OtherWorld/defA/defB... but what if there is also /OtherWorld/defX/defA/defB?
+            // (is that allowed?). 
+            // In all my examples the full path is the same, IE both have /World/defA, and then there is
+            // World/defA/overA/overB in the parent. Is it always like that? Seems like this would prevent
+            // referencing things at arbitrary paths in the parent...
+            string parentDefPath = rootDefForOvers.Path.FullPath;
+            string overPath = overPrim.Path.FullPath;
+            string referenceDefPath = overPath.Replace(parentDefPath, "");      // hmmmm
+
+            // in referenced subtree, find the def that the over refers to, by path
+            (USDPrim? applyToPrim, USDPrim? parent) = find_child_def_path(rootDefForOvers, referenceDefPath);
+            if (applyToPrim == null || parent == null)
+                return;   // todo print warning
+
+            // instance the target def-prim in it's parent. This allows us to apply the over by
+            // modifying the Attribs list in-place
+            applyToPrim = parent.InstanceChild(applyToPrim);
+            if (applyToPrim == null)
+                return;   // todo print warning
+
+            // for each attrib listed in the over, we replace the existing attrib in the target def-prim
+            // (or insert as new). 
+            foreach ( USDAttrib overAttrib in overPrim.Attribs ) {
+                // in this case we probably want to combine/update the lists?
+                // anyway we don't use these lists currently so we are just going to punt for now
+                if (overAttrib.Name == "properties" || overAttrib.Name == "primChildren")    
+                    continue;
+
+                USDAttrib? targetAttrib = applyToPrim.FindAttribByName(overAttrib.Name);
+                if (targetAttrib != null) {
+                    Debug.WriteLine($"{referenceDefPath}: replacing {targetAttrib} with {overAttrib}");
+                    applyToPrim.ReplaceAttrib(targetAttrib, overAttrib);
+                } else {
+                    Debug.WriteLine($"{referenceDefPath}: adding {targetAttrib} with {overAttrib}");
+                    applyToPrim.AddAttrib(overAttrib);      // is this allowed??
+                }
+            }
+
+        }
+        static (USDPrim?, USDPrim?) find_child_def_path(USDPrim prim, string childDefPath)
+        {
+            // todo should only be searching in references?
+            foreach (USDPrim childPrim in prim.Children) {
+                if (childPrim.SpecifierType == EUSDSpecifierType.Def) {
+                    string path = childPrim.Path.FullPath;
+                    if (path.EndsWith(childDefPath))
+                        return (childPrim, prim);
+
+                    // recurse
+                    (USDPrim?, USDPrim?) found = find_child_def_path(childPrim, childDefPath);
+                    if (found.Item1 != null)
+                        return found;
+                }
+            }
+            return (null,null);
+        }
     }
+
+
+
+
+
+
 }

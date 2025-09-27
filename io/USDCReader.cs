@@ -19,6 +19,11 @@ namespace g3
         // connect to this to get warning messages
         public event ParsingMessagesHandler? warningEvent;
 
+        
+        public bool ExpandReferences = true;
+        public bool ApplyOvers = true;
+
+
         public IOReadResult Read(string filename, ReadOptions options, out USDScene Scene)
         {
             using (FileStream stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
@@ -82,8 +87,11 @@ namespace g3
             Scene = BuildScene();
             //debug_print("", scene.Root);
 
-            ExpandReferences(Scene, options);
-
+            if (ExpandReferences) 
+                ExpandReferences(Scene, options);
+            if (ApplyOvers)
+                ApplyOvers(Scene);
+            
             return IOReadResult.Ok;
         }
 
@@ -148,7 +156,8 @@ namespace g3
             USDCSpec? Root = find_spec_by_path("/");
             USDPrim RootPrim = new USDPrim() {
                 Path = Root!.Path,
-                PrimType = EDefType.PsuedoRoot
+                PrimType = EDefType.PsuedoRoot,
+                SpecifierType = EUSDSpecifierType.Def
             };
 
             USDScene scene = new USDScene() { Root = RootPrim };
@@ -162,11 +171,12 @@ namespace g3
         {
             List<USDAttrib> attribs = new();
 
-            ESpecifierType specType = ESpecifierType.Def;
+            // default specifier is Over, according to tinyusdz in USDCReader::Impl::ReconstructPrimNode()
+            EUSDSpecifierType specifierType = (parent.SpecType == ESpecType.PsuedoRoot) ? EUSDSpecifierType.Def : EUSDSpecifierType.Over;
             foreach (USDCField field in parent.Fields) {
 
                 if (field.FieldType == USDCDataType.Specifier) {
-                    specType = (ESpecifierType)field.data!;
+                    specifierType = (EUSDSpecifierType)field.data!;
                 } else if ( field.Name == "typeName") {
                     string defname = (field.data as string) ?? "(no name)";
                     int idx = Array.FindIndex(USDFile.DefTypeTokens, (str) => { return str == defname; });
@@ -180,6 +190,7 @@ namespace g3
                     attribs.Add(field_to_attrib(field));
                 }
             }
+            parentPrim.SpecifierType = specifierType;
 
             List<USDCSpec> childSpecs = new();
             foreach (USDCSpec child in enumerate_children(parent)) 
@@ -196,7 +207,7 @@ namespace g3
                 }
             }
 
-            parentPrim.Attribs = attribs.ToArray();  
+            parentPrim.Attribs = attribs;  
 
             for ( int i = 0; i < childSpecs.Count; ++i ) { 
                 USDCSpec child = childSpecs[i];
@@ -700,22 +711,15 @@ namespace g3
 
 
 
-        public enum ESpecifierType
-        {
-            Def = 0,
-            Over = 1,
-            Class = 2
-        };
-
         public enum ESpecType
         {
             Unknown = 0,
 
             Attribute = 1,
             Connection = 2,
-            Expression = 3,
-            Mapper = 4,
-            Arg = 5,
+            Expression = 3,  // pixar internal
+            Mapper = 4,      // pixar internal
+            Arg = 5,         // pixar internal
             Prim = 6,
             PsuedoRoot = 7,
             Relationship = 8,
@@ -804,8 +808,9 @@ namespace g3
 
             switch (field.FieldType) {
                 case USDCDataType.Specifier:
-                    field.data = (ESpecifierType)field.ValueRep.PayloadData;
+                    field.data = (EUSDSpecifierType)field.ValueRep.PayloadData;
                     break;
+
 
                 case USDCDataType.StringVector:
                     throw new NotImplementedException();
