@@ -20,8 +20,8 @@ namespace g3
         public event ParsingMessagesHandler? warningEvent;
 
         
-        public bool ExpandReferences = true;
-        public bool ApplyOvers = true;
+        public bool ExpandReferences = false;
+        public bool ApplyOvers = false;
 
 
         public IOReadResult Read(string filename, ReadOptions options, out USDScene Scene)
@@ -809,6 +809,9 @@ namespace g3
             switch (field.FieldType) {
                 case USDCDataType.Specifier:
                     field.data = (EUSDSpecifierType)field.ValueRep.PayloadData;
+                    break;
+                case USDCDataType.Variability:
+                    field.data = (EUSDVariabilityType)field.ValueRep.PayloadData;
                     break;
 
 

@@ -195,6 +195,11 @@ namespace g3
             Class = 2
         };
 
+        public enum EUSDVariabilityType
+        {
+            Varying = 0,
+            Uniform = 1
+        };
 
         // to support:
         // 
@@ -780,42 +785,107 @@ namespace g3
 
 
 
-        public static void ExpandReferences(USDScene scene, ReadOptions options)
+
+        /// <summary>
+        /// Expands all references in the given Scene, recursively, so that if referenced
+        /// files contain next-level references, they are also loaded.
+        /// </summary>
+        public static void ExpandReferences(USDScene scene, ReadOptions options,
+            Action<string,object?>? warningCallback = null)
         {
-            expand_references(scene.Root, options);
+            expand_references(scene, options, warningCallback);
         }
-        static void expand_references(USDPrim prim, ReadOptions options)
+        static void expand_references(USDScene scene, ReadOptions options, 
+            Action<string, object?>? warningCallback)
         {
-            foreach (USDAttrib attrib in prim.Attribs) {
-                if (attrib.USDType != EUSDType.ReferenceListOp || !(attrib.Data is USDReferenceListOp))
+            ReferenceCache cache = new ReferenceCache();
+            HashSet<USDPrim> donePrims = new();
+
+            // make repeat passes to load references until we can't find any more
+            bool bDone = false;
+            while (!bDone) {
+
+                // make a pass over the current scene hierarchy to find any new referenced files
+                // that need to be loaded
+                HashSet<string> newReferencePaths = new();
+                List<(string, USDPrim)> primsToUpdate = new();
+                collect_references(scene.Root, options, donePrims, newReferencePaths, primsToUpdate, warningCallback);
+                if (newReferencePaths.Count == 0) {
+                    bDone = true;
                     continue;
-                USDReferenceListOp listOp = (USDReferenceListOp)attrib.Data;
-                Util.gDevAssert(listOp.header.HasDeletedItems == false);
+                }
 
-                foreach (USDReference reference in listOp.references) 
-                {
-                    // TODO should cache this somehow, dumb to read multiple times...
-                    // can be async
-                    // should be done in a way that handles usda too
-                    // ideally want to forward warningEvent
-
-                    string filePath = System.IO.Path.Combine(options.BaseFilePath, reference.assetPath);
-                    if (System.IO.File.Exists(filePath)) {
-                        USDCReader reader = new USDCReader();
-                        IOReadResult result = reader.Read(filePath, options, out USDScene childScene);
-                        if (result.code == IOCode.Ok) {
-                            prim.Children.Add(childScene.Root);
-                        }
+                // load new scenes and store in cache
+                gParallel.ForEach(newReferencePaths, (string filePath) => {
+                    //Debug.WriteLine($"Loading referenced file {filePath}...");
+                    USDScene? loadedScene = null;
+                    if (cache.TryGetScene(filePath, out loadedScene))
+                        return;
+                    USDReader reader = new USDReader();
+                    reader.warningEvent += (s, o) => warningCallback?.Invoke(s, o);
+                    IOReadResult result = reader.Read(filePath, options, out loadedScene);
+                    if (loadedScene == null) {
+                        warningCallback?.Invoke($"reference {filePath} could not be loaded", null);
                     } else {
-                        // print error
+                        cache.AddScene(filePath, loadedScene);
+                    }
+                });
+
+                // apply loaded scenes to prim that referenced them
+                foreach ( (string filePath, USDPrim prim) in primsToUpdate ) {
+                    if (cache.TryGetScene(filePath, out USDScene? loadedScene)) {
+                        if ( loadedScene != null )
+                            prim.Children.Add(loadedScene.Root);
                     }
                 }
             }
-
-            // recurse - maybe limit depth?
-            foreach (USDPrim child in prim.Children)
-                expand_references(child, options);
         }
+        static void collect_references(USDPrim prim, ReadOptions options, 
+            HashSet<USDPrim> processed, HashSet<string> newReferencePaths,
+            List<(string,USDPrim)> primsToUpdate, Action<string, object?>? warningCallback)
+        {
+            if (processed.Contains(prim) == false) {
+                foreach (USDAttrib attrib in prim.Attribs) {
+                    if (attrib.USDType != EUSDType.ReferenceListOp || !(attrib.Data is USDReferenceListOp))
+                        continue;
+                    USDReferenceListOp listOp = (USDReferenceListOp)attrib.Data;
+                    if (listOp.header.HasDeletedItems) {
+                        warningCallback?.Invoke("collect_references: DeletedItems ListOp currently not supported - ignoring", null);
+                        continue;
+                    }
+                    foreach (USDReference reference in listOp.references) {
+                        string filePath = System.IO.Path.Combine(options.BaseFilePath, reference.assetPath);
+                        if (System.IO.File.Exists(filePath)) {
+                            newReferencePaths.Add(filePath);
+                            primsToUpdate.Add(new(filePath, prim));
+                        } else
+                            warningCallback?.Invoke($"reference {filePath} at {prim.Path} does not exist", null);
+                    }
+                }
+                processed.Add(prim);
+            }
+            // recurse to children
+            foreach (USDPrim child in prim.Children) 
+                collect_references(child, options, processed, newReferencePaths, primsToUpdate, warningCallback);
+        }
+        class ReferenceCache
+        {
+            Dictionary<string, USDScene> FileCache = new();
+            
+            public bool TryGetScene(string filePath, out USDScene? scene)
+            {
+                lock (FileCache) {
+                    return FileCache.TryGetValue(filePath, out scene);
+                }
+            }
+            public void AddScene(string filePath, USDScene scene)
+            {
+                lock (FileCache) {
+                    FileCache.Add(filePath, scene);
+                }
+            }
+        }
+
 
 
         /// <summary>
@@ -894,10 +964,10 @@ namespace g3
 
                 USDAttrib? targetAttrib = applyToPrim.FindAttribByName(overAttrib.Name);
                 if (targetAttrib != null) {
-                    Debug.WriteLine($"{referenceDefPath}: replacing {targetAttrib} with {overAttrib}");
+                    //Debug.WriteLine($"{referenceDefPath}: replacing {targetAttrib} with {overAttrib}");
                     applyToPrim.ReplaceAttrib(targetAttrib, overAttrib);
                 } else {
-                    Debug.WriteLine($"{referenceDefPath}: adding {targetAttrib} with {overAttrib}");
+                    //Debug.WriteLine($"{referenceDefPath}: adding {targetAttrib} with {overAttrib}");
                     applyToPrim.AddAttrib(overAttrib);      // is this allowed??
                 }
             }
@@ -920,6 +990,51 @@ namespace g3
             }
             return (null,null);
         }
+
+
+
+        public class USDReader
+        {
+            public event ParsingMessagesHandler? warningEvent;
+
+            public bool ExpandReferences = false;
+            public bool ApplyOvers = false;
+
+            public IOReadResult Read(string filename, ReadOptions options, out USDScene? Scene)
+            {
+                Scene = null;
+                try {
+                    using (FileStream stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                        return ReadFile(stream, options, out Scene);
+                    }
+                } catch (Exception e) {
+                    return new IOReadResult(IOCode.FileAccessError, "Could not open file " + filename + " for reading : " + e.Message);
+                }
+            }
+
+            public IOReadResult ReadFile(Stream stream, ReadOptions options, out USDScene? scene)
+            {
+                bool bIsBinary = false;
+                using (BinaryReader tmpReader = new BinaryReader(stream, Encoding.Default, true)) {
+                    byte[] header = tmpReader.ReadBytes(8);
+                    bIsBinary = (Encoding.ASCII.GetString(header) == "PXR-USDC");
+                }
+                stream.Position = 0;
+
+                if (bIsBinary) {
+                    USDCReader binaryReader = new USDCReader();
+                    binaryReader.ExpandReferences = this.ExpandReferences;
+                    binaryReader.ApplyOvers = this.ApplyOvers;
+                    binaryReader.warningEvent += warningEvent;
+                    return binaryReader.Read(new BinaryReader(stream), options, out scene);
+                } else {
+                    USDAReader asciiReader = new USDAReader();
+                    asciiReader.warningEvent += warningEvent;
+                    return asciiReader.Read(new StreamReader(stream), options, out scene);
+                }
+            }
+        }
+
     }
 
 

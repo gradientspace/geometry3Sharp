@@ -23,6 +23,8 @@ namespace g3
         public IOReadResult Read(BinaryReader reader, ReadOptions options, IMeshBuilder builder)
         {
             USDCReader usdReader = new USDCReader();
+            usdReader.ExpandReferences = true;
+            usdReader.ApplyOvers = true;
             usdReader.warningEvent += this.warningEvent;
             IOReadResult result = usdReader.Read(reader, options, out USDScene scene);
             if (! result.IsOk)

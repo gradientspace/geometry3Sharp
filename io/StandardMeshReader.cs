@@ -63,8 +63,6 @@ namespace g3
                 Readers.Add(new BinaryG3FormatReader());
                 Readers.Add(new GLTFFormatReader());
                 Readers.Add(new GLBFormatReader());
-                Readers.Add(new USDAFormatReader());
-                Readers.Add(new USDCFormatReader());
                 Readers.Add(new USDFormatReader());
             }
         }
@@ -420,62 +418,10 @@ namespace g3
     }
 
 
-    // MeshFormatReader impl for USDA
-    public class USDAFormatReader : MeshFormatReader
-    {
-        public List<string> SupportedExtensions { get; set; } = ["usda"];
-
-        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
-        {
-            try {
-                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-                    return ReadFile(stream, builder, options, messages);
-                }
-            } catch (Exception e) {
-                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
-            }
-        }
-
-        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
-        {
-            USDMeshReader reader = new USDMeshReader();
-            reader.warningEvent += messages;
-            IOReadResult result = reader.Read(new StreamReader(stream), options, builder);
-            return result;
-        }
-    }
-
-
-    // MeshFormatReader impl for USDC
-    public class USDCFormatReader : MeshFormatReader
-    {
-        public List<string> SupportedExtensions { get; set; } = ["usdc"];
-
-        public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
-        {
-            try {
-                using (FileStream stream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-                    return ReadFile(stream, builder, options, messages);
-                }
-            } catch (Exception e) {
-                return new IOReadResult(IOCode.FileAccessError, "Could not open file " + sFilename + " for reading : " + e.Message);
-            }
-        }
-
-        public IOReadResult ReadFile(Stream stream, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
-        {
-            USDMeshReader reader = new USDMeshReader();
-            reader.warningEvent += messages;
-            IOReadResult result = reader.Read(new BinaryReader(stream), options, builder);
-            return result;
-        }
-    }
-
-
     // MeshFormatReader impl for USD - forwards to USDA or USDC
     public class USDFormatReader : MeshFormatReader
     {
-        public List<string> SupportedExtensions { get; set; } = ["usd"];
+        public List<string> SupportedExtensions { get; set; } = ["usd", "usdc", "usda"];
 
         public IOReadResult ReadFile(string sFilename, IMeshBuilder builder, ReadOptions options, ParsingMessagesHandler messages)
         {
