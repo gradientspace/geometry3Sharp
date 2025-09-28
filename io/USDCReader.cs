@@ -14,8 +14,27 @@ using static g3.USDFile;
 
 namespace g3
 {
+    /// <summary>
+    /// binary USD (.usdc) file reader
+    /// Constructs a USDScene instance
+    /// 
+    /// Enable USDScene.ExpandReferences to recursively open referenced files and append to the USDScene
+    /// Enable USDScene.ApplyOvers to apply 'over' sections to loaded referenced files  (basic composition support)
+    /// 
+    /// This reader is not complete. See USDFile for many higher-level limitations.
+    /// For USDC specifically:
+    ///    - half-float fields are not reconstructed (need a half-float type in C#/g3)
+    ///    - vec2/3/4i fields not currently reconstructed  (no good reason, wouldn't be hard)
+    ///    - int64/uint64 arrays not currently reconstructed (need 64-bit version of decode_packed_integers)
+    ///    - all listops except ReferenceListOp are ignored
+    ///    - various other field-types and metadata types not correctly parsed, are ignored, etc
+    /// 
+    /// </summary>
     public partial class USDCReader
     {
+        // the PDF in this issue is helpful:
+        // https://github.com/PixarAnimationStudios/OpenUSD/pull/2086
+
         // connect to this to get warning messages
         public event ParsingMessagesHandler? warningEvent;
 
@@ -84,6 +103,8 @@ namespace g3
                 }
             }
 
+            // convert internal USDC_ types to USDFile.USDxyz types
+
             Scene = BuildScene();
             //debug_print("", scene.Root);
 
@@ -104,7 +125,6 @@ namespace g3
         protected USDPath[] Paths = [];
         protected USDCSpec[] Specs = [];
 
-        protected string USDC_Header = "PXR-USDC";
 
         protected static Dictionary<string, EUSDType> typeNameToType = build_typeName_dictionary();
         static Dictionary<string, EUSDType> build_typeName_dictionary()
@@ -120,8 +140,6 @@ namespace g3
                 return type;
             return EUSDType.Unknown;
         }
-
-
         USDCSpec? find_spec_by_path(string Path)
         {
             return Array.Find(Specs, (spec) => { return spec.Path.FullPath == Path; });
@@ -150,6 +168,10 @@ namespace g3
                 debug_print(child_indent, childPrim);
         }
 
+
+        /////////////////////////////////////
+        /// USDScene construction
+        /////////////////////////////////////
 
         USDScene BuildScene()
         {
@@ -275,8 +297,6 @@ namespace g3
         }
 
 
-
-
         USDAttrib make_attribute(USDPrim prim, USDCSpec attribSpec)
         {
             USDAttrib attrib = new();
@@ -324,6 +344,12 @@ namespace g3
         }
 
 
+        /////////////////////////////////////
+        /// USDC Header-related
+        /////////////////////////////////////
+
+
+        protected const string USDC_Header = "PXR-USDC";
 
         // struct _TableOfContents in pxr\usd\sdf\crateFile.h
         protected struct USDC_TableOfContents
@@ -381,8 +407,12 @@ namespace g3
         }
 
 
+        /////////////////////////////////////
+        /// internal USDC data structures
+        /////////////////////////////////////
 
-        // crateDataTypes.h
+
+        // matches values in crateDataTypes.h
         protected enum USDCDataType
         {
             UnknownInvalid = 0,
@@ -466,11 +496,6 @@ namespace g3
             return (EUSDType)(int)dataType;
         }
 
-
-
-
-
-
         protected struct USDCValueRep
         {
             const ulong IsArrayMask = (ulong)1 << 63;
@@ -509,7 +534,6 @@ namespace g3
             }
         }
 
-
         protected struct USDCReference
         {
             public int assetPathStringIndex;
@@ -518,9 +542,46 @@ namespace g3
             public object? customData;
         }
 
+        public enum ESpecType
+        {
+            Unknown = 0,
+
+            Attribute = 1,
+            Connection = 2,
+            Expression = 3,  // pixar internal
+            Mapper = 4,      // pixar internal
+            Arg = 5,         // pixar internal
+            Prim = 6,
+            PsuedoRoot = 7,
+            Relationship = 8,
+            RelationshipTarget = 9,
+            Variant = 10,
+            VariantSet = 11
+        }
+
+        protected class USDCSpec
+        {
+            public ESpecType SpecType;
+            public USDPath Path;
+            public USDCField[] Fields;
+
+            public USDCSpec(ESpecType specType, USDPath path, USDCField[] fields)
+            {
+                SpecType=specType;
+                Path=path;
+                Fields=fields;
+            }
+
+            public override string ToString() {
+                return Path.ToString();
+            }
+        }
 
 
 
+        /////////////////////////////////////
+        /// Section readers
+        /////////////////////////////////////
 
 
         protected List<string> ReadSection_Tokens(BinaryReader reader, USDC_Section section)
@@ -565,9 +626,6 @@ namespace g3
             }
             return indices;
         }
-
-
-
 
 
         protected List<USDCField>? ReadSection_Fields(BinaryReader reader, USDC_Section section)
@@ -626,7 +684,6 @@ namespace g3
         }
 
 
-
         protected USDPath[] ReadSection_Paths(BinaryReader reader, USDC_Section section)
         {
             reader.BaseStream.Position = (long)section.Offset;
@@ -657,7 +714,6 @@ namespace g3
             AssembleChildPaths(0, RootPath, path_indices, element_token_indices, jump_indices, PathSet);
             return PathSet;
         }
-
 
 
         protected void AssembleChildPaths(
@@ -709,44 +765,6 @@ namespace g3
             } while (bContinue);
         }
 
-
-
-        public enum ESpecType
-        {
-            Unknown = 0,
-
-            Attribute = 1,
-            Connection = 2,
-            Expression = 3,  // pixar internal
-            Mapper = 4,      // pixar internal
-            Arg = 5,         // pixar internal
-            Prim = 6,
-            PsuedoRoot = 7,
-            Relationship = 8,
-            RelationshipTarget = 9,
-            Variant = 10,
-            VariantSet = 11
-        }
-
-        protected class USDCSpec
-        {
-            public ESpecType SpecType;
-            public USDPath Path;
-            public USDCField[] Fields;
-
-            public USDCSpec(ESpecType specType, USDPath path, USDCField[] fields)
-            {
-                SpecType=specType;
-                Path=path;
-                Fields=fields;
-            }
-
-            public override string ToString() {
-                return Path.ToString();
-            }
-        }
-
-
         protected USDCSpec[] ReadSection_Specs(BinaryReader reader, USDC_Section section)
         {
             reader.BaseStream.Position = (long)section.Offset;
@@ -797,6 +815,11 @@ namespace g3
 
 
 
+
+        /////////////////////////////////////
+        /// top-level field handler
+        /////////////////////////////////////
+
         private void parse_field(BinaryReader reader, USDCField field)
         {
             // inline array is always an empty array
@@ -815,8 +838,6 @@ namespace g3
                     break;
 
 
-                case USDCDataType.StringVector:
-                    throw new NotImplementedException();
                 case USDCDataType.String: {
                         Util.gDevAssert(field.IsArray == false);
                         int str_idx = (int)field.ValueRep.PayloadData;
@@ -829,14 +850,6 @@ namespace g3
                 case USDCDataType.TokenVector:
                     parse_field_token(reader, field);
                     break;
-
-                case USDCDataType.Half:
-                case USDCDataType.Vec2h:
-                case USDCDataType.Vec3h:
-                case USDCDataType.Vec4h:
-                case USDCDataType.Quath:
-                    // todo need half-float implementation
-                    throw new NotImplementedException();
 
                 case USDCDataType.Bool:
                     parse_field_bool(reader, field);
@@ -910,6 +923,38 @@ namespace g3
                     parse_field_referenceListOp(reader, field);
                     break;
 
+
+
+                case USDCDataType.Half:
+                case USDCDataType.Vec2h:
+                case USDCDataType.Vec3h:
+                case USDCDataType.Vec4h:
+                case USDCDataType.Quath:
+                case USDCDataType.Vec2i:
+                case USDCDataType.Vec3i:
+                case USDCDataType.Vec4i:
+                case USDCDataType.TokenListOp:
+                case USDCDataType.StringListOp:
+                case USDCDataType.PathListOp:
+                case USDCDataType.IntListOp:
+                case USDCDataType.Int64ListOp:
+                case USDCDataType.UIntListOp:
+                case USDCDataType.UInt64ListOp:
+                case USDCDataType.Permission:
+                case USDCDataType.TimeSamples:
+                case USDCDataType.Payload:
+                case USDCDataType.LayerOffsetVector:
+                case USDCDataType.StringVector:
+                case USDCDataType.ValueBlock:
+                case USDCDataType.Value:
+                case USDCDataType.UnregisteredValue:
+                case USDCDataType.UnregisteredValueListOp:
+                case USDCDataType.PayloadListOp:
+                case USDCDataType.TimeCode:
+                case USDCDataType.PathExpression:
+                case USDCDataType.Relocates:
+                case USDCDataType.Spline:
+                case USDCDataType.AnimationBlock:
                 default:
                     warningEvent?.Invoke($"unhandled field type {field.FieldType} in parse_field", null);
                     break;

@@ -12,15 +12,43 @@ using System.IO;
 
 namespace g3
 {
+    /// <summary>
+    /// Top-level types and utlities for g3 USD support.
+    /// This is not a full USD implementation. The intention here is to make it 
+    /// possible to extract mesh geometry from USD files. To do that, quite a bit of 
+    /// USD needs to be supported. However, there are many limitations, and many
+    /// aspects of USD scene composition are not supported.
+    /// 
+    /// Both USDC and USDA are supported (via USDCReader and USDAReader). Top-level USDReader
+    /// will automatically use whichever is appropriate. Support is *mostly* the same between
+    /// USDA and USDC - however USDA is much less tested. A notable difference is anything to
+    /// do with half-floats - in USDA these become floats, in USDC they are not supported. 
+    /// 
+    /// Here are some of the many limitations:
+    ///   - no support for 'class' (only 'def' and 'over')
+    ///   - no support for any listops except references. No delete support, there.
+    ///   - no support for 'payloads'
+    ///   - no support for timesamples, timecodes, splines, animations
+    ///   - probably many other missing or incorrect aspects - USD is impenetrable...
+    /// 
+    /// Note that in USDA, the USDPrim/USDAttrib's may contain some additional data in unparsed-text form.
+    /// In USDC, the unhandled binary blocks are ignored.
+    /// 
+    /// </summary>
     public static class USDFile
     {
         // notes on USD transform order, matrix storage, and coordinate systems:
         // https://openusd.org/dev/api/usd_geom_page_front.html#UsdGeom_LinAlgBasics
+        //
+        // common USD schemas - explains what fields are for:
+        // https://lucascheller.github.io/VFX-UsdSurvivalGuide/pages/production/schemas.html
+
 
 
         /// <summary>
         /// USDScene is what results from parsing a USD file. 
-        /// Conceivably this is analogous to a USD Stage.
+        /// Conceivably this is analogous to a USD Stage?
+        /// Effectively just the Root Prim...
         /// </summary>
         public class USDScene
         {

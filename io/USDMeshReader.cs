@@ -8,13 +8,22 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using static g3.GLTFFile;
 using static g3.USDFile;
 
 #nullable enable
 
 namespace g3
 {
+    /// <summary>
+    /// Read USD binary/ascii files and extract scene as meshes.
+    /// Currently this bakes transforms into the mesh vertex positions.
+    /// Currently one output Mesh per USDMesh.
+    /// Currently the minimal scene-composition support (ie loading references, applying overs) is hardcoded-enabled.
+    /// Not all xform types are currently supported
+    /// support for colors, normals and uvs needs work (currently not all variations supported)
+    /// 
+    /// (also lots of potential limitations inherited from USDFile/USDCReader/USDAReader)
+    /// </summary>
     public partial class USDMeshReader : IMeshReader
     {
         // connect to this to get warning messages
@@ -61,9 +70,6 @@ namespace g3
                 if ( xformOpOrder.Data is string[] order ) 
                     transformOps = order;
             }
-
-            //if (prim.Path.FullPath.Contains("Crate"))
-            //    Debugger.Break();
 
             // now find the referenced transforms and accumulate them
             foreach (string op in transformOps) {
@@ -117,6 +123,12 @@ namespace g3
 
         protected Matrix4d ExtractTransform(USDAttrib xformOp, bool bInvert)
         {
+            // todo - various types of transform not supported:
+            // see https://openusd.org/dev/api/class_usd_geom_xformable.html
+            // note there seems to be some kind of convention where
+            // you might see (eg) xformOp:translate:maya (etc)
+            // so maybe we only want to check for starts-with?
+
             if (xformOp.USDType == EUSDType.Matrix4d && xformOp.IsArray == false) {
                 if (xformOp.Value.data is matrix4d m) {
                     // note: USD has a very bizarre definition of "row-order", because they assume

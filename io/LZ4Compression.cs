@@ -72,6 +72,9 @@ namespace g3
         /// <summary>
         /// if uncompressed size is not known, we can decompress into a dynamically-growing buffer.
         /// Implemented using DVector so growing does not involve memory-copies
+        /// 
+        /// todo: could probably combine w/ above by making the two loops that update Uncompressed
+        /// be functions...might hurt speed though, unless they get inlined by jit
         /// </summary>
         public static byte[] DecompressLZ4BlockFormat(Span<byte> compressedData)
         {
