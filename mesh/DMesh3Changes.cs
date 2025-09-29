@@ -185,6 +185,7 @@ namespace g3
 
         protected DVector<int> RemovedT;
         protected DVector<Index4i> Triangles;
+        protected bool RemoveIsolatedVertices = true;
 
         public Action<IEnumerable<int>,IEnumerable<int>> OnApplyF;
         public Action<IEnumerable<int>, IEnumerable<int>> OnRevertF;
@@ -194,12 +195,12 @@ namespace g3
         }
 
 
-        public void InitializeFromApply(DMesh3 mesh, IEnumerable<int> triangles)
-        {
+        public void InitializeFromApply(DMesh3 mesh, IEnumerable<int> triangles, bool removeIsolatedVertices = true) {
+            RemoveIsolatedVertices = removeIsolatedVertices;
             initialize_buffers(mesh);
             bool has_groups = mesh.HasTriangleGroups;
 
-            foreach ( int tid in triangles ) { 
+            foreach ( int tid in triangles ) {
                 if (!mesh.IsTriangle(tid))
                     continue;
 
@@ -213,7 +214,7 @@ namespace g3
                 RemovedT.Add(tid);
                 Triangles.Add(tri);
 
-                MeshResult result = mesh.RemoveTriangle(tid, true, false);
+                MeshResult result = mesh.RemoveTriangle(tid, bRemoveIsolatedVertices: RemoveIsolatedVertices, bPreserveManifold: false);
                 if (result != MeshResult.Ok)
                     throw new Exception("RemoveTrianglesMeshChange.Initialize: exception in RemoveTriangle(" + tid.ToString() + "): " + result.ToString());
                 Util.gDevAssert(mesh.IsVertex(tv.a) == va && mesh.IsVertex(tv.b) == vb && mesh.IsVertex(tv.c) == vc);
@@ -222,8 +223,9 @@ namespace g3
 
 
 
-        public void InitializeFromExisting(DMesh3 mesh, IEnumerable<int> remove_t)
+        public void InitializeFromExisting(DMesh3 mesh, IEnumerable<int> remove_t, bool removeIsolatedVertices = true)
         {
+            RemoveIsolatedVertices = removeIsolatedVertices;
             initialize_buffers(mesh);
             bool has_groups = mesh.HasTriangleGroups;
 
@@ -264,7 +266,7 @@ namespace g3
             int N = RemovedT.size;
             for ( int i = 0; i< N; ++i) {
                 int tid = RemovedT[i];
-                MeshResult result = mesh.RemoveTriangle(RemovedT[i], true, false);
+                MeshResult result = mesh.RemoveTriangle(RemovedT[i], bRemoveIsolatedVertices: RemoveIsolatedVertices, bPreserveManifold: false);
                 if (result != MeshResult.Ok)
                     throw new Exception("RemoveTrianglesMeshChange.Apply: error in RemoveTriangle(" + tid.ToString() + "): " + result.ToString());
             }

@@ -37,3 +37,7 @@ bin
 obj
 .vs
 *.meta
+
+#Rider
+
+.idea
