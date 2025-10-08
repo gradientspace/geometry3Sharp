@@ -4,6 +4,10 @@ I have not been able to work on or maintain geometry3Sharp for the past few year
 
 https://github.com/NewWheelTech/geometry4Sharp
 
+There is also a dedicated and actively maintained Unity only branch developed for the Virgis Project at
+
+https://github.com/ViRGIS-Team/ViRGiS-Geometry
+
 # geometry3Sharp
 
 Open-Source (Boost-license) C# library for geometric computing. 
