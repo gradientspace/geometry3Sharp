@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 #if G3_USING_UNITY
 using UnityEngine;
@@ -8,6 +11,7 @@ using UnityEngine;
 namespace g3
 {
     // mostly ported from WildMagic5 Wm5Quaternion, from geometrictools.com
+    [JsonConverter(typeof(QuaterniondJsonConverter))]
     public struct Quaterniond
     {
         // note: in Wm5 version, this is a 4-element array stored in order (w,x,y,z).
@@ -423,5 +427,44 @@ namespace g3
         }
 #endif
 
+    }
+
+
+
+    // json read and write for Vector3d type
+    public class QuaterniondJsonConverter : JsonConverter<g3.Quaterniond>
+    {
+#nullable enable
+        public override g3.Quaterniond Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            JsonNode? node = JsonNode.Parse(ref reader);
+            if (node == null)
+                return Quaterniond.Identity;
+
+            string? value = node["Quaterniond"]?.GetValue<string>() ?? null;
+            if (value == null)
+                return Quaterniond.Identity;
+
+            // todo this could probably be done more efficiently...
+            string[] values = value.Split(' ', StringSplitOptions.TrimEntries);
+            if (values.Length != 4)
+                return Quaterniond.Identity;
+
+            double x = 0, y = 0, z = 0, w = 0;
+            double.TryParse(values[0], out x);
+            double.TryParse(values[1], out y);
+            double.TryParse(values[2], out z);
+            double.TryParse(values[3], out w);
+            return new Quaterniond(x, y, z, w);
+        }
+
+
+        public override void Write(Utf8JsonWriter writer, g3.Quaterniond value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("Quaterniond", $"{value.x} {value.y} {value.z} {value.w}");
+            writer.WriteEndObject();
+        }
+#nullable disable
     }
 }

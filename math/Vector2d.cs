@@ -1,10 +1,12 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace g3
 {
+    [JsonConverter(typeof(Vector2dJsonConverter))]
     public struct Vector2d : IComparable<Vector2d>, IEquatable<Vector2d>
     {
         public double x;
@@ -447,6 +449,43 @@ namespace g3
             info.mDimension = 2;
             info.mExtremeCCW = (maxSign > (double)0);
         }
+    }
+
+
+
+    // json read and write for Vector3d type
+    public class Vector2dJsonConverter : JsonConverter<g3.Vector2d>
+    {
+#nullable enable
+        public override g3.Vector2d Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            JsonNode? node = JsonNode.Parse(ref reader);
+            if (node == null)
+                return Vector2d.Zero;
+
+            string? value = node["Vector2d"]?.GetValue<string>() ?? null;
+            if (value == null)
+                return Vector2d.Zero;
+
+            // todo this could probably be done more efficiently...
+            string[] values = value.Split(' ', StringSplitOptions.TrimEntries);
+            if (values.Length != 2)
+                return Vector2d.Zero;
+
+            double x = 0, y = 0;
+            double.TryParse(values[0], out x);
+            double.TryParse(values[1], out y);
+            return new Vector2d(x, y);
+        }
+
+
+        public override void Write(Utf8JsonWriter writer, g3.Vector2d value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("Vector2d", $"{value.x} {value.y}");
+            writer.WriteEndObject();
+        }
+#nullable disable
     }
 
 }
