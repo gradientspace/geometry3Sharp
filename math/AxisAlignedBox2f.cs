@@ -241,6 +241,12 @@ namespace g3
             Min.Add(vTranslate);
             Max.Add(vTranslate);
         }
+		public AxisAlignedBox2f Translated(Vector2f Translation) {
+            return new AxisAlignedBox2f(this.Min + Translation, this.Max + Translation);
+		}
+		public AxisAlignedBox2f Translated(float dx, float dy) {
+            return new AxisAlignedBox2f(this.Min.x+dx, this.Min.y+dy, this.Max.x+dx, this.Max.y+dy);
+		}
 
         public void MoveMin(Vector2f vNewMin) {
             Max.x = vNewMin.x + (Max.x - Min.x);
