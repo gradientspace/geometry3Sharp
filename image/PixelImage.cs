@@ -74,7 +74,30 @@ namespace g3
             ProcessFunc(data);
         }
 
+        public byte[] ExtractBytes(bool bCreateCopy = true)
+        {
+            if (bCreateCopy) {
+                byte[] newData = new byte[data.Length];
+                Array.Copy(data, newData, data.Length);
+                return newData;
+            }
+            byte[] returnData = data;
+            initialize(1, 1, Format);
+            return returnData;
+        }
 
+
+        public void UpdateFromBytes(byte[] NewRGBABytes, bool bTakeOwnership = false)
+        {
+            if (Format != EPixelFormat.RGBA8 || Compression != ECompression.Uncompressed )
+                throw new Exception("[PixelImage.UpdateFromBytes] image must be Uncompressed RGBA8");
+            if (Width*Height*4 != NewRGBABytes.Length)
+                throw new Exception("[PixelImage.UpdateFromBytes] Input byte array is of the incorrect length");
+            if (bTakeOwnership)
+                this.data = NewRGBABytes;
+            else
+                Array.Copy(NewRGBABytes, this.data, NewRGBABytes.Length);
+        }
 
 
         public static int ChannelCount(EPixelFormat format)
