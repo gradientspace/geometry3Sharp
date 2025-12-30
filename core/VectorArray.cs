@@ -89,6 +89,14 @@ namespace g3
             for (int i = 0; i < Count; ++i)
                 yield return this[i];
         }
+
+        public Vector3d[] AsArray()
+        {
+            Vector3d[] values = new Vector3d[Count];
+            for (int i = 0; i < Count; ++i)
+                values[i] = new Vector3d(array[3 * i], array[3 * i + 1], array[3 * i + 2]);
+            return values;
+        }
     };
 
 
@@ -229,6 +237,13 @@ namespace g3
         public IEnumerable<Vector2d> AsVector2d() {
             for (int i = 0; i < Count; ++i)
                 yield return this[i];
+        }
+
+        public Vector2d[] AsArray() {
+            Vector2d[] values = new Vector2d[Count];
+            for (int i = 0; i < Count; ++i)
+                values[i] = new Vector2d(array[2 * i], array[2 * i + 1]);
+            return values;
         }
     };
     public class VectorArray2f : VectorArray2<float>

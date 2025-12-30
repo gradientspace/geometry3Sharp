@@ -289,7 +289,9 @@ namespace g3
         public override string ToString() {
             return string.Format("{0:F8} {1:F8}", x, y);
         }
-
+        public string ToString(string fmt) {
+            return string.Format("{0} {1}", x.ToString(fmt), y.ToString(fmt));
+        }
 
         public static implicit operator Vector2d(Vector2f v)
         {
@@ -449,6 +451,19 @@ namespace g3
             info.mDimension = 2;
             info.mExtremeCCW = (maxSign > (double)0);
         }
+
+
+        //! support x,y,z and x y z
+        public static bool TryParse(string s, out Vector2d result)
+        {
+            result = default;
+            if (MathUtil.TryParseRealVector(s, 2, out Vector4d result4)) {
+                result = new Vector2d(result4.x, result4.y);
+                return true;
+            }
+            return false;
+        }
+
     }
 
 
