@@ -652,13 +652,13 @@ namespace g3
         /// <summary>
         /// Iterate from 0 to (nMax-1) using prime-modulo, so we see every index once, but not in-order
         /// </summary>
-        public static IEnumerable<int> ModuloIteration(int nMaxExclusive, int nPrime = 31337)
+        public static IEnumerable<int> ModuloIteration(int nMaxExclusive, ulong nPrime = 2147483647)
         {
-            int i = 0;
+            ulong i = 0;
             bool done = false;
             while (done == false) {
-                yield return i;
-                i = (i + nPrime) % nMaxExclusive;
+                yield return (int)i;
+                i = (i + nPrime) % (ulong)nMaxExclusive;
                 done = (i == 0);
             }
         }
