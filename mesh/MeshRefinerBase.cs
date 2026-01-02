@@ -71,6 +71,14 @@ namespace g3
                 return n0.Normalized.Dot(n1.Normalized);
             }
         }
+        public static double edge_flip_metric(ref Vector3d n0, ref Vector3d n1, double edge_flip_tol)
+        {
+            if (edge_flip_tol == 0) {
+                return n0.Dot(n1);
+            } else {
+                return n0.Normalized.Dot(n1.Normalized);
+            }
+        }
 
 
         /// <summary>
@@ -81,7 +89,7 @@ namespace g3
         /// This only checks one-ring of vid, so you have to call it twice,
         /// with vid and vother reversed, to check both one-rings
         /// </summary>
-        protected bool collapse_creates_flip_or_invalid(int vid, int vother, ref Vector3d newv, int tc, int td)
+        public static bool collapse_creates_flip_or_invalid(DMesh3 mesh, int vid, int vother, ref Vector3d newv, int tc, int td, double edge_flip_tol = 0)
         {
             Vector3d va = Vector3d.Zero, vb = Vector3d.Zero, vc = Vector3d.Zero;
             foreach (int tid in mesh.VtxTrianglesItr(vid)) {
@@ -95,13 +103,13 @@ namespace g3
                 double sign = 0;
                 if (curt.a == vid) {
                     Vector3d nnew = (vb - newv).Cross(vc - newv);
-                    sign = edge_flip_metric(ref ncur, ref nnew);
+                    sign = edge_flip_metric(ref ncur, ref nnew, edge_flip_tol);
                 } else if (curt.b == vid) {
                     Vector3d nnew = (newv - va).Cross(vc - va);
-                    sign = edge_flip_metric(ref ncur, ref nnew);
+                    sign = edge_flip_metric(ref ncur, ref nnew, edge_flip_tol);
                 } else if (curt.c == vid) {
                     Vector3d nnew = (vb - va).Cross(newv - va);
-                    sign = edge_flip_metric(ref ncur, ref nnew);
+                    sign = edge_flip_metric(ref ncur, ref nnew, edge_flip_tol);
                 } else
                     throw new Exception("should never be here!");
                 if (sign <= edge_flip_tol)
@@ -109,7 +117,10 @@ namespace g3
             }
             return false;
         }
-
+        protected bool collapse_creates_flip_or_invalid(int vid, int vother, ref Vector3d newv, int tc, int td)
+        {
+            return collapse_creates_flip_or_invalid(this.mesh, vid, vother, ref newv, tc, td, this.edge_flip_tol);
+        }
 
 
         /// <summary>

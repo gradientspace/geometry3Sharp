@@ -58,6 +58,13 @@ namespace g3
                 return 0;
         }
 
+        // project point p onto plane
+        public readonly Vector3d Project(Vector3d p)
+        {
+            double d = Normal.Dot(p) - Constant;
+            return p - d * Normal;
+        }
+
     }
 
 
