@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace g3
 {
@@ -141,6 +140,8 @@ namespace g3
 				Vector3d newPos = (1 - t) * Mesh.GetVertex(ev.a) + (t) * Mesh.GetVertex(ev.b);
 				Mesh.SetVertex(splitInfo.vNew, newPos);
 
+                // TODO something kinda wrong here because OnCutEdges will end up including interior edges too...
+                // (possibly due to later cuts?). Probably should be doing this triangle-based, not edge-based...
 				NewEdges.Add(splitInfo.eNewBN);
 				NewEdges.Add(splitInfo.eNewCN);  OnCutEdges.Add(splitInfo.eNewCN);
 				if (splitInfo.eNewDN != DMesh3.InvalidID) {
@@ -158,10 +159,15 @@ namespace g3
 					Mesh.RemoveVertex(vid, true, false);
 			}
 
-            // collapse degenerate edges if we got em
-            if (CollapseDegenerateEdgesOnCut) {
-                collapse_degenerate_edges(OnCutEdges, ZeroEdges);
-            }
+            // This is older code that collapses more than just on-cut boundary edges, it
+            // also collapses interior edges connected to the cut. Possibly this was an
+            // unintended bug, or possibly it was desired behavior...tbh I'm not sure.
+            // Might be worth revisiting as it does seem like it would handle degenerate
+            // edges connected *to* the cut loops/spans, and not just along them, which
+            // might be useful in some cases?
+            //if (CollapseDegenerateEdgesOnCut) {
+            //    collapse_degenerate_edges(OnCutEdges, ZeroEdges);
+            //}
 
 
 			// ok now we extract boundary loops, but restricted
@@ -186,12 +192,163 @@ namespace g3
 				CutLoopsFailed = true;
 			}
 
+            // if we want degenerate edge collapses, do that now, it's expensive though...
+            if (CollapseDegenerateEdgesOnCut)
+                do_simplify_cut_edges();
+
             return true;
 
 		} // Cut()
 
 
 
+        protected void do_simplify_cut_edges()
+        {
+            // TODO: can't we do this per-loop/span? no reason to do them all at once...
+
+            // have to rebuild list of all cut edges
+            HashSet<int> AllCutEdges = new();
+            foreach (EdgeLoop loop in CutLoops) {
+                foreach (int eid in loop.Edges)
+                    AllCutEdges.Add(eid);
+            }
+            foreach (EdgeSpan span in CutSpans) {
+                foreach (int eid in span.Edges)
+                    AllCutEdges.Add(eid);
+            }
+
+            // run simplification
+            int NumCollapsed = simplify_cut_edges(AllCutEdges);
+            if (NumCollapsed == 0)
+                return;
+
+            // have to rebuild boundary loops/spans (hopefully this works...?)
+            Func<int, bool> CutEdgeFilter = (eid) => {
+                return AllCutEdges.Contains(eid);
+            };
+            try {
+                MeshBoundaryLoops loops = new MeshBoundaryLoops(Mesh, false);
+                loops.EdgeFilterF = CutEdgeFilter;
+                loops.Compute();
+
+                CutLoops = loops.Loops;
+                CutSpans = loops.Spans;
+                CutLoopsFailed = false;
+                FoundOpenSpans = CutSpans.Count > 0;
+
+            } catch {
+                CutLoops = new List<EdgeLoop>();
+                CutLoopsFailed = true;
+            }
+        }
+
+
+        // incrementally collapse edges along the cut (ie must be boundary edges),
+        // trying to achieve a min-edge-length requirement
+        protected int simplify_cut_edges(HashSet<int> OnCutEdges)
+        {
+            var edge_len_func = (int eid) => { Index2i ev = Mesh.GetEdgeV(eid); return Mesh.GetVertex(ev.a).Distance(Mesh.GetVertex(ev.b)); };
+
+            int[] cur_edges = new int[OnCutEdges.Count];
+            double[] edge_lengths = new double[OnCutEdges.Count];
+            Vector3d a = Vector3d.Zero, b = Vector3d.Zero;
+            int collapsed = 0, total_num_collapsed = 0;
+
+            // The are two stages, each with one or more iterations
+            int stage_num = 0;
+            do {
+                collapsed = 0;
+
+                // construct list of edges to process, sorted by increasing edge length
+                // (if collapsed == 0 on last do-loop iter, we don't need to do this again...)
+                int N = 0;
+                foreach (int eid in OnCutEdges)
+                    cur_edges[N++] = eid;
+                for (int i = 0; i < N; ++i)
+                    edge_lengths[i] = edge_len_func(cur_edges[i]);
+                Array.Sort(edge_lengths, cur_edges, 0, N);
+
+                for ( int idx = 0; idx < N; ++idx) { 
+                    int eid = cur_edges[idx];
+                    //Debug.Assert(Mesh.IsEdge(eid));
+                    //Debug.Assert(Mesh.IsBoundaryEdge(eid));
+
+                    // recalc edge length in case it changed due to adjacent collapses...
+                    edge_lengths[idx] = edge_len_func(eid);
+                    double eid_len = edge_lengths[idx];
+
+                    // probably should break here at some point...once edges get very large
+                    // we aren't likely to encounter any further collapses
+                    if (edge_lengths[idx] > DegenerateEdgeTol)
+                        continue;
+
+                    Index2i ev = Mesh.GetEdgeV(eid);
+                    Index2i et = Mesh.GetEdgeT(eid);
+                    a = Mesh.GetVertex(ev.a); b = Mesh.GetVertex(ev.b);
+                    Vector3d midpoint = 0.5 * (a+b);
+
+                    // compute current max distance from a/b to connected cut edges (should only be one except in messy situations...)
+                    double max_a_nbr_len = 0;
+                    foreach (int nbr_eid in Mesh.VtxEdgesItr(ev.a)) {
+                        if (nbr_eid == eid || OnCutEdges.Contains(nbr_eid) == false) continue;
+                        double nbr_len = Mesh.GetVertex(Mesh.edge_other_v(nbr_eid, ev.a)).Distance(a);
+                        max_a_nbr_len = Math.Max(max_a_nbr_len, nbr_len);
+                    }
+                    double max_b_nbr_len = 0;
+                    foreach (int nbr_eid in Mesh.VtxEdgesItr(ev.b)) {
+                        if (nbr_eid == eid || OnCutEdges.Contains(nbr_eid) == false) continue;
+                        double nbr_len = Mesh.GetVertex(Mesh.edge_other_v(nbr_eid, ev.b)).Distance(b);
+                        max_b_nbr_len = Math.Max(max_b_nbr_len, nbr_len);
+                    }
+
+                    // compute max edge length that will result if we collapse to a, b, or midpoint
+                    // (these distances are only correct on straight lines...)
+                    double to_a_len = max_b_nbr_len + eid_len;
+                    double to_b_len = max_a_nbr_len + eid_len;
+                    double midpoint_len = Math.Max(max_b_nbr_len+eid_len/2, max_a_nbr_len+eid_len/2);
+
+                    // choose which collapse to do, if we can (disallow normal flips)
+                    // collapse will make one or both adjacent edges larger, we want to limit that but <= tolerance is too strict
+                    // preferentially collapse to the midpoint, this distributes lengths the best
+                    // otherwise collapse to a or to b, this keeps one length the same and the other grows
+                    // in stage 0 we try to control edge lengths, in stage 1 we don't
+
+                    double MaxEdgeTol = 2*DegenerateEdgeTol;
+                    int keep = -1, collapse = -1; Vector3d pos = Vector3d.Zero;
+                    if (midpoint_len < MaxEdgeTol && MeshRefinerBase.collapse_creates_flip_or_invalid(Mesh, ev.a, ev.b, ref midpoint, et.a, et.b) == false) {
+                        keep = ev.a; collapse = ev.b; pos = midpoint;
+                    } else if (to_a_len < MaxEdgeTol && MeshRefinerBase.collapse_creates_flip_or_invalid(Mesh, ev.a, ev.b, ref a, et.a, et.b) == false) {
+                        keep = ev.a; collapse = ev.b; pos = a;
+                    } else if (to_b_len < MaxEdgeTol && MeshRefinerBase.collapse_creates_flip_or_invalid(Mesh, ev.b, ev.a, ref b, et.a, et.b) == false) {
+                        keep = ev.b; collapse = ev.a; pos = b;
+                    } else if (stage_num == 1 && MeshRefinerBase.collapse_creates_flip_or_invalid(Mesh, ev.a, ev.b, ref midpoint, et.a, et.b) == false) {
+                        keep = ev.a; collapse = ev.b; pos = midpoint;
+                    } else if (stage_num == 1 && MeshRefinerBase.collapse_creates_flip_or_invalid(Mesh, ev.b, ev.a, ref midpoint, et.a, et.b) == false) {
+                        keep = ev.b; collapse = ev.a; pos = midpoint;
+                    } else {
+                        continue;       // can't collapse this edge right now...
+                    }
+
+                    // do the collapse
+                    DMesh3.EdgeCollapseInfo collapseInfo;
+                    MeshResult result = Mesh.CollapseEdge(keep, collapse, out collapseInfo);
+                    if (result == MeshResult.Ok) {
+                        Mesh.SetVertex(collapseInfo.vKept, pos);
+                        collapsed++; total_num_collapsed++;
+                        OnCutEdges.Remove(eid);
+                    }
+                }
+                
+                if (collapsed == 0)     // proceed to second stage
+                    stage_num++;
+
+            } while (collapsed != 0 || stage_num < 2);
+
+            return total_num_collapsed;
+        }
+
+
+        // this version is not currently callled - see comment on the commented-out block that calls it
         protected void collapse_degenerate_edges(HashSet<int> OnCutEdges, HashSet<int> ZeroEdges)
         {
             HashSet<int>[] sets = new HashSet<int>[2] { OnCutEdges, ZeroEdges };
