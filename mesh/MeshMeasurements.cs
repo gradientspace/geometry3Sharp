@@ -184,6 +184,67 @@ namespace g3
 
 
         /// <summary>
+        /// Compute entire volume of mesh.
+        /// Return value is volume
+        /// Note that if triangles don't define closed region, volume is probably nonsense...
+        /// </summary>
+        public static double Volume(DMesh3 mesh)
+        {
+            double mass_integral = 0.0;
+
+            foreach (int tid in mesh.TriangleIndices())
+            {
+                Index3i tri = mesh.GetTriangle(tid);
+                // Get vertices of triangle i.
+                Vector3d v0 = mesh.GetVertex(tri.a);
+                Vector3d v1 = mesh.GetVertex(tri.b);
+                Vector3d v2 = mesh.GetVertex(tri.c);
+
+                // Get cross product of edges and (un-normalized) normal vector.
+                Vector3d V1mV0 = v1 - v0;
+                Vector3d V2mV0 = v2 - v0;
+                Vector3d N = V1mV0.Cross(V2mV0);
+
+                double tmp0 = v0.x + v1.x;
+                double f1x = tmp0 + v2.x;
+                mass_integral += N.x * f1x;
+            }
+
+            return mass_integral * (1.0 / 6.0);
+        }
+
+
+
+        /// <summary>
+        /// Compute surface area of triangles of mesh.
+        /// Return value is area
+        /// Note that if triangles don't define closed region, volume is probably nonsense...
+        /// </summary>
+        public static Vector2d Area(DMesh3 mesh)
+        {
+            double area_sum = 0;
+            foreach (int tid in mesh.TriangleIndices())
+            {
+                Index3i tri = mesh.GetTriangle(tid);
+                // Get vertices of triangle i.
+                Vector3d v0 = getVertexF(tri.a);
+                Vector3d v1 = getVertexF(tri.b);
+                Vector3d v2 = getVertexF(tri.c);
+
+                // Get cross product of edges and (un-normalized) normal vector.
+                Vector3d V1mV0 = v1 - v0;
+                Vector3d V2mV0 = v2 - v0;
+                Vector3d N = V1mV0.Cross(V2mV0);
+
+                area_sum += 0.5 * N.Length;
+            }
+
+            return area_sum;
+        }
+
+
+
+        /// <summary>
         /// Compute area of one-ring of mesh vertex by summing triangle areas.
         /// If bDisjoint = true, we multiple each triangle area by 1/3
         /// </summary>
