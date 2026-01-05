@@ -8,8 +8,13 @@ namespace g3
     // ported from WildMagic 5 
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistSegment3Triangle3
+    /// <summary>
+    /// Computes distance between a 3D Segment and a 3D Triangle.
+    /// Converted to struct to minimize heap allocations.
+    /// </summary>
+    public struct DistSegment3Triangle3
     {
+        // Inputs
         Segment3d segment;
         public Segment3d Segment
         {
@@ -24,6 +29,7 @@ namespace g3
             set { triangle = value; DistanceSquared = -1.0; }
         }
 
+        // Outputs
         public double DistanceSquared = -1.0;
 
         public Vector3d SegmentClosest;

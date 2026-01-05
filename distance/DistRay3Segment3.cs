@@ -8,8 +8,9 @@ namespace g3
     /// <summary>
     /// Distance between ray and segment
     /// ported from WildMagic5
+    /// Converted to struct to minimize heap allocations.
     /// </summary>
-    public class DistRay3Segment3
+    public struct DistRay3Segment3
     {
         Ray3d ray;
         public Ray3d Ray

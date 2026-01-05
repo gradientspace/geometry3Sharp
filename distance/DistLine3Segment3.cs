@@ -5,11 +5,16 @@ using System.Text;
 
 namespace g3
 {
-	// ported from WildMagic 5 
-	// https://www.geometrictools.com/Downloads/Downloads.html
+    // ported from WildMagic 5 
+    // https://www.geometrictools.com/Downloads/Downloads.html
 
-	public class DistLine3Segment3
+    /// <summary>
+    /// Computes distance between a 3D Line and a 3D Segment.
+    /// Converted to struct to minimize heap allocations.
+    /// </summary>
+    public struct DistLine3Segment3
 	{
+        // Inputs
 		Line3d line;
 		public Line3d Line
 		{
@@ -24,6 +29,7 @@ namespace g3
 			set { segment = value; DistanceSquared = -1.0; }
 		}
 
+        // Outputs
 		public double DistanceSquared = -1.0;
 
 		public Vector3d LineClosest;

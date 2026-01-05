@@ -8,8 +8,13 @@ namespace g3
     // ported from WildMagic 5 
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistLine3Triangle3
+    /// <summary>
+    /// Computes distance between a 3D Line and a 3D Triangle.
+    /// Converted to struct to minimize heap allocations.
+    /// </summary>
+    public struct DistLine3Triangle3
     {
+        // Input
         Line3d line;
         public Line3d Line
         {
@@ -24,6 +29,7 @@ namespace g3
             set { triangle = value; DistanceSquared = -1.0; }
         }
 
+        // Output
         public double DistanceSquared = -1.0;
 
         public Vector3d LineClosest;

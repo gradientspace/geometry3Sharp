@@ -8,14 +8,20 @@ namespace g3
     // ported from WildMagic 5 
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistLine3Ray3
+    /// <summary>
+    /// Computes distance between a 3D Line and a 3D Ray.
+    /// Converted to struct to minimize heap allocations.
+    /// </summary>
+    public struct DistLine3Ray3
     {
+        // Inputs
         Line3d line;
         public Line3d Line
         {
             get { return line; }
             set { line = value; DistanceSquared = -1.0; }
         }
+
 
         Ray3d ray;
         public Ray3d Ray
@@ -24,6 +30,8 @@ namespace g3
             set { ray = value; DistanceSquared = -1.0; }
         }
 
+
+        // Outputs
         public double DistanceSquared = -1.0;
 
         public Vector3d LineClosest;
@@ -37,10 +45,13 @@ namespace g3
             this.ray = rayIn; this.line = LineIn;
         }
 
+
         static public double MinDistance(Ray3d r, Line3d s)
         {
             return new DistLine3Ray3(r, s).Get();
         }
+
+
         static public double MinDistanceLineParam(Ray3d r, Line3d s)
         {
             return new DistLine3Ray3(r, s).Compute().LineParameter;
@@ -52,6 +63,7 @@ namespace g3
             GetSquared();
             return this;
         }
+
 
         public double Get()
         {

@@ -8,7 +8,11 @@ namespace g3
     // ported from WildMagic 5 
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistRay3Ray3
+    /// <summary>
+    /// Computes distance between two 3D Rays.
+    /// Converted to struct to minimize heap allocations.
+    /// </summary>
+    public struct DistRay3Ray3
     {
         Ray3d ray1;
         public Ray3d Ray1

@@ -5,8 +5,9 @@ using System.Text;
 
 namespace g3
 {
-    public class DistTriangle3Triangle3
+    public struct DistTriangle3Triangle3
     {
+        // Inputs
         Triangle3d triangle0;
         public Triangle3d Triangle0
         {
@@ -21,6 +22,7 @@ namespace g3
             set { triangle1 = value; DistanceSquared = -1.0; }
         }
 
+        // Outputs
         public double DistanceSquared = -1.0;
 
         public Vector3d Triangle0Closest;
