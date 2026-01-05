@@ -34,3 +34,6 @@ MeshEditor changes/improvements
 
 DMesh3 changes
   - invalid/degenerate tris no longer assert in InsertTriangle/AppendTriangle
+
+MeshMeasurements changes
+  - added Volume and Area for simple requests
