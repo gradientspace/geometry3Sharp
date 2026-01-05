@@ -43,7 +43,7 @@ namespace g3
             initialize(width, height, format, imageBuffer);
         }
 
-        public PixelImage(int width, int height, Span<byte> data, EPixelFormat format, ECompression compression)
+        public PixelImage(int width, int height, ReadOnlySpan<byte> data, EPixelFormat format, ECompression compression)
         {
             if (compression == ECompression.Uncompressed) {
                 initialize(width, height, format);
