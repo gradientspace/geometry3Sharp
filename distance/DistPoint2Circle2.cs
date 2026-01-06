@@ -60,7 +60,8 @@ namespace g3
                 AllCirclePointsEquidistant = false;
             } else {
                 // All circle points are equidistant from P.  Return one of them.
-                CircleClosest = circle.Center + circle.Radius;
+                CircleClosest = circle.Center;
+                CircleClosest.x += circle.Radius;
                 AllCirclePointsEquidistant = true;
             }
 
