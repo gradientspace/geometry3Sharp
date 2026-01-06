@@ -14,7 +14,7 @@ namespace g3
         public static DistPoint3Triangle3 TriangleDistance(DMesh3 mesh, int ti, Vector3d point)
         {
             if (!mesh.IsTriangle(ti))
-                return null;
+                return new DistPoint3Triangle3();
             Triangle3d tri = new Triangle3d();
             mesh.GetTriVertices(ti, ref tri.V0, ref tri.V1, ref tri.V2);
             DistPoint3Triangle3 q = new DistPoint3Triangle3(point, tri);
@@ -62,7 +62,7 @@ namespace g3
         public static DistTriangle3Triangle3 TriangleTriangleDistance(DMesh3 mesh1, int ti, DMesh3 mesh2, int tj, Func<Vector3d, Vector3d> TransformF = null)
         {
             if (mesh1.IsTriangle(ti) == false || mesh2.IsTriangle(tj) == false)
-                return null;
+                return new DistTriangle3Triangle3();
             Triangle3d tri1 = new Triangle3d(), tri2 = new Triangle3d();
             mesh1.GetTriVertices(ti, ref tri1.V0, ref tri1.V1, ref tri1.V2);
             mesh2.GetTriVertices(tj, ref tri2.V0, ref tri2.V1, ref tri2.V2);
@@ -120,7 +120,7 @@ namespace g3
         public static DistTriangle3Triangle3 TrianglesDistance(DMesh3 mesh1, int ti, DMesh3 mesh2, int tj, Func<Vector3d,Vector3d> TransformF = null)
         {
             if (mesh1.IsTriangle(ti) == false || mesh2.IsTriangle(tj) == false)
-                return null;
+                return new DistTriangle3Triangle3();
             Triangle3d tri1 = new Triangle3d(), tri2 = new Triangle3d();
             mesh1.GetTriVertices(ti, ref tri1.V0, ref tri1.V1, ref tri1.V2);
             mesh2.GetTriVertices(tj, ref tri2.V0, ref tri2.V1, ref tri2.V2);
