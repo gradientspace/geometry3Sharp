@@ -55,12 +55,10 @@ allowlist: 'bot*,dependabot*,*[bot]'
 The workflow requires the following GitHub secrets:
 
 1. **GITHUB_TOKEN** (automatically provided by GitHub)
-   - Used for basic operations
+   - Used for all CLA operations
+   - No manual configuration needed
 
-2. **PERSONAL_ACCESS_TOKEN** (optional)
-   - Only needed if storing signatures in a different repository
-   - Should have `repo` scope
-   - Not required for the current setup (signatures stored in same repo)
+**Note**: The PERSONAL_ACCESS_TOKEN is NOT required for this setup since signatures are stored in the same repository.
 
 ## How It Works
 

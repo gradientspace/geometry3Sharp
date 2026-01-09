@@ -95,16 +95,9 @@ The CLA Assistant bot needs to commit signature files to the `master` branch. Ei
 - Update `.github/workflows/cla.yml`, line 30: change `branch: 'master'` to `branch: 'cla-signatures'`
 - Ensure this branch is not protected
 
-#### 2. Optional: Personal Access Token (PAT)
+#### 2. ~~Optional: Personal Access Token (PAT)~~
 
-⚠️ **Note**: Only required if storing signatures in a different repository
-
-If you want to store signatures in a separate repository:
-1. Generate a Personal Access Token with `repo` scope
-2. Add it to repository secrets as `PERSONAL_ACCESS_TOKEN`
-3. Update workflow configuration with remote repository details
-
-**Current Setup**: Signatures are stored in the same repository, so this is **NOT required**.
+✅ **Not Required**: The PERSONAL_ACCESS_TOKEN has been removed from the workflow as it's not needed when storing signatures in the same repository.
 
 #### 3. Verify GitHub Actions are Enabled
 
@@ -137,6 +130,7 @@ To verify the CLA Assistant is working:
 | Target Branch | master | ✅ |
 | Bot Allowlist | bot*, dependabot*, *[bot] | ✅ |
 | PAT Required | No | ✅ |
+| Badge Type | Simple CLA badge | ✅ |
 
 ### Files Created
 

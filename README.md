@@ -6,7 +6,7 @@ https://github.com/NewWheelTech/geometry4Sharp
 
 # geometry3Sharp
 
-[![CLA Assistant](https://cla-assistant.io/readme/badge/gradientspace/geometry3Sharp)](https://cla-assistant.io/gradientspace/geometry3Sharp)
+[![CLA](https://img.shields.io/badge/CLA-required-blue.svg)](CLA.md)
 
 Open-Source (Boost-license) C# library for geometric computing. 
 
