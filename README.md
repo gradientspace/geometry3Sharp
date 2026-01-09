@@ -6,6 +6,8 @@ https://github.com/NewWheelTech/geometry4Sharp
 
 # geometry3Sharp
 
+[![CLA Assistant](https://cla-assistant.io/readme/badge/gradientspace/geometry3Sharp)](https://cla-assistant.io/gradientspace/geometry3Sharp)
+
 Open-Source (Boost-license) C# library for geometric computing. 
 
 geometry3Sharp is compatible with Unity. Set the G3_USING_UNITY Scripting Define and you will have transparent interop between g3 and Unity vector types (*see details at the very bottom of this README*). Although the library is written for C# 4.5, if you are using the .NET 3.5 Unity runtime, it will still work, just with a few missing features.
@@ -23,6 +25,13 @@ Questions? Contact Ryan Schmidt [@rms80](http://www.twitter.com/rms80) / [gradie
 * [OrthoVR Project](https://orthovrproject.org/) - 3D-printed lower-leg prosthetic design in VR
 * [Archform](https://www.archform.co/) - Clear Dental Aligner design/planning app
 * [Your Project Here?](rms@gradientspace.com) - *we are very excited to hear about your project!*
+
+
+# Contributing
+
+We welcome contributions to geometry3Sharp! Before submitting a pull request, please read our [Contributing Guidelines](CONTRIBUTING.md) and sign our [Contributor License Agreement (CLA)](CLA.md).
+
+The CLA process is automated - when you open a pull request, our CLA Assistant bot will guide you through signing the CLA if you haven't already.
 
 
 # Credits
