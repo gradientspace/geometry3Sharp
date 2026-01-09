@@ -1,12 +1,8 @@
-# A Short Note about the future of geometry3Sharp
+# A Short Note about the future of geometry3Sharp (updated Jan 2026)
 
-I have not been able to work on or maintain geometry3Sharp for the past few years, due to some restrictive employment-contract terms. Various forks now exist that have active maintainers, and I would recommend you consider switching to one of those. In particular I would recommend the geometry4Sharp fork being developed by New Wheel Technology (_who also does C# development consulting, if you are looking for that_):
+geometry3Sharp development was on hiatus for many years, however we have started working on major update for modern C#/dotnet (currently targeting .NET SDK 8.0), in the [dotnet8 branch](https://github.com/gradientspace/geometry3Sharp/tree/dotnet8). This branch already has some nice feature additions like GLTF and partial USD support, and much more to come. There are also substantial breaking changes, like removing many of the "float" (ie 2f/3f) versions of geometric types and computation classes. See the Changes.md file in the branch for more info. Many of these changes are being made in support of our new Gradientspace Graph project (http://gradientspace.com/gsgraph). 
 
-https://github.com/NewWheelTech/geometry4Sharp
-
-There is also a dedicated and actively maintained Unity only branch developed for the Virgis Project at
-
-https://github.com/ViRGIS-Team/ViRGiS-Geometry
+There is a dedicated and actively maintained Unity-only branch developed for the Virgis Project at https://github.com/ViRGIS-Team/ViRGiS-Geometry.
 
 # geometry3Sharp
 
