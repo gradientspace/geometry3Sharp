@@ -16,7 +16,7 @@ namespace gs
     /// then uses PlanarSpansFiller. See comments, is not really functional.
     /// 
     /// </summary>
-    public class AutoHoleFill
+   [Serializable] public class AutoHoleFill
     {
         public DMesh3 Mesh;
 

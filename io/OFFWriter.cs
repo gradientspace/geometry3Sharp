@@ -12,7 +12,7 @@ namespace g3
 	// Write OFF mesh format
 	// https://en.wikipedia.org/wiki/OFF_(file_format)
 	//
-    public class OFFWriter : IMeshWriter
+   [Serializable] public class OFFWriter : IMeshWriter
     {
  
 

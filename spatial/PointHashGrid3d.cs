@@ -20,7 +20,7 @@ namespace g3
     /// big, we build a sub-hash there?
     /// 
     /// </summary>
-    public class PointHashGrid3d<T>
+   [Serializable] public class PointHashGrid3d<T>
     {
         Dictionary<Vector3i, List<T>> Hash;
         ScaleGridIndexer3 Indexer;

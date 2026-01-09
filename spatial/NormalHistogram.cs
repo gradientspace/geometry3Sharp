@@ -9,7 +9,7 @@ namespace g3
     /// Construct spherical histogram of normals of mesh. 
     /// Binning is done using a Spherical Fibonacci point set.
     /// </summary>
-    public class NormalHistogram
+   [Serializable] public class NormalHistogram
     {
         public int Bins = 1024;
         public SphericalFibonacciPointSet Points;

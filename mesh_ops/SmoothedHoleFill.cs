@@ -12,7 +12,7 @@ namespace gs
     /// This fills a hole in a mesh by doing a trivial fill, optionally offsetting along a fixed vector,
     /// then doing a remesh, then a laplacian smooth, then a second remesh.
     /// </summary>
-    public class SmoothedHoleFill
+   [Serializable] public class SmoothedHoleFill
     {
         public DMesh3 Mesh;
 

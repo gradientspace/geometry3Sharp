@@ -9,7 +9,7 @@ namespace g3
     /// Inserted edge set is avaliable as .InsertedPolygonEdges, and
     /// triangles inside polygon as .InteriorTriangles
     /// </summary>
-    public class MeshInsertPolygon
+   [Serializable] public class MeshInsertPolygon
     {
         public DMesh3 Mesh;
         public GeneralPolygon2d Polygon;

@@ -8,7 +8,7 @@ namespace g3
     // use Find() to compute full information
     // By default fully-contained co-planar triangles are not reported as intersecting.
     // set ReportCoplanarIntersection=true to handle this case (more expensive)
-    public class IntrTriangle3Triangle3
+   [Serializable] public class IntrTriangle3Triangle3
     {
         Triangle3d triangle0;
         public Triangle3d Triangle0

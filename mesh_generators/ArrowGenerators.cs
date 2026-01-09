@@ -6,7 +6,7 @@ using System.Text;
 namespace g3
 {
     // radially-symmetric 3D arrow
-    public class Radial3DArrowGenerator : VerticalGeneralizedCylinderGenerator
+   [Serializable] public class Radial3DArrowGenerator : VerticalGeneralizedCylinderGenerator
     {
         public float StickRadius = 0.5f;
         public float StickLength = 1.0f;

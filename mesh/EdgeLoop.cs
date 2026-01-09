@@ -10,7 +10,7 @@ namespace g3
     /// 
     /// If all you have are the vertices, use EdgeLoop.VertexLoopToEdgeLoop() to construct an EdgeLoop
     /// </summary>
-    public class EdgeLoop
+   [Serializable] public class EdgeLoop
     {
         public DMesh3 Mesh;
 

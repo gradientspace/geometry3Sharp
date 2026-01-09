@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace g3
 {
-    public class MeshBoolean
+   [Serializable] public class MeshBoolean
     {
         public DMesh3 Target;
         public DMesh3 Tool;

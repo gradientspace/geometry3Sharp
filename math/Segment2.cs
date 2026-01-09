@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-	public struct Segment2d : IParametricCurve2d
+	[Serializable] public struct Segment2d : IParametricCurve2d
     {
         // Center-direction-extent representation.
         public Vector2d Center;
@@ -257,7 +257,7 @@ namespace g3
 
 
 
-    public struct Segment2f
+    [Serializable] public struct Segment2f
     {
         // Center-direction-extent representation.
         public Vector2f Center;
@@ -369,7 +369,7 @@ namespace g3
 
 
 
-	public class Segment2dBox 
+	[Serializable] public class Segment2dBox 
 	{
 		public Segment2d Segment;
 

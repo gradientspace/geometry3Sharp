@@ -19,7 +19,7 @@ namespace gs
     ///      stitching "through" mesh or not. If not set properly, then fill self-intersects.
     ///      Could we (optionally) resolve this automatically, eg by checking total of the two alternatives?
     /// </summary>
-    public class MeshStitchLoops
+   [Serializable] public class MeshStitchLoops
     {
         public DMesh3 Mesh;
         public EdgeLoop Loop0;

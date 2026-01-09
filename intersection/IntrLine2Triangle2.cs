@@ -3,7 +3,7 @@
 namespace g3 
 {
 	// ported from WildMagic5 
-	public class IntrLine2Triangle2
+	[Serializable] public class IntrLine2Triangle2
 	{
 		Line2d line;
 		public Line2d Line

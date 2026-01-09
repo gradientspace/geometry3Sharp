@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace g3
 {
-	public class PolyLine2d : IEnumerable<Vector2d>
+	[Serializable] public class PolyLine2d : IEnumerable<Vector2d>
 	{
 		protected List<Vector2d> vertices;
 		public int Timestamp;
@@ -384,7 +384,7 @@ namespace g3
     /// <summary>
     /// Wrapper for a PolyLine2d that provides minimal IParametricCurve2D interface
     /// </summary>
-    public class PolyLine2DCurve : IParametricCurve2d
+   [Serializable] public class PolyLine2DCurve : IParametricCurve2d
     {
         public PolyLine2d Polyline;
 

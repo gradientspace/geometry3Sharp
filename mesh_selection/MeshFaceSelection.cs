@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class MeshFaceSelection : IEnumerable<int>
+   [Serializable] public class MeshFaceSelection : IEnumerable<int>
     {
         public DMesh3 Mesh;
 

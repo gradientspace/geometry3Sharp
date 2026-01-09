@@ -3,7 +3,7 @@
 namespace g3
 {
     // some functions ported from WildMagic5 Matrix2
-    public class Matrix2f
+   [Serializable] public class Matrix2f
     {
         public float m00, m01, m10, m11;
 

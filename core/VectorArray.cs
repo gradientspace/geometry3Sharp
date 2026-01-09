@@ -10,7 +10,7 @@ namespace g3
     // This class is just a wrapper around a static array that provides convenient 3-element set/get access
     // Useful for things like treating a float array as a list of vectors
     //
-    public class VectorArray3<T> : IEnumerable<T>
+   [Serializable] public class VectorArray3<T> : IEnumerable<T>
     {
         public T[] array;
 
@@ -56,7 +56,7 @@ namespace g3
     }
 
 
-    public class VectorArray3d : VectorArray3<double>
+   [Serializable] public class VectorArray3d : VectorArray3<double>
     {
         const double invalid_value = -99999999.0;
 
@@ -92,7 +92,7 @@ namespace g3
     };
 
 
-    public class VectorArray3f : VectorArray3<float>
+   [Serializable] public class VectorArray3f : VectorArray3<float>
     {
         public VectorArray3f(int nCount) : base(nCount) { }
         public VectorArray3f(float[] data) : base(data) { }
@@ -109,7 +109,7 @@ namespace g3
     };
 
 
-    public class VectorArray3i : VectorArray3<int>
+   [Serializable] public class VectorArray3i : VectorArray3<int>
     {
         public VectorArray3i(int nCount) : base(nCount) { }
         public VectorArray3i(int[] data) : base(data) { }
@@ -138,7 +138,7 @@ namespace g3
 
 
 
-    public class IndexArray3i : VectorArray3<int>
+   [Serializable] public class IndexArray3i : VectorArray3<int>
     {
         public IndexArray3i(int nCount) : base(nCount) { }
         public IndexArray3i(int[] data) : base(data) { }
@@ -172,7 +172,7 @@ namespace g3
     //
     // Same as VectorArray3, but for 2D vectors/etc
     //
-    public class VectorArray2<T> : IEnumerable<T>
+   [Serializable] public class VectorArray2<T> : IEnumerable<T>
     {
         public T[] array;
 
@@ -217,7 +217,7 @@ namespace g3
             return array.GetEnumerator();
         }
     }
-    public class VectorArray2d : VectorArray2<double>
+   [Serializable] public class VectorArray2d : VectorArray2<double>
     {
         public VectorArray2d(int nCount) : base(nCount) { }
         public VectorArray2d(double[] data) : base(data) { }
@@ -231,7 +231,7 @@ namespace g3
                 yield return this[i];
         }
     };
-    public class VectorArray2f : VectorArray2<float>
+   [Serializable] public class VectorArray2f : VectorArray2<float>
     {
         public VectorArray2f(int nCount) : base(nCount) { }
         public VectorArray2f(float[] data) : base(data) { }
@@ -248,7 +248,7 @@ namespace g3
 
 
 
-    public class IndexArray2i : VectorArray2<int>
+   [Serializable] public class IndexArray2i : VectorArray2<int>
     {
         public IndexArray2i(int nCount) : base(nCount) { }
         public IndexArray2i(int[] data) : base(data) { }
@@ -273,7 +273,7 @@ namespace g3
 
 
 
-    public class VectorArray4<T> : IEnumerable<T>
+   [Serializable] public class VectorArray4<T> : IEnumerable<T>
     {
         public T[] array;
 
@@ -324,7 +324,7 @@ namespace g3
 
 
 
-    public class IndexArray4i : VectorArray4<int>
+   [Serializable] public class IndexArray4i : VectorArray4<int>
     {
         public IndexArray4i(int nCount) : base(nCount) { }
         public IndexArray4i(int[] data) : base(data) { }

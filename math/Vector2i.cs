@@ -2,7 +2,7 @@
 
 namespace g3
 {
-    public struct Vector2i : IComparable<Vector2i>, IEquatable<Vector2i>
+    [Serializable] public struct Vector2i : IComparable<Vector2i>, IEquatable<Vector2i>
     {
         public int x;
         public int y;
@@ -140,7 +140,7 @@ namespace g3
 
 
 
-    public struct Vector2l : IComparable<Vector2l>, IEquatable<Vector2l>
+    [Serializable] public struct Vector2l : IComparable<Vector2l>, IEquatable<Vector2l>
     {
         public long x;
         public long y;

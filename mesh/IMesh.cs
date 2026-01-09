@@ -61,7 +61,7 @@ namespace g3
     /*
      * Abstracts construction of meshes, so that we can construct different types, etc
      */
-    public struct NewVertexInfo
+    [Serializable] public struct NewVertexInfo
     {
         public Vector3d v;
         public Vector3f n, c;

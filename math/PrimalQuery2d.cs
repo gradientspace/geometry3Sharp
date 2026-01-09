@@ -245,7 +245,7 @@ namespace g3
         //   ORDER_COLLINEAR_LEFT when the line ordering is <P,Q0,Q1>
         //   ORDER_COLLINEAR_RIGHT when the line ordering is <Q0,Q1,P>
         //   ORDER_COLLINEAR_CONTAIN when the line ordering is <Q0,P,Q1>
-        public enum OrderType
+       [Serializable] public enum OrderType
         {
             ORDER_Q0_EQUALS_Q1,
             ORDER_P_EQUALS_Q0,

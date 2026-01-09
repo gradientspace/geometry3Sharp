@@ -12,7 +12,7 @@ namespace g3
     /// 
     /// Currently uses Dictionary<> as sparse data structure
     /// </summary>
-    public class SparseList<T>  where T : IEquatable<T>
+   [Serializable] public class SparseList<T>  where T : IEquatable<T>
     {
         T[] dense;
         Dictionary<int, T> sparse;
@@ -115,7 +115,7 @@ namespace g3
     /// 
     /// TODO: can we combine these classes somehow?
     /// </summary>
-    public class SparseObjectList<T>  where T : class
+   [Serializable] public class SparseObjectList<T>  where T : class
     {
         T[] dense;
         Dictionary<int, T> sparse;

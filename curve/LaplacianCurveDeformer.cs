@@ -12,7 +12,7 @@ namespace g3
     /// Currently only supports uniform weights (in Initialize)
     /// 
     /// </summary>
-    public class LaplacianCurveDeformer
+   [Serializable] public class LaplacianCurveDeformer
     {
         public DCurve3 Curve;
 
@@ -35,7 +35,7 @@ namespace g3
         double[] MLx, MLy, MLz;
 
         // constraints
-        public struct SoftConstraintV
+        [Serializable] public struct SoftConstraintV
         {
             public Vector3d Position;
             public double Weight;

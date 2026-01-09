@@ -12,7 +12,7 @@ namespace g3
     /// </summary>
     public static class DGraph3Util
     {
-        public struct Curves
+        [Serializable] public struct Curves
         {
             public List<DCurve3> Loops;
             public List<DCurve3> Paths;

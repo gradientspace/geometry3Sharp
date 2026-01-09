@@ -256,7 +256,7 @@ namespace g3
 
 
 
-        public struct EdgeSplitInfo {
+        [Serializable] public struct EdgeSplitInfo {
 			public bool bIsBoundary;
 			public int vNew;
 			public int eNewBN;      // new edge [vNew,vB] (original was AB)
@@ -440,7 +440,7 @@ namespace g3
 
 
 
-		public struct EdgeFlipInfo {
+		[Serializable] public struct EdgeFlipInfo {
 			public int eID;
 			public int v0,v1;
 			public int ov0,ov1;
@@ -552,7 +552,7 @@ namespace g3
 		}
 
 
-		public struct EdgeCollapseInfo {
+		[Serializable] public struct EdgeCollapseInfo {
 			public int vKept;
 			public int vRemoved;
 			public bool bIsBoundary;
@@ -791,7 +791,7 @@ namespace g3
 
 
 
-		public struct MergeEdgesInfo
+		[Serializable] public struct MergeEdgesInfo
 		{
 			public int eKept;
 			public int eRemoved;
@@ -1003,7 +1003,7 @@ namespace g3
 
 
 
-        public struct PokeTriangleInfo
+        [Serializable] public struct PokeTriangleInfo
         {
             public int new_vid;
             public int new_t1, new_t2;

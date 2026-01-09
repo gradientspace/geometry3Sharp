@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public struct AxisAlignedBox2i : IComparable<AxisAlignedBox2i>, IEquatable<AxisAlignedBox2i>
+    [Serializable] public struct AxisAlignedBox2i : IComparable<AxisAlignedBox2i>, IEquatable<AxisAlignedBox2i>
     {
         public Vector2i Min;
         public Vector2i Max;

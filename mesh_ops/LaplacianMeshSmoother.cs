@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class LaplacianMeshSmoother
+   [Serializable] public class LaplacianMeshSmoother
     {
         public DMesh3 Mesh;
 
@@ -17,7 +17,7 @@ namespace g3
         double[] MLx, MLy, MLz;
 
         // constraints
-        public struct SoftConstraintV
+        [Serializable] public struct SoftConstraintV
         {
             public Vector3d Position;
             public double Weight;

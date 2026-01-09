@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace g3
 {
-    public class MeshLoopClosure
+   [Serializable] public class MeshLoopClosure
     {
         public DMesh3 Mesh;
         public EdgeLoop InitialBorderLoop;

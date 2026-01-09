@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace g3
 {
-    public class MeshConnectedComponents : IEnumerable<MeshConnectedComponents.Component>
+   [Serializable] public class MeshConnectedComponents : IEnumerable<MeshConnectedComponents.Component>
     {
         public DMesh3 Mesh;
 
@@ -18,7 +18,7 @@ namespace g3
         // (or don't know) a full-triangle-set filter
         public Func<int, bool> SeedFilterF = null;
 
-        public struct Component
+        [Serializable] public struct Component
         {
             public int[] Indices;
         }

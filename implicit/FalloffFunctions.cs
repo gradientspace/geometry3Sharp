@@ -26,7 +26,7 @@ namespace gs
     /// <summary>
     /// returns 1 in range [0,ConstantRange], and then falls off to 0 in range [ConstantRange,1]
     /// </summary>
-    public class LinearFalloff : IFalloffFunction
+   [Serializable] public class LinearFalloff : IFalloffFunction
     {
         public double ConstantRange = 0;
 
@@ -53,7 +53,7 @@ namespace gs
     /// <summary>
     /// returns 1 in range [0,ConstantRange], and then falls off to 0 in range [ConstantRange,1]
     /// </summary>
-    public class WyvillFalloff : IFalloffFunction
+   [Serializable] public class WyvillFalloff : IFalloffFunction
     {
         public double ConstantRange = 0;
 

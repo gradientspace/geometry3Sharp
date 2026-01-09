@@ -6,7 +6,7 @@ namespace g3
     /// Triangulate a 2D polygon-with-holes by inserting it's edges into a meshed rectangle
     /// and then removing the triangles outside the polygon.
     /// </summary>
-    public class TriangulatedPolygonGenerator : MeshGenerator
+   [Serializable] public class TriangulatedPolygonGenerator : MeshGenerator
     {
         public GeneralPolygon2d Polygon;
         public Vector3f FixedNormal = Vector3f.AxisZ;

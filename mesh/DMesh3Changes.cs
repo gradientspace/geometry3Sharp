@@ -9,7 +9,7 @@ namespace g3
     /// Mesh change for vertex deformations. Currently minimal support for initializing buffers.
     /// AppendNewVertex() can be used to accumulate modified vertices and their initial positions.
     /// </summary>
-    public class ModifyVerticesMeshChange
+   [Serializable] public class ModifyVerticesMeshChange
     {
         public DVector<int> ModifiedV;
         public DVector<Vector3d> OldPositions, NewPositions;
@@ -115,7 +115,7 @@ namespace g3
     /// Mesh change for full-mesh vertex deformations - more efficient than ModifyVerticesMeshChange.
     /// Note that this does not enforce that vertex count does not change!
     /// </summary>
-    public class SetVerticesMeshChange
+   [Serializable] public class SetVerticesMeshChange
     {
         public DVector<double> OldPositions, NewPositions;
         public DVector<float> OldNormals, NewNormals;
@@ -175,7 +175,7 @@ namespace g3
     /// Vertex and Triangle IDs will be restored on Revert()
     /// Currently does *not* restore the same EdgeIDs
     /// </summary>
-    public class RemoveTrianglesMeshChange
+   [Serializable] public class RemoveTrianglesMeshChange
     {
         protected DVector<int> RemovedV;
         protected DVector<Vector3d> Positions;
@@ -360,7 +360,7 @@ namespace g3
     /// Vertex and Triangle IDs will be restored on Revert()
     /// Currently does *not* restore the same EdgeIDs
     /// </summary>
-    public class AddTrianglesMeshChange
+   [Serializable] public class AddTrianglesMeshChange
     {
         protected DVector<int> AddedV;
         protected DVector<Vector3d> Positions;

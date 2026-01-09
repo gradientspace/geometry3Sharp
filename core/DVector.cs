@@ -11,7 +11,7 @@ namespace g3
     //   - this[] operator does not check bounds, so it can write to any valid Block
     //   - some fns discard Blocks beyond iCurBlock
     //   - wtf...
-    public class DVector<T> : IEnumerable<T>
+   [Serializable] public class DVector<T> : IEnumerable<T>
     {
         List<T[]> Blocks;
         int iCurBlock;
@@ -408,7 +408,7 @@ namespace g3
 
 
         // block iterator
-        public struct DBlock
+        [Serializable] public struct DBlock
         {
             public T[] data;
             public int usedCount;

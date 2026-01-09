@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace g3 {
 
-	public class Arc2d : IParametricCurve2d
+	[Serializable] public class Arc2d : IParametricCurve2d
 	{
 		public Vector2d Center;
 		public double Radius;

@@ -3,7 +3,7 @@
 namespace g3
 {
     // ported from WildMagic5 Wm5LinearSystem.cpp
-    public class SparseSymmetricCG
+   [Serializable] public class SparseSymmetricCG
     {
         // Compute B = A*X, where inputs are ordered <X,B>
         public Action<double[], double[]> MultiplyF;
@@ -223,7 +223,7 @@ namespace g3
     /// converged, however we still have to do the multiplies!
     /// 
     /// </summary>
-    public class SparseSymmetricCGMultipleRHS
+   [Serializable] public class SparseSymmetricCGMultipleRHS
     {
         // Compute B = A*X, where inputs are ordered <X,B>
         public Action<double[][], double[][]> MultiplyF;

@@ -6,7 +6,7 @@ namespace g3
     // Port of Wm5 Query/Query2 from WildMagic5 library by David Eberly / geometrictools.com
 
 
-    public enum QueryNumberType
+   [Serializable] public enum QueryNumberType
     {
         QT_DOUBLE = 0,
         QT_INT64 = 1,
@@ -34,7 +34,7 @@ namespace g3
 
 
 
-    public class Query2d : QueryBase, Query2
+   [Serializable] public class Query2d : QueryBase, Query2
     {
         protected IList<Vector2d> mVertices;
 
@@ -209,7 +209,7 @@ namespace g3
     /// <summary>
     /// Port of WildMagic5 Query class
     /// </summary>
-    public class QueryBase
+   [Serializable] public class QueryBase
     {
 
         // Support for ordering a set of unique indices into the vertex pool.  On

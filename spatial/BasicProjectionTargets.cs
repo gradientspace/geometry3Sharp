@@ -9,7 +9,7 @@ namespace g3
     /// MeshProjectionTarget provides an IProjectionTarget interface to a mesh + spatial data structure.
     /// Use to project points to mesh surface.
     /// </summary>
-    public class MeshProjectionTarget : IOrientedProjectionTarget
+   [Serializable] public class MeshProjectionTarget : IOrientedProjectionTarget
     {
         public DMesh3 Mesh { get; set; }
         public ISpatial Spatial { get; set; }
@@ -82,7 +82,7 @@ namespace g3
     /// Extension of MeshProjectionTarget that allows the target to have a transformation
     /// relative to it's internal space. Call SetTransform(), or initialize the transforms yourself
     /// </summary>
-    public class TransformedMeshProjectionTarget : MeshProjectionTarget
+   [Serializable] public class TransformedMeshProjectionTarget : MeshProjectionTarget
     {
         public TransformSequence SourceToTargetXForm;
         public TransformSequence TargetToSourceXForm;
@@ -127,7 +127,7 @@ namespace g3
 
 
 
-    public class PlaneProjectionTarget : IProjectionTarget
+   [Serializable] public class PlaneProjectionTarget : IProjectionTarget
     {
         public Vector3d Origin;
         public Vector3d Normal;
@@ -142,7 +142,7 @@ namespace g3
 
 
 
-    public class CircleProjectionTarget : IProjectionTarget
+   [Serializable] public class CircleProjectionTarget : IProjectionTarget
     {
         public Circle3d Circle;
 
@@ -156,7 +156,7 @@ namespace g3
 
 
 
-    public class CylinderProjectionTarget : IProjectionTarget
+   [Serializable] public class CylinderProjectionTarget : IProjectionTarget
     {
         public Cylinder3d Cylinder;
 
@@ -171,7 +171,7 @@ namespace g3
 
 
 
-    public class SequentialProjectionTarget : IProjectionTarget
+   [Serializable] public class SequentialProjectionTarget : IProjectionTarget
     {
         public IProjectionTarget[] Targets { get; set; }
 

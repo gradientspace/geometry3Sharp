@@ -14,7 +14,7 @@ namespace g3
     /// <summary>
     /// Just wraps a func<bool> as an ICancelSource
     /// </summary>
-    public class CancelFunction : ICancelSource
+   [Serializable] public class CancelFunction : ICancelSource
     {
         public Func<bool> CancelF;
         public CancelFunction(Func<bool> cancelF) {
@@ -29,7 +29,7 @@ namespace g3
     ///  1) provide progress info back to caller (not implemented yet)
     ///  2) allow caller to cancel the computation
     /// </summary>
-    public class ProgressCancel
+   [Serializable] public class ProgressCancel
     {
         public ICancelSource Source;
 

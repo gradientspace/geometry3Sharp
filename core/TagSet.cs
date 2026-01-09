@@ -7,7 +7,7 @@ namespace g3
     /// <summary>
     /// Basic object->integer mapping
     /// </summary>
-    public class IntTagSet<T>
+   [Serializable] public class IntTagSet<T>
     {
         public const int InvalidTag = int.MaxValue;
 
@@ -46,7 +46,7 @@ namespace g3
     /// <summary>
     /// integer type/value pair, packed into 32 bits - 8 for type, 24 for value
     /// </summary>
-    public struct IntTagPair
+    [Serializable] public struct IntTagPair
     {
         public byte type;
         public int value; 
@@ -69,7 +69,7 @@ namespace g3
     /// <summary>
     /// Basic object->string mapping
     /// </summary>
-    public class StringTagSet<T>
+   [Serializable] public class StringTagSet<T>
     {
         public const string InvalidTag = "";
 

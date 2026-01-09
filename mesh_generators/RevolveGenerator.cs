@@ -5,7 +5,7 @@ using System.Text;
 
 namespace g3
 {
-    public class Curve3Axis3RevolveGenerator : MeshGenerator
+   [Serializable] public class Curve3Axis3RevolveGenerator : MeshGenerator
     {
         public Vector3d[] Curve;
 
@@ -160,7 +160,7 @@ namespace g3
 
 
 
-    public class Curve3Curve3RevolveGenerator : MeshGenerator
+   [Serializable] public class Curve3Curve3RevolveGenerator : MeshGenerator
     {
         public Vector3d[] Curve;
         public Vector3d[] Axis;

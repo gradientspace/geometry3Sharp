@@ -3,7 +3,7 @@
 namespace g3
 {
     // somewhat ported from WildMagic5
-    public class Circle3d
+   [Serializable] public class Circle3d
     {
         // The plane containing the circle is Dot(N,X-C) = 0, where X is any point
         // in the plane.  Vectors U, V, and N form an orthonormal right-handed set

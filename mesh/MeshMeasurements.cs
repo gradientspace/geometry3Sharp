@@ -416,7 +416,7 @@ namespace g3
 
 
 
-        public struct GenusResult
+        [Serializable] public struct GenusResult
         {
             public bool Valid;
             public int Genus;

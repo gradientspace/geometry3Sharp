@@ -8,7 +8,7 @@ namespace g3
     /// <summary>
     /// Sample implicit fields into a dense grid
     /// </summary>
-    public class ImplicitFieldSampler3d
+   [Serializable] public class ImplicitFieldSampler3d
     {
         public DenseGrid3f Grid;
         public double CellSize;
@@ -19,7 +19,7 @@ namespace g3
         public float BackgroundValue;
 
 
-        public enum CombineModes
+       [Serializable] public enum CombineModes
         {
             DistanceMinUnion = 0
         }

@@ -19,7 +19,7 @@ namespace g3
     // [TODO] 
     //    - build strategy using AABB tree traversal
     //    - option to store components here (currently if client does not hold, we are discarding)
-    public class MeshDecomposition
+   [Serializable] public class MeshDecomposition
     {
         DMesh3 mesh;
 
@@ -32,7 +32,7 @@ namespace g3
         public IMeshComponentManager Manager { set; get; }
 
 
-        public struct Component
+        [Serializable] public struct Component
         {
             public int id;              // probably linear index
 

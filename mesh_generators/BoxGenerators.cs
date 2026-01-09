@@ -7,7 +7,7 @@ namespace g3
     /// <summary>
     /// Generate a minimal box
     /// </summary>
-    public class TrivialBox3Generator : MeshGenerator
+   [Serializable] public class TrivialBox3Generator : MeshGenerator
     {
         public Box3d Box = Box3d.UnitZeroCentered;
         public bool NoSharedVertices = false;
@@ -68,7 +68,7 @@ namespace g3
     /// with EdgeVertices verts along each edge.
     /// [TODO] allow varying EdgeVertices in each dimension (tricky...)
     /// </summary>
-    public class GridBox3Generator : MeshGenerator
+   [Serializable] public class GridBox3Generator : MeshGenerator
     {
         public Box3d Box = Box3d.UnitZeroCentered;
         public int EdgeVertices = 8;

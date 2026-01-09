@@ -8,7 +8,7 @@ namespace g3
     // ported from WildMagic 5 
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistRay3Ray3
+   [Serializable] public class DistRay3Ray3
     {
         Ray3d ray1;
         public Ray3d Ray1

@@ -17,7 +17,7 @@ namespace g3
     /// 
     /// 
     /// </summary>
-    public class MeshMeshCut
+   [Serializable] public class MeshMeshCut
     {
         public DMesh3 Target;
         public DMesh3 CutMesh;

@@ -16,7 +16,7 @@ namespace gs
     ///       - this is tricky, in many CAD meshes these faces can't just be collapsed. But can often remove via flipping...?
     /// 
     /// </summary>
-    public class MeshAutoRepair
+   [Serializable] public class MeshAutoRepair
     {
 		public double RepairTolerance = MathUtil.ZeroTolerancef;
 
@@ -28,7 +28,7 @@ namespace gs
 
 
         // [TODO] interior components?
-        public enum RemoveModes {
+       [Serializable] public enum RemoveModes {
 			None = 0, Interior = 1, Occluded = 2
 		};
 		public RemoveModes RemoveMode = MeshAutoRepair.RemoveModes.None;

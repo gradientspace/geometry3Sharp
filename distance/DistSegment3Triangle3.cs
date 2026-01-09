@@ -8,7 +8,7 @@ namespace g3
     // ported from WildMagic 5 
     // https://www.geometrictools.com/Downloads/Downloads.html
 
-    public class DistSegment3Triangle3
+   [Serializable] public class DistSegment3Triangle3
     {
         Segment3d segment;
         public Segment3d Segment

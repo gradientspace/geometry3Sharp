@@ -9,7 +9,7 @@ namespace g3
     /// [TODO] this is very, very old code. Should at minimum rewrite using current
     /// vector classes/etc.
 	/// </summary>
-	public class MarchingQuads
+	[Serializable] public class MarchingQuads
 	{
 		DPolyLine2f m_stroke;
 

@@ -14,7 +14,7 @@ namespace g3
     /// that returns the triangle index list for a given key. The set of DSubmesh3
     /// objects are computed on construction.
     /// </summary>
-    public class DSubmesh3Set : IEnumerable<DSubmesh3>
+   [Serializable] public class DSubmesh3Set : IEnumerable<DSubmesh3>
     {
         public DMesh3 Mesh;
 

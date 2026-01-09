@@ -22,7 +22,7 @@ namespace g3
     /// you must also know it's 2D center, so we can look up the cell coordinates.
     /// Hence, to 'update' a segment, you need to know both it's old and new 2D centers.
     /// </summary>
-    public class SegmentHashGrid2d<T>
+   [Serializable] public class SegmentHashGrid2d<T>
     {
         Dictionary<Vector2i, List<T>> Hash;
         ScaleGridIndexer2 Indexer;

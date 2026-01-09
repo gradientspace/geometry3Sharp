@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace g3
 {
-    public struct Colorb
+    [Serializable] public struct Colorb
     {
         public byte r;
         public byte g;

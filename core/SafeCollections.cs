@@ -11,7 +11,7 @@ namespace g3
     /// A simple wrapper around a List<T> that supports multi-threaded construction.
     /// Basically intended for use within things like a Parallel.ForEach
     /// </summary>
-    public class SafeListBuilder<T>
+   [Serializable] public class SafeListBuilder<T>
     {
         public List<T> List;
         public SpinLock spinlock;

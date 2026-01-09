@@ -3,7 +3,7 @@
 namespace g3
 {
     // ported from WildMagic5 BSplineBasis
-    public class BSplineBasis
+   [Serializable] public class BSplineBasis
     {
         // Defaultructor.  The number of control points is n+1 and the
         // indices i for the control points satisfy 0 <= i <= n.  The degree of

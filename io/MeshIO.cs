@@ -7,7 +7,7 @@ using System.IO;
 namespace g3
 {
 
-    public enum IOCode
+   [Serializable] public enum IOCode
     {
         Ok = 0,
 
@@ -32,7 +32,7 @@ namespace g3
 
 
 
-    public class ReadOptions
+   [Serializable] public class ReadOptions
     {
 		public bool ReadMaterials;
 
@@ -50,7 +50,7 @@ namespace g3
         };
     }
 
-    public struct IOReadResult
+    [Serializable] public struct IOReadResult
     {
         public IOCode code { get; set; }
         public string message { get; set; }
@@ -75,7 +75,7 @@ namespace g3
 
 
 
-    public struct IOWriteResult
+    [Serializable] public struct IOWriteResult
     {
         public IOCode code { get; set; }
         public string message { get; set; }
@@ -90,7 +90,7 @@ namespace g3
 		public static readonly IOWriteResult Ok = new IOWriteResult(IOCode.Ok, "");
     }
 
-    public struct WriteOptions
+    [Serializable] public struct WriteOptions
     {
 		public bool bWriteBinary;        	// write binary format if supported (STL)
 
@@ -132,7 +132,7 @@ namespace g3
     }
 
 
-    public struct WriteMesh
+    [Serializable] public struct WriteMesh
     {
         public IMesh Mesh;
         public string Name;         // supported by some formats

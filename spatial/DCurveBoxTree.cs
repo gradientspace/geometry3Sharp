@@ -14,7 +14,7 @@ namespace g3
     /// [TODO] would it make more sense to have more than just 2 segments at lowest level?
     /// 
     /// </summary>
-    public class DCurve3BoxTree
+   [Serializable] public class DCurve3BoxTree
     {
         public DCurve3 Curve;
 

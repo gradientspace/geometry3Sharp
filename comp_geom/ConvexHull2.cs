@@ -26,7 +26,7 @@ namespace g3
     /// 
     /// HullIndices provides ordered indices of vertices of input points that form hull.
     /// </summary>
-    public class ConvexHull2
+   [Serializable] public class ConvexHull2
     {
         //QueryNumberType mQueryType = QueryNumberType.QT_DOUBLE;
         IList<Vector2d> mVertices;

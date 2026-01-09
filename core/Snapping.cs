@@ -2,7 +2,7 @@
 
 namespace g3
 {
-    public class Snapping
+   [Serializable] public class Snapping
     {
 
         public static double SnapToIncrement(double fValue, double fIncrement, double offset = 0)

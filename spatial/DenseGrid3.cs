@@ -9,7 +9,7 @@ namespace g3
     /// <summary>
     /// 3D dense grid of floating-point scalar values. 
     /// </summary>
-    public class DenseGrid3f
+   [Serializable] public class DenseGrid3f
     {
         public float[] Buffer;
         public int ni, nj, nk;
@@ -209,7 +209,7 @@ namespace g3
     /// <summary>
     /// 3D dense grid of integers. 
     /// </summary>
-    public class DenseGrid3i
+   [Serializable] public class DenseGrid3i
     {
         public int[] Buffer;
         public int ni, nj, nk;

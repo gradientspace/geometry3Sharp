@@ -20,7 +20,7 @@ namespace gs
     ///  - TrackedProjectionPass() same
     /// 
     /// </summary>
-    public class RemesherPro : Remesher
+   [Serializable] public class RemesherPro : Remesher
     {
 
         public bool UseFaceAlignedProjection = false;

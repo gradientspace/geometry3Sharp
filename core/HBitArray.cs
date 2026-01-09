@@ -16,7 +16,7 @@ namespace g3
     /// Uses more memory than BitArray, but each tree level is divided by 32, so
     /// it is better than NlogN
     /// </summary>
-    public class HBitArray : IEnumerable<int>
+   [Serializable] public class HBitArray : IEnumerable<int>
     {
         struct MyBitVector32
         {

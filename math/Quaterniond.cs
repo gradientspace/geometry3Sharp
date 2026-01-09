@@ -8,7 +8,7 @@ using UnityEngine;
 namespace g3
 {
     // mostly ported from WildMagic5 Wm5Quaternion, from geometrictools.com
-    public struct Quaterniond
+    [Serializable] public struct Quaterniond
     {
         // note: in Wm5 version, this is a 4-element array stored in order (w,x,y,z).
         public double x, y, z, w;
