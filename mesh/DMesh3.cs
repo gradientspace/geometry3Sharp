@@ -2155,67 +2155,68 @@ namespace g3
         /// Use .Spans to iterate without allocation.
         /// </summary>
         public DVector<double> VerticesBuffer {
-            get => vertices;
-            set => vertices = value;
+            get { return vertices; }
+            set { vertices = value; }
         }
 
         /// <summary>
         /// Direct access to the internal triangle index buffer.
         /// </summary>
         public DVector<int> TrianglesBuffer {
-            get => triangles;
-            set => triangles = value;
+            get { return triangles; }
+            set { triangles = value; }
         }
 
         /// <summary>
         /// Direct access to the internal normals buffer (may be null).
         /// </summary>
         public DVector<float> NormalsBuffer {
-            get => normals;
-            set => normals = value;
+            get { return normals; }
+            set { normals = value; }
         }
 
         /// <summary>
         /// Direct access to the internal UV buffer (may be null).
         /// </summary>
         public DVector<float> UVBuffer {
-            get => uv;
-            set => uv = value;
+            get { return uv; }
+            set { uv = value; }
         }
 
         public RefCountVector VerticesRefCounts {
-            get => vertices_refcount; 
-            set => vertices_refcount = value; 
+            get { return vertices_refcount; }
+            set { vertices_refcount = value; }
         }
 
         /// <summary>
         /// Direct access to the internal Colors buffer (may be null).
         /// </summary>
         public DVector<float> ColorsBuffer {
-            get => HasVertexColors ? Attribs.VertexColor.ToBuffer() : null; 
+            get { return HasVertexColors ? Attribs.VertexColor.ToBuffer() : null; }
             set { EnableVertexColors(); Attribs.VertexColor.SetFromBuffer(value); }
         }
 
         public RefCountVector TrianglesRefCounts {
-            get => triangles_refcount;
-            set => triangles_refcount = value; 
+            get { return triangles_refcount; }
+            set { triangles_refcount = value; }
         }
         public DVector<int> GroupsBuffer {
-            get => triangle_groups;
-            set => triangle_groups = value;
+            get { return triangle_groups; }
+            set { triangle_groups = value; }
         }
 
-        public DVector<int> EdgesBuffer{
-            get => edges;
-            set => edges = value;
+        public DVector<int> EdgesBuffer
+        {
+            get { return edges; }
+            set { edges = value; }
         }
         public RefCountVector EdgesRefCounts {
-            get => edges_refcount;
-            set => edges_refcount = value;
+            get { return edges_refcount; }
+            set { edges_refcount = value; }
         }
         public SmallListSet VertexEdges {
-            get => vertex_edges;
-            set => vertex_edges = value;
+            get { return vertex_edges; }
+            set { vertex_edges = value; }
         }
 
 
