@@ -57,7 +57,7 @@ namespace g3
         }
 
 
-
+        // TODO: Remove? [NLS]
         //public int Capacity {
         //    get { return Blocks.Count * nBlockSize;  }
         //}
@@ -66,8 +66,40 @@ namespace g3
             get { return iCurBlock * nBlockSize + iCurBlockUsed;  }
         }
 
-        public int BlockCount {
-            get { return nBlockSize; }
+        /// <summary>
+        /// Returns the capacity of a single block (usually 2048).
+        /// Useful for external algorithms to size their buffers.
+        /// </summary>
+        public int BlockCapacity => nBlockSize;
+
+        /// <summary>
+        /// Gets the number of active memory blocks.
+        /// </summary>
+        public int BlockCount => iCurBlock + 1;
+
+        // TODO: Should this be placed elsewhere? Seems to be useful in other classes than this [NLS]
+        /// <summary>
+        /// Struct-based enumerator to iterate spans without allocation.
+        /// Usage: foreach (Span<T> block in vector.SpanIterator()) { ... }
+        /// </summary>
+        public SpanEnumerator Spans => new SpanEnumerator(this);
+        public struct SpanEnumerator {
+            private readonly DVector<T> _vector;
+            private int _idx;
+
+            public SpanEnumerator(DVector<T> vector) {
+                _vector = vector;
+                _idx = -1;
+            }
+
+            public SpanEnumerator GetEnumerator() => this;
+
+            public bool MoveNext() {
+                _idx++;
+                return _idx <= _vector.iCurBlock;
+            }
+
+            public Span<T> Current => _vector.GetBlock(_idx);
         }
 
         public int size {
@@ -228,6 +260,18 @@ namespace g3
         }
 
 
+        /// <summary>
+        /// Get a Span for a specific block index. 
+        /// NOTE: The last block may be smaller than BlockCapacity!
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public Span<T> GetBlock(int blockIndex) {
+            // Safety check optional depending on how much trust you want
+            // if (blockIndex < 0 || blockIndex > iCurBlock) throw new IndexOutOfRangeException();
+
+            int count = (blockIndex == iCurBlock) ? iCurBlockUsed : nBlockSize;
+            return new Span<T>(Blocks[blockIndex], 0, count);
+        }
 
         // TODO: 
         //   - iterate through blocks in above to avoid div/mod for each element

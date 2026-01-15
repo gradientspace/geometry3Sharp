@@ -27,6 +27,9 @@ namespace g3
             get { return array.Length/3; }
         }
 
+        public ReadOnlySpan<T> AsSpan() =>
+            new Span<T>(array, 0, array.Length);
+
         public IEnumerator<T> GetEnumerator()
         {
             for (int i = 0; i < array.Length; ++i)
@@ -199,6 +202,9 @@ namespace g3
             get { return array.Length / 2; }
         }
 
+        public ReadOnlySpan<T> AsSpan() =>
+            new Span<T>(array, 0, array.Length);
+
         public IEnumerator<T> GetEnumerator()
         {
             for (int i = 0; i < array.Length; ++i)
@@ -305,6 +311,9 @@ namespace g3
         public int Count {
             get { return array.Length / 4; }
         }
+
+        public ReadOnlySpan<T> AsSpan() =>
+            new Span<T>(array, 0, array.Length);
 
         public IEnumerator<T> GetEnumerator()
         {
