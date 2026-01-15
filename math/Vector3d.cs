@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Runtime.CompilerServices; // Added for Inlining
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -18,88 +17,72 @@ namespace g3 {
         public double y;
         public double z;
 
+        public Vector3d() { }
         public Vector3d(double f) { x = y = z = f; }
         public Vector3d(double x, double y, double z) { this.x = x; this.y = y; this.z = z; }
         public Vector3d(double[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; }
         public Vector3d(Vector3d copy) { x = copy.x; y = copy.y; z = copy.z; }
         public Vector3d(Vector3f copy) { x = copy.x; y = copy.y; z = copy.z; }
 
-        static public readonly Vector3d Zero = new Vector3d(0.0, 0.0, 0.0);
-        static public readonly Vector3d One = new Vector3d(1.0, 1.0, 1.0);
-        static public readonly Vector3d OneNormalized = new Vector3d(1.0, 1.0, 1.0).Normalized;
-        static public readonly Vector3d Invalid = new Vector3d(double.MaxValue, double.MaxValue, double.MaxValue);
-        static public readonly Vector3d AxisX = new Vector3d(1.0, 0.0, 0.0);
-        static public readonly Vector3d AxisY = new Vector3d(0.0, 1.0, 0.0);
-        static public readonly Vector3d AxisZ = new Vector3d(0.0, 0.0, 1.0);
-        static public readonly Vector3d UnitX = new Vector3d(1.0, 0.0, 0.0);
-        static public readonly Vector3d UnitY = new Vector3d(0.0, 1.0, 0.0);
-        static public readonly Vector3d UnitZ = new Vector3d(0.0, 0.0, 1.0);
+        static public readonly Vector3d Zero = new Vector3d(0.0f, 0.0f, 0.0f);
+        static public readonly Vector3d One = new Vector3d(1.0f, 1.0f, 1.0f);
+        static public readonly Vector3d OneNormalized = new Vector3d(1.0f, 1.0f, 1.0f).Normalized;
+        static public readonly Vector3d Invalid = new Vector3d(float.MaxValue, float.MaxValue, float.MaxValue); // use float so that LengthSquared is non-inf
+        static public readonly Vector3d AxisX = new Vector3d(1.0f, 0.0f, 0.0f);
+        static public readonly Vector3d AxisY = new Vector3d(0.0f, 1.0f, 0.0f);
+        static public readonly Vector3d AxisZ = new Vector3d(0.0f, 0.0f, 1.0f);
+        static public readonly Vector3d UnitX = new Vector3d(1.0f, 0.0f, 0.0f);
+        static public readonly Vector3d UnitY = new Vector3d(0.0f, 1.0f, 0.0f);
+        static public readonly Vector3d UnitZ = new Vector3d(0.0f, 0.0f, 1.0f);
         static public readonly Vector3d MaxValue = new Vector3d(double.MaxValue, double.MaxValue, double.MaxValue);
         static public readonly Vector3d MinValue = new Vector3d(double.MinValue, double.MinValue, double.MinValue);
 
         public double this[int key] {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return (key == 0) ? x : (key == 1) ? y : z; }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
         }
 
         public Vector2d xy {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new Vector2d(x, y); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { x = value.x; y = value.y; }
         }
         public Vector2d xz {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new Vector2d(x, z); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { x = value.x; z = value.y; }
         }
         public Vector2d yz {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new Vector2d(y, z); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { y = value.x; z = value.y; }
         }
 
         public readonly double LengthSquared {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return x * x + y * y + z * z; }
         }
         public readonly double Length {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return Math.Sqrt(x * x + y * y + z * z); }
+            get { return Math.Sqrt(LengthSquared); }
         }
 
         public readonly double LengthL1 {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
         }
 
         public readonly double Max {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Math.Max(x, Math.Max(y, z)); }
         }
         public readonly double Min {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Math.Min(x, Math.Min(y, z)); }
         }
         public readonly double MaxAbs {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Math.Max(Math.Abs(x), Math.Max(Math.Abs(y), Math.Abs(z))); }
         }
         public readonly double MinAbs {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Math.Min(Math.Abs(x), Math.Min(Math.Abs(y), Math.Abs(z))); }
         }
 
         public readonly Vector3d Abs {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new Vector3d(Math.Abs(x), Math.Abs(y), Math.Abs(z)); }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double Normalize(double epsilon = MathUtil.Epsilon) {
             double length = Length;
             if (length > epsilon) {
@@ -116,7 +99,6 @@ namespace g3 {
         }
 
         public readonly Vector3d Normalized {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get {
                 double length = Length;
                 if (length > MathUtil.Epsilon) {
@@ -129,12 +111,10 @@ namespace g3 {
         }
 
         public readonly bool IsNormalized {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Math.Abs((x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerance; }
         }
 
         public readonly bool IsFinite {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { double f = x + y + z; return double.IsNaN(f) == false && double.IsInfinity(f) == false; }
         }
 
@@ -147,35 +127,29 @@ namespace g3 {
             return new Vector3d(Math.Round(x, nDecimals), Math.Round(y, nDecimals), Math.Round(z, nDecimals));
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double Dot(Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double Dot(ref Vector3d v2) {
             return x * v2.x + y * v2.y + z * v2.z;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Dot(Vector3d v1, Vector3d v2) {
             return v1.Dot(ref v2);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector3d Cross(Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
                 x * v2.y - y * v2.x);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector3d Cross(ref Vector3d v2) {
             return new Vector3d(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
                 x * v2.y - y * v2.x);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d Cross(Vector3d v1, Vector3d v2) {
             return v1.Cross(ref v2);
         }
@@ -208,23 +182,19 @@ namespace g3 {
             return v1.AngleR(v2);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double DistanceSquared(Vector3d v2) {
             double dx = v2.x - x, dy = v2.y - y, dz = v2.z - z;
             return dx * dx + dy * dy + dz * dz;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double DistanceSquared(ref Vector3d v2) {
             double dx = v2.x - x, dy = v2.y - y, dz = v2.z - z;
             return dx * dx + dy * dy + dz * dz;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double Distance(Vector3d v2) {
             double dx = v2.x - x, dy = v2.y - y, dz = v2.z - z;
             return Math.Sqrt(dx * dx + dy * dy + dz * dz);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double Distance(ref Vector3d v2) {
             double dx = v2.x - x, dy = v2.y - y, dz = v2.z - z;
             return Math.Sqrt(dx * dx + dy * dy + dz * dz);
@@ -244,71 +214,62 @@ namespace g3 {
         }
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
         public static Vector3d operator -(Vector3d v) {
             return new Vector3d(-v.x, -v.y, -v.z);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator *(double f, Vector3d v) {
             return new Vector3d(f * v.x, f * v.y, f * v.z);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator *(Vector3d v, double f) {
             return new Vector3d(f * v.x, f * v.y, f * v.z);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator /(Vector3d v, double f) {
-            double invF = 1.0 / f;
-            return new Vector3d(v.x * invF, v.y * invF, v.z * invF);
+            return new Vector3d(v.x / f, v.y / f, v.z / f);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator /(double f, Vector3d v) {
             return new Vector3d(f / v.x, f / v.y, f / v.z);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator *(Vector3d a, Vector3d b) {
             return new Vector3d(a.x * b.x, a.y * b.y, a.z * b.z);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator /(Vector3d a, Vector3d b) {
             return new Vector3d(a.x / b.x, a.y / b.y, a.z / b.z);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
         public static Vector3d operator +(Vector3d v0, Vector3d v1) {
             return new Vector3d(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator +(Vector3d v0, double f) {
             return new Vector3d(v0.x + f, v0.y + f, v0.z + f);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator -(Vector3d v0, Vector3d v1) {
             return new Vector3d(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d operator -(Vector3d v0, double f) {
             return new Vector3d(v0.x - f, v0.y - f, v0.z - f);
         }
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
         public static bool operator ==(Vector3d a, Vector3d b) {
             return (a.x == b.x && a.y == b.y && a.z == b.z);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector3d a, Vector3d b) {
             return (a.x != b.x || a.y != b.y || a.z != b.z);
         }
         public override bool Equals(object obj) {
-            return (obj is Vector3d) ? (this == (Vector3d)obj) : false;
+            return this == (Vector3d)obj;
         }
         public override int GetHashCode() {
-            unchecked {
+            unchecked // Overflow is fine, just wrap
+            {
                 int hash = (int)2166136261;
+                // Suitable nullity checks etc, of course :)
                 hash = (hash * 16777619) ^ x.GetHashCode();
                 hash = (hash * 16777619) ^ y.GetHashCode();
                 hash = (hash * 16777619) ^ z.GetHashCode();
@@ -336,16 +297,15 @@ namespace g3 {
         }
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d Lerp(Vector3d a, Vector3d b, double t) {
             double s = 1 - t;
             return new Vector3d(s * a.x + t * b.x, s * a.y + t * b.y, s * a.z + t * b.z);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3d Lerp(ref Vector3d a, ref Vector3d b, double t) {
             double s = 1 - t;
             return new Vector3d(s * a.x + t * b.x, s * a.y + t * b.y, s * a.z + t * b.z);
         }
+
 
 
         public override string ToString() {
@@ -363,6 +323,7 @@ namespace g3 {
             return new Vector3f((float)v.x, (float)v.y, (float)v.z);
         }
 
+
 #if G3_USING_UNITY
         public static implicit operator Vector3d(UnityEngine.Vector3 v)
         {
@@ -375,17 +336,39 @@ namespace g3 {
 #endif
 
 
+
+
         // complicated functions go down here...
 
+
+        /// <summary>
+        /// Gram-Schmidt orthonormalization of the input vectors.
+        /// [RMS] this is from WildMagic5, but I added returning the minLength value
+        /// from GTEngine, because I use this in place of GTEngine's Orthonormalize in
+        /// ComputeOrthogonalComplement below
+        /// </summary>
         public static double Orthonormalize(ref Vector3d u, ref Vector3d v, ref Vector3d w) {
+            // If the input vectors are v0, v1, and v2, then the Gram-Schmidt
+            // orthonormalization produces vectors u0, u1, and u2 as follows,
+            //
+            //   u0 = v0/|v0|
+            //   u1 = (v1-(u0*v1)u0)/|v1-(u0*v1)u0|
+            //   u2 = (v2-(u0*v2)u0-(u1*v2)u1)/|v2-(u0*v2)u0-(u1*v2)u1|
+            //
+            // where |A| indicates length of vector A and A*B indicates dot
+            // product of vectors A and B.
+
+            // compute u0
             double minLength = u.Normalize();
 
+            // compute u1
             double dot0 = u.Dot(v);
             v -= dot0 * u;
             double l = v.Normalize();
             if (l < minLength)
                 minLength = l;
 
+            // compute u2
             double dot1 = v.Dot(w);
             dot0 = u.Dot(w);
             w -= dot0 * u + dot1 * v;
@@ -397,10 +380,16 @@ namespace g3 {
         }
 
 
+        /// <summary>
+        /// Input W must be a unit-length vector.  The output vectors {U,V} are
+        /// unit length and mutually perpendicular, and {U,V,W} is an orthonormal basis.
+        /// ported from WildMagic5
+        /// </summary>
         public static void GenerateComplementBasis(ref Vector3d u, ref Vector3d v, Vector3d w) {
             double invLength;
 
             if (Math.Abs(w.x) >= Math.Abs(w.y)) {
+                // W.x or W.z is the largest magnitude component, swap them
                 invLength = MathUtil.InvSqrt(w.x * w.x + w.z * w.z);
                 u.x = -w.z * invLength;
                 u.y = 0;
@@ -410,6 +399,7 @@ namespace g3 {
                 v.z = -w.y * u.x;
             }
             else {
+                // W.y or W.z is the largest magnitude component, swap them
                 invLength = MathUtil.InvSqrt(w.y * w.y + w.z * w.z);
                 u.x = 0;
                 u.y = +w.z * invLength;
@@ -420,7 +410,17 @@ namespace g3 {
             }
         }
 
-        public static double ComputeOrthogonalComplement(int numInputs, Vector3d v0, ref Vector3d v1, ref Vector3d v2) {
+        /// <summary>
+        /// this function is ported from GTEngine.
+        /// Compute a right-handed orthonormal basis for the orthogonal complement
+        /// of the input vectors.  The function returns the smallest length of the
+        /// unnormalized vectors computed during the process.  If this value is nearly
+        /// zero, it is possible that the inputs are linearly dependent (within
+        /// numerical round-off errors).  On input, numInputs must be 1 or 2 and
+        /// v0 through v(numInputs-1) must be initialized.  On output, the
+        /// vectors v0 through v2 form an orthonormal set.
+        /// </summary>
+        public static double ComputeOrthogonalComplement(int numInputs, Vector3d v0, ref Vector3d v1, ref Vector3d v2 /*, bool robust = false*/) {
             if (numInputs == 1) {
                 if (Math.Abs(v0[0]) > Math.Abs(v0[1])) {
                     v1 = new Vector3d(-v0[2], 0.0, +v0[0]);
@@ -434,15 +434,24 @@ namespace g3 {
             if (numInputs == 2) {
                 v2 = Vector3d.Cross(v0, v1);
                 return Vector3d.Orthonormalize(ref v0, ref v1, ref v2);
+                //return Orthonormalize<3, Real>(3, v, robust);
             }
 
             return 0;
         }
 
+
+
+        /// <summary>
+        /// Returns two vectors perpendicular to n, as efficiently as possible.
+        /// Duff et al method, from https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+        /// </summary>
         public static void MakePerpVectors(Vector3d n, out Vector3d b1, out Vector3d b2) {
             if (n.z < 0.0) {
                 double a = 1.0 / (1.0 - n.z);
                 double b = n.x * n.y * a;
+                //b1 = Vec3f(1.0f - n.x * n.x * a, -b, n.x);
+                //b2 = Vec3f(b, n.y * n.y * a - 1.0f, -n.y);
                 b1.x = 1.0f - n.x * n.x * a;
                 b1.y = -b;
                 b1.z = n.x;
@@ -453,6 +462,8 @@ namespace g3 {
             else {
                 double a = 1.0 / (1.0 + n.z);
                 double b = -n.x * n.y * a;
+                //b1 = Vec3f(1.0 - n.x * n.x * a, b, -n.x);
+                //b2 = Vec3f(b, 1.0 - n.y * n.y * a, -n.y);
                 b1.x = 1.0 - n.x * n.x * a;
                 b1.y = b;
                 b1.z = -n.x;
@@ -465,6 +476,7 @@ namespace g3 {
             MakePerpVectors(n, out b1, out b2);
         }
 
+        //! support x,y,z and x y z
         public static bool TryParse(string s, out Vector3d result) {
             result = default;
             if (MathUtil.TryParseRealVector(s, 3, out Vector4d result4)) {
@@ -474,9 +486,12 @@ namespace g3 {
             return false;
         }
 
+
     }
 
-    // Keep the JsonConverter as is
+
+
+    // json read and write for Vector3d type
     public class Vector3dJsonConverter : JsonConverter<g3.Vector3d> {
 #nullable enable
         public override g3.Vector3d Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
@@ -488,6 +503,7 @@ namespace g3 {
             if (value == null)
                 return Vector3d.Zero;
 
+            // todo this could probably be done more efficiently...
             string[] values = value.Split(' ', StringSplitOptions.TrimEntries);
             if (values.Length != 3)
                 return Vector3d.Zero;
@@ -498,6 +514,7 @@ namespace g3 {
             double.TryParse(values[2], out z);
             return new Vector3d(x, y, z);
         }
+
 
         public override void Write(Utf8JsonWriter writer, g3.Vector3d value, JsonSerializerOptions options) {
             writer.WriteStartObject();

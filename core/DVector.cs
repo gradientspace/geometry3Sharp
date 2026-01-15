@@ -72,10 +72,14 @@ namespace g3
         /// </summary>
         public int BlockCapacity => nBlockSize;
 
+        public int BlockCount {
+            get { return nBlockSize; }
+        }
+
         /// <summary>
         /// Gets the number of active memory blocks.
         /// </summary>
-        public int BlockCount => iCurBlock + 1;
+        public int CurrentBlock => iCurBlock + 1;
 
         // TODO: Should this be placed elsewhere? Seems to be useful in other classes than this [NLS]
         /// <summary>

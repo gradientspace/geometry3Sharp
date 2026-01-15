@@ -1,29 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 #if G3_USING_UNITY
 using UnityEngine;
 #endif
 
-namespace g3
+namespace g3 
 {
-    public struct Vector3f : IComparable<Vector3f>, IEquatable<Vector3f>
+    public struct Vector3f : IComparable<Vector3f>, IEquatable<Vector3f> 
     {
         public float x;
         public float y;
         public float z;
 
-        public Vector3f(float f) {  x = y = z = f; }
+        public Vector3f(float f) { x = y = z = f; }
         public Vector3f(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
         public Vector3f(float[] v2) { x = v2[0]; y = v2[1]; z = v2[2]; }
-        public Vector3f(Vector3f copy) {  x = copy.x; y = copy.y; z = copy.z; }
+        public Vector3f(Vector3f copy) { x = copy.x; y = copy.y; z = copy.z; }
 
-        public Vector3f(double f) {  x = y = z = (float)f; }
+        public Vector3f(double f) { x = y = z = (float)f; }
         public Vector3f(double x, double y, double z) { this.x = (float)x; this.y = (float)y; this.z = (float)z; }
-        public Vector3f(double[] v2) {  x = (float)v2[0]; y = (float)v2[1]; z = (float)v2[2]; }
-        public Vector3f(Vector3d copy) {  x = (float)copy.x; y = (float)copy.y; z = (float)copy.z; }
+        public Vector3f(double[] v2) { x = (float)v2[0]; y = (float)v2[1]; z = (float)v2[2]; }
+        public Vector3f(Vector3d copy) { x = (float)copy.x; y = (float)copy.y; z = (float)copy.z; }
 
         static public readonly Vector3f Zero = new Vector3f(0.0f, 0.0f, 0.0f);
         static public readonly Vector3f One = new Vector3f(1.0f, 1.0f, 1.0f);
@@ -35,80 +34,61 @@ namespace g3
         static public readonly Vector3f UnitX = new Vector3f(1.0f, 0.0f, 0.0f);
         static public readonly Vector3f UnitY = new Vector3f(0.0f, 1.0f, 0.0f);
         static public readonly Vector3f UnitZ = new Vector3f(0.0f, 0.0f, 1.0f);
-        static public readonly Vector3f MaxValue = new Vector3f(float.MaxValue,float.MaxValue,float.MaxValue);
-		static public readonly Vector3f MinValue = new Vector3f(float.MinValue,float.MinValue,float.MinValue);
+        static public readonly Vector3f MaxValue = new Vector3f(float.MaxValue, float.MaxValue, float.MaxValue);
+        static public readonly Vector3f MinValue = new Vector3f(float.MinValue, float.MinValue, float.MinValue);
 
-        public float this[int key]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float this[int key] {
             get { return (key == 0) ? x : (key == 1) ? y : z; }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { if (key == 0) x = value; else if (key == 1) y = value; else z = value; }
         }
 
         public Vector2f xy {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new Vector2f(x, y); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { x = value.x; y = value.y; }
         }
         public Vector2f xz {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new Vector2f(x, z); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { x = value.x; z = value.y; }
         }
         public Vector2f yz {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new Vector2f(y, z); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { y = value.x; z = value.y; }
         }
 
-        public float LengthSquared
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float LengthSquared {
             get { return x * x + y * y + z * z; }
         }
-        public float Length
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float Length {
             get { return MathF.Sqrt(LengthSquared); }
         }
 
-        public float LengthL1
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float LengthL1 {
             get { return Math.Abs(x) + Math.Abs(y) + Math.Abs(z); }
         }
 
-		public float Max {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float Max {
             get { return Math.Max(x, Math.Max(y, z)); }
-		}
-		public float Min {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        }
+        public float Min {
             get { return Math.Min(x, Math.Min(y, z)); }
-		}
-		public float MaxAbs {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        }
+        public float MaxAbs {
             get { return Math.Max(Math.Abs(x), Math.Max(Math.Abs(y), Math.Abs(z))); }
-		}
-		public float MinAbs {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        }
+        public float MinAbs {
             get { return Math.Min(Math.Abs(x), Math.Min(Math.Abs(y), Math.Abs(z))); }
-		}
+        }
 
 
-        public float Normalize(float epsilon = MathUtil.Epsilonf)
-        {
+        public float Normalize(float epsilon = MathUtil.Epsilonf) {
             float length = Length;
             if (length > epsilon) {
                 float invLength = 1.0f / length;
                 x *= invLength;
                 y *= invLength;
                 z *= invLength;
-            } else {
+            }
+            else {
                 length = 0;
                 x = y = z = 0;
             }
@@ -120,19 +100,17 @@ namespace g3
                 if (length > MathUtil.Epsilonf) {
                     float invLength = 1 / length;
                     return new Vector3f(x * invLength, y * invLength, z * invLength);
-                } else
+                }
+                else
                     return Vector3f.Zero;
             }
         }
 
-		public bool IsNormalized {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return Math.Abs( (x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerancef; }
-		}
+        public bool IsNormalized {
+            get { return Math.Abs((x * x + y * y + z * z) - 1) < MathUtil.ZeroTolerancef; }
+        }
 
-        public bool IsFinite
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsFinite {
             get { float f = x + y + z; return float.IsNaN(f) == false && float.IsInfinity(f) == false; }
         }
 
@@ -143,27 +121,21 @@ namespace g3
             z = MathF.Round(z, nDecimals);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float Dot(Vector3f v2)
-        {
+
+        public float Dot(Vector3f v2) {
             return x * v2[0] + y * v2[1] + z * v2[2];
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Dot(Vector3f v1, Vector3f v2) {
             return v1.Dot(v2);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3f Cross(Vector3f v2)
-        {
+
+        public Vector3f Cross(Vector3f v2) {
             return new Vector3f(
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
                 x * v2.y - y * v2.x);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3f Cross(Vector3f v1, Vector3f v2) {
             return v1.Cross(v2);
         }
@@ -181,138 +153,97 @@ namespace g3
             float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return MathF.Acos(fDot) * MathUtil.Rad2Degf;
         }
-
         public static float AngleD(Vector3f v1, Vector3f v2) {
             return v1.AngleD(v2);
         }
-
         public float AngleR(Vector3f v2) {
             float fDot = MathUtil.Clamp(Dot(v2), -1, 1);
             return MathF.Acos(fDot);
         }
-
         public static float AngleR(Vector3f v1, Vector3f v2) {
             return v1.AngleR(v2);
         }
 
+
         public float DistanceSquared(Vector3f v2) {
-			float dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
-			return dx*dx + dy*dy + dz*dz;
+            float dx = v2.x - x, dy = v2.y - y, dz = v2.z - z;
+            return dx * dx + dy * dy + dz * dz;
+        }
+        public float Distance(Vector3f v2) {
+            float dx = v2.x - x, dy = v2.y - y, dz = v2.z - z;
+            return MathF.Sqrt(dx * dx + dy * dy + dz * dz);
         }
 
-        public float Distance(Vector3f v2) {
-            float dx = v2.x-x, dy = v2.y-y, dz = v2.z-z;
-			return MathF.Sqrt(dx*dx + dy*dy + dz*dz);
-		}
 
-        public void Set(Vector3f o)
-        {
+
+        public void Set(Vector3f o) {
             x = o[0]; y = o[1]; z = o[2];
         }
-
-        public void Set(float fX, float fY, float fZ)
-        {
+        public void Set(float fX, float fY, float fZ) {
             x = fX; y = fY; z = fZ;
         }
-
-        public void Add(Vector3f o)
-        {
+        public void Add(Vector3f o) {
             x += o[0]; y += o[1]; z += o[2];
         }
-
-        public void Subtract(Vector3f o)
-        {
+        public void Subtract(Vector3f o) {
             x -= o[0]; y -= o[1]; z -= o[2];
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator -(Vector3f v)
-        {
+
+
+        public static Vector3f operator -(Vector3f v) {
             return new Vector3f(-v.x, -v.y, -v.z);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator *(float f, Vector3f v)
-        {
+        public static Vector3f operator *(float f, Vector3f v) {
             return new Vector3f(f * v.x, f * v.y, f * v.z);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator *(Vector3f v, float f)
-        {
+        public static Vector3f operator *(Vector3f v, float f) {
             return new Vector3f(f * v.x, f * v.y, f * v.z);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator /(Vector3f v, float f)
-        {
-            return new Vector3f(v.x /f, v.y /f, v.z /f);
+        public static Vector3f operator /(Vector3f v, float f) {
+            return new Vector3f(v.x / f, v.y / f, v.z / f);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator /(float f, Vector3f v)
-        {
+        public static Vector3f operator /(float f, Vector3f v) {
             return new Vector3f(f / v.x, f / v.y, f / v.z);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator *(Vector3f a, Vector3f b)
-        {
+        public static Vector3f operator *(Vector3f a, Vector3f b) {
             return new Vector3f(a.x * b.x, a.y * b.y, a.z * b.z);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator /(Vector3f a, Vector3f b)
-        {
+        public static Vector3f operator /(Vector3f a, Vector3f b) {
             return new Vector3f(a.x / b.x, a.y / b.y, a.z / b.z);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator +(Vector3f v0, Vector3f v1)
-        {
+
+        public static Vector3f operator +(Vector3f v0, Vector3f v1) {
             return new Vector3f(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator +(Vector3f v0, float f)
-        {
+        public static Vector3f operator +(Vector3f v0, float f) {
             return new Vector3f(v0.x + f, v0.y + f, v0.z + f);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator -(Vector3f v0, Vector3f v1)
-        {
+        public static Vector3f operator -(Vector3f v0, Vector3f v1) {
             return new Vector3f(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f operator -(Vector3f v0, float f)
-        {
+        public static Vector3f operator -(Vector3f v0, float f) {
             return new Vector3f(v0.x - f, v0.y - f, v0.z - f);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(Vector3f a, Vector3f b)
-        {
+
+        public static bool operator ==(Vector3f a, Vector3f b) {
             return (a.x == b.x && a.y == b.y && a.z == b.z);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(Vector3f a, Vector3f b)
-        {
+        public static bool operator !=(Vector3f a, Vector3f b) {
             return (a.x != b.x || a.y != b.y || a.z != b.z);
         }
-
-        public override bool Equals(object obj)
-        {
+        public override bool Equals(object obj) {
             return this == (Vector3f)obj;
         }
-
-        public override int GetHashCode()
-        {
+        public override int GetHashCode() {
             unchecked // Overflow is fine, just wrap
             {
-                int hash = (int) 2166136261;
+                int hash = (int)2166136261;
                 // Suitable nullity checks etc, of course :)
                 hash = (hash * 16777619) ^ x.GetHashCode();
                 hash = (hash * 16777619) ^ y.GetHashCode();
@@ -320,8 +251,7 @@ namespace g3
                 return hash;
             }
         }
-        public int CompareTo(Vector3f other)
-        {
+        public int CompareTo(Vector3f other) {
             if (x != other.x)
                 return x < other.x ? -1 : 1;
             else if (y != other.y)
@@ -330,22 +260,20 @@ namespace g3
                 return z < other.z ? -1 : 1;
             return 0;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Vector3f other)
-        {
+        public bool Equals(Vector3f other) {
             return (x == other.x && y == other.y && z == other.z);
         }
 
+
+        // converted math into double-precision for improved accuracy
         public bool EpsilonEqual(Vector3f v2, float epsilon) {
-            return MathF.Abs(x - v2.x) <= epsilon && 
-                   MathF.Abs(y - v2.y) <= epsilon &&
-                   MathF.Abs(z - v2.z) <= epsilon;
+            return Math.Abs(x - v2.x) <= (double)epsilon &&
+                   Math.Abs(y - v2.y) <= (double)epsilon &&
+                   Math.Abs(z - v2.z) <= (double)epsilon;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3f Lerp(Vector3f a, Vector3f b, float t)
-        {
+
+        public static Vector3f Lerp(Vector3f a, Vector3f b, float t) {
             float s = 1 - t;
             return new Vector3f(s * a.x + t * b.x, s * a.y + t * b.y, s * a.z + t * b.z);
         }

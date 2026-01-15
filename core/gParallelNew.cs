@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace g3.core;
+namespace g3;
 
 /// <summary>
 /// Modern .NET 8 implementation of gParallel using the Task Parallel Library (TPL).
